@@ -1,0 +1,1926 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SGCD — Sistema de Gestão de Contratação Direta</title>
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --brand:        #E95420;
+    --brand-light:  #fdf3ef;
+    --brand-dark:   #c7411a;
+    --aubergine:    #2C001E;
+    --aubergine-mid:#5E2750;
+    --success:      #0e8420;
+    --success-light:#e6f4e8;
+    --warning:      #f99b11;
+    --warning-light:#fff3d8;
+    --danger:       #c7162b;
+    --danger-light: #fce8ea;
+    --gray-50:      #f7f7f7;
+    --gray-100:     #ebebeb;
+    --gray-200:     #d9d9d9;
+    --gray-300:     #aea79f;
+    --gray-500:     #666360;
+    --gray-700:     #3c3b37;
+    --gray-900:     #1a1a1a;
+    --radius: 4px;
+    --shadow: 0 1px 4px rgba(0,0,0,.14), 0 1px 2px rgba(0,0,0,.08);
+    --shadow-md: 0 4px 12px rgba(0,0,0,.15), 0 2px 4px rgba(0,0,0,.08);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; text-transform: uppercase; }
+  ::placeholder { text-transform: uppercase; }
+
+  body {
+    font-family: 'Ubuntu', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--gray-50);
+    color: var(--gray-900);
+    min-height: 100vh;
+    text-transform: uppercase;
+  }
+
+  /* ── Header ─────────────────────────────────────── */
+  header {
+    background: var(--aubergine);
+    color: #fff;
+    padding: 0 24px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 8px rgba(0,0,0,.4);
+    position: sticky; top: 0; z-index: 100;
+  }
+  header .hdr-brand { display: flex; align-items: center; gap: 10px; }
+  header .hdr-logo {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--brand);
+    display: flex; align-items: center; justify-content: center;
+    font-size: .7rem; font-weight: 700; color: #fff; letter-spacing: 0; flex-shrink: 0;
+  }
+  header h1 { font-size: .9rem; font-weight: 500; letter-spacing: .8px; text-transform: uppercase; }
+  header h1 strong { color: var(--brand); font-weight: 700; }
+  header span { font-size: .75rem; opacity: .65; font-weight: 300; }
+
+  /* ── Layout ──────────────────────────────────────── */
+  #app { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
+
+  /* ── Views ───────────────────────────────────────── */
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* ── Dashboard ───────────────────────────────────── */
+  .dash-top {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 20px; flex-wrap: wrap; gap: 12px;
+  }
+  .dash-top h2 { font-size: 1.05rem; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; }
+
+  .stats {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr));
+    gap: 12px; margin-bottom: 24px;
+  }
+  .stat {
+    background: #fff; border-radius: var(--radius); padding: 16px 18px;
+    box-shadow: var(--shadow); border-left: 4px solid var(--brand);
+  }
+  .stat.done  { border-color: var(--success); }
+  .stat.prog  { border-color: var(--warning); }
+  .stat.pend  { border-color: var(--gray-300); }
+  .stat-val { font-size: 1.8rem; font-weight: 800; line-height: 1; }
+  .stat-lbl { font-size: .75rem; color: var(--gray-500); margin-top: 4px; text-transform: uppercase; letter-spacing: .5px; }
+
+  /* search / filter */
+  .filters { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+  .filters input, .filters select {
+    border: 1px solid var(--gray-200); border-radius: var(--radius);
+    padding: 8px 12px; font-size: .875rem; background: #fff;
+    color: var(--gray-900); outline: none;
+  }
+  .filters input { flex: 1; min-width: 180px; }
+  .filters input:focus, .filters select:focus { border-color: var(--brand); outline: 2px solid rgba(233,84,32,.2); }
+
+  /* process cards */
+  .process-list { display: flex; flex-direction: column; gap: 10px; }
+  .process-card {
+    background: #fff; border-radius: var(--radius); padding: 16px 18px;
+    box-shadow: var(--shadow); cursor: pointer; border: 1px solid var(--gray-200);
+    transition: box-shadow .15s, border-color .15s;
+    display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center;
+  }
+  .process-card:hover { box-shadow: var(--shadow-md); border-color: var(--brand); }
+  .process-card .num { font-size: .72rem; font-weight: 600; color: var(--brand); text-transform: uppercase; }
+  .process-card .title { font-weight: 600; font-size: .95rem; margin: 2px 0 4px; }
+  .process-card .meta { font-size: .78rem; color: var(--gray-500); display: flex; gap: 14px; flex-wrap: wrap; }
+  .process-card .meta span { display: flex; align-items: center; gap: 3px; }
+
+  .progress-wrap { display: flex; align-items: center; gap: 8px; }
+  .progress-bar {
+    width: 90px; height: 6px; background: var(--gray-200);
+    border-radius: 99px; overflow: hidden;
+  }
+  .progress-fill { height: 100%; border-radius: 99px; background: var(--brand); transition: width .3s; }
+  .progress-fill.done { background: var(--success); }
+  .progress-pct { font-size: .75rem; font-weight: 600; color: var(--gray-500); white-space: nowrap; }
+
+  .badge {
+    display: inline-block; padding: 2px 9px; border-radius: 99px;
+    font-size: .7rem; font-weight: 600; text-transform: uppercase; letter-spacing: .4px;
+  }
+  .badge-todo     { background: var(--gray-100); color: var(--gray-500); }
+  .badge-progress { background: var(--warning-light); color: var(--warning); }
+  .badge-done     { background: var(--success-light); color: var(--success); }
+  .badge-blocked  { background: var(--danger-light); color: var(--danger); }
+
+  /* empty state */
+  .empty {
+    text-align: center; padding: 64px 24px; color: var(--gray-500);
+  }
+  .empty svg { opacity: .3; margin-bottom: 16px; }
+  .empty p { font-size: .9rem; }
+
+  /* ── Process detail ──────────────────────────────── */
+  .detail-header {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 12px; margin-bottom: 20px; flex-wrap: wrap;
+  }
+  .detail-header .back {
+    display: inline-flex; align-items: center; gap: 6px;
+    color: var(--brand); font-size: .85rem; font-weight: 600;
+    cursor: pointer; margin-bottom: 10px; background: none; border: none; padding: 0;
+  }
+  .detail-header .back:hover { text-decoration: underline; }
+  .detail-title { font-size: 1.1rem; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; }
+  .detail-num   { font-size: .8rem; color: var(--brand); font-weight: 600; margin-bottom: 4px; }
+  .detail-meta  { font-size: .8rem; color: var(--gray-500); margin-top: 4px; display: flex; gap: 16px; flex-wrap: wrap; }
+
+  .detail-grid {
+    display: grid; grid-template-columns: 1fr 340px; gap: 20px; align-items: start;
+  }
+  @media (max-width: 760px) { .detail-grid { grid-template-columns: 1fr; } }
+
+  /* checklist */
+  .checklist-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .checklist-header h3 { font-size: .9rem; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--gray-500); }
+
+  .step-card {
+    background: #fff; border-radius: var(--radius); margin-bottom: 8px;
+    border: 1px solid var(--gray-200); overflow: hidden;
+    transition: border-color .15s;
+  }
+  .step-card.completed { border-color: var(--success); }
+  .step-card.blocked   { border-color: var(--danger); }
+  .step-card.expanded  { box-shadow: var(--shadow-md); }
+
+  .step-row {
+    display: flex; align-items: center; gap: 12px; padding: 12px 14px;
+    cursor: pointer; user-select: none;
+  }
+  .step-check {
+    width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--gray-300);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    transition: all .15s; cursor: pointer;
+  }
+  .step-check.checked { background: var(--success); border-color: var(--success); }
+  .step-check.blocked { background: var(--danger); border-color: var(--danger); }
+  .step-check svg { display: none; }
+  .step-check.checked svg, .step-check.blocked svg { display: block; }
+
+  .step-info { flex: 1; min-width: 0; }
+  .step-name { font-size: .9rem; font-weight: 600; }
+  .step-card.completed .step-name { color: var(--success); }
+  .step-sub  { font-size: .75rem; color: var(--gray-500); margin-top: 2px; }
+  .step-date { font-size: .72rem; color: var(--gray-500); white-space: nowrap; }
+
+  .step-body { padding: 0 14px 14px 48px; border-top: 1px solid var(--gray-100); }
+  .step-body.hidden { display: none; }
+
+  .step-body label {
+    display: block; font-size: .75rem; font-weight: 600; color: var(--gray-500);
+    margin-bottom: 4px; margin-top: 12px; text-transform: uppercase; letter-spacing: .4px;
+  }
+  .step-body textarea, .step-body input[type=text], .step-body input[type=date] {
+    width: 100%; border: 1px solid var(--gray-200); border-radius: 6px;
+    padding: 7px 10px; font-size: .85rem; font-family: inherit; color: var(--gray-900);
+    outline: none; resize: vertical;
+  }
+  .step-body textarea:focus, .step-body input:focus { border-color: var(--brand); }
+  .step-body textarea { min-height: 70px; }
+
+  .step-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+
+  /* file list */
+  .file-list { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+  .file-item {
+    display: flex; align-items: center; gap: 8px; padding: 6px 10px;
+    background: var(--gray-50); border-radius: 6px; border: 1px solid var(--gray-200);
+    font-size: .8rem;
+  }
+  .file-item .file-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .file-item .file-size { color: var(--gray-500); flex-shrink: 0; }
+
+  /* sidebar */
+  .sidebar-card {
+    background: #fff; border-radius: var(--radius); box-shadow: var(--shadow);
+    border: 1px solid var(--gray-200); overflow: hidden; margin-bottom: 16px;
+  }
+  .sidebar-card h4 {
+    padding: 10px 16px; font-size: .75rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .6px; color: #fff; border-bottom: 2px solid var(--brand);
+    background: var(--aubergine-mid);
+  }
+  .sidebar-card .body { padding: 12px 16px; }
+
+  /* info fields */
+  .info-field { margin-bottom: 12px; }
+  .info-field label { display: block; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--gray-500); margin-bottom: 3px; }
+  .info-field input, .info-field select, .info-field textarea {
+    width: 100%; border: 1px solid var(--gray-200); border-radius: 6px;
+    padding: 7px 10px; font-size: .85rem; font-family: inherit; color: var(--gray-900);
+    outline: none;
+  }
+  .info-field input:focus, .info-field select:focus, .info-field textarea:focus { border-color: var(--brand); }
+  .info-field textarea { min-height: 60px; resize: vertical; }
+
+  /* timeline */
+  .timeline { display: flex; flex-direction: column; gap: 0; }
+  .tl-item { display: flex; gap: 10px; padding: 8px 0; position: relative; }
+  .tl-item:not(:last-child)::before {
+    content: ''; position: absolute; left: 7px; top: 24px; bottom: -8px;
+    width: 2px; background: var(--gray-200);
+  }
+  .tl-dot {
+    width: 16px; height: 16px; border-radius: 50%; background: var(--brand);
+    flex-shrink: 0; margin-top: 3px; border: 2px solid #fff; box-shadow: 0 0 0 2px var(--brand);
+  }
+  .tl-dot.done    { background: var(--success); box-shadow: 0 0 0 2px var(--success); }
+  .tl-dot.blocked { background: var(--danger);  box-shadow: 0 0 0 2px var(--danger); }
+  .tl-content { flex: 1; }
+  .tl-action { font-size: .8rem; font-weight: 600; }
+  .tl-time   { font-size: .72rem; color: var(--gray-500); }
+
+  /* ── Modal / Overlay ─────────────────────────────── */
+  .overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.45);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 200; padding: 16px;
+  }
+  .overlay.hidden { display: none; }
+  .modal {
+    background: #fff; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,.2);
+    width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto;
+  }
+  .modal-header {
+    padding: 16px 24px; display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 3px solid var(--brand); position: sticky; top: 0;
+    background: var(--aubergine); z-index: 1; border-radius: 12px 12px 0 0;
+  }
+  .modal-header h2 { font-size: .9rem; font-weight: 500; color: #fff; letter-spacing: .8px; }
+  .modal-header .btn-ghost { color: rgba(255,255,255,.7); }
+  .modal-header .btn-ghost:hover { background: rgba(255,255,255,.1); color: #fff; }
+  .modal-body { padding: 20px 24px; }
+  .modal-footer {
+    padding: 14px 24px; border-top: 1px solid var(--gray-200);
+    display: flex; justify-content: flex-end; gap: 10px;
+    position: sticky; bottom: 0; background: #fff;
+  }
+
+  /* ── Buttons ─────────────────────────────────────── */
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 16px; border-radius: var(--radius); font-size: .85rem; font-weight: 600;
+    border: none; cursor: pointer; transition: all .15s; font-family: inherit;
+  }
+  .btn-primary { background: var(--brand); color: #fff; }
+  .btn-primary:hover { background: var(--brand-dark); }
+  .btn-success { background: var(--success); color: #fff; }
+  .btn-success:hover { background: #155e32; }
+  .btn-danger  { background: var(--danger); color: #fff; }
+  .btn-danger:hover  { background: #991b1b; }
+  .btn-outline {
+    background: #fff; color: var(--gray-700); border: 1px solid var(--gray-200);
+  }
+  .btn-outline:hover { border-color: var(--brand); color: var(--brand); }
+  .btn-ghost { background: transparent; color: var(--gray-500); padding: 6px 10px; }
+  .btn-ghost:hover { background: var(--gray-100); color: var(--gray-900); }
+  .btn-sm { padding: 5px 12px; font-size: .78rem; }
+  .btn-icon { padding: 6px; border-radius: 6px; }
+  .btn[disabled] { opacity: .45; cursor: not-allowed; }
+
+  /* file upload zone */
+  .upload-zone {
+    border: 2px dashed var(--gray-300); border-radius: var(--radius);
+    padding: 14px; text-align: center; cursor: pointer;
+    color: var(--gray-500); font-size: .8rem; transition: all .15s;
+    margin-top: 8px;
+  }
+  .upload-zone:hover, .upload-zone.dragover { border-color: var(--brand); color: var(--brand); background: var(--brand-light); }
+  .upload-zone input { display: none; }
+
+  /* toast */
+  #toast {
+    position: fixed; bottom: 24px; right: 24px; z-index: 300;
+    display: flex; flex-direction: column; gap: 8px; pointer-events: none;
+  }
+  .toast-msg {
+    background: var(--aubergine); color: #fff; padding: 10px 16px;
+    border-radius: var(--radius); font-size: .8rem; box-shadow: var(--shadow-md);
+    animation: slideIn .2s ease; max-width: 320px;
+    border-left: 4px solid var(--brand);
+  }
+  .toast-msg.success { background: var(--aubergine); border-color: var(--success); }
+  .toast-msg.error   { background: var(--aubergine); border-color: var(--danger); }
+  @keyframes slideIn { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+  /* Ubuntu-style scrollbar */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: var(--gray-100); }
+  ::-webkit-scrollbar-thumb { background: var(--aubergine-mid); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--brand); }
+
+  /* ── Propostas ───────────────────────────────────── */
+  .propostas-wrap { margin-top: 14px; }
+  .proposta-card {
+    border: 1px solid var(--gray-200); border-radius: var(--radius);
+    padding: 12px 14px; margin-bottom: 8px; background: #fff;
+    position: relative;
+  }
+  .proposta-card.vencedora { border-color: var(--success); background: var(--success-light); }
+  .proposta-card.recusada  { border-color: var(--danger);  background: var(--danger-light); opacity: .75; }
+  .proposta-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  }
+  .proposta-grid .full { grid-column: 1 / -1; }
+  .proposta-card .del-btn {
+    position: absolute; top: 8px; right: 8px;
+    background: none; border: none; cursor: pointer;
+    color: var(--gray-300); font-size: 1rem; line-height: 1; padding: 2px 6px;
+    border-radius: 4px;
+  }
+  .proposta-card .del-btn:hover { color: var(--danger); background: var(--danger-light); }
+  .proposta-situacao {
+    display: inline-block; padding: 2px 10px; border-radius: 99px;
+    font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .5px;
+    margin-top: 6px;
+  }
+  .sit-analise  { background: var(--warning-light); color: var(--warning); }
+  .sit-aceita   { background: var(--brand-light);   color: var(--brand); }
+  .sit-vencedora{ background: var(--success-light);  color: var(--success); }
+  .sit-recusada { background: var(--danger-light);   color: var(--danger); }
+
+  /* ── Certidões ──────────────────────────────────── */
+  .cert-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 14px; margin-bottom: 8px;
+  }
+  .cert-header span { font-size: .72rem; font-weight: 700; color: var(--gray-500); letter-spacing: .4px; }
+  .cert-progress-bar { flex: 1; height: 5px; background: var(--gray-200); border-radius: 99px; margin: 0 10px; overflow: hidden; }
+  .cert-progress-fill { height: 100%; border-radius: 99px; background: var(--success); transition: width .3s; }
+
+  .cert-item {
+    display: grid; grid-template-columns: auto 1fr auto; align-items: center;
+    gap: 10px; padding: 8px 10px; border-radius: var(--radius);
+    border: 1px solid var(--gray-200); margin-bottom: 5px;
+    background: #fff; transition: border-color .15s;
+  }
+  .cert-item.obtida  { border-color: var(--success); background: var(--success-light); }
+  .cert-item.na      { border-color: var(--gray-300); opacity: .55; }
+  body.dark .cert-item           { background: #2a2a2a; border-color: #383838; }
+  body.dark .cert-item.obtida    { background: #0d2e15; border-color: var(--success); opacity: 1; }
+
+  .cert-status-btn {
+    width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--gray-300);
+    background: none; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-size: .75rem; flex-shrink: 0; transition: all .15s;
+  }
+  .cert-item.obtida .cert-status-btn { background: var(--success); border-color: var(--success); color: #fff; }
+  .cert-item.na     .cert-status-btn { background: var(--gray-300); border-color: var(--gray-300); color: #fff; }
+
+  .cert-info { min-width: 0; }
+  .cert-nome { font-size: .8rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cert-desc { font-size: .7rem; color: var(--gray-500); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cert-item.obtida .cert-desc { color: var(--success); }
+
+  .cert-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+  .cert-date { font-size: .72rem; color: var(--gray-500); width: 105px; }
+  .cert-date input { width: 100%; border: none; background: transparent; font-size: .72rem; color: var(--gray-500); font-family: inherit; cursor: pointer; }
+  .cert-link-btn {
+    padding: 3px 8px; font-size: .68rem; border-radius: 3px; border: 1px solid var(--brand);
+    color: var(--brand); background: transparent; cursor: pointer; font-family: inherit;
+    font-weight: 600; white-space: nowrap; text-decoration: none;
+    display: inline-flex; align-items: center; gap: 3px;
+  }
+  .cert-link-btn:hover { background: var(--brand); color: #fff; }
+
+  .cert-file-area { grid-column: 1 / -1; margin-top: 8px; display: flex; flex-direction: column; gap: 4px; }
+  .cert-upload-lbl { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: .72rem; padding: 10px; border: 2px dashed var(--gray-300); border-radius: var(--radius); cursor: pointer; color: var(--gray-500); background: transparent; transition: .15s; width: 100%; }
+  .cert-upload-lbl:hover { border-color: var(--brand); color: var(--brand); background: var(--brand-light); }
+  .cert-file-chip { display: inline-flex; align-items: center; gap: 4px; font-size: .64rem; padding: 2px 6px; background: var(--gray-100); border: 1px solid var(--gray-200); border-radius: var(--radius); max-width: 180px; }
+  .cert-file-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cert-file-chip button { background: none; border: none; cursor: pointer; color: var(--gray-500); font-size: .72rem; padding: 0; line-height: 1; flex-shrink: 0; }
+  .cert-file-chip button:hover { color: var(--danger); }
+
+  /* ── Dark mode (Yaru Dark) ───────────────────────── */
+  body.dark {
+    --brand-light:  #3d1a0a;
+    --gray-50:      #1a1a1a;
+    --gray-100:     #242424;
+    --gray-200:     #323232;
+    --gray-300:     #555550;
+    --gray-500:     #9a9691;
+    --gray-700:     #c8c3bc;
+    --gray-900:     #f0ece8;
+    --shadow:       0 1px 4px rgba(0,0,0,.5), 0 1px 2px rgba(0,0,0,.3);
+    --shadow-md:    0 4px 12px rgba(0,0,0,.6), 0 2px 4px rgba(0,0,0,.3);
+  }
+  body.dark { background: #1a1a1a; color: #f0ece8; }
+  body.dark .stat          { background: #2a2a2a; border-right-color: #383838; border-top-color: #383838; border-bottom-color: #383838; }
+  body.dark .process-card,
+  body.dark .step-card,
+  body.dark .sidebar-card,
+  body.dark .modal,
+  body.dark .proposta-card { background: #2a2a2a; border-color: #383838; }
+  body.dark .step-body,
+  body.dark .modal-body,
+  body.dark .modal-footer,
+  body.dark .sidebar-card .body { background: #2a2a2a; }
+  body.dark input, body.dark textarea, body.dark select {
+    background: #323232; border-color: #444; color: #f0ece8;
+  }
+  body.dark input:focus, body.dark textarea:focus, body.dark select:focus {
+    border-color: var(--brand); background: #3a3a3a;
+  }
+  body.dark .filters input, body.dark .filters select { background: #2a2a2a; }
+  body.dark .step-body { border-top-color: #383838; }
+  body.dark .tl-item:not(:last-child)::before { background: #383838; }
+  body.dark .upload-zone { border-color: #444; color: var(--gray-500); }
+  body.dark .upload-zone:hover { background: #3a1a0a; border-color: var(--brand); }
+  body.dark .file-item { background: #323232; border-color: #444; }
+  body.dark .badge-todo { background: #323232; }
+  body.dark .proposta-card.vencedora { background: #0d2e15; }
+  body.dark .proposta-card.recusada  { background: #2e0d12; }
+  body.dark .modal-footer { border-top-color: #383838; }
+
+  /* ── Theme toggle button ─────────────────────────── */
+  .theme-toggle {
+    background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15);
+    color: #fff; border-radius: 20px; padding: 4px 12px;
+    font-size: .72rem; font-weight: 500; cursor: pointer;
+    display: flex; align-items: center; gap: 6px; transition: all .2s;
+    font-family: inherit; letter-spacing: .5px;
+  }
+  .theme-toggle:hover { background: rgba(255,255,255,.16); border-color: var(--brand); }
+  .theme-toggle .icon { font-size: .9rem; }
+
+  /* print */
+  @media print {
+    header, .btn, .step-actions, .upload-zone, .filters, .dash-top button { display: none !important; }
+    .detail-grid { grid-template-columns: 1fr; }
+    .step-body.hidden { display: block !important; }
+    body { background: #fff; }
+  }
+
+  /* Responsive */
+  @media (max-width: 500px) {
+    .detail-header { flex-direction: column; }
+    .stats { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hdr-brand">
+    <div class="hdr-logo">CD</div>
+    <h1><strong>SGCD</strong> — Sistema de Gestão de Contratação Direta</h1>
+  </div>
+  <div style="display:flex;align-items:center;gap:14px">
+    <button class="theme-toggle" onclick="toggleTheme()" id="theme-btn" title="Alternar tema">
+      <span class="icon">🌙</span><span id="theme-lbl">Escuro</span>
+    </button>
+    <span id="hdr-date"></span>
+  </div>
+</header>
+
+<div id="app">
+  <!-- ── Dashboard ── -->
+  <div id="view-dash" class="view active">
+    <div class="dash-top">
+      <h2>Processos</h2>
+      <button class="btn btn-primary" onclick="openNewModal()">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+        Novo Processo
+      </button>
+    </div>
+
+    <div class="stats">
+      <div class="stat pend"><div class="stat-val" id="st-total">0</div><div class="stat-lbl">Total</div></div>
+      <div class="stat prog"><div class="stat-val" id="st-prog">0</div><div class="stat-lbl">Em andamento</div></div>
+      <div class="stat done"><div class="stat-val" id="st-done">0</div><div class="stat-lbl">Concluídos</div></div>
+      <div class="stat"    ><div class="stat-val" id="st-pend">0</div><div class="stat-lbl">Não iniciados</div></div>
+    </div>
+
+    <div class="filters">
+      <input type="text" id="search" placeholder="Buscar por objeto, nº ou fornecedor…" oninput="renderDash()">
+      <select id="filter-status" onchange="renderDash()">
+        <option value="">Todos os status</option>
+        <option value="todo">Não iniciado</option>
+        <option value="progress">Em andamento</option>
+        <option value="done">Concluído</option>
+        <option value="blocked">Bloqueado</option>
+      </select>
+    </div>
+
+    <div class="process-list" id="process-list"></div>
+  </div>
+
+  <!-- ── Process Detail ── -->
+  <div id="view-detail" class="view">
+    <button class="back btn btn-ghost" onclick="showDash()">
+      ← Voltar à lista
+    </button>
+    <div class="detail-header">
+      <div>
+        <div class="detail-num" id="d-num"></div>
+        <div class="detail-title" id="d-title"></div>
+        <div class="detail-meta" id="d-meta"></div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-outline btn-sm" onclick="printProcess()">&#128438; Imprimir</button>
+        <button class="btn btn-outline btn-sm" onclick="gerarAta()" style="border-color:var(--aubergine-mid);color:var(--aubergine-mid)">&#128196; Gerar Ata</button>
+        <button class="btn btn-danger  btn-sm" onclick="deleteProcess()">Excluir</button>
+      </div>
+    </div>
+
+    <div class="detail-grid">
+      <!-- Checklist -->
+      <div>
+        <div class="checklist-header">
+          <h3>Checklist do Processo</h3>
+          <div id="d-progress-wrap" class="progress-wrap">
+            <div class="progress-bar"><div class="progress-fill" id="d-progress-fill"></div></div>
+            <span class="progress-pct" id="d-progress-pct"></span>
+          </div>
+        </div>
+        <div id="checklist"></div>
+      </div>
+
+      <!-- Sidebar -->
+      <div>
+        <!-- Info -->
+        <div class="sidebar-card">
+          <h4>Informações do Processo</h4>
+          <div class="body" id="info-fields"></div>
+        </div>
+        <!-- Timeline -->
+        <div class="sidebar-card">
+          <h4>Histórico</h4>
+          <div class="body">
+            <div class="timeline" id="timeline"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── New Process Modal ── -->
+<div class="overlay hidden" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Novo Processo de Dispensa</h2>
+      <button class="btn btn-ghost btn-icon" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="info-field">
+        <label>Número / Identificação do Processo *</label>
+        <input type="text" id="m-num" placeholder="Ex: DL-001/2024">
+      </div>
+      <div class="info-field">
+        <label>Objeto (descrição resumida) *</label>
+        <input type="text" id="m-obj" placeholder="Ex: Aquisição de material de limpeza">
+      </div>
+      <div class="info-field">
+        <label>Fundamentação Legal (Art. 75, inciso)</label>
+        <select id="m-legal">
+          <option value="">Selecionar…</option>
+          <option value="Art. 75, I — Valor (até R$ 57.184,60 — serviços)">Art. 75, I — Valor (até R$ 57.184,60 — serviços)</option>
+          <option value="Art. 75, II — Valor (até R$ 114.369,20 — obras/serv. engenharia)">Art. 75, II — Valor (até R$ 114.369,20 — obras/serv. engenharia)</option>
+          <option value="Art. 75, III — Emergência ou calamidade">Art. 75, III — Emergência ou calamidade</option>
+          <option value="Art. 75, IV — Fornecedor exclusivo">Art. 75, IV — Fornecedor exclusivo</option>
+          <option value="Outro">Outro</option>
+        </select>
+      </div>
+      <div class="info-field">
+        <label>Valor Estimado (R$)</label>
+        <input type="text" id="m-valor" placeholder="0,00" oninput="maskMoney(this)">
+      </div>
+      <div class="info-field">
+        <label>Unidade Solicitante</label>
+        <input type="text" id="m-unidade" placeholder="Ex: Secretaria de Saúde">
+      </div>
+      <div class="info-field">
+        <label>Observações iniciais</label>
+        <textarea id="m-obs" placeholder="Contexto, prioridade, prazos…"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="createProcess()">Criar Processo</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Confirm Modal ── -->
+<div class="overlay hidden" id="confirm-overlay">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header" style="gap:12px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span id="confirm-icon" style="font-size:1.2rem">⚠️</span>
+        <h2 id="confirm-title">Confirmar</h2>
+      </div>
+    </div>
+    <div class="modal-body">
+      <p id="confirm-msg" style="font-size:.875rem;line-height:1.6;color:var(--gray-700)"></p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" id="confirm-cancel">Cancelar</button>
+      <button class="btn btn-danger"  id="confirm-ok">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// DB — IndexedDB wrapper
+// ══════════════════════════════════════════════════════════════
+let db;
+const DB_NAME = 'dispensaDB', DB_VER = 1;
+
+function initDB() {
+  return new Promise((res, rej) => {
+    const req = indexedDB.open(DB_NAME, DB_VER);
+    req.onupgradeneeded = e => {
+      const d = e.target.result;
+      if (!d.objectStoreNames.contains('processes')) {
+        d.createObjectStore('processes', { keyPath: 'id' });
+      }
+      if (!d.objectStoreNames.contains('files')) {
+        const fs = d.createObjectStore('files', { keyPath: 'id', autoIncrement: true });
+        fs.createIndex('processId', 'processId');
+        fs.createIndex('stepIdx', ['processId','stepIdx']);
+      }
+    };
+    req.onsuccess = e => { db = e.target.result; res(); };
+    req.onerror   = e => rej(e);
+  });
+}
+
+function dbGet(store, key) {
+  return new Promise((res, rej) => {
+    const tx = db.transaction(store, 'readonly');
+    const req = tx.objectStore(store).get(key);
+    req.onsuccess = () => res(req.result);
+    req.onerror   = e => rej(e);
+  });
+}
+
+function dbGetAll(store) {
+  return new Promise((res, rej) => {
+    const tx = db.transaction(store, 'readonly');
+    const req = tx.objectStore(store).getAll();
+    req.onsuccess = () => res(req.result);
+    req.onerror   = e => rej(e);
+  });
+}
+
+function dbPut(store, data) {
+  return new Promise((res, rej) => {
+    const tx = db.transaction(store, 'readwrite');
+    const req = tx.objectStore(store).put(data);
+    req.onsuccess = () => res(req.result);
+    req.onerror   = e => rej(e);
+  });
+}
+
+function dbDelete(store, key) {
+  return new Promise((res, rej) => {
+    const tx = db.transaction(store, 'readwrite');
+    const req = tx.objectStore(store).delete(key);
+    req.onsuccess = () => res();
+    req.onerror   = e => rej(e);
+  });
+}
+
+function dbGetByIndex(store, indexName, value) {
+  return new Promise((res, rej) => {
+    const tx = db.transaction(store, 'readonly');
+    const idx = tx.objectStore(store).index(indexName);
+    const req = idx.getAll(value);
+    req.onsuccess = () => res(req.result);
+    req.onerror   = e => rej(e);
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+// STEPS DEFINITION — Lei 14.133/2021
+// ══════════════════════════════════════════════════════════════
+const STEPS = [
+  {
+    name: 'Documento de Formalização da Demanda (DFD)',
+    sub: 'Art. 12, §1º — justificativa da necessidade',
+    fields: ['responsavel','data_conclusao','observacoes']
+  },
+  {
+    name: 'Estudo Técnico Preliminar (ETP)',
+    sub: 'Quando aplicável — Art. 18, §2º',
+    fields: ['responsavel','data_conclusao','observacoes']
+  },
+  {
+    name: 'Termo de Referência (TR)',
+    sub: 'Especificação do objeto, critérios e obrigações — Art. 6º, XXIII',
+    fields: ['responsavel','data_conclusao','observacoes']
+  },
+  {
+    name: 'Pesquisa de Preços',
+    sub: 'Mínimo 3 cotações válidas — IN SEGES nº 65/2021',
+    fields: ['responsavel','data_conclusao','num_cotacoes','observacoes']
+  },
+  {
+    name: 'Mapa de Preços / Estimativa de Valor',
+    sub: 'Consolidação das cotações e definição do preço de referência',
+    fields: ['responsavel','data_conclusao','valor_estimado','observacoes']
+  },
+  {
+    name: 'Enquadramento Legal',
+    sub: 'Justificativa da hipótese de dispensa — Art. 75',
+    fields: ['responsavel','data_conclusao','fundamento','observacoes']
+  },
+  {
+    name: 'Autorização da Autoridade Competente',
+    sub: 'Despacho de autorização do ordenador de despesa',
+    fields: ['responsavel','data_conclusao','autoridade','observacoes']
+  },
+  {
+    name: 'Elaboração do Aviso de Dispensa',
+    sub: 'Minuta do aviso com objeto, valor e condições',
+    fields: ['responsavel','data_conclusao','observacoes']
+  },
+  {
+    name: 'Publicação no PNCP',
+    sub: 'Prazo mínimo de 3 dias úteis — Art. 75, §3º',
+    fields: ['responsavel','data_publicacao','data_encerramento','link_pncp','observacoes']
+  },
+  {
+    name: 'Recebimento e Análise de Propostas',
+    sub: 'Avaliação das propostas recebidas no prazo',
+    fields: ['responsavel','data_conclusao','observacoes'],
+    propostas: true
+  },
+  {
+    name: 'Habilitação do Fornecedor',
+    sub: 'Verificação regularidade fiscal, trabalhista e jurídica',
+    fields: ['responsavel','fornecedor','cnpj','observacoes'],
+    certidoes: true
+  },
+  {
+    name: 'Adjudicação',
+    sub: 'Declaração do vencedor pelo agente de contratação',
+    fields: ['responsavel','data_conclusao','valor_adjudicado','observacoes']
+  },
+  {
+    name: 'Homologação',
+    sub: 'Aprovação pela autoridade competente — Art. 71',
+    fields: ['responsavel','data_conclusao','autoridade','observacoes']
+  },
+  {
+    name: 'Nota de Empenho',
+    sub: 'Reserva orçamentária e emissão da NE',
+    fields: ['responsavel','data_conclusao','num_empenho','dotacao','observacoes']
+  },
+  {
+    name: 'Instrumento Contratual',
+    sub: 'Contrato, ARP, PCA ou dispensa de instrumento — Art. 95',
+    fields: ['responsavel','data_conclusao','num_contrato','vigencia','observacoes']
+  },
+  {
+    name: 'Publicação do Contrato no PNCP',
+    sub: 'Obrigatória em até 20 dias úteis — Art. 94',
+    fields: ['responsavel','data_publicacao','link_pncp','observacoes']
+  }
+];
+
+const FIELD_LABELS = {
+  responsavel: 'Responsável',
+  data_conclusao: 'Data de conclusão',
+  observacoes: 'Observações / Notas',
+  num_cotacoes: 'Nº de cotações obtidas',
+  valor_estimado: 'Valor estimado (R$)',
+  fundamento: 'Fundamento legal específico',
+  autoridade: 'Autoridade responsável',
+  data_publicacao: 'Data de publicação',
+  data_encerramento: 'Data de encerramento',
+  link_pncp: 'Link no PNCP',
+  num_propostas: 'Nº de propostas recebidas',
+  fornecedor_vencedor: 'Fornecedor vencedor',
+  fornecedor: 'Fornecedor',
+  cnpj: 'CNPJ',
+  valor_adjudicado: 'Valor adjudicado (R$)',
+  num_empenho: 'Nº da nota de empenho',
+  dotacao: 'Dotação orçamentária',
+  num_contrato: 'Nº do instrumento contratual',
+  vigencia: 'Vigência'
+};
+
+const DATE_FIELDS  = new Set(['data_conclusao','data_publicacao','data_encerramento','vigencia']);
+const MONEY_FIELDS = new Set(['valor_estimado','valor_adjudicado']);
+
+const CERTIDOES = [
+  { id:'cnpj',         nome:'CNPJ — Receita Federal',              url:'https://solucoes.receita.fazenda.gov.br/servicos/cnpjreva/cnpjreva_solicitacao.asp',                                                                     desc:'Comprovante de inscrição e situação cadastral' },
+  { id:'qsa',          nome:'QSA — Quadro Societário',             url:'https://solucoes.receita.fazenda.gov.br/servicos/cnpjreva/cnpjreva_solicitacao.asp',                                                                     desc:'Quadro de sócios e administradores' },
+  { id:'sicaf_crc',    nome:'SICAF — CRC',                         url:'https://www3.comprasnet.gov.br/sicaf-web/public/pages/consultas/consultarCRC.jsf',                                                                       desc:'Certificado de Registro Cadastral' },
+  { id:'sicaf_rest',   nome:'SICAF — Restrição Contratar',         url:'https://www3.comprasnet.gov.br/sicaf-web/public/pages/consultas/consultarRestricaoContratarAdministracaoPublica.jsf',                                   desc:'Restrição de contratar com a Adm. Pública' },
+  { id:'tcu_consult',  nome:'TCU — Consulta Consolidada PJ',       url:'https://certidoes-apf.apps.tcu.gov.br/',                                                                                                                desc:'Consulta consolidada de pessoa jurídica' },
+  { id:'tcu_inidone',  nome:'TCU — Inabilitados e Inidôneos',      url:'https://contas.tcu.gov.br/ords/f?p=1660:3:17397976312703::::P3_TIPO_RELACAO:INIDONEO',                                                                   desc:'Certidão de inabilitados e inidôneos' },
+  { id:'cgu',          nome:'CGU — Certidões',                     url:'https://certidoes.cgu.gov.br/',                                                                                                                         desc:'Certidões da Controladoria-Geral da União' },
+  { id:'cnj',          nome:'CNJ — Improbidade Administrativa',    url:'https://www.cnj.jus.br/improbidade_adm/consultar_requerido.php?validar=form',                                                                           desc:'CNIA — Cadastro Nacional de Condenações' },
+  { id:'tcesp_lic',    nome:'TCESP — Apenados Licitação',          url:'https://www4.tce.sp.gov.br/apenados/publico/#/publicas/certificado',                                                                                     desc:'Certidão de impedimentos de licitação' },
+  { id:'tcesp_rep',    nome:'TCESP — Apenados Repasse',            url:'https://www4.tce.sp.gov.br/apenados/publico/#/publicas/certificado/repasse',                                                                             desc:'Certidão de impedimentos de repasse' },
+  { id:'transp',       nome:'Portal Transparência — Sanções',      url:'https://portaldatransparencia.gov.br/sancoes/consulta?paginacaoSimples=true&tamanhoPagina=&offset=&direcaoOrdenacao=asc&cadastro=1%2C2',                desc:'Consulta de sanções federais' },
+  { id:'fgts',         nome:'FGTS — CRF',                         url:'https://consulta-crf.caixa.gov.br/consultacrf/pages/consultaEmpregador.jsf',                                                                             desc:'Certidão de Regularidade do FGTS' },
+  { id:'cndt',         nome:'CNDT — TST',                          url:'https://cndt-certidao.tst.jus.br/inicio.faces',                                                                                                         desc:'Certidão Negativa de Débitos Trabalhistas' },
+  { id:'rfb',          nome:'Dívida Ativa da União — RFB/PGFN',   url:'https://servicos.receitafederal.gov.br/servico/certidoes/#/home/cnpj#',                                                                                  desc:'Certidão conjunta RFB/PGFN' },
+  { id:'pge_sp',       nome:'Dívida Ativa SP — PGE',              url:'https://www.dividaativa.pge.sp.gov.br/sc/pages/crda/emitirCrda.jsf',                                                                                     desc:'Certidão de regularidade fiscal estadual SP' },
+  { id:'susep_lic',    nome:'SUSEP — Certidão Licenciamento',      url:'https://www2.susep.gov.br/safe/certidoes/app/certidao/emitir',                                                                                           desc:'Certidão de licenciamento e apontamento',  engenharia:true },
+  { id:'susep_apo',    nome:'SUSEP — Apólice Seguro Garantia',    url:'https://www2.susep.gov.br/safe/apolices/app/garantia',                                                                                                    desc:'Apólice de seguro garantia',               engenharia:true },
+];
+
+// ══════════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════════
+let processes = [];
+let currentId = null;
+let currentProcess = null;
+let expandedSteps = new Set();
+
+// ══════════════════════════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════════════════════════
+function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+function fmt(dt) {
+  if (!dt) return '';
+  const d = new Date(dt);
+  if (isNaN(d)) return dt;
+  return d.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+}
+function fmtDate(dt) {
+  if (!dt) return '';
+  const d = new Date(dt + 'T00:00:00');
+  return d.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric' });
+}
+
+function processStatus(p) {
+  const done = p.steps.filter(s => s.status === 'done').length;
+  const blocked = p.steps.some(s => s.status === 'blocked');
+  if (blocked) return 'blocked';
+  if (done === 0) return 'todo';
+  if (done === p.steps.length) return 'done';
+  return 'progress';
+}
+
+function statusLabel(s) {
+  return { todo:'Não iniciado', progress:'Em andamento', done:'Concluído', blocked:'Bloqueado' }[s] || s;
+}
+
+function pct(p) {
+  const done = p.steps.filter(s => s.status === 'done').length;
+  return Math.round(done / p.steps.length * 100);
+}
+
+function toast(msg, type = '') {
+  const el = document.createElement('div');
+  el.className = 'toast-msg ' + type;
+  el.textContent = msg;
+  document.getElementById('toast').appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+function fmtMoney(v) {
+  if (!v) return '';
+  // remove tudo exceto dígitos e vírgula, depois converte vírgula decimal → ponto
+  const s = String(v).replace(/\./g, '').replace(',', '.');
+  const n = parseFloat(s.replace(/[^\d\.]/g, ''));
+  if (isNaN(n)) return v;
+  return n.toLocaleString('pt-BR', { style:'currency', currency:'BRL' });
+}
+
+// Máscara de moeda pt-BR aplicada oninput (ex: 1.234,56)
+function maskMoney(el) {
+  let digits = el.value.replace(/\D/g, '');
+  if (!digits) { el.value = ''; return; }
+  const num = parseInt(digits, 10) / 100;
+  el.value = 'R$ ' + num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+// ══════════════════════════════════════════════════════════════
+// LOAD / SAVE
+// ══════════════════════════════════════════════════════════════
+async function loadProcesses() {
+  processes = await dbGetAll('processes');
+  processes.sort((a,b) => b.createdAt - a.createdAt);
+}
+
+async function saveProcess(p) {
+  await dbPut('processes', p);
+}
+
+// ══════════════════════════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════════════════════════
+function showDash() {
+  document.getElementById('view-dash').classList.add('active');
+  document.getElementById('view-detail').classList.remove('active');
+  currentId = null;
+  currentProcess = null;
+  expandedSteps.clear();
+  loadProcesses().then(renderDash);
+}
+
+function renderDash() {
+  const q     = document.getElementById('search').value.toLowerCase();
+  const fSt   = document.getElementById('filter-status').value;
+
+  const filtered = processes.filter(p => {
+    const st = processStatus(p);
+    if (fSt && st !== fSt) return false;
+    if (q) {
+      const hay = [p.num, p.objeto, p.fornecedor, p.unidade].join(' ').toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  // stats
+  document.getElementById('st-total').textContent = processes.length;
+  document.getElementById('st-prog').textContent  = processes.filter(p => processStatus(p) === 'progress').length;
+  document.getElementById('st-done').textContent  = processes.filter(p => processStatus(p) === 'done').length;
+  document.getElementById('st-pend').textContent  = processes.filter(p => processStatus(p) === 'todo').length;
+
+  const list = document.getElementById('process-list');
+  if (filtered.length === 0) {
+    list.innerHTML = `<div class="empty">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="9"/>
+        <line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="15" x2="12" y2="15"/>
+      </svg>
+      <p>${processes.length === 0 ? 'Nenhum processo cadastrado.<br>Clique em <strong>Novo Processo</strong> para começar.' : 'Nenhum processo encontrado com esses filtros.'}</p>
+    </div>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map(p => {
+    const st  = processStatus(p);
+    const pc  = pct(p);
+    const stl = { todo:'badge-todo', progress:'badge-progress', done:'badge-done', blocked:'badge-blocked' }[st];
+    return `<div class="process-card" onclick="openProcess('${p.id}')">
+      <div>
+        <div class="num">${escHtml(p.num || '—')}</div>
+        <div class="title">${escHtml(p.objeto)}</div>
+        <div class="meta">
+          ${p.valor ? `<span>💰 ${fmtMoney(p.valor)}</span>` : ''}
+          ${p.unidade ? `<span>🏛 ${escHtml(p.unidade)}</span>` : ''}
+          <span>📅 ${fmt(p.createdAt)}</span>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
+        <span class="badge ${stl}">${statusLabel(st)}</span>
+        <div class="progress-wrap">
+          <div class="progress-bar"><div class="progress-fill ${pc===100?'done':''}" style="width:${pc}%"></div></div>
+          <span class="progress-pct">${pc}%</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function escHtml(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ══════════════════════════════════════════════════════════════
+// NEW PROCESS MODAL
+// ══════════════════════════════════════════════════════════════
+function openNewModal() {
+  ['m-num','m-obj','m-valor','m-unidade','m-obs'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('m-legal').value = '';
+  document.getElementById('modal-overlay').classList.remove('hidden');
+  document.getElementById('m-num').focus();
+}
+function closeModal() {
+  document.getElementById('modal-overlay').classList.add('hidden');
+}
+
+async function createProcess() {
+  const num    = document.getElementById('m-num').value.trim();
+  const objeto = document.getElementById('m-obj').value.trim();
+  if (!objeto) { toast('Informe o objeto do processo.','error'); return; }
+
+  const p = {
+    id: genId(),
+    num,
+    objeto,
+    legal: document.getElementById('m-legal').value,
+    valor: document.getElementById('m-valor').value.trim(),
+    unidade: document.getElementById('m-unidade').value.trim(),
+    obs: document.getElementById('m-obs').value.trim(),
+    createdAt: Date.now(),
+    steps: STEPS.map(s => ({ status: 'pending', fields: {}, completedAt: null })),
+    timeline: [{ action: 'Processo criado', at: Date.now(), type: 'create' }]
+  };
+
+  await saveProcess(p);
+  closeModal();
+  playNotify();
+  toast('Processo criado com sucesso!', 'success');
+  await loadProcesses();
+  renderDash();
+}
+
+// ══════════════════════════════════════════════════════════════
+// PROCESS DETAIL
+// ══════════════════════════════════════════════════════════════
+async function openProcess(id) {
+  currentId = id;
+  currentProcess = await dbGet('processes', id);
+  expandedSteps.clear();
+
+  document.getElementById('view-dash').classList.remove('active');
+  document.getElementById('view-detail').classList.add('active');
+
+  renderDetail();
+}
+
+function renderDetail() {
+  const p = currentProcess;
+  const st = processStatus(p);
+  const stl = { todo:'badge-todo', progress:'badge-progress', done:'badge-done', blocked:'badge-blocked' }[st];
+
+  document.getElementById('d-num').textContent   = p.num || '';
+  document.getElementById('d-title').textContent = p.objeto;
+  document.getElementById('d-meta').innerHTML = `
+    <span><span class="badge ${stl}">${statusLabel(st)}</span></span>
+    ${p.legal   ? `<span>⚖️ ${escHtml(p.legal)}</span>` : ''}
+    ${p.valor   ? `<span>💰 ${fmtMoney(p.valor)}</span>` : ''}
+    ${p.unidade ? `<span>🏛 ${escHtml(p.unidade)}</span>` : ''}
+    <span>📅 Criado em ${fmt(p.createdAt)}</span>
+  `;
+
+  const pc = pct(p);
+  document.getElementById('d-progress-fill').style.width = pc + '%';
+  document.getElementById('d-progress-fill').className = 'progress-fill' + (pc===100?' done':'');
+  document.getElementById('d-progress-pct').textContent = pc + '%';
+
+  renderChecklist();
+  renderInfoFields();
+  renderTimeline();
+}
+
+async function renderChecklist() {
+  const p = currentProcess;
+  const container = document.getElementById('checklist');
+
+  let html = '';
+  for (let i = 0; i < STEPS.length; i++) {
+    const step = STEPS[i];
+    const data = p.steps[i];
+    const status = data.status;
+    const expanded = expandedSteps.has(i);
+    const isDone    = status === 'done';
+    const isBlocked = status === 'blocked';
+
+    // file count
+    const files = await dbGetByIndex('files', 'processId', p.id + '_' + i);
+    const certFileMap = step.certidoes ? await getCertFilesMap(p.id, i) : {};
+    const fileCount = files.length;
+
+    html += `<div class="step-card ${isDone?'completed':''} ${isBlocked?'blocked':''} ${expanded?'expanded':''}" id="step-card-${i}">
+      <div class="step-row" onclick="toggleStep(${i})">
+        <div class="step-check ${isDone?'checked':''} ${isBlocked?'blocked':''}" onclick="event.stopPropagation();cycleStatus(${i})" title="Clique para alternar status">
+          ${isDone ? `<svg width="11" height="9" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1.5" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>` : ''}
+          ${isBlocked ? `<svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 2l6 6M8 2l-6 6" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>` : ''}
+        </div>
+        <div class="step-info">
+          <div class="step-name">${i+1}. ${escHtml(step.name)}</div>
+          <div class="step-sub">${escHtml(step.sub)}${fileCount ? ` · 📎 ${fileCount} arquivo${fileCount>1?'s':''}` : ''}</div>
+        </div>
+        ${data.completedAt ? `<div class="step-date">${fmtDate(data.completedAt)}</div>` : ''}
+      </div>
+      <div class="step-body ${expanded?'':'hidden'}" id="step-body-${i}">
+        ${renderStepFields(i, step, data, certFileMap)}
+        ${step.certidoes ? '' : `<div style="margin-top:12px">
+          <label style="display:block;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-500);margin-bottom:4px">Documentos anexos</label>
+          ${renderFileList(files, i)}
+          <div class="upload-zone" onclick="triggerUpload(${i})" id="dz-${i}"
+               ondragover="event.preventDefault();this.classList.add('dragover')"
+               ondragleave="this.classList.remove('dragover')"
+               ondrop="handleDrop(event,${i})">
+            <input type="file" id="fu-${i}" multiple accept=".pdf,.docx,.doc,.xlsx,.xls,.png,.jpg,.jpeg" onchange="handleFiles(${i})">
+            📎 Clique ou arraste arquivos (PDF, DOCX, etc.)
+          </div>
+        </div>`}
+        <div class="step-actions">
+          <button class="btn btn-success btn-sm" onclick="markStep(${i},'done')">✓ Concluída</button>
+          <button class="btn btn-outline btn-sm" onclick="markStep(${i},'pending')">Desfazer</button>
+          <button class="btn btn-danger btn-sm"  onclick="markStep(${i},'blocked')">✗ Bloqueada</button>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  container.innerHTML = html;
+}
+
+function renderStepFields(i, step, data, certFileMap = {}) {
+  let html = step.fields.map(f => {
+    const label = FIELD_LABELS[f] || f;
+    const val   = escHtml(data.fields[f] || '');
+    if (f === 'observacoes') {
+      return `<label>${label}</label>
+        <textarea rows="2" onchange="updateField(${i},'${f}',this.value)">${val}</textarea>`;
+    }
+    if (DATE_FIELDS.has(f)) {
+      return `<label>${label}</label>
+        <input type="date" value="${data.fields[f]||''}" onchange="updateField(${i},'${f}',this.value)">`;
+    }
+    if (MONEY_FIELDS.has(f)) {
+      return `<label>${label}</label>
+        <input type="text" value="${val}" oninput="maskMoney(this)" onchange="updateField(${i},'${f}',this.value)">`;
+    }
+    return `<label>${label}</label>
+      <input type="text" value="${val}" onchange="updateField(${i},'${f}',this.value)">`;
+  }).join('');
+
+  if (step.certidoes) {
+    html += renderCertidoesSection(i, data, certFileMap);
+  }
+  if (step.propostas) {
+    html += renderPropostasSection(i, data);
+  }
+  return html;
+}
+
+function renderCertidoesSection(stepIdx, data, certFileMap = {}) {
+  const saved = data.fields._certidoes ? JSON.parse(data.fields._certidoes) : {};
+  const engenharia = !!saved._engenharia;
+  const aplicaveis = CERTIDOES.filter(c => !c.engenharia || engenharia);
+  const obtidas = aplicaveis.filter(c => (saved[c.id]||{}).status === 'obtida').length;
+  const pct     = aplicaveis.length > 0 ? Math.round(obtidas / aplicaveis.length * 100) : 0;
+
+  const items = CERTIDOES.map(c => {
+    const disabled = c.engenharia && !engenharia;
+    const st   = disabled ? 'na' : ((saved[c.id]||{}).status || 'pendente');
+    const date = (saved[c.id]||{}).date || '';
+    const icon = st === 'obtida' ? '✓' : st === 'na' ? '—' : '';
+    const certFiles = certFileMap[c.id] || [];
+    const fileChips = certFiles.map(f =>
+      `<span class="cert-file-chip" title="${escHtml(f.name)}">
+        <span onclick="downloadFile(${f.id})" style="cursor:pointer">📄 ${escHtml(f.name.length > 20 ? f.name.slice(0,18)+'…' : f.name)}</span>
+        <button onclick="deleteCertFile(${f.id},${stepIdx})" title="Remover">✕</button>
+      </span>`
+    ).join('');
+    const fileArea = `<div class="cert-file-area">
+      ${fileChips}
+      <label class="cert-upload-lbl" onclick="event.stopPropagation()">
+        <input type="file" style="display:none" multiple accept=".pdf,.docx,.doc,.xlsx,.xls,.png,.jpg,.jpeg" onchange="handleCertFiles(${stepIdx},'${c.id}',this)">
+        📎 Anexar
+      </label>
+    </div>`;
+
+    if (disabled) {
+      return `<div class="cert-item na" id="cert-${stepIdx}-${c.id}" style="opacity:.4;pointer-events:none">
+        <button class="cert-status-btn" disabled>—</button>
+        <div class="cert-info">
+          <div class="cert-nome">${escHtml(c.nome)}</div>
+          <div class="cert-desc">${escHtml(c.desc)} — <em>apenas para obras de engenharia</em></div>
+        </div>
+        <div class="cert-actions">
+          <a class="cert-link-btn" href="${c.url}" target="_blank" rel="noopener" style="pointer-events:auto;opacity:.5">↗ Acessar</a>
+        </div>
+      </div>`;
+    }
+    return `<div class="cert-item ${st}" id="cert-${stepIdx}-${c.id}">
+      <button class="cert-status-btn" onclick="cycleCertidao(${stepIdx},'${c.id}')" title="Alternar: Pendente → Obtida → N/A">${icon}</button>
+      <div class="cert-info">
+        <div class="cert-nome">${escHtml(c.nome)}</div>
+        <div class="cert-desc">${escHtml(c.desc)}</div>
+      </div>
+      <div class="cert-actions">
+        ${st === 'obtida' ? `<div class="cert-date"><input type="date" value="${date}" onchange="updateCertidao(${stepIdx},'${c.id}','date',this.value)" title="Data de obtenção"></div>` : ''}
+        <a class="cert-link-btn" href="${c.url}" target="_blank" rel="noopener" onclick="playClick()">↗ Acessar</a>
+      </div>
+      ${fileArea}
+    </div>`;
+  }).join('');
+
+  return `<div style="margin-top:14px">
+    <div class="cert-header">
+      <span>Certidões — ${obtidas} de ${aplicaveis.length} obtidas</span>
+      <div class="cert-progress-bar"><div class="cert-progress-fill" style="width:${pct}%"></div></div>
+      <span>${pct}%</span>
+    </div>
+    <label style="display:flex;align-items:center;gap:8px;font-size:.75rem;margin-bottom:10px;cursor:pointer;padding:6px 10px;background:var(--gray-100);border-radius:var(--radius);border:1px solid var(--gray-200)">
+      <input type="checkbox" ${engenharia ? 'checked' : ''} onchange="toggleEngenharia(${stepIdx},this.checked)" style="width:15px;height:15px;accent-color:var(--brand)">
+      <span>Contratação envolve obras de engenharia (habilita itens SUSEP)</span>
+    </label>
+    ${items}
+    <p style="font-size:.68rem;color:var(--gray-500);margin-top:6px">Clique no círculo para alternar: Pendente → Obtida → N/A</p>
+  </div>`;
+}
+
+function getCertidoes(stepIdx) {
+  const raw = currentProcess.steps[stepIdx].fields._certidoes;
+  return raw ? JSON.parse(raw) : {};
+}
+async function saveCertidoes(stepIdx, obj) {
+  currentProcess.steps[stepIdx].fields._certidoes = JSON.stringify(obj);
+  await saveProcess(currentProcess);
+}
+async function cycleCertidao(stepIdx, id) {
+  const obj = getCertidoes(stepIdx);
+  const cur = (obj[id]||{}).status || 'pendente';
+  const next = cur === 'pendente' ? 'obtida' : cur === 'obtida' ? 'na' : 'pendente';
+  obj[id] = { ...(obj[id]||{}), status: next };
+  if (next !== 'obtida') delete obj[id].date;
+  await saveCertidoes(stepIdx, obj);
+  expandedSteps.add(stepIdx);
+  renderChecklist();
+  playClick();
+}
+async function updateCertidao(stepIdx, id, field, value) {
+  const obj = getCertidoes(stepIdx);
+  obj[id] = { ...(obj[id]||{}), [field]: value };
+  await saveCertidoes(stepIdx, obj);
+}
+async function getCertFilesMap(processId, stepIdx) {
+  const all = await dbGetAll('files');
+  const prefix = processId + '_' + stepIdx + '_cert_';
+  const map = {};
+  for (const f of all) {
+    if (typeof f.processId === 'string' && f.processId.startsWith(prefix)) {
+      const certId = f.processId.slice(prefix.length);
+      if (!map[certId]) map[certId] = [];
+      map[certId].push(f);
+    }
+  }
+  return map;
+}
+function handleCertFiles(stepIdx, certId, input) {
+  processCertFileList(stepIdx, certId, input.files);
+  input.value = '';
+}
+async function processCertFileList(stepIdx, certId, fileList) {
+  const p = currentProcess;
+  for (const file of fileList) {
+    const buf = await file.arrayBuffer();
+    await dbPut('files', {
+      processId: p.id + '_' + stepIdx + '_cert_' + certId,
+      stepIdx,
+      name: file.name, size: file.size, type: file.type,
+      data: buf, addedAt: Date.now()
+    });
+  }
+  toast(`${fileList.length} arquivo(s) anexado(s).`, 'success');
+  expandedSteps.add(stepIdx);
+  renderChecklist();
+}
+async function deleteCertFile(fileId, stepIdx) {
+  if (!await customConfirm('Remover este arquivo?', { title: 'Remover Arquivo', icon: '🗑️', okLabel: 'Remover' })) return;
+  await dbDelete('files', fileId);
+  toast('Arquivo removido.', '');
+  expandedSteps.add(stepIdx);
+  renderChecklist();
+}
+
+async function toggleEngenharia(stepIdx, checked) {
+  const obj = getCertidoes(stepIdx);
+  obj._engenharia = checked;
+  await saveCertidoes(stepIdx, obj);
+  expandedSteps.add(stepIdx);
+  renderChecklist();
+  playClick();
+}
+
+function renderPropostasSection(stepIdx, data) {
+  const lista = data.fields._propostas ? JSON.parse(data.fields._propostas) : [];
+  const sitLabels = { analise:'Em análise', aceita:'Aceita', vencedora:'Vencedora', recusada:'Recusada' };
+  const cards = lista.map((p, pi) => `
+    <div class="proposta-card ${p.situacao === 'vencedora' ? 'vencedora' : p.situacao === 'recusada' ? 'recusada' : ''}">
+      <button class="del-btn" onclick="removeProposta(${stepIdx},${pi})" title="Remover">✕</button>
+      <div class="proposta-grid">
+        <div>
+          <label>Fornecedor</label>
+          <input type="text" value="${escHtml(p.fornecedor||'')}" onchange="updateProposta(${stepIdx},${pi},'fornecedor',this.value)">
+        </div>
+        <div>
+          <label>CNPJ</label>
+          <input type="text" value="${escHtml(p.cnpj||'')}" placeholder="00.000.000/0000-00" onchange="updateProposta(${stepIdx},${pi},'cnpj',this.value)">
+        </div>
+        <div>
+          <label>Valor proposto (R$)</label>
+          <input type="text" value="${escHtml(p.valor||'')}" oninput="maskMoney(this)" onchange="updateProposta(${stepIdx},${pi},'valor',this.value)">
+        </div>
+        <div>
+          <label>Situação</label>
+          <select onchange="updateProposta(${stepIdx},${pi},'situacao',this.value)">
+            ${Object.entries(sitLabels).map(([v,l]) => `<option value="${v}" ${p.situacao===v?'selected':''}>${l}</option>`).join('')}
+          </select>
+        </div>
+        <div class="full">
+          <label>Observações</label>
+          <input type="text" value="${escHtml(p.obs||'')}" onchange="updateProposta(${stepIdx},${pi},'obs',this.value)">
+        </div>
+      </div>
+    </div>`).join('');
+
+  return `<div class="propostas-wrap">
+    <label style="display:flex;align-items:center;justify-content:space-between;margin-top:14px">
+      <span>Propostas recebidas (${lista.length})</span>
+      <button class="btn btn-outline btn-sm" onclick="addProposta(${stepIdx})">+ Adicionar proposta</button>
+    </label>
+    ${cards || '<p style="color:var(--gray-500);font-size:.8rem;margin-top:8px">Nenhuma proposta cadastrada ainda.</p>'}
+  </div>`;
+}
+
+function renderFileList(files, stepIdx) {
+  if (!files.length) return '';
+  return `<div class="file-list">${files.map(f => `
+    <div class="file-item">
+      <span>📄</span>
+      <span class="file-name">${escHtml(f.name)}</span>
+      <span class="file-size">${fmtSize(f.size)}</span>
+      <button class="btn btn-ghost btn-icon btn-sm" onclick="downloadFile(${f.id})" title="Baixar">⬇</button>
+      <button class="btn btn-ghost btn-icon btn-sm" onclick="deleteFile(${f.id},${stepIdx})" title="Remover">✕</button>
+    </div>`).join('')}</div>`;
+}
+
+function fmtSize(b) {
+  if (b < 1024) return b + ' B';
+  if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
+  return (b/1048576).toFixed(1) + ' MB';
+}
+
+function renderInfoFields() {
+  const p = currentProcess;
+  const fields = [
+    { key:'num',     label:'Nº / Identificação', type:'text' },
+    { key:'objeto',  label:'Objeto',              type:'text' },
+    { key:'legal',   label:'Fundamentação',       type:'text' },
+    { key:'valor',   label:'Valor estimado (R$)', type:'money' },
+    { key:'unidade', label:'Unidade solicitante', type:'text' },
+    { key:'obs',     label:'Observações',          type:'textarea' }
+  ];
+  document.getElementById('info-fields').innerHTML = fields.map(f => {
+    const val = escHtml(p[f.key] || '');
+    if (f.type === 'textarea') {
+      return `<div class="info-field"><label>${f.label}</label>
+        <textarea rows="2" onchange="updateProcessField('${f.key}',this.value)">${val}</textarea></div>`;
+    }
+    if (f.type === 'money') {
+      return `<div class="info-field"><label>${f.label}</label>
+        <input type="text" value="${val}" oninput="maskMoney(this)" onchange="updateProcessField('${f.key}',this.value)"></div>`;
+    }
+    return `<div class="info-field"><label>${f.label}</label>
+      <input type="text" value="${val}" onchange="updateProcessField('${f.key}',this.value)"></div>`;
+  }).join('');
+}
+
+function renderTimeline() {
+  const tl = [...(currentProcess.timeline || [])].reverse();
+  const types = { create:'', done:'done', blocked:'blocked', unmark:'' };
+  document.getElementById('timeline').innerHTML = tl.slice(0,30).map(ev => `
+    <div class="tl-item">
+      <div class="tl-dot ${types[ev.type]||''}"></div>
+      <div class="tl-content">
+        <div class="tl-action">${escHtml(ev.action)}</div>
+        <div class="tl-time">${fmt(ev.at)}</div>
+      </div>
+    </div>`).join('') || '<p style="color:var(--gray-500);font-size:.8rem">Sem histórico ainda.</p>';
+}
+
+// ══════════════════════════════════════════════════════════════
+// STEP INTERACTIONS
+// ══════════════════════════════════════════════════════════════
+function toggleStep(i) {
+  if (expandedSteps.has(i)) expandedSteps.delete(i);
+  else expandedSteps.add(i);
+  renderChecklist();
+}
+
+async function cycleStatus(i) {
+  const p = currentProcess;
+  const cur = p.steps[i].status;
+  const next = cur === 'done' ? 'pending' : cur === 'blocked' ? 'pending' : 'done';
+  await setStepStatus(i, next);
+}
+
+async function markStep(i, status) {
+  await setStepStatus(i, status);
+}
+
+async function setStepStatus(i, status) {
+  const p = currentProcess;
+  const prev = p.steps[i].status;
+  p.steps[i].status = status;
+  p.steps[i].completedAt = status === 'done' ? new Date().toISOString().slice(0,10) : null;
+
+  const labels = { done: 'Etapa concluída', blocked: 'Etapa bloqueada', pending: 'Etapa reaberta' };
+  p.timeline.push({
+    action: `${labels[status] || status}: ${STEPS[i].name}`,
+    at: Date.now(),
+    type: status
+  });
+
+  await saveProcess(p);
+  renderDetail();
+  expandedSteps.add(i);
+  renderChecklist();
+}
+
+async function updateField(i, field, value) {
+  const p = currentProcess;
+  p.steps[i].fields[field] = value;
+  await saveProcess(p);
+}
+
+function getPropostas(stepIdx) {
+  const raw = currentProcess.steps[stepIdx].fields._propostas;
+  return raw ? JSON.parse(raw) : [];
+}
+async function savePropostas(stepIdx, lista) {
+  currentProcess.steps[stepIdx].fields._propostas = JSON.stringify(lista);
+  await saveProcess(currentProcess);
+}
+
+async function addProposta(stepIdx) {
+  const lista = getPropostas(stepIdx);
+  lista.push({ fornecedor:'', cnpj:'', valor:'', situacao:'analise', obs:'' });
+  await savePropostas(stepIdx, lista);
+  expandedSteps.add(stepIdx);
+  renderChecklist();
+}
+
+async function removeProposta(stepIdx, pi) {
+  if (!await customConfirm('Remover esta proposta?', { title: 'Remover Proposta', icon: '🗑️', okLabel: 'Remover' })) return;
+  const lista = getPropostas(stepIdx);
+  lista.splice(pi, 1);
+  await savePropostas(stepIdx, lista);
+  expandedSteps.add(stepIdx);
+  renderChecklist();
+}
+
+async function updateProposta(stepIdx, pi, field, value) {
+  const lista = getPropostas(stepIdx);
+  lista[pi][field] = value;
+  await savePropostas(stepIdx, lista);
+  if (field === 'situacao') {
+    expandedSteps.add(stepIdx);
+    renderChecklist();
+  }
+}
+
+async function updateProcessField(key, value) {
+  const p = currentProcess;
+  p[key] = value;
+  if (key === 'objeto') document.getElementById('d-title').textContent = value;
+  await saveProcess(p);
+}
+
+// ══════════════════════════════════════════════════════════════
+// FILES
+// ══════════════════════════════════════════════════════════════
+function triggerUpload(stepIdx) {
+  document.getElementById('fu-' + stepIdx).click();
+}
+
+function handleDrop(e, stepIdx) {
+  e.preventDefault();
+  document.getElementById('dz-' + stepIdx).classList.remove('dragover');
+  processFileList(stepIdx, e.dataTransfer.files);
+}
+
+function handleFiles(stepIdx) {
+  const input = document.getElementById('fu-' + stepIdx);
+  processFileList(stepIdx, input.files);
+  input.value = '';
+}
+
+async function processFileList(stepIdx, fileList) {
+  const p = currentProcess;
+  for (const file of fileList) {
+    const buf = await file.arrayBuffer();
+    await dbPut('files', {
+      processId: p.id + '_' + stepIdx,
+      stepIdx,
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      data: buf,
+      addedAt: Date.now()
+    });
+  }
+  p.timeline.push({ action: `${fileList.length} arquivo(s) anexado(s) à etapa ${stepIdx+1}: ${STEPS[stepIdx].name}`, at: Date.now(), type: '' });
+  await saveProcess(p);
+  toast(`${fileList.length} arquivo(s) anexado(s).`, 'success');
+  expandedSteps.add(stepIdx);
+  renderChecklist();
+  renderTimeline();
+}
+
+async function downloadFile(fileId) {
+  const f = await dbGet('files', fileId);
+  if (!f) return;
+  const blob = new Blob([f.data], { type: f.type || 'application/octet-stream' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = f.name;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+async function deleteFile(fileId, stepIdx) {
+  if (!await customConfirm('Remover este arquivo?', { title: 'Remover Arquivo', icon: '🗑️', okLabel: 'Remover' })) return;
+  await dbDelete('files', fileId);
+  toast('Arquivo removido.', '');
+  expandedSteps.add(stepIdx);
+  renderChecklist();
+}
+
+// ══════════════════════════════════════════════════════════════
+// DELETE PROCESS
+// ══════════════════════════════════════════════════════════════
+async function deleteProcess() {
+  if (!await customConfirm(`Excluir o processo "${currentProcess.objeto}"? Todos os dados e arquivos serão removidos permanentemente.`, { title: 'Excluir Processo', icon: '🚨', okLabel: 'Excluir', okClass: 'btn-danger' })) return;
+  // delete all files
+  for (let i = 0; i < STEPS.length; i++) {
+    const files = await dbGetByIndex('files', 'processId', currentProcess.id + '_' + i);
+    for (const f of files) await dbDelete('files', f.id);
+  }
+  await dbDelete('processes', currentProcess.id);
+  toast('Processo excluído.', '');
+  showDash();
+}
+
+// ══════════════════════════════════════════════════════════════
+// PRINT
+// ══════════════════════════════════════════════════════════════
+function printProcess() {
+  expandedSteps = new Set(STEPS.map((_,i)=>i));
+  renderChecklist().then(() => setTimeout(() => window.print(), 300));
+}
+
+// ══════════════════════════════════════════════════════════════
+// ATA DE SESSÃO — Lei 14.133/2021
+// ══════════════════════════════════════════════════════════════
+function gerarAta() {
+  const p = currentProcess;
+  const f = i => (p.steps[i] || {}).fields || {};
+  const v = (i, k) => f(i)[k] || '';
+  const d = s => s ? new Date(s).toLocaleDateString('pt-BR') : '___/___/______';
+  const blank = txt => txt || '_'.repeat(40);
+
+  // Propostas (step 10, idx 9)
+  const propostas = (() => {
+    try { return JSON.parse(f(9)._propostas || '[]'); } catch { return []; }
+  })();
+  const vencedora = propostas.find(x => x.situacao === 'vencedora') || propostas.find(x => x.situacao === 'aceita') || {};
+
+  // Certidões (step 11, idx 10)
+  const certSaved = (() => {
+    try { return JSON.parse(f(10)._certidoes || '{}'); } catch { return {}; }
+  })();
+  const engenharia = !!certSaved._engenharia;
+  const certAplicaveis = CERTIDOES.filter(c => !c.engenharia || engenharia);
+  const todasObtidas = certAplicaveis.every(c => (certSaved[c.id] || {}).status === 'obtida' || (certSaved[c.id] || {}).status === 'na');
+  const resultadoHab = todasObtidas ? 'HABILITADO' : 'HABILITAÇÃO PENDENTE DE VERIFICAÇÃO';
+
+  const hoje = new Date().toLocaleDateString('pt-BR', { day:'numeric', month:'long', year:'numeric' });
+
+  const propostasHtml = propostas.length ? `
+    <table>
+      <thead><tr><th>Fornecedor</th><th>CNPJ</th><th>Valor Proposto</th><th>Situação</th></tr></thead>
+      <tbody>${propostas.map(pr => `
+        <tr>
+          <td>${pr.fornecedor || '—'}</td>
+          <td>${pr.cnpj || '—'}</td>
+          <td>${pr.valor || '—'}</td>
+          <td>${{analise:'Em análise', aceita:'Aceita', vencedora:'Vencedora — Menor Preço', recusada:'Recusada'}[pr.situacao] || pr.situacao}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>` : '<p><em>Nenhuma proposta registrada.</em></p>';
+
+  const certHtml = certAplicaveis.map(c => {
+    const st = (certSaved[c.id] || {}).status || 'pendente';
+    const dt = (certSaved[c.id] || {}).date ? ` — obtida em ${d(certSaved[c.id].date)}` : '';
+    const label = { obtida: '✔ Obtida', na: '— N/A', pendente: '○ Pendente' }[st] || st;
+    return `<tr><td>${c.nome}</td><td>${c.desc}</td><td>${label}${dt}</td></tr>`;
+  }).join('');
+
+  const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Ata de Sessão — ${p.num || 'DL'}</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; color: #000; background: #fff; padding: 20mm 25mm; }
+  @media print { body { padding: 15mm 20mm; } .no-print { display: none !important; } }
+  h1 { font-size: 14pt; text-align: center; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4pt; }
+  h2 { font-size: 12pt; text-align: center; margin-bottom: 16pt; font-weight: normal; }
+  .subtitulo { font-size: 11pt; text-align: center; margin-bottom: 24pt; color: #333; }
+  hr { border: none; border-top: 1.5px solid #000; margin: 16pt 0; }
+  .secao { margin-bottom: 18pt; }
+  .secao-titulo { font-size: 11pt; font-weight: bold; text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid #000; padding-bottom: 3pt; margin-bottom: 10pt; }
+  p { line-height: 1.6; text-align: justify; margin-bottom: 8pt; }
+  .dado { margin-bottom: 6pt; }
+  .dado strong { display: inline-block; min-width: 220px; }
+  table { width: 100%; border-collapse: collapse; margin: 8pt 0; font-size: 10.5pt; }
+  th { background: #eee; border: 1px solid #999; padding: 5pt 6pt; text-align: left; font-weight: bold; }
+  td { border: 1px solid #999; padding: 4pt 6pt; vertical-align: top; }
+  .cert-obtida td:last-child { color: #0a5c0a; }
+  .cert-pendente td:last-child { color: #b00; }
+  .assinaturas { margin-top: 40pt; display: flex; gap: 40pt; justify-content: center; flex-wrap: wrap; }
+  .assinatura { text-align: center; min-width: 200px; }
+  .assinatura .linha { border-top: 1px solid #000; padding-top: 4pt; margin-top: 40pt; font-size: 10pt; }
+  .resultado-hab { font-weight: bold; font-size: 12pt; text-align: center; padding: 8pt; border: 1.5px solid #000; margin: 10pt 0; }
+  .habilitado { color: #0a5c0a; border-color: #0a5c0a; }
+  .pendente { color: #b00; border-color: #b00; }
+  .btn-print { display: block; margin: 0 auto 20pt; padding: 8pt 24pt; background: #2C001E; color: #fff; border: none; border-radius: 4px; font-size: 11pt; cursor: pointer; letter-spacing: .5px; }
+  .btn-print:hover { background: #5E2750; }
+</style>
+</head>
+<body>
+<button class="btn-print no-print" onclick="window.print()">🖨 Imprimir / Salvar PDF</button>
+
+<h1>Prefeitura Municipal de Orindiúva</h1>
+<h2>Ata de Sessão Pública de Dispensa de Licitação</h2>
+<p class="subtitulo">Processo nº ${blank(p.num)} &nbsp;|&nbsp; Lei nº 14.133/2021, Art. 75${p.legal ? ' — ' + p.legal : ''}</p>
+<hr>
+
+<div class="secao">
+  <div class="secao-titulo">I — Identificação do Processo</div>
+  <div class="dado"><strong>Processo nº:</strong> ${blank(p.num)}</div>
+  <div class="dado"><strong>Objeto:</strong> ${blank(p.objeto)}</div>
+  <div class="dado"><strong>Fundamentação Legal:</strong> ${blank(p.legal)}</div>
+  <div class="dado"><strong>Valor Estimado:</strong> ${p.valor ? fmtMoney(p.valor) : '_'.repeat(20)}</div>
+  <div class="dado"><strong>Unidade Solicitante:</strong> ${blank(p.unidade)}</div>
+  <div class="dado"><strong>Data da Ata:</strong> ${hoje}</div>
+</div>
+
+<div class="secao">
+  <div class="secao-titulo">II — Abertura da Sessão</div>
+  <p>Aos ${hoje}, o(a) Agente de Contratação ${blank(v(6,'responsavel'))}, designado(a) para conduzir o procedimento de Dispensa de Licitação nº ${blank(p.num)}, declara aberta a sessão pública, dando continuidade à análise do processo administrativo referente à contratação de <strong>${blank(p.objeto)}</strong>, com fundamento no art. 75 da Lei nº 14.133, de 1º de abril de 2021${p.legal ? ' — ' + p.legal : ''}.</p>
+</div>
+
+<div class="secao">
+  <div class="secao-titulo">III — Instrumento Convocatório e Instrução do Processo</div>
+  <div class="dado"><strong>Documento de Formalização da Demanda (DFD):</strong> concluído em ${d(v(0,'data_conclusao'))} — ${blank(v(0,'responsavel'))}</div>
+  <div class="dado"><strong>Estudo Técnico Preliminar (ETP):</strong> ${p.steps[1].status === 'done' ? `concluído em ${d(v(1,'data_conclusao'))}` : 'dispensado / não aplicável'}</div>
+  <div class="dado"><strong>Termo de Referência (TR):</strong> concluído em ${d(v(2,'data_conclusao'))} — ${blank(v(2,'responsavel'))}</div>
+  <div class="dado"><strong>Pesquisa de Preços:</strong> ${blank(v(3,'num_cotacoes'))} cotações obtidas — concluída em ${d(v(3,'data_conclusao'))}</div>
+  <div class="dado"><strong>Valor de Referência (Mapa de Preços):</strong> ${v(4,'valor_estimado') ? fmtMoney(v(4,'valor_estimado')) : '_'.repeat(20)} — concluído em ${d(v(4,'data_conclusao'))}</div>
+  <div class="dado"><strong>Enquadramento Legal:</strong> ${blank(v(5,'fundamento'))} — concluído em ${d(v(5,'data_conclusao'))}</div>
+  <div class="dado"><strong>Autorização da Autoridade Competente:</strong> ${blank(v(6,'autoridade'))} em ${d(v(6,'data_conclusao'))}</div>
+  <div class="dado"><strong>Aviso de Dispensa elaborado em:</strong> ${d(v(7,'data_conclusao'))}</div>
+  <div class="dado"><strong>Publicação no PNCP:</strong> de ${d(v(8,'data_publicacao'))} a ${d(v(8,'data_encerramento'))}${v(8,'link_pncp') ? ' — ' + v(8,'link_pncp') : ''}</div>
+</div>
+
+<div class="secao">
+  <div class="secao-titulo">IV — Propostas Recebidas</div>
+  <p>Encerrado o prazo de recebimento, foram analisadas as seguintes propostas:</p>
+  ${propostasHtml}
+  ${v(9,'observacoes') ? `<p><strong>Observações:</strong> ${v(9,'observacoes')}</p>` : ''}
+</div>
+
+<div class="secao">
+  <div class="secao-titulo">V — Habilitação do Fornecedor</div>
+  <p>O(A) Agente de Contratação procedeu à verificação da regularidade fiscal, trabalhista e jurídica do fornecedor com menor preço:</p>
+  <div class="dado"><strong>Fornecedor:</strong> ${blank(v(10,'fornecedor'))}</div>
+  <div class="dado"><strong>CNPJ:</strong> ${blank(v(10,'cnpj'))}</div>
+  <br>
+  <table>
+    <thead><tr><th>Certidão</th><th>Descrição</th><th>Situação</th></tr></thead>
+    <tbody>${certHtml}</tbody>
+  </table>
+  ${v(10,'observacoes') ? `<p style="margin-top:8pt"><strong>Observações:</strong> ${v(10,'observacoes')}</p>` : ''}
+  <div class="resultado-hab ${todasObtidas ? 'habilitado' : 'pendente'}">${resultadoHab}</div>
+</div>
+
+<div class="secao">
+  <div class="secao-titulo">VI — Adjudicação</div>
+  <p>Com base na análise das propostas e na verificação da habilitação, o(a) Agente de Contratação adjudica o objeto ao seguinte fornecedor:</p>
+  <div class="dado"><strong>Fornecedor:</strong> ${blank(v(10,'fornecedor') || vencedora.fornecedor)}</div>
+  <div class="dado"><strong>CNPJ:</strong> ${blank(v(10,'cnpj') || vencedora.cnpj)}</div>
+  <div class="dado"><strong>Valor Adjudicado:</strong> ${v(11,'valor_adjudicado') ? fmtMoney(v(11,'valor_adjudicado')) : '_'.repeat(20)}</div>
+  <div class="dado"><strong>Data:</strong> ${d(v(11,'data_conclusao'))}</div>
+  ${v(11,'observacoes') ? `<p><strong>Observações:</strong> ${v(11,'observacoes')}</p>` : ''}
+</div>
+
+<div class="secao">
+  <div class="secao-titulo">VII — Homologação</div>
+  <p>A autoridade competente homologa o procedimento de Dispensa de Licitação nº ${blank(p.num)}, declarando válidos todos os atos praticados.</p>
+  <div class="dado"><strong>Autoridade:</strong> ${blank(v(12,'autoridade'))}</div>
+  <div class="dado"><strong>Data:</strong> ${d(v(12,'data_conclusao'))}</div>
+  ${v(12,'observacoes') ? `<p><strong>Observações:</strong> ${v(12,'observacoes')}</p>` : ''}
+</div>
+
+<div class="secao">
+  <div class="secao-titulo">VIII — Encerramento</div>
+  <p>Nada mais havendo a tratar, o(a) Agente de Contratação declara encerrada a presente sessão, determinando a lavratura da presente ata, que vai assinada pelos presentes.</p>
+  <p>Orindiúva/SP, ${hoje}.</p>
+</div>
+
+<div class="assinaturas">
+  <div class="assinatura">
+    <div class="linha">${blank(v(6,'responsavel'))}<br>Agente de Contratação</div>
+  </div>
+  <div class="assinatura">
+    <div class="linha">${blank(v(12,'autoridade') || v(6,'autoridade'))}<br>Autoridade Competente</div>
+  </div>
+  <div class="assinatura">
+    <div class="linha">${blank(v(10,'fornecedor'))}<br>Representante do Fornecedor</div>
+  </div>
+</div>
+
+</body>
+</html>`;
+
+  const win = window.open('', '_blank', 'width=900,height=700');
+  win.document.write(html);
+  win.document.close();
+}
+
+// ══════════════════════════════════════════════════════════════
+// KEYBOARD
+// ══════════════════════════════════════════════════════════════
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    if (!document.getElementById('modal-overlay').classList.contains('hidden')) closeModal();
+  }
+});
+document.getElementById('modal-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal-overlay')) closeModal();
+});
+
+// ══════════════════════════════════════════════════════════════
+// SOUNDS — Web Audio API
+// ══════════════════════════════════════════════════════════════
+const _ac = () => new (window.AudioContext || window.webkitAudioContext)();
+
+function playClick() {
+  try {
+    const ac = _ac();
+    const o = ac.createOscillator();
+    const g = ac.createGain();
+    o.connect(g); g.connect(ac.destination);
+    o.type = 'sine'; o.frequency.setValueAtTime(880, ac.currentTime);
+    o.frequency.exponentialRampToValueAtTime(660, ac.currentTime + .06);
+    g.gain.setValueAtTime(.18, ac.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001, ac.currentTime + .08);
+    o.start(); o.stop(ac.currentTime + .08);
+  } catch(e) {}
+}
+
+function playSuccess() {
+  try {
+    const ac = _ac();
+    [[523,0],[659,.1],[784,.2],[1047,.32]].forEach(([f,t]) => {
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.connect(g); g.connect(ac.destination);
+      o.type = 'sine'; o.frequency.value = f;
+      g.gain.setValueAtTime(.0001, ac.currentTime + t);
+      g.gain.exponentialRampToValueAtTime(.22, ac.currentTime + t + .02);
+      g.gain.exponentialRampToValueAtTime(.0001, ac.currentTime + t + .18);
+      o.start(ac.currentTime + t); o.stop(ac.currentTime + t + .2);
+    });
+  } catch(e) {}
+}
+
+function playError() {
+  try {
+    const ac = _ac();
+    [[440,0],[330,.1],[220,.22]].forEach(([f,t]) => {
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.connect(g); g.connect(ac.destination);
+      o.type = 'sawtooth'; o.frequency.value = f;
+      g.gain.setValueAtTime(.0001, ac.currentTime + t);
+      g.gain.exponentialRampToValueAtTime(.12, ac.currentTime + t + .02);
+      g.gain.exponentialRampToValueAtTime(.0001, ac.currentTime + t + .15);
+      o.start(ac.currentTime + t); o.stop(ac.currentTime + t + .18);
+    });
+  } catch(e) {}
+}
+
+function playNotify() {
+  try {
+    const ac = _ac();
+    [[784,0,.15],[1047,.18,.15]].forEach(([f,t,dur]) => {
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.connect(g); g.connect(ac.destination);
+      o.type = 'sine'; o.frequency.value = f;
+      g.gain.setValueAtTime(.0001, ac.currentTime + t);
+      g.gain.exponentialRampToValueAtTime(.2, ac.currentTime + t + .03);
+      g.gain.exponentialRampToValueAtTime(.0001, ac.currentTime + t + dur);
+      o.start(ac.currentTime + t); o.stop(ac.currentTime + t + dur + .05);
+    });
+  } catch(e) {}
+}
+
+// ══════════════════════════════════════════════════════════════
+// CONFIRM MODAL — substitui confirm() nativo
+// ══════════════════════════════════════════════════════════════
+function customConfirm(msg, { title = 'Confirmar', icon = '⚠️', okLabel = 'Confirmar', okClass = 'btn-danger' } = {}) {
+  return new Promise(res => {
+    document.getElementById('confirm-msg').textContent   = msg;
+    document.getElementById('confirm-title').textContent = title;
+    document.getElementById('confirm-icon').textContent  = icon;
+    const okBtn     = document.getElementById('confirm-ok');
+    const cancelBtn = document.getElementById('confirm-cancel');
+    okBtn.textContent  = okLabel;
+    okBtn.className    = 'btn ' + okClass;
+    document.getElementById('confirm-overlay').classList.remove('hidden');
+
+    const finish = val => {
+      document.getElementById('confirm-overlay').classList.add('hidden');
+      okBtn.removeEventListener('click', onOk);
+      cancelBtn.removeEventListener('click', onCancel);
+      res(val);
+    };
+    const onOk     = () => { playClick(); finish(true); };
+    const onCancel = () => { playClick(); finish(false); };
+    okBtn.addEventListener('click', onOk);
+    cancelBtn.addEventListener('click', onCancel);
+  });
+}
+
+document.getElementById('confirm-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('confirm-overlay')) {
+    document.getElementById('confirm-overlay').classList.add('hidden');
+  }
+});
+
+// ══════════════════════════════════════════════════════════════
+// THEME — claro / escuro
+// ══════════════════════════════════════════════════════════════
+function applyTheme(dark) {
+  document.body.classList.toggle('dark', dark);
+  const btn = document.getElementById('theme-btn');
+  const lbl = document.getElementById('theme-lbl');
+  if (btn) {
+    btn.querySelector('.icon').textContent = dark ? '☀️' : '🌙';
+    lbl.textContent = dark ? 'Claro' : 'Escuro';
+  }
+}
+
+function toggleTheme() {
+  const isDark = !document.body.classList.contains('dark');
+  localStorage.setItem('sgcd-theme', isDark ? 'dark' : 'light');
+  applyTheme(isDark);
+  playClick();
+}
+
+// Aplica tema salvo ou prefere escuro do sistema
+(function initTheme() {
+  const saved = localStorage.getItem('sgcd-theme');
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  applyTheme(saved ? saved === 'dark' : prefersDark);
+})();
+
+// ── Wire sounds to all buttons globally ──────────────────────
+document.addEventListener('click', e => {
+  const btn = e.target.closest('button, .process-card, .step-row');
+  if (!btn) return;
+  if (btn.classList.contains('btn-success')) { playSuccess(); return; }
+  if (btn.classList.contains('btn-danger'))  { playError();   return; }
+  if (btn.classList.contains('process-card')) { playClick();  return; }
+  playClick();
+}, true);
+
+// ══════════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════════
+document.getElementById('hdr-date').textContent = new Date().toLocaleDateString('pt-BR', { weekday:'long', day:'2-digit', month:'long', year:'numeric' });
+
+initDB().then(() => loadProcesses()).then(() => renderDash());
+</script>
+</body>
+</html>
