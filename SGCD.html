@@ -477,6 +477,40 @@
   .theme-toggle:hover { background: rgba(255,255,255,.16); border-color: var(--brand); }
   .theme-toggle .icon { font-size: .9rem; }
 
+  .settings-btn {
+    background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15);
+    color: #fff; border-radius: 20px; padding: 4px 12px;
+    font-size: .72rem; font-weight: 500; cursor: pointer;
+    display: flex; align-items: center; gap: 6px; transition: all .2s;
+    font-family: inherit; letter-spacing: .5px;
+  }
+  .settings-btn:hover { background: rgba(255,255,255,.16); border-color: var(--brand); }
+  .user-name-badge { max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* ── Fracionamento ──────────────────────────────────── */
+  .frac-badge { font-size: .65rem; font-weight: 700; padding: 2px 7px; border-radius: 3px; white-space: nowrap; letter-spacing: .3px; }
+  .frac-badge.atencao { background: #fff3cd; color: #7a5800; border: 1px solid #f99b11; }
+  .frac-badge.alerta  { background: #fde8eb; color: #c7162b; border: 1px solid #c7162b; }
+
+  .frac-panel { font-size: .8rem; }
+  .frac-nivel-bar-wrap { margin: 8px 0 12px; }
+  .frac-nivel-label { display: flex; justify-content: space-between; font-size: .72rem; margin-bottom: 4px; }
+  .frac-nivel-bar { height: 8px; background: var(--gray-200); border-radius: 4px; overflow: hidden; }
+  .frac-nivel-fill { height: 100%; border-radius: 4px; transition: width .4s; }
+  .frac-nivel-fill.ok      { background: var(--success); }
+  .frac-nivel-fill.atencao { background: var(--warning); }
+  .frac-nivel-fill.alerta  { background: var(--danger); }
+
+  .frac-group-item { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;
+    padding: 6px 8px; border-radius: var(--radius); background: var(--gray-50); border: 1px solid var(--gray-200);
+    margin-bottom: 4px; cursor: pointer; }
+  .frac-group-item:hover { border-color: var(--brand); }
+  .frac-group-item .fgi-num { font-size: .68rem; color: var(--brand); font-weight: 600; }
+  .frac-group-item .fgi-obj { font-size: .75rem; font-weight: 500; }
+  .frac-group-item .fgi-val { font-size: .72rem; color: var(--gray-500); white-space: nowrap; }
+  .frac-total { display: flex; justify-content: space-between; padding: 6px 8px; border-top: 1px solid var(--gray-200);
+    margin-top: 4px; font-weight: 700; font-size: .8rem; }
+
   /* print */
   @media print {
     header, .btn, .step-actions, .upload-zone, .filters, .dash-top button { display: none !important; }
@@ -500,6 +534,9 @@
     <h1><strong>SGCD</strong> — Sistema de Gestão de Contratação Direta</h1>
   </div>
   <div style="display:flex;align-items:center;gap:14px">
+    <button class="settings-btn" onclick="openSettings()" title="Configurações do usuário">
+      ⚙ <span class="user-name-badge" id="hdr-user-name">Configurações do Usuário</span>
+    </button>
     <button class="theme-toggle" onclick="toggleTheme()" id="theme-btn" title="Alternar tema">
       <span class="icon">🌙</span><span id="theme-lbl">Escuro</span>
     </button>
@@ -577,6 +614,11 @@
           <h4>Informações do Processo</h4>
           <div class="body" id="info-fields"></div>
         </div>
+        <!-- Fracionamento -->
+        <div class="sidebar-card" id="frac-card" style="display:none">
+          <h4 id="frac-card-title">⚠ Análise de Fracionamento</h4>
+          <div class="body" id="frac-panel"></div>
+        </div>
         <!-- Timeline -->
         <div class="sidebar-card">
           <h4>Histórico</h4>
@@ -609,8 +651,8 @@
         <label>Fundamentação Legal (Art. 75, inciso)</label>
         <select id="m-legal">
           <option value="">Selecionar…</option>
-          <option value="Art. 75, I — Valor (até R$ 57.184,60 — serviços)">Art. 75, I — Valor (até R$ 57.184,60 — serviços)</option>
-          <option value="Art. 75, II — Valor (até R$ 114.369,20 — obras/serv. engenharia)">Art. 75, II — Valor (até R$ 114.369,20 — obras/serv. engenharia)</option>
+          <option value="Art. 75, I — Valor (até R$ 130.984,20 — obras/serv. engenharia)">Art. 75, I — Valor (até R$ 130.984,20 — obras/serv. engenharia)</option>
+          <option value="Art. 75, II — Valor (até R$ 65.492,11 — serviços e compras)">Art. 75, II — Valor (até R$ 65.492,11 — serviços e compras)</option>
           <option value="Art. 75, III — Emergência ou calamidade">Art. 75, III — Emergência ou calamidade</option>
           <option value="Art. 75, IV — Fornecedor exclusivo">Art. 75, IV — Fornecedor exclusivo</option>
           <option value="Outro">Outro</option>
@@ -624,6 +666,27 @@
         <label>Unidade Solicitante</label>
         <input type="text" id="m-unidade" placeholder="Ex: Secretaria de Saúde">
       </div>
+      <div style="border-top:1px solid var(--gray-200);margin:12px 0 8px;padding-top:12px">
+        <p style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-500);margin-bottom:8px">Classificação do objeto (para controle de fracionamento)</p>
+      </div>
+      <div class="info-field">
+        <label>Natureza</label>
+        <select id="m-natureza" onchange="onModalNaturezaChange()">
+          <option value="">Selecionar…</option>
+        </select>
+      </div>
+      <div class="info-field">
+        <label>Categoria</label>
+        <select id="m-categoria" disabled onchange="onModalCategoriaChange()">
+          <option value="">Selecione a natureza primeiro</option>
+        </select>
+      </div>
+      <div class="info-field">
+        <label>Subcategoria</label>
+        <select id="m-subcategoria" disabled>
+          <option value="">Selecione a categoria primeiro</option>
+        </select>
+      </div>
       <div class="info-field">
         <label>Observações iniciais</label>
         <textarea id="m-obs" placeholder="Contexto, prioridade, prazos…"></textarea>
@@ -632,6 +695,66 @@
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
       <button class="btn btn-primary" onclick="createProcess()">Criar Processo</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Settings Modal ── -->
+<div class="overlay hidden" id="settings-overlay" onclick="if(event.target===this)closeSettings()">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-header">
+      <h2>⚙ Configurações do Usuário</h2>
+      <button class="btn btn-ghost btn-icon" onclick="closeSettings()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:.75rem;color:var(--gray-500);margin-bottom:16px">Estas informações serão usadas para pré-preencher os campos de responsável e para subsidiar a geração da Ata.</p>
+
+      <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
+        <legend style="font-size:.72rem;font-weight:700;color:var(--brand);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Agente de Contratação</legend>
+        <div class="form-group"><label>Nome Completo *</label>
+          <input type="text" id="s-nome" placeholder="Ex: João da Silva"></div>
+        <div class="form-group"><label>Cargo / Função</label>
+          <input type="text" id="s-cargo" placeholder="Ex: Agente de Contratação"></div>
+        <div class="form-group"><label>Matrícula</label>
+          <input type="text" id="s-matricula" placeholder="Ex: 12345"></div>
+      </fieldset>
+
+      <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
+        <legend style="font-size:.72rem;font-weight:700;color:var(--aubergine-mid);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Órgão</legend>
+        <div class="form-group"><label>Nome do Órgão</label>
+          <input type="text" id="s-orgao" placeholder="Ex: Prefeitura Municipal de Orindiúva"></div>
+        <div class="form-group"><label>Município / UF</label>
+          <input type="text" id="s-municipio" placeholder="Ex: Orindiúva/SP"></div>
+      </fieldset>
+
+      <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
+        <legend style="font-size:.72rem;font-weight:700;color:var(--aubergine-mid);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Autoridade Competente</legend>
+        <div class="form-group"><label>Nome Completo</label>
+          <input type="text" id="s-aut-nome" placeholder="Ex: Maria Souza"></div>
+        <div class="form-group"><label>Cargo</label>
+          <input type="text" id="s-aut-cargo" placeholder="Ex: Prefeita Municipal"></div>
+      </fieldset>
+
+      <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px">
+        <legend style="font-size:.72rem;font-weight:700;color:var(--aubergine-mid);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Controle de Fracionamento</legend>
+        <div class="form-group">
+          <label>Janela temporal de análise</label>
+          <select id="s-frac-janela">
+            <option value="exercicio">Exercício financeiro — 1º jan a 31 dez (recomendado)</option>
+            <option value="12">Período móvel — últimos 12 meses</option>
+            <option value="18">Período móvel — últimos 18 meses</option>
+            <option value="24">Período móvel — últimos 24 meses</option>
+          </select>
+          <p style="font-size:.68rem;color:var(--gray-500);margin-top:4px;line-height:1.4">
+            <strong>Exercício financeiro</strong> é a interpretação dominante nos TCEs e na AGU (Lei 4.320/64, Art. 34).
+            <strong>Período móvel</strong> é mais rigoroso e evita fracionamento artificial entre dezembro e janeiro.
+          </p>
+        </div>
+      </fieldset>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeSettings()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveSettings()">Salvar</button>
     </div>
   </div>
 </div>
@@ -868,6 +991,251 @@ const CERTIDOES = [
 let processes = [];
 let currentId = null;
 let currentProcess = null;
+let fracResultado = new Map();
+
+// ══════════════════════════════════════════════════════════════
+// FRACIONAMENTO ENGINE
+// ══════════════════════════════════════════════════════════════
+const FRAC_STOPWORDS = new Set(['de','do','da','dos','das','para','com','em','na','no','nas','nos',
+  'e','a','o','as','os','um','uma','ao','aos','por','pelo','pela','pelos','pelas',
+  'que','se','ou','ate','mais','menos','entre','sobre','aquisicao','contratacao',
+  'fornecimento','prestacao','servico','servicos','compra','material']);
+
+const FRAC_LIMITES = { 'I':130984.20, 'II':65492.11, 'III':65492.11, 'IV':65492.11 };
+
+// ══════════════════════════════════════════════════════════════
+// CLASSIFICAÇÃO DO OBJETO (Natureza → Categoria → Subcategoria)
+// ══════════════════════════════════════════════════════════════
+const OBJETO_CLASS = {
+  naturezas: [
+    'Bens — Material de Consumo',
+    'Bens — Material Permanente',
+    'Serviços',
+    'Obras e Serviços de Engenharia'
+  ],
+  categorias: {
+    'Bens — Material de Consumo': [
+      'Alimentação e Gêneros Alimentícios',
+      'Higiene, Limpeza e Conservação',
+      'Material de Escritório e Papelaria',
+      'Material Educacional e Didático',
+      'Material Hospitalar e Laboratorial',
+      'Material Farmacológico e Medicamentos',
+      'Material Esportivo e Recreativo',
+      'Vestuário, Uniformes e EPIs',
+      'Combustíveis e Lubrificantes',
+      'Material Elétrico',
+      'Material Hidráulico e Sanitário',
+      'Material de Construção e Manutenção',
+      'Ferramentas e Utensílios',
+      'Sementes, Fertilizantes e Insumos Agrícolas',
+      'Gás e Combustíveis Especiais',
+      'Material Gráfico e de Comunicação',
+      'Outros Materiais de Consumo'
+    ],
+    'Bens — Material Permanente': [
+      'Mobiliário e Decoração',
+      'Equipamentos de Informática e TI',
+      'Equipamentos de Comunicação e Audiovisual',
+      'Equipamentos Médico-Hospitalares',
+      'Equipamentos Laboratoriais e Científicos',
+      'Equipamentos Esportivos e de Lazer',
+      'Equipamentos Educacionais',
+      'Veículos, Máquinas e Equipamentos Pesados',
+      'Equipamentos de Segurança e Vigilância',
+      'Equipamentos de Climatização',
+      'Eletrodomésticos e Eletroeletrônicos',
+      'Instrumentos Musicais',
+      'Outros Equipamentos Permanentes'
+    ],
+    'Serviços': [
+      'Limpeza, Higienização e Conservação',
+      'Manutenção de Bens Imóveis',
+      'Manutenção de Veículos e Máquinas',
+      'Manutenção de Equipamentos de TI',
+      'Manutenção de Equipamentos em Geral',
+      'Vigilância e Segurança Patrimonial',
+      'Serviços de Tecnologia da Informação',
+      'Serviços Gráficos, Editoriais e de Publicidade',
+      'Serviços de Comunicação e Telefonia',
+      'Serviços de Saúde e Medicina do Trabalho',
+      'Serviços de Capacitação e Treinamento',
+      'Serviços Jurídicos e Advocatícios',
+      'Serviços Contábeis, Financeiros e de Auditoria',
+      'Serviços de Transporte e Logística',
+      'Serviços de Alimentação e Nutrição',
+      'Serviços de Jardinagem, Paisagismo e Limpeza Urbana',
+      'Serviços Culturais, Artísticos e Esportivos',
+      'Serviços Ambientais e de Saneamento',
+      'Locação de Veículos, Máquinas e Equipamentos',
+      'Locação de Imóveis',
+      'Serviços de Eventos e Cerimonial',
+      'Serviços Funerários',
+      'Serviços de Topografia, Georreferenciamento e Engenharia',
+      'Outros Serviços'
+    ],
+    'Obras e Serviços de Engenharia': [
+      'Construção de Edificações',
+      'Reforma e Ampliação de Edificações',
+      'Pavimentação e Obras Viárias',
+      'Obras de Saneamento e Drenagem',
+      'Iluminação Pública',
+      'Obras Hidráulicas e de Abastecimento',
+      'Obras de Contenção, Aterro e Terraplanagem',
+      'Instalações Elétricas e de Telecomunicações',
+      'Instalações Hidrossanitárias',
+      'Outros Serviços de Engenharia'
+    ]
+  },
+  subcategorias: {
+    'Alimentação e Gêneros Alimentícios': ['Gêneros alimentícios em geral','Água mineral e bebidas','Laticínios e derivados','Carnes e pescados','Hortifrutigranjeiros','Produtos de panificação','Suplementos e complementos alimentares'],
+    'Higiene, Limpeza e Conservação': ['Material de limpeza em geral','Desinfetantes e saneantes','Papel higiênico e descartáveis de higiene','Produtos de higiene pessoal','Sacos de lixo e embalagens de descarte','Panos, vassouras e utensílios de limpeza'],
+    'Material de Escritório e Papelaria': ['Papéis, cadernos e cartolinas','Canetas, lápis e instrumentos de escrita','Pastas, arquivadores e organizadores','Envelopes e formulários','Toner, cartuchos e suprimentos de impressão','Itens de fixação (clipes, grampos, fitas)','Outros materiais de papelaria'],
+    'Material Educacional e Didático': ['Livros e publicações','Material escolar (cadernos, mochilas etc.)','Jogos pedagógicos e brinquedos educativos','Material artístico e de artesanato','Material de laboratório escolar','Outros materiais didáticos'],
+    'Material Hospitalar e Laboratorial': ['Materiais descartáveis hospitalares','EPIs hospitalares','Reagentes e insumos laboratoriais','Material para curativos e procedimentos','Artigos médico-cirúrgicos'],
+    'Material Farmacológico e Medicamentos': ['Medicamentos em geral','Vacinas e imunobiológicos','Insumos farmacêuticos','Materiais odontológicos','Produtos fitoterápicos e similares'],
+    'Material Esportivo e Recreativo': ['Equipamentos esportivos','Uniformes e artigos esportivos','Brinquedos e artigos recreativos','Artigos para academia e fitness'],
+    'Vestuário, Uniformes e EPIs': ['Uniformes funcionais e escolares','Equipamentos de proteção individual (EPIs)','Calçados e acessórios profissionais','Roupas de cama, mesa e banho institucional'],
+    'Combustíveis e Lubrificantes': ['Gasolina, etanol e diesel','Lubrificantes e óleos automotivos','Aditivos e fluidos especiais'],
+    'Material Elétrico': ['Fios, cabos e condutores elétricos','Lâmpadas, luminárias e reatores','Disjuntores, tomadas e componentes elétricos','Pilhas, baterias e acumuladores','Materiais de proteção elétrica'],
+    'Material Hidráulico e Sanitário': ['Tubos, conexões e registros','Torneiras, válvulas e acessórios sanitários','Caixas d\'água e reservatórios','Bombas e motores hidráulicos'],
+    'Material de Construção e Manutenção': ['Cimento, areia, brita e argamassa','Tintas, solventes e impermeabilizantes','Madeiras e materiais de marcenaria','Azulejos, pisos e revestimentos','Ferro, aço e estruturas metálicas','Vidros e esquadrias'],
+    'Ferramentas e Utensílios': ['Ferramentas manuais e elétricas','Utensílios de copa e cozinha institucional','Outros utensílios'],
+    'Sementes, Fertilizantes e Insumos Agrícolas': ['Sementes e mudas','Fertilizantes e corretivos','Defensivos agrícolas e fitossanitários','Equipamentos e insumos de irrigação'],
+    'Gás e Combustíveis Especiais': ['Gás de cozinha (GLP)','Gás natural','Lenha e biomassa'],
+    'Material Gráfico e de Comunicação': ['Impressos e formulários','Material de sinalização e comunicação visual','Brindes, placas comemorativas e troféus'],
+    'Outros Materiais de Consumo': ['Outros materiais de consumo não classificados'],
+    'Mobiliário e Decoração': ['Mesas, cadeiras e mobiliário de escritório','Mobiliário escolar','Mobiliário hospitalar e clínico','Armários, estantes e arquivos de aço','Cortinas, tapetes e artigos de decoração'],
+    'Equipamentos de Informática e TI': ['Computadores e notebooks','Servidores e infraestrutura de rede','Periféricos e acessórios de informática','Impressoras, scanners e multifuncionais','Softwares e licenças','Outros equipamentos de TI'],
+    'Equipamentos de Comunicação e Audiovisual': ['Aparelhos de telefonia e PABX','Equipamentos de videoconferência','Equipamentos de som, projeção e TV','Equipamentos de radiocomunicação','Câmeras e equipamentos fotográficos'],
+    'Equipamentos Médico-Hospitalares': ['Equipamentos de diagnóstico','Equipamentos cirúrgicos','Equipamentos de UTI e terapia intensiva','Equipamentos odontológicos','Equipamentos de fisioterapia e reabilitação'],
+    'Equipamentos Laboratoriais e Científicos': ['Equipamentos de análise e medição','Equipamentos de microbiologia','Instrumentos de precisão'],
+    'Equipamentos Esportivos e de Lazer': ['Equipamentos de academia e fitness','Equipamentos para quadras e campos','Equipamentos de lazer e recreação infantil','Piscinas e equipamentos aquáticos'],
+    'Equipamentos Educacionais': ['Quadros brancos, interativos e lousas','Mobiliário e estruturas pedagógicas','Equipamentos de artes e música'],
+    'Veículos, Máquinas e Equipamentos Pesados': ['Automóveis e veículos leves','Ônibus, vans e transporte coletivo','Caminhões e veículos de carga','Máquinas agrícolas e de terraplanagem','Tratores e equipamentos de jardinagem','Ambulâncias e veículos de emergência','Embarcações e equipamentos náuticos'],
+    'Equipamentos de Segurança e Vigilância': ['Câmeras de vigilância (CFTV)','Alarmes e sistemas de monitoramento','Equipamentos de controle de acesso','Equipamentos de combate a incêndio'],
+    'Equipamentos de Climatização': ['Aparelhos de ar-condicionado split','Sistemas de ar-condicionado central','Ventiladores, exaustores e climatizadores','Aquecedores e sistemas de aquecimento'],
+    'Eletrodomésticos e Eletroeletrônicos': ['Eletrodomésticos de cozinha','Televisores e monitores','Geladeiras, freezers e câmaras frias','Lavadoras e secadoras institucionais'],
+    'Instrumentos Musicais': ['Instrumentos de sopro','Instrumentos de percussão','Instrumentos de corda','Equipamentos de som para bandas'],
+    'Outros Equipamentos Permanentes': ['Outros equipamentos permanentes não classificados'],
+    'Limpeza, Higienização e Conservação': ['Limpeza predial (contrato)','Higienização de veículos','Controle de pragas e desinsetização','Limpeza de caixas d\'água e reservatórios','Lavanderia e higienização de roupas','Desinfecção e higienização ambiental'],
+    'Manutenção de Bens Imóveis': ['Manutenção civil e de alvenaria','Manutenção elétrica predial','Manutenção hidráulica predial','Manutenção de telhados e coberturas','Manutenção de portões, portas e esquadrias','Pintura e recuperação de fachadas','Manutenção predial geral'],
+    'Manutenção de Veículos e Máquinas': ['Manutenção preventiva de veículos leves','Manutenção corretiva de veículos leves','Manutenção de ônibus e veículos pesados','Manutenção de máquinas e equipamentos pesados','Serviços de borracharia e pneus','Higienização e lavagem de frotas'],
+    'Manutenção de Equipamentos de TI': ['Manutenção de computadores e periféricos','Manutenção de redes e infraestrutura','Manutenção de impressoras e copiadoras','Suporte técnico e helpdesk'],
+    'Manutenção de Equipamentos em Geral': ['Manutenção de equipamentos médico-hospitalares','Manutenção de ar-condicionado e climatização','Manutenção de elevadores','Manutenção de eletrodomésticos e eletroeletrônicos','Calibração e aferição de instrumentos'],
+    'Vigilância e Segurança Patrimonial': ['Vigilância armada','Vigilância desarmada','Monitoramento eletrônico (CFTV)','Portaria e controle de acesso','Segurança escolar'],
+    'Serviços de Tecnologia da Informação': ['Desenvolvimento e manutenção de sistemas','Hospedagem e infraestrutura cloud','Licenciamento de software','Consultoria e assessoria em TI','Suporte e implantação de sistemas'],
+    'Serviços Gráficos, Editoriais e de Publicidade': ['Impressão de materiais institucionais','Criação e design gráfico','Publicidade e propaganda','Publicações legais (diário oficial, jornais)','Serviços editoriais e de redação'],
+    'Serviços de Comunicação e Telefonia': ['Telefonia fixa e móvel','Internet banda larga e links dedicados','Radiocomunicação','Serviços postais e de malote','TV a cabo e streaming institucional'],
+    'Serviços de Saúde e Medicina do Trabalho': ['Exames médicos periódicos','Vacinação e imunização','Assistência médica e planos de saúde','Serviços odontológicos','Saúde mental e psicológica','Ambulância e serviços de emergência'],
+    'Serviços de Capacitação e Treinamento': ['Cursos e treinamentos presenciais','Cursos e treinamentos online (EAD)','Palestras e seminários','Congressos, feiras e eventos técnicos','Certificações e habilitações profissionais'],
+    'Serviços Jurídicos e Advocatícios': ['Assessoria jurídica geral','Representação em processos judiciais','Elaboração de pareceres e contratos','Serviços notariais e cartorários'],
+    'Serviços Contábeis, Financeiros e de Auditoria': ['Serviços contábeis','Auditoria interna e externa','Avaliação patrimonial e perícia','Serviços atuariais'],
+    'Serviços de Transporte e Logística': ['Transporte escolar','Transporte de pacientes','Frete e logística de materiais','Translado e transfer institucional','Locação de veículos com motorista'],
+    'Serviços de Alimentação e Nutrição': ['Fornecimento de refeições (refeitório)','Fornecimento de marmitas e quentinhas','Merenda escolar','Coffee break e catering para eventos','Nutrição enteral e dietas especiais'],
+    'Serviços de Jardinagem, Paisagismo e Limpeza Urbana': ['Poda, roçagem e capina','Jardinagem e paisagismo','Coleta e destinação de resíduos sólidos','Varrição de vias públicas','Arborização urbana'],
+    'Serviços Culturais, Artísticos e Esportivos': ['Apresentações musicais e artísticas','Eventos esportivos e competições','Serviços de biblioteca e acervo','Programas culturais e recreativos'],
+    'Serviços Ambientais e de Saneamento': ['Coleta de resíduos especiais e perigosos','Saneamento ambiental','Licenciamento e consultoria ambiental','Análise de água e efluentes'],
+    'Locação de Veículos, Máquinas e Equipamentos': ['Locação de veículos leves','Locação de ônibus e transporte coletivo','Locação de máquinas e equipamentos pesados','Locação de equipamentos de eventos','Locação de equipamentos de TI'],
+    'Locação de Imóveis': ['Locação de imóvel para uso administrativo','Locação de imóvel para unidade de saúde','Locação de imóvel para uso educacional','Locação de imóvel para uso assistencial','Locação de galpão ou armazém'],
+    'Serviços de Eventos e Cerimonial': ['Organização e produção de eventos','Decoração e ambientação','Locação de tendas, palcos e estruturas','Sonorização e iluminação para eventos','Serviços de recepção e cerimonial'],
+    'Serviços Funerários': ['Fornecimento de urnas funerárias','Serviços de velório e sepultamento','Cremação','Translado funerário'],
+    'Serviços de Topografia, Georreferenciamento e Engenharia': ['Levantamento topográfico','Georreferenciamento e cadastro imobiliário','Projetos arquitetônicos e de engenharia','Supervisão e fiscalização de obras','Laudos técnicos e perícias de engenharia'],
+    'Outros Serviços': ['Outros serviços não classificados'],
+    'Construção de Edificações': ['Construção de prédio administrativo/prefeitura','Construção de unidade de saúde','Construção de escola ou creche','Construção de equipamento esportivo/quadra','Construção de equipamento cultural','Construção de unidade assistencial'],
+    'Reforma e Ampliação de Edificações': ['Reforma de prédio administrativo','Reforma de unidade de saúde','Reforma de escola ou creche','Reforma de equipamento esportivo','Reforma de equipamento cultural','Ampliação de edificação existente'],
+    'Pavimentação e Obras Viárias': ['Pavimentação asfáltica','Pavimentação em paralelepípedo e calçamento','Recapeamento e fresagem','Construção e reforma de calçadas','Sinalização viária','Construção de pontes e viadutos'],
+    'Obras de Saneamento e Drenagem': ['Implantação de rede de drenagem pluvial','Construção de galerias e bueiros','Obras de contenção de enchentes','Implantação de rede de esgoto','Melhorias sanitárias domiciliares'],
+    'Iluminação Pública': ['Implantação de iluminação pública','Substituição por LED','Manutenção do sistema de iluminação pública'],
+    'Obras Hidráulicas e de Abastecimento': ['Implantação de rede de abastecimento d\'água','Construção de poços artesianos','Reservatórios e caixas d\'água','Obras de captação e tratamento de água'],
+    'Obras de Contenção, Aterro e Terraplanagem': ['Contenção de encostas','Aterro e terraplanagem','Muros de arrimo e contenção','Recuperação de áreas degradadas'],
+    'Instalações Elétricas e de Telecomunicações': ['Instalações elétricas prediais','Instalação de cabos e redes estruturadas','CFTV e sistemas de segurança eletrônica','Instalação de painéis solares'],
+    'Instalações Hidrossanitárias': ['Instalações hidráulicas prediais','Instalações sanitárias e esgoto predial','Sistemas de combate a incêndio'],
+    'Outros Serviços de Engenharia': ['Outros serviços de engenharia não classificados']
+  }
+};
+
+function fracTokenize(str) {
+  return (str || '')
+    .normalize('NFD').replace(/[̀-ͯ]/g,'')
+    .toLowerCase().replace(/[^\w\s]/g,' ').split(/\s+/)
+    .filter(w => w.length > 2 && !FRAC_STOPWORDS.has(w));
+}
+function fracSimilarity(a, b) {
+  const ta = new Set(fracTokenize(a));
+  const tb = new Set(fracTokenize(b));
+  if (!ta.size || !tb.size) return 0;
+  let inter = 0;
+  ta.forEach(t => { if (tb.has(t)) inter++; });
+  return inter / (ta.size + tb.size - inter);
+}
+function fracSimilaridade(p, q) {
+  if (p.subcategoria && p.subcategoria === q.subcategoria)
+    return { score: 1.0, razao: `Mesma subcategoria: ${p.subcategoria}` };
+  if (p.categoria && p.categoria === q.categoria)
+    return { score: 0.7, razao: `Mesma categoria: ${p.categoria}` };
+  const score = fracSimilarity(p.objeto, q.objeto);
+  const pct = Math.round(score * 100);
+  return { score, razao: `Similaridade textual (${pct}%)` };
+}
+function fracNormUnit(u) {
+  return (u||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().trim();
+}
+function fracMesmaUnidade(a, b) {
+  const ua = fracNormUnit(a), ub = fracNormUnit(b);
+  if (!ua || !ub) return false;
+  return ua === ub || ua.includes(ub) || ub.includes(ua);
+}
+function fracInciso(legal) {
+  const m = (legal||'').match(/art\.?\s*75[,\s]+(?:caput[,\s]+)?(?:inciso\s+)?([IVX]+)/i);
+  return m ? m[1].toUpperCase() : null;
+}
+function fracLimite(legal) {
+  return FRAC_LIMITES[fracInciso(legal)] || 65492.11;
+}
+function fracParseValor(v) {
+  const n = parseFloat(String(v||'').replace(/R\$\s*/,'').replace(/\./g,'').replace(',','.'));
+  return isNaN(n) ? 0 : n;
+}
+function fracJanelaAtivos(lista) {
+  const cfg = getUser().frac_janela || 'exercicio';
+  if (cfg === 'exercicio') {
+    const ano = new Date().getFullYear();
+    return lista.filter(p => new Date(p.createdAt).getFullYear() === ano);
+  }
+  const meses = parseInt(cfg, 10) || 12;
+  const corte = Date.now() - meses * 30.44 * 24 * 3600 * 1000;
+  return lista.filter(p => p.createdAt >= corte);
+}
+
+function analisarFracionamento(lista) {
+  const ativos = fracJanelaAtivos(lista);
+  const result = new Map();
+  for (const p of ativos) {
+    const inciso = fracInciso(p.legal);
+    if (!inciso) { result.set(p.id, { nivel:'ok', grupo:[], acumulado:0, limite:0, pct:0 }); continue; }
+    const limite = fracLimite(p.legal);
+    const grupo = [p];
+    for (const q of ativos) {
+      if (q.id === p.id) continue;
+      if (fracInciso(q.legal) !== inciso) continue;
+      const { score: sim, razao } = fracSimilaridade(p, q);
+      const mesmaUnit = fracMesmaUnidade(p.unidade, q.unidade);
+      if (sim > 0.45 || (sim > 0.20 && mesmaUnit)) {
+        const razaoFinal = sim <= 0.45 && mesmaUnit ? razao + ' + mesma unidade' : razao;
+        grupo.push({ ...q, _razao: razaoFinal });
+      }
+    }
+    const acumulado = grupo.reduce((s, x) => s + fracParseValor(x.valor), 0);
+    const pct = limite > 0 ? Math.round(acumulado / limite * 100) : 0;
+    result.set(p.id, {
+      nivel: pct >= 100 ? 'alerta' : pct >= 70 ? 'atencao' : 'ok',
+      grupo: grupo.filter(x => x.id !== p.id),
+      acumulado, limite, pct
+    });
+  }
+  return result;
+}
 let expandedSteps = new Set();
 
 // ══════════════════════════════════════════════════════════════
@@ -936,6 +1304,7 @@ function maskMoney(el) {
 async function loadProcesses() {
   processes = await dbGetAll('processes');
   processes.sort((a,b) => b.createdAt - a.createdAt);
+  fracResultado = analisarFracionamento(processes);
 }
 
 async function saveProcess(p) {
@@ -987,9 +1356,13 @@ function renderDash() {
   }
 
   list.innerHTML = filtered.map(p => {
-    const st  = processStatus(p);
-    const pc  = pct(p);
-    const stl = { todo:'badge-todo', progress:'badge-progress', done:'badge-done', blocked:'badge-blocked' }[st];
+    const st   = processStatus(p);
+    const pc   = pct(p);
+    const stl  = { todo:'badge-todo', progress:'badge-progress', done:'badge-done', blocked:'badge-blocked' }[st];
+    const frac = fracResultado.get(p.id);
+    const fracBadge = frac && frac.nivel !== 'ok'
+      ? `<span class="frac-badge ${frac.nivel}">${frac.nivel === 'alerta' ? '🔴 Alerta Fracionamento' : '🟡 Atenção Fracionamento'} ${frac.pct}%</span>`
+      : '';
     return `<div class="process-card" onclick="openProcess('${p.id}')">
       <div>
         <div class="num">${escHtml(p.num || '—')}</div>
@@ -998,6 +1371,7 @@ function renderDash() {
           ${p.valor ? `<span>💰 ${fmtMoney(p.valor)}</span>` : ''}
           ${p.unidade ? `<span>🏛 ${escHtml(p.unidade)}</span>` : ''}
           <span>📅 ${fmt(p.createdAt)}</span>
+          ${fracBadge}
         </div>
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
@@ -1019,9 +1393,41 @@ function escHtml(s) {
 // ══════════════════════════════════════════════════════════════
 // NEW PROCESS MODAL
 // ══════════════════════════════════════════════════════════════
+function onModalNaturezaChange() {
+  const nat = document.getElementById('m-natureza').value;
+  const catSel = document.getElementById('m-categoria');
+  const subSel = document.getElementById('m-subcategoria');
+  catSel.innerHTML = '<option value="">Selecionar…</option>' +
+    (OBJETO_CLASS.categorias[nat] || []).map(c => `<option value="${c}">${c}</option>`).join('');
+  catSel.disabled = !nat;
+  subSel.innerHTML = '<option value="">Selecione a categoria primeiro</option>';
+  subSel.disabled = true;
+}
+function onModalCategoriaChange() {
+  const cat = document.getElementById('m-categoria').value;
+  const subSel = document.getElementById('m-subcategoria');
+  subSel.innerHTML = '<option value="">Selecionar…</option>' +
+    (OBJETO_CLASS.subcategorias[cat] || []).map(s => `<option value="${s}">${s}</option>`).join('');
+  subSel.disabled = !cat;
+}
+
+function populateModalNatureza() {
+  const sel = document.getElementById('m-natureza');
+  if (sel.options.length <= 1) {
+    OBJETO_CLASS.naturezas.forEach(n => {
+      const o = document.createElement('option');
+      o.value = o.textContent = n;
+      sel.appendChild(o);
+    });
+  }
+}
+
 function openNewModal() {
   ['m-num','m-obj','m-valor','m-unidade','m-obs'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('m-legal').value = '';
+  populateModalNatureza();
+  document.getElementById('m-natureza').value = '';
+  onModalNaturezaChange();
   document.getElementById('modal-overlay').classList.remove('hidden');
   document.getElementById('m-num').focus();
 }
@@ -1041,9 +1447,18 @@ async function createProcess() {
     legal: document.getElementById('m-legal').value,
     valor: document.getElementById('m-valor').value.trim(),
     unidade: document.getElementById('m-unidade').value.trim(),
+    natureza: document.getElementById('m-natureza').value,
+    categoria: document.getElementById('m-categoria').value,
+    subcategoria: document.getElementById('m-subcategoria').value,
     obs: document.getElementById('m-obs').value.trim(),
     createdAt: Date.now(),
-    steps: STEPS.map(s => ({ status: 'pending', fields: {}, completedAt: null })),
+    steps: STEPS.map(s => {
+      const u = getUser();
+      const fields = {};
+      if (u.nome  && s.fields.includes('responsavel')) fields.responsavel = u.nome;
+      if (u.aut_nome && s.fields.includes('autoridade')) fields.autoridade = u.aut_nome;
+      return { status: 'pending', fields, completedAt: null };
+    }),
     timeline: [{ action: 'Processo criado', at: Date.now(), type: 'create' }]
   };
 
@@ -1092,6 +1507,71 @@ function renderDetail() {
   renderChecklist();
   renderInfoFields();
   renderTimeline();
+  renderFracPanel();
+}
+
+function renderFracPanel() {
+  const frac = fracResultado.get(currentProcess.id);
+  const card  = document.getElementById('frac-card');
+  const panel = document.getElementById('frac-panel');
+  const title = document.getElementById('frac-card-title');
+  if (!frac || frac.nivel === 'ok') { card.style.display = 'none'; return; }
+
+  card.style.display = '';
+  const cores = { atencao: '#7a5800', alerta: '#c7162b' };
+  const icons = { atencao: '🟡', alerta: '🔴' };
+  title.style.color = '#fff';
+  title.style.background = frac.nivel === 'alerta' ? '#c7162b' : '#d4920a';
+  const temRelacionados = frac.grupo.length > 0;
+  title.textContent = temRelacionados
+    ? `${icons[frac.nivel]} Possível Fracionamento`
+    : `${icons[frac.nivel]} Valor Próximo ao Limite`;
+
+  const todoGrupo = [currentProcess, ...frac.grupo];
+  const grpHtml = todoGrupo.map(q => {
+    const isAtual = q.id === currentProcess.id;
+    const razaoTag = (!isAtual && q._razao)
+      ? `<span style="font-size:.65rem;color:var(--gray-500);font-style:normal;text-transform:none;display:block;margin-top:1px">${escHtml(q._razao)}</span>`
+      : '';
+    return `<div class="frac-group-item" onclick="${isAtual ? '' : `openProcess('${q.id}')`}" style="${isAtual ? 'cursor:default;background:color-mix(in srgb,var(--brand) 10%,transparent);border-color:var(--brand)' : ''}">
+      <div>
+        <div class="fgi-num">${escHtml(q.num || '—')}${isAtual ? ' <em style="color:var(--brand);font-style:normal;text-transform:none">(este processo)</em>' : ''}</div>
+        <div class="fgi-obj">${escHtml(q.objeto)}</div>
+        ${razaoTag}
+      </div>
+      <div class="fgi-val">${q.valor ? fmtMoney(q.valor) : '—'}</div>
+    </div>`;
+  }).join('');
+
+  const pctFill = Math.min(frac.pct, 100);
+  const limFmt  = frac.limite.toLocaleString('pt-BR', { style:'currency', currency:'BRL' });
+  const acumFmt = frac.acumulado.toLocaleString('pt-BR', { style:'currency', currency:'BRL' });
+  const incStr  = fracInciso(currentProcess.legal) ? 'Art. 75, ' + fracInciso(currentProcess.legal) : 'artigo';
+
+  const descricao = temRelacionados
+    ? `Foram identificados <strong>${frac.grupo.length} processo(s) relacionado(s)</strong> com objeto similar e mesmo inciso. O valor acumulado representa <strong>${frac.pct}%</strong> do limite do ${incStr} (${limFmt}).`
+    : `O valor deste processo já representa <strong>${frac.pct}%</strong> do limite individual do ${incStr} (${limFmt}). Nenhum processo relacionado encontrado, mas o valor está próximo ao teto legal.`;
+
+  panel.innerHTML = `
+    <div class="frac-panel">
+      <p style="font-size:.75rem;color:var(--gray-500);margin-bottom:8px">${descricao}</p>
+      <div class="frac-nivel-bar-wrap">
+        <div class="frac-nivel-label">
+          <span>Acumulado: ${acumFmt}</span>
+          <span>Limite: ${limFmt}</span>
+        </div>
+        <div class="frac-nivel-bar">
+          <div class="frac-nivel-fill ${frac.nivel}" style="width:${pctFill}%"></div>
+        </div>
+      </div>
+      <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-500);margin-bottom:6px">Composição do valor acumulado</div>
+      ${grpHtml}
+      <div class="frac-total">
+        <span>Total acumulado</span>
+        <span style="color:${frac.nivel==='alerta'?'#c7162b':'#7a5800'}">${acumFmt}</span>
+      </div>
+      <p style="font-size:.68rem;color:var(--gray-500);margin-top:8px">⚠ Esta análise é consultiva. Verifique se as contratações são independentes antes de prosseguir.</p>
+    </div>`;
 }
 
 async function renderChecklist() {
@@ -1383,11 +1863,33 @@ function renderInfoFields() {
   const fields = [
     { key:'num',     label:'Nº / Identificação', type:'text' },
     { key:'objeto',  label:'Objeto',              type:'text' },
-    { key:'legal',   label:'Fundamentação',       type:'text' },
+    { key:'legal',   label:'Fundamentação',       type:'select' },
     { key:'valor',   label:'Valor estimado (R$)', type:'money' },
     { key:'unidade', label:'Unidade solicitante', type:'text' },
     { key:'obs',     label:'Observações',          type:'textarea' }
   ];
+
+  // Classification fields (cascading, rendered separately)
+  const natOpts = ['', ...OBJETO_CLASS.naturezas].map(n =>
+    `<option value="${n}" ${p.natureza===n?'selected':''}>${n||'Selecionar…'}</option>`).join('');
+  const catList = OBJETO_CLASS.categorias[p.natureza] || [];
+  const catOpts = ['', ...catList].map(c =>
+    `<option value="${c}" ${p.categoria===c?'selected':''}>${c||'Selecionar…'}</option>`).join('');
+  const subList = OBJETO_CLASS.subcategorias[p.categoria] || [];
+  const subOpts = ['', ...subList].map(s =>
+    `<option value="${s}" ${p.subcategoria===s?'selected':''}>${s||'Selecionar…'}</option>`).join('');
+
+  const classHtml = `
+    <div style="border-top:1px solid var(--gray-200);margin:10px 0 8px;padding-top:8px">
+      <p style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-500);margin-bottom:6px">Classificação do objeto</p>
+    </div>
+    <div class="info-field"><label>Natureza</label>
+      <select onchange="infoNaturezaChange(this.value)">${natOpts}</select></div>
+    <div class="info-field"><label>Categoria</label>
+      <select ${!p.natureza?'disabled':''} onchange="infoCategoriaChange(this.value)">${catOpts}</select></div>
+    <div class="info-field"><label>Subcategoria</label>
+      <select ${!p.categoria?'disabled':''} onchange="updateProcessField('subcategoria',this.value)">${subOpts}</select></div>`;
+
   document.getElementById('info-fields').innerHTML = fields.map(f => {
     const val = escHtml(p[f.key] || '');
     if (f.type === 'textarea') {
@@ -1398,9 +1900,36 @@ function renderInfoFields() {
       return `<div class="info-field"><label>${f.label}</label>
         <input type="text" value="${val}" oninput="maskMoney(this)" onchange="updateProcessField('${f.key}',this.value)"></div>`;
     }
+    if (f.type === 'select') {
+      const opts = [
+        '',
+        'Art. 75, I — Valor (até R$ 130.984,20 — obras/serv. engenharia)',
+        'Art. 75, II — Valor (até R$ 65.492,11 — serviços e compras)',
+        'Art. 75, III — Emergência ou calamidade',
+        'Art. 75, IV — Fornecedor exclusivo',
+        'Outro'
+      ];
+      const options = opts.map(o => `<option value="${o}" ${p[f.key]===o?'selected':''}>${o || 'Selecionar…'}</option>`).join('');
+      return `<div class="info-field"><label>${f.label}</label>
+        <select onchange="updateProcessField('${f.key}',this.value)">${options}</select></div>`;
+    }
     return `<div class="info-field"><label>${f.label}</label>
       <input type="text" value="${val}" onchange="updateProcessField('${f.key}',this.value)"></div>`;
-  }).join('');
+  }).join('') + classHtml;
+}
+
+function infoNaturezaChange(val) {
+  currentProcess.natureza = val;
+  currentProcess.categoria = '';
+  currentProcess.subcategoria = '';
+  saveProcess(currentProcess);
+  renderInfoFields();
+}
+function infoCategoriaChange(val) {
+  currentProcess.categoria = val;
+  currentProcess.subcategoria = '';
+  saveProcess(currentProcess);
+  renderInfoFields();
 }
 
 function renderTimeline() {
@@ -1593,6 +2122,7 @@ function printProcess() {
 // ══════════════════════════════════════════════════════════════
 function gerarAta() {
   const p = currentProcess;
+  const u = getUser();
   const f = i => (p.steps[i] || {}).fields || {};
   const v = (i, k) => f(i)[k] || '';
   const d = s => s ? new Date(s).toLocaleDateString('pt-BR') : '___/___/______';
@@ -1671,7 +2201,7 @@ function gerarAta() {
 <body>
 <button class="btn-print no-print" onclick="window.print()">🖨 Imprimir / Salvar PDF</button>
 
-<h1>Prefeitura Municipal de Orindiúva</h1>
+<h1>${u.orgao || 'Prefeitura Municipal de Orindiúva'}</h1>
 <h2>Ata de Sessão Pública de Dispensa de Licitação</h2>
 <p class="subtitulo">Processo nº ${blank(p.num)} &nbsp;|&nbsp; Lei nº 14.133/2021, Art. 75${p.legal ? ' — ' + p.legal : ''}</p>
 <hr>
@@ -1688,7 +2218,7 @@ function gerarAta() {
 
 <div class="secao">
   <div class="secao-titulo">II — Abertura da Sessão</div>
-  <p>Aos ${hoje}, o(a) Agente de Contratação ${blank(v(6,'responsavel'))}, designado(a) para conduzir o procedimento de Dispensa de Licitação nº ${blank(p.num)}, declara aberta a sessão pública, dando continuidade à análise do processo administrativo referente à contratação de <strong>${blank(p.objeto)}</strong>, com fundamento no art. 75 da Lei nº 14.133, de 1º de abril de 2021${p.legal ? ' — ' + p.legal : ''}.</p>
+  <p>Aos ${hoje}, o(a) ${u.cargo || 'Agente de Contratação'} ${u.nome || blank(v(6,'responsavel'))}${u.matricula ? ', matrícula nº ' + u.matricula + ',' : ''} designado(a) para conduzir o procedimento de Dispensa de Licitação nº ${blank(p.num)}, declara aberta a sessão pública, dando continuidade à análise do processo administrativo referente à contratação de <strong>${blank(p.objeto)}</strong>, com fundamento no art. 75 da Lei nº 14.133, de 1º de abril de 2021${p.legal ? ' — ' + p.legal : ''}.</p>
 </div>
 
 <div class="secao">
@@ -1746,18 +2276,18 @@ function gerarAta() {
 <div class="secao">
   <div class="secao-titulo">VIII — Encerramento</div>
   <p>Nada mais havendo a tratar, o(a) Agente de Contratação declara encerrada a presente sessão, determinando a lavratura da presente ata, que vai assinada pelos presentes.</p>
-  <p>Orindiúva/SP, ${hoje}.</p>
+  <p>${u.municipio || 'Orindiúva/SP'}, ${hoje}.</p>
 </div>
 
 <div class="assinaturas">
   <div class="assinatura">
-    <div class="linha">${blank(v(6,'responsavel'))}<br>Agente de Contratação</div>
+    <div class="linha">${u.nome || v(6,'responsavel') || ''}<br>${u.cargo || 'Agente de Contratação'}${u.matricula ? '<br>Matrícula: ' + u.matricula : ''}</div>
   </div>
   <div class="assinatura">
-    <div class="linha">${blank(v(12,'autoridade') || v(6,'autoridade'))}<br>Autoridade Competente</div>
+    <div class="linha">${u.aut_nome || v(12,'autoridade') || v(6,'autoridade') || ''}<br>${u.aut_cargo || 'Autoridade Competente'}</div>
   </div>
   <div class="assinatura">
-    <div class="linha">${blank(v(10,'fornecedor'))}<br>Representante do Fornecedor</div>
+    <div class="linha">${v(10,'fornecedor') || ''}<br>Representante do Fornecedor</div>
   </div>
 </div>
 
@@ -1894,6 +2424,54 @@ function applyTheme(dark) {
   }
 }
 
+// ══════════════════════════════════════════════════════════════
+// USER SETTINGS
+// ══════════════════════════════════════════════════════════════
+function getUser() {
+  try { return JSON.parse(localStorage.getItem('sgcd-user') || '{}'); } catch { return {}; }
+}
+function updateHeaderUser() {
+  const u = getUser();
+  const el = document.getElementById('hdr-user-name');
+  if (el) el.textContent = u.nome ? u.nome : 'Configurações do Usuário';
+}
+function openSettings() {
+  const u = getUser();
+  document.getElementById('s-nome').value      = u.nome      || '';
+  document.getElementById('s-cargo').value     = u.cargo     || '';
+  document.getElementById('s-matricula').value = u.matricula || '';
+  document.getElementById('s-orgao').value     = u.orgao     || '';
+  document.getElementById('s-municipio').value = u.municipio || '';
+  document.getElementById('s-aut-nome').value  = u.aut_nome  || '';
+  document.getElementById('s-aut-cargo').value = u.aut_cargo || '';
+  document.getElementById('s-frac-janela').value = u.frac_janela || 'exercicio';
+  document.getElementById('settings-overlay').classList.remove('hidden');
+  document.getElementById('s-nome').focus();
+  playClick();
+}
+function closeSettings() {
+  document.getElementById('settings-overlay').classList.add('hidden');
+}
+function saveSettings() {
+  const nome = document.getElementById('s-nome').value.trim();
+  if (!nome) { toast('Informe seu nome completo.', 'error'); return; }
+  const u = {
+    nome,
+    cargo:     document.getElementById('s-cargo').value.trim(),
+    matricula: document.getElementById('s-matricula').value.trim(),
+    orgao:     document.getElementById('s-orgao').value.trim(),
+    municipio: document.getElementById('s-municipio').value.trim(),
+    aut_nome:  document.getElementById('s-aut-nome').value.trim(),
+    aut_cargo:    document.getElementById('s-aut-cargo').value.trim(),
+    frac_janela:  document.getElementById('s-frac-janela').value,
+  };
+  localStorage.setItem('sgcd-user', JSON.stringify(u));
+  updateHeaderUser();
+  closeSettings();
+  playSuccess();
+  toast('Configurações salvas!', 'success');
+}
+
 function toggleTheme() {
   const isDark = !document.body.classList.contains('dark');
   localStorage.setItem('sgcd-theme', isDark ? 'dark' : 'light');
@@ -1907,6 +2485,8 @@ function toggleTheme() {
   const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
   applyTheme(saved ? saved === 'dark' : prefersDark);
 })();
+
+updateHeaderUser();
 
 // ── Wire sounds to all buttons globally ──────────────────────
 document.addEventListener('click', e => {
