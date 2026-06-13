@@ -621,12 +621,42 @@
   <div id="view-fornecedores" class="view">
     <div class="dash-top">
       <h2>Fornecedores</h2>
-      <button class="btn btn-ghost" onclick="showDash()">← Processos</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary" onclick="openFornModal()">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+          Novo Fornecedor
+        </button>
+        <button class="btn btn-ghost" onclick="showDash()">← Processos</button>
+      </div>
     </div>
     <div class="filters">
       <input type="text" id="forn-search" placeholder="Buscar por CNPJ, razão social…" oninput="renderFornecedores()">
     </div>
     <div id="forn-list"></div>
+  </div>
+
+  <!-- ── Fornecedor Modal ── -->
+  <div class="overlay hidden" id="forn-modal-overlay" onclick="if(event.target===this)closeFornModal()">
+    <div class="modal" style="max-width:520px">
+      <div class="modal-header">
+        <h2>Novo Fornecedor</h2>
+        <button class="btn btn-ghost btn-icon" onclick="closeFornModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="forn-lookup" style="margin-top:0">
+          <label style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-500);display:block;margin-bottom:6px">CNPJ do Fornecedor</label>
+          <div class="forn-input-row">
+            <input type="text" id="forn-modal-cnpj" placeholder="00.000.000/0000-00" oninput="maskCnpj(this)" maxlength="18">
+            <button class="btn btn-primary btn-sm" onclick="buscarCnpjModal()">🔍 Consultar</button>
+          </div>
+        </div>
+        <div id="forn-modal-card"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeFornModal()">Cancelar</button>
+        <button class="btn btn-primary" id="forn-modal-save-btn" disabled onclick="saveFornModal()">Salvar Fornecedor</button>
+      </div>
+    </div>
   </div>
 
   <!-- ── Process Detail ── -->
@@ -1435,9 +1465,10 @@ async function buscarCnpj(stepIdx) {
 }
 async function saveFornecedor(forn, processId) {
   const existing = await dbGet('fornecedores', forn.id);
-  const processos = existing
-    ? [...new Set([...(existing.processos || []), processId])]
-    : [processId];
+  const prevProcessos = existing?.processos || [];
+  const processos = processId
+    ? [...new Set([...prevProcessos, processId])]
+    : prevProcessos;
   await dbPut('fornecedores', { ...forn, processos, addedAt: existing?.addedAt || Date.now(), updatedAt: Date.now() });
 }
 function renderFornecedorLookup(stepIdx) {
@@ -1644,6 +1675,90 @@ function populateModalNatureza() {
       sel.appendChild(o);
     });
   }
+}
+
+let _fornModalData = null;
+
+function openFornModal() {
+  _fornModalData = null;
+  document.getElementById('forn-modal-cnpj').value = '';
+  document.getElementById('forn-modal-card').innerHTML = '';
+  document.getElementById('forn-modal-save-btn').disabled = true;
+  document.getElementById('forn-modal-overlay').classList.remove('hidden');
+  document.getElementById('forn-modal-cnpj').focus();
+  playClick();
+}
+function closeFornModal() {
+  document.getElementById('forn-modal-overlay').classList.add('hidden');
+  _fornModalData = null;
+}
+async function buscarCnpjModal() {
+  const input = document.getElementById('forn-modal-cnpj');
+  const digits = cleanCnpj(input.value);
+  if (digits.length !== 14) { toast('CNPJ deve ter 14 dígitos.', 'error'); return; }
+  toast('Consultando BrasilAPI…', '');
+  try {
+    const r = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${digits}`);
+    if (!r.ok) throw new Error('CNPJ não encontrado ou inválido.');
+    const d = await r.json();
+    const end = [d.logradouro, d.numero, d.complemento, d.bairro,
+      d.municipio ? `${d.municipio}/${d.uf}` : '', d.cep ? `CEP ${d.cep}` : ''].filter(Boolean).join(', ');
+    _fornModalData = {
+      id: digits,
+      cnpj: formatCnpj(digits),
+      cnpj_digits: digits,
+      razao_social: d.razao_social || '',
+      nome_fantasia: d.nome_fantasia || '',
+      situacao: d.descricao_situacao_cadastral || '',
+      porte: d.descricao_porte || '',
+      abertura: d.data_inicio_atividade || '',
+      natureza_juridica: d.natureza_juridica || '',
+      cnae: d.cnae_fiscal_descricao || '',
+      endereco: end,
+      qsa: (d.qsa || []).map(s => ({ nome: s.nome_socio, qual: s.qualificacao_socio })),
+      consultadoEm: Date.now()
+    };
+    const f = _fornModalData;
+    const sitCls = cnpjSitClass(f.situacao);
+    const qsaHtml = f.qsa.length
+      ? `<div class="forn-qsa">
+          <div class="forn-qsa-title">Quadro Societário (QSA)</div>
+          ${f.qsa.map(s => `<div class="forn-qsa-item">👤 ${escHtml(s.nome)}${s.qual ? ` — ${escHtml(s.qual)}` : ''}</div>`).join('')}
+        </div>` : '';
+    document.getElementById('forn-modal-card').innerHTML = `
+      <div class="forn-card" style="margin-top:10px">
+        <div class="forn-card-header">
+          <div>
+            <div class="forn-razao">${escHtml(f.razao_social)}</div>
+            ${f.nome_fantasia ? `<div class="forn-fantasia">${escHtml(f.nome_fantasia)}</div>` : ''}
+            <div class="forn-cnpj-row"><span class="forn-cnpj-txt">${escHtml(f.cnpj)}</span></div>
+          </div>
+          <span class="forn-sit ${sitCls}">${escHtml(f.situacao || '—')}</span>
+        </div>
+        <div class="forn-details">
+          ${f.endereco ? `<div class="forn-detail-row">📍 ${escHtml(f.endereco)}</div>` : ''}
+          ${f.abertura ? `<div class="forn-detail-row">📅 Abertura: ${escHtml(f.abertura)}</div>` : ''}
+          ${f.porte ? `<div class="forn-detail-row">🏢 Porte: ${escHtml(f.porte)}</div>` : ''}
+          ${f.cnae ? `<div class="forn-detail-row">🔧 CNAE: ${escHtml(f.cnae)}</div>` : ''}
+        </div>
+        ${qsaHtml}
+      </div>`;
+    document.getElementById('forn-modal-save-btn').disabled = false;
+    toast('Fornecedor encontrado!', 'success');
+    playSuccess();
+  } catch (e) {
+    toast(e.message || 'Erro ao consultar CNPJ.', 'error');
+    playError();
+    document.getElementById('forn-modal-save-btn').disabled = true;
+  }
+}
+async function saveFornModal() {
+  if (!_fornModalData) return;
+  await saveFornecedor(_fornModalData, null);
+  closeFornModal();
+  toast('Fornecedor cadastrado!', 'success');
+  playSuccess();
+  await renderFornecedores();
 }
 
 function openNewModal() {
