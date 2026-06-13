@@ -3199,7 +3199,7 @@ function gerarAutorizacao() {
   .signature-block { margin-top: 40pt; }
   .signature-line { border-top: 1px solid #000; width: 280pt; margin: 0 auto; text-align: center; padding-top: 4pt; font-size: 10pt; }
   .city-date { text-align: right; margin-top: 30pt; margin-bottom: 6pt; font-size: 11pt; }
-  .despacho { background: #f9f9f9; border-left: 3px solid #555; padding: 10pt 14pt; margin: 16pt 0; font-size: 11pt; line-height: 1.8; }
+  .despacho { background: #f9f9f9; border-left: 3px solid #555; padding: 10pt 14pt; margin: 16pt 0; font-size: 11pt; line-height: 1.8; text-align: justify; }
   .footer { margin-top: 40pt; border-top: 1px solid #ccc; padding-top: 6pt; text-align: center; font-size: 8pt; color: #666; }
   @media print { body { padding: 0; } }
 </style>
@@ -3219,7 +3219,7 @@ function gerarAutorizacao() {
 
 <div class="section">
   <div class="despacho">
-    <strong>DESPACHO:</strong> Nos termos ${p.legal ? 'do ' + p.legal : 'do Art. 75 da Lei Federal nº 14.133/2021'}, e considerando a justificativa da necessidade apresentada pela unidade requisitante, <strong>AUTORIZO</strong> a abertura do processo administrativo de Dispensa de Licitação visando à aquisição/contratação descrita abaixo, determinando ao Departamento de Licitações e Contratos que adote as providências necessárias à instrução do processo.
+    <strong>DESPACHO:</strong> Nos termos do ${p.legal ? p.legal.split(' — ')[0] + ' da Lei Federal nº 14.133/2021' : 'Art. 75 da Lei Federal nº 14.133/2021'}, e considerando a justificativa da necessidade apresentada pela unidade requisitante, <strong>AUTORIZO</strong> a abertura do processo administrativo de Dispensa de Licitação visando à aquisição/contratação descrita abaixo, determinando ao Departamento de Licitações e Contratos que adote as providências necessárias à instrução do processo.
   </div>
 </div>
 
