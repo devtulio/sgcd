@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manual Operacional — SGCD v1.6.0</title>
+<style>
+  /* Reset e base */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; color: #000; background: #f5f5f5; }
+
+  /* Página */
+  .page { background: #fff; width: 210mm; min-height: 297mm; margin: 20px auto; padding: 25mm 20mm; box-shadow: 0 2px 8px rgba(0,0,0,.15); }
+
+  /* Capa */
+  .cover { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 240mm; text-align: center; border: 3px double #2C001E; padding: 30mm 20mm; }
+  .cover-logo { font-size: 48pt; margin-bottom: 20pt; }
+  .cover-title { font-size: 24pt; font-weight: bold; color: #2C001E; margin-bottom: 8pt; }
+  .cover-subtitle { font-size: 16pt; color: #5E2750; margin-bottom: 6pt; }
+  .cover-system { font-size: 13pt; color: #333; margin-bottom: 30pt; }
+  .cover-version { font-size: 11pt; color: #666; border: 1px solid #ccc; padding: 4pt 12pt; border-radius: 20px; display: inline-block; margin-bottom: 16pt; }
+  .cover-legal { font-size: 10pt; color: #888; margin-top: 30pt; font-style: italic; border-top: 1px solid #ddd; padding-top: 12pt; }
+  .cover-date { font-size: 10pt; color: #999; margin-top: 8pt; }
+
+  /* Tipografia */
+  h1, h2, h3, h4 { font-family: 'Times New Roman', serif; }
+  h1 { font-size: 20pt; }
+  h2 { font-size: 15pt; border-bottom: 2px solid #2C001E; padding-bottom: 4pt; margin: 20pt 0 10pt; color: #2C001E; }
+  h3 { font-size: 13pt; margin: 14pt 0 6pt; color: #5E2750; }
+  h4 { font-size: 11pt; margin: 10pt 0 4pt; }
+  p { line-height: 1.7; text-align: justify; margin-bottom: 8pt; }
+  ul, ol { margin: 6pt 0 10pt 20pt; line-height: 1.7; }
+  li { margin-bottom: 3pt; }
+  strong { font-weight: bold; }
+  em { font-style: italic; }
+  code { font-family: 'Courier New', monospace; font-size: 10pt; background: #f5f5f5; padding: 1px 4px; border-radius: 3px; }
+
+  /* Sumário */
+  .toc { margin: 10pt 0; }
+  .toc a { color: #2C001E; text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+  .toc-item { display: flex; justify-content: space-between; align-items: baseline; padding: 2pt 0; border-bottom: 1px dotted #ccc; }
+  .toc-item.h2 { font-weight: 700; margin-top: 6pt; }
+  .toc-item.h3 { padding-left: 16pt; font-size: 10.5pt; }
+  .toc-num { white-space: nowrap; color: #888; font-size: 10pt; }
+
+  /* Etapas do checklist */
+  .step-box { border: 1px solid #ddd; border-left: 4px solid #E95420; border-radius: 4px; padding: 10pt 14pt; margin: 8pt 0 12pt; }
+  .step-box .step-num { font-size: 9pt; font-weight: 700; color: #E95420; text-transform: uppercase; letter-spacing: .5px; }
+  .step-box .step-name { font-size: 12pt; font-weight: 700; margin: 2pt 0; }
+  .step-box .step-legal { font-size: 9pt; color: #666; font-style: italic; margin-bottom: 6pt; }
+  .step-box p, .step-box ul { margin-bottom: 0; }
+
+  /* Nota / aviso */
+  .nota { background: #fff8e1; border-left: 4px solid #f59e0b; padding: 8pt 12pt; margin: 10pt 0; font-size: 10.5pt; border-radius: 0 4px 4px 0; }
+  .aviso { background: #fef2f2; border-left: 4px solid #ef4444; padding: 8pt 12pt; margin: 10pt 0; font-size: 10.5pt; border-radius: 0 4px 4px 0; }
+  .dica { background: #f0fdf4; border-left: 4px solid #22c55e; padding: 8pt 12pt; margin: 10pt 0; font-size: 10.5pt; border-radius: 0 4px 4px 0; }
+
+  /* Tabela */
+  table { width: 100%; border-collapse: collapse; margin: 10pt 0; font-size: 10.5pt; }
+  th { background: #2C001E; color: #fff; padding: 6pt 8pt; text-align: left; font-weight: bold; }
+  td { padding: 5pt 8pt; border: 1px solid #ddd; vertical-align: top; }
+  tr:nth-child(even) td { background: #f9f9f9; }
+
+  /* Separador de seção */
+  .section-divider { border: none; border-top: 1px solid #eee; margin: 20pt 0; }
+
+  /* Número de página no sumário */
+  .page-ref { color: #888; }
+
+  /* Botão de impressão */
+  .btn-print { position: fixed; top: 20px; right: 20px; background: #2C001E; color: #fff; border: none; border-radius: 6px; padding: 10px 18px; cursor: pointer; font-size: 11pt; font-family: sans-serif; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,.3); transition: background 0.2s; }
+  .btn-print:hover { background: #5E2750; }
+
+  /* Impressão */
+  @media print {
+    body { background: #fff; }
+    .btn-print { display: none; }
+    .page { margin: 0; padding: 15mm 20mm; box-shadow: none; width: 100%; }
+    .cover { page-break-after: always; }
+    .toc-page { page-break-after: always; }
+    h2 { page-break-before: always; }
+    h2:first-of-type { page-break-before: avoid; }
+    .step-box { page-break-inside: avoid; }
+    .nota, .aviso, .dica { page-break-inside: avoid; }
+
+    /* Cabeçalho e rodapé de impressão */
+    @page {
+      margin: 20mm 20mm 25mm;
+      size: A4;
+      @top-center {
+        content: "SGCD v1.6.0 — Manual Operacional";
+        font-family: 'Times New Roman', serif;
+        font-size: 9pt;
+        color: #666;
+        border-bottom: 1px solid #ccc;
+        padding-bottom: 4pt;
+      }
+      @bottom-center {
+        content: counter(page);
+        font-family: 'Times New Roman', serif;
+        font-size: 9pt;
+        color: #666;
+      }
+    }
+    @page :first { @top-center { content: none; } }
+  }
+</style>
+</head>
+<body>
+
+<button class="btn-print no-print" onclick="window.print()">🖨 Imprimir / Salvar PDF</button>
+
+<!-- ═══════════════════════════════════════════════════════════ CAPA -->
+<div class="page">
+  <div class="cover">
+    <div class="cover-logo">📋</div>
+    <div class="cover-title">Manual Operacional</div>
+    <div class="cover-subtitle">SGCD — Sistema de Gestão de Contratação Direta</div>
+    <div class="cover-system">Gestão de Processos de Dispensa de Licitação</div>
+    <div class="cover-version">Versão v1.6.0</div>
+    <br>
+    <div style="font-size:11pt; color:#555; line-height:1.8;">
+      Aplicação web single-file para agentes de contratação pública<br>
+      Armazenamento local via IndexedDB · Sem instalação necessária
+    </div>
+    <div class="cover-legal">
+      Elaborado em conformidade com a<br>
+      <strong>Lei Federal nº 14.133/2021</strong> — Nova Lei de Licitações e Contratos Administrativos<br>
+      IN SEGES nº 65/2021 · Art. 75 — Dispensa de Licitação
+    </div>
+    <div class="cover-date">Junho de 2026</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ SUMÁRIO -->
+<div class="page toc-page">
+  <h2 style="page-break-before: avoid;">Sumário</h2>
+  <div class="toc">
+    <div class="toc-item h2"><a href="#sec1">1. Introdução</a></div>
+    <div class="toc-item h3"><a href="#sec1-1">1.1 O que é o SGCD</a></div>
+    <div class="toc-item h3"><a href="#sec1-2">1.2 Para quem é destinado</a></div>
+    <div class="toc-item h3"><a href="#sec1-3">1.3 Requisitos mínimos</a></div>
+    <div class="toc-item h3"><a href="#sec1-4">1.4 Aviso sobre armazenamento de dados</a></div>
+
+    <div class="toc-item h2"><a href="#sec2">2. Primeiro Acesso — Configuração Inicial</a></div>
+    <div class="toc-item h3"><a href="#sec2-1">2.1 Acessando as configurações</a></div>
+    <div class="toc-item h3"><a href="#sec2-2">2.2 Campos do perfil</a></div>
+    <div class="toc-item h3"><a href="#sec2-3">2.3 Brasão personalizado</a></div>
+
+    <div class="toc-item h2"><a href="#sec3">3. Visão Geral da Interface</a></div>
+    <div class="toc-item h3"><a href="#sec3-1">3.1 Barra superior (header)</a></div>
+    <div class="toc-item h3"><a href="#sec3-2">3.2 Barra lateral (sidebar)</a></div>
+    <div class="toc-item h3"><a href="#sec3-3">3.3 Dashboard</a></div>
+
+    <div class="toc-item h2"><a href="#sec4">4. Cadastro de Fornecedores</a></div>
+    <div class="toc-item h3"><a href="#sec4-1">4.1 Consultando e cadastrando</a></div>
+    <div class="toc-item h3"><a href="#sec4-2">4.2 Certidões e regularidade fiscal</a></div>
+    <div class="toc-item h3"><a href="#sec4-3">4.3 Verificação de impedimento</a></div>
+
+    <div class="toc-item h2"><a href="#sec5">5. Criando um Novo Processo</a></div>
+    <div class="toc-item h3"><a href="#sec5-1">5.1 Campos do processo</a></div>
+    <div class="toc-item h3"><a href="#sec5-2">5.2 Natureza, categoria e subcategoria</a></div>
+
+    <div class="toc-item h2"><a href="#sec6">6. Checklist das 16 Etapas</a></div>
+
+    <div class="toc-item h2"><a href="#sec7">7. Trabalhando com o Processo</a></div>
+    <div class="toc-item h3"><a href="#sec7-1">7.1 Expandir e recolher etapas</a></div>
+    <div class="toc-item h3"><a href="#sec7-2">7.2 Status das etapas</a></div>
+    <div class="toc-item h3"><a href="#sec7-3">7.3 Anexar documentos</a></div>
+    <div class="toc-item h3"><a href="#sec7-4">7.4 Editar informações do processo</a></div>
+    <div class="toc-item h3"><a href="#sec7-5">7.5 Reordenar etapas</a></div>
+    <div class="toc-item h3"><a href="#sec7-6">7.6 Histórico e log de auditoria</a></div>
+
+    <div class="toc-item h2"><a href="#sec8">8. Gerenciamento de Propostas (Etapa 10)</a></div>
+
+    <div class="toc-item h2"><a href="#sec9">9. Documentos Gerados</a></div>
+
+    <div class="toc-item h2"><a href="#sec10">10. Verificação de Conformidade</a></div>
+
+    <div class="toc-item h2"><a href="#sec11">11. Dashboard e Filtros</a></div>
+
+    <div class="toc-item h2"><a href="#sec12">12. Backup e Restauração</a></div>
+
+    <div class="toc-item h2"><a href="#sec13">13. Alertas de Fracionamento</a></div>
+
+    <div class="toc-item h2"><a href="#sec14">14. Dicas e Boas Práticas</a></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ CONTEÚDO -->
+<div class="page">
+
+<!-- ─────────────────────────────────────────────── SEÇÃO 1 -->
+<h2 id="sec1">1. Introdução</h2>
+
+<h3 id="sec1-1">1.1 O que é o SGCD</h3>
+<p>O <strong>SGCD — Sistema de Gestão de Contratação Direta</strong> é uma aplicação web desenvolvida para organizar, acompanhar e documentar processos de <strong>Dispensa de Licitação</strong> conforme a Lei Federal nº 14.133/2021 (Nova Lei de Licitações e Contratos Administrativos).</p>
+<p>O sistema funciona como um único arquivo HTML que pode ser aberto diretamente no navegador, sem necessidade de instalação, servidor web ou acesso à internet (exceto para consulta de CNPJ). Todos os dados são armazenados localmente no próprio computador do usuário.</p>
+<p>O SGCD guia o agente de contratação por meio de um <strong>checklist com 16 etapas</strong>, cada uma com fundamento legal, orientações de preenchimento e possibilidade de anexar documentos. Ao final de cada etapa — ou a qualquer momento —, o sistema gera automaticamente os documentos necessários para o processo.</p>
+
+<h3 id="sec1-2">1.2 Para quem é destinado</h3>
+<p>O SGCD é destinado a <strong>agentes de contratação pública</strong>, pregoeiros, comissões de contratação e servidores responsáveis pela condução de processos de Dispensa de Licitação em órgãos e entidades da Administração Pública Federal, Estadual ou Municipal que adotam a Lei nº 14.133/2021.</p>
+<p>O sistema é especialmente útil para:</p>
+<ul>
+  <li>Agentes que conduzem múltiplos processos simultaneamente e precisam de organização centralizada</li>
+  <li>Órgãos que buscam padronizar o fluxo de contratações diretas</li>
+  <li>Servidores que precisam gerar documentação padronizada com dados do processo</li>
+  <li>Equipes que necessitam controlar prazos e conformidade dos processos</li>
+</ul>
+
+<h3 id="sec1-3">1.3 Requisitos mínimos</h3>
+<p>O SGCD não exige instalação de software adicional. Os únicos requisitos são:</p>
+<ul>
+  <li><strong>Navegador moderno:</strong> Google Chrome (versão 90 ou superior) ou Microsoft Edge (versão 90 ou superior) — recomendados para melhor compatibilidade</li>
+  <li><strong>JavaScript habilitado:</strong> necessário para o funcionamento da aplicação (habilitado por padrão em todos os navegadores modernos)</li>
+  <li><strong>Conexão à internet:</strong> necessária apenas para consulta automática de CNPJ via BrasilAPI</li>
+</ul>
+<div class="nota">
+  <strong>Nota:</strong> O sistema também funciona nos navegadores Firefox e Safari, porém o Chrome e o Edge oferecem melhor desempenho e compatibilidade com o recurso de impressão e geração de PDF.
+</div>
+
+<h3 id="sec1-4">1.4 Aviso sobre armazenamento de dados</h3>
+<div class="aviso">
+  <strong>Importante:</strong> Todos os dados do SGCD (processos, fornecedores, configurações e anexos) ficam armazenados exclusivamente no <strong>navegador local</strong> do computador, utilizando a tecnologia IndexedDB. Os dados <strong>não são enviados para nenhum servidor</strong> e não ficam disponíveis em outros computadores ou outros navegadores.<br><br>
+  <strong>Atenção:</strong> Se você limpar os dados de navegação ou o cache do navegador, os dados do SGCD serão perdidos permanentemente. Faça <strong>backups regulares</strong> em Configurações → Backup de Dados.
+</div>
+
+<hr class="section-divider">
+
+<!-- ─────────────────────────────────────────────── SEÇÃO 2 -->
+<h2 id="sec2">2. Primeiro Acesso — Configuração Inicial</h2>
+<p>Antes de criar o primeiro processo, é essencial configurar o perfil do usuário. Essas informações serão utilizadas automaticamente em todos os documentos gerados pelo sistema (cabeçalhos, assinaturas, identificação do órgão etc.).</p>
+
+<h3 id="sec2-1">2.1 Acessando as configurações</h3>
+<p>Para acessar as configurações:</p>
+<ol>
+  <li>Localize a <strong>barra lateral</strong> no lado esquerdo da tela</li>
+  <li>Clique no ícone de <strong>engrenagem (⚙)</strong>, geralmente posicionado na parte inferior da barra lateral</li>
+  <li>O painel de Configurações será aberto com as abas disponíveis</li>
+</ol>
+
+<h3 id="sec2-2">2.2 Campos do perfil</h3>
+<p>Preencha os seguintes campos na aba <strong>Perfil do Agente</strong>:</p>
+
+<table>
+  <tr>
+    <th>Campo</th>
+    <th>Descrição</th>
+    <th>Onde é usado</th>
+  </tr>
+  <tr>
+    <td><strong>Nome completo</strong></td>
+    <td>Nome do agente de contratação responsável pelos processos</td>
+    <td>Assinatura nos documentos gerados</td>
+  </tr>
+  <tr>
+    <td><strong>Cargo</strong></td>
+    <td>Cargo ou função do servidor (ex.: Agente de Contratação, Pregoeiro)</td>
+    <td>Identificação funcional nos documentos</td>
+  </tr>
+  <tr>
+    <td><strong>Matrícula</strong></td>
+    <td>Número de matrícula funcional do servidor</td>
+    <td>Identificação nos documentos</td>
+  </tr>
+  <tr>
+    <td><strong>Órgão / Entidade</strong></td>
+    <td>Nome completo do órgão ou entidade pública</td>
+    <td>Cabeçalho de todos os documentos</td>
+  </tr>
+  <tr>
+    <td><strong>Município / UF</strong></td>
+    <td>Cidade e estado onde está sediado o órgão</td>
+    <td>Local e data nos documentos</td>
+  </tr>
+  <tr>
+    <td><strong>Autoridade Competente</strong></td>
+    <td>Nome do ordenador de despesa ou autoridade que assina as autorizações</td>
+    <td>Espaço de assinatura da autoridade nos documentos</td>
+  </tr>
+  <tr>
+    <td><strong>Cargo da Autoridade</strong></td>
+    <td>Cargo da autoridade competente (ex.: Secretário Municipal, Diretor-Geral)</td>
+    <td>Identificação da autoridade nos documentos</td>
+  </tr>
+</table>
+
+<div class="dica">
+  <strong>Dica:</strong> Preencha todos os campos antes de criar o primeiro processo. Uma vez configurados, esses dados são aplicados automaticamente em todos os documentos, economizando tempo e garantindo padronização.
+</div>
+
+<h3 id="sec2-3">2.3 Brasão personalizado</h3>
+<p>O sistema permite inserir o <strong>brasão ou logotipo institucional</strong> do órgão, que será exibido no cabeçalho de todos os documentos gerados. Para configurar:</p>
+<ol>
+  <li>Na aba de Configurações, localize o campo <strong>"Brasão / Logotipo"</strong></li>
+  <li>Clique em <strong>"Escolher arquivo"</strong> e selecione a imagem do brasão (formato PNG, JPG ou SVG)</li>
+  <li>O brasão será armazenado junto com as configurações e exibido nos documentos</li>
+</ol>
+<p>Após preencher todos os campos, clique em <strong>"Salvar Configurações"</strong>. Uma mensagem de confirmação será exibida.</p>
+
+<hr class="section-divider">
+
+<!-- ─────────────────────────────────────────────── SEÇÃO 3 -->
+<h2 id="sec3">3. Visão Geral da Interface</h2>
+<p>A interface do SGCD é dividida em três áreas principais: a barra superior (header), a barra lateral (sidebar) e a área de conteúdo central (dashboard ou processo aberto).</p>
+
+<h3 id="sec3-1">3.1 Barra superior (header)</h3>
+<p>A barra superior contém os seguintes elementos:</p>
+<ul>
+  <li><strong>Nome do sistema</strong> (SGCD) e versão, no lado esquerdo</li>
+  <li><strong>Campo de busca global:</strong> pesquisa em todos os campos de todos os processos cadastrados. Pode ser ativado pelo atalho <code>Ctrl+K</code></li>
+  <li><strong>Data atual:</strong> exibida no lado direito da barra superior</li>
+  <li><strong>Indicadores de alerta:</strong> ícones que sinalizam processos com pendências urgentes</li>
+</ul>
+
+<h3 id="sec3-2">3.2 Barra lateral (sidebar)</h3>
+<p>A barra lateral, localizada no lado esquerdo da tela, oferece acesso às principais funções do sistema:</p>
+<ul>
+  <li><strong>Ícone de pasta / lista:</strong> retorna ao dashboard de processos</li>
+  <li><strong>Ícone de prédio / empresa:</strong> acessa o cadastro de fornecedores</li>
+  <li><strong>Ícone de engrenagem (⚙):</strong> abre as configurações do sistema</li>
+  <li><strong>Ícone de lua / sol:</strong> alterna entre o tema claro e o tema escuro</li>
+</ul>
+
+<h3 id="sec3-3">3.3 Dashboard</h3>
+<p>O dashboard é a tela principal do sistema, exibida ao abrir o SGCD. Ele apresenta:</p>
+<ul>
+  <li><strong>Stat cards:</strong> cartões com resumo numérico — total de processos, em andamento, concluídos e não iniciados</li>
+  <li><strong>Barra de filtros:</strong> permite filtrar a lista de processos por texto, status, unidade, período e faixa de valor</li>
+  <li><strong>Lista de processos:</strong> exibe os processos cadastrados em formato de cards ou tabela</li>
+  <li><strong>Botão "+ Novo Processo":</strong> inicia o cadastro de um novo processo</li>
+  <li><strong>Botão de Relatório:</strong> gera o relatório geral imprimível</li>
+  <li><strong>Botão CSV:</strong> exporta os processos visíveis para arquivo CSV</li>
+</ul>
+<div class="nota">
+  <strong>Nota:</strong> Alertas automáticos aparecem no dashboard para processos parados há mais de 15 dias ou com prazos vencidos, destacados em vermelho ou amarelo para facilitar a identificação.
+</div>
+
+<hr class="section-divider">
+
+<!-- ─────────────────────────────────────────────── SEÇÃO 4 -->
+<h2 id="sec4">4. Cadastro de Fornecedores</h2>
+<p>O SGCD mantém um cadastro de fornecedores integrado com os processos. Fornecedores cadastrados podem ser vinculados às propostas e ao processo, facilitando o reaproveitamento de dados e o controle de certidões.</p>
+
+<h3 id="sec4-1">4.1 Consultando e cadastrando</h3>
+<p>Para acessar o cadastro de fornecedores, clique no <strong>ícone de prédio</strong> na barra lateral. A tela exibirá a lista de fornecedores cadastrados e um botão para adicionar novo.</p>
+<p>Para cadastrar um novo fornecedor:</p>
+<ol>
+  <li>Clique em <strong>"+ Novo Fornecedor"</strong></li>
+  <li>Digite o <strong>CNPJ</strong> do fornecedor no campo indicado</li>
+  <li>Clique em <strong>"Consultar CNPJ"</strong> — o sistema buscará automaticamente os dados na <strong>BrasilAPI</strong> (requer conexão à internet)</li>
+  <li>Os campos serão preenchidos automaticamente: razão social, nome fantasia, endereço, atividade econômica (CNAE) e situação cadastral</li>
+  <li>Verifique e complete os dados se necessário</li>
+  <li>Clique em <strong>"Salvar"</strong></li>
+</ol>
+<div class="dica">
+  <strong>Dica:</strong> Ao vincular fornecedores do cadastro às propostas (em vez de digitá-los manualmente), o histórico de participações do fornecedor em processos anteriores fica disponível automaticamente.
+</div>
+
+<h3 id="sec4-2">4.2 Certidões e regularidade fiscal</h3>
+<p>Para cada fornecedor, é possível registrar as certidões de regularidade fiscal, trabalhista e previdenciária. No cadastro do fornecedor, localize a seção <strong>"Certidões"</strong> e informe:</p>
+<ul>
+  <li><strong>Tipo da certidão</strong> (ex.: FGTS, Receita Federal, INSS, Trabalhista, Municipal, Estadual)</li>
+  <li><strong>Situação:</strong> Regular, Irregular ou Vencida</li>
+  <li><strong>Data de emissão</strong> e <strong>data de vencimento</strong></li>
+</ul>
+<p>O sistema exibe alertas quando certidões estão próximas do vencimento ou já vencidas, auxiliando na etapa de habilitação (Etapa 11).</p>
+
+<h3 id="sec4-3">4.3 Verificação de impedimento</h3>
+<p>No cadastro do fornecedor, há links diretos para consulta nos portais de transparência:</p>
+<ul>
+  <li><strong>CEIS</strong> — Cadastro de Empresas Inidôneas e Suspensas</li>
+  <li><strong>CNEP</strong> — Cadastro Nacional de Empresas Punidas</li>
+  <li><strong>Portal da Transparência</strong> — consulta geral de impedimentos</li>
+</ul>
+<p>Clique nos links correspondentes para abrir os portais e realizar a consulta. Registre o resultado da verificação no campo de observações do fornecedor.</p>
+
+<hr class="section-divider">
+
+<!-- ─────────────────────────────────────────────── SEÇÃO 5 -->
+<h2 id="sec5">5. Criando um Novo Processo</h2>
+<p>Para iniciar um novo processo de Dispensa de Licitação, clique no botão <strong>"+ Novo Processo"</strong> no dashboard. Um formulário será exibido com os campos necessários para o cadastro inicial.</p>
+
+<h3 id="sec5-1">5.1 Campos do processo</h3>
+
+<table>
+  <tr>
+    <th>Campo</th>
+    <th>Obrigatório</th>
+    <th>Descrição</th>
+  </tr>
+  <tr>
+    <td><strong>Objeto</strong></td>
+    <td>Sim</td>
+    <td>Descrição sucinta do bem, serviço ou obra a ser contratado. Exemplo: "Aquisição de material de expediente para o setor administrativo"</td>
+  </tr>
+  <tr>
+    <td><strong>Número do PA</strong></td>
+    <td>Recomendado</td>
+    <td>Número do Processo Administrativo. O sistema sugere uma numeração automática (editável)</td>
+  </tr>
+  <tr>
+    <td><strong>Número da DL</strong></td>
+    <td>Recomendado</td>
+    <td>Número da Dispensa de Licitação. Numeração sugerida automaticamente e editável</td>
+  </tr>
+  <tr>
+    <td><strong>Fundamentação Legal</strong></td>
+    <td>Sim</td>
+    <td>Hipótese de dispensa aplicável — inciso do Art. 75 da Lei 14.133/2021 (ex.: Art. 75, I — valor)</td>
+  </tr>
+  <tr>
+    <td><strong>Valor Estimado</strong></td>
+    <td>Recomendado</td>
+    <td>Valor estimado da contratação em reais. Usado nos alertas de fracionamento e nos documentos</td>
+  </tr>
+  <tr>
+    <td><strong>Unidade Solicitante</strong></td>
+    <td>Recomendado</td>
+    <td>Setor ou departamento que solicitou a contratação (ex.: Secretaria de Administração)</td>
+  </tr>
+  <tr>
+    <td><strong>Prazo de Entrega / Execução</strong></td>
+    <td>Opcional</td>
+    <td>Prazo previsto para entrega do bem ou execução do serviço</td>
+  </tr>
+  <tr>
+    <td><strong>Exercício</strong></td>
+    <td>Automático</td>
+    <td>Ano do processo. Preenchido automaticamente com o ano corrente</td>
+  </tr>
+</table>
+
+<p>Após preencher os campos, clique em <strong>"Criar"</strong>. O processo será cadastrado e o sistema abrirá automaticamente o checklist de etapas.</p>
+
+<h3 id="sec5-2">5.2 Natureza, categoria e subcategoria</h3>
+<p>Ao criar ou editar o processo, é possível classificar a contratação por:</p>
+<ul>
+  <li><strong>Natureza:</strong> Bens ou Serviços</li>
+  <li><strong>Categoria:</strong> tipo de bem ou serviço (ex.: Material de Consumo, Serviços de TI, Obras)</li>
+  <li><strong>Subcategoria:</strong> classificação mais específica dentro da categoria</li>
+</ul>
+<p>Essa classificação é utilizada pelo sistema para o <strong>controle de fracionamento</strong>: processos da mesma categoria e natureza têm seus valores somados automaticamente para verificação do limite do Art. 75.</p>
+
+<hr class="section-divider">
+
+<!-- ─────────────────────────────────────────────── SEÇÃO 6 -->
+<h2 id="sec6">6. Checklist das 16 Etapas</h2>
+<p>O coração do SGCD é o checklist estruturado com as 16 etapas do processo de Dispensa de Licitação. Cada etapa apresenta o fundamento legal, uma orientação sobre o que deve ser feito e campos para registro. A seguir, a descrição completa de cada etapa:</p>
+
+<div class="step-box">
+  <div class="step-num">Etapa 1</div>
+  <div class="step-name">Documento de Formalização da Demanda (DFD)</div>
+  <div class="step-legal">Fundamento: Art. 12, §1º da Lei 14.133/2021</div>
+  <p><strong>O que fazer:</strong> Solicitar à unidade requisitante o Documento de Formalização da Demanda (DFD), que deve conter a descrição da necessidade, a quantidade estimada do bem ou serviço e a justificativa da contratação. O DFD é o documento que origina formalmente o processo e deve ser assinado pelo responsável da unidade solicitante.</p>
+  <ul>
+    <li>Receba ou elabore o DFD com o chefe da unidade requisitante</li>
+    <li>Verifique se a descrição da necessidade está clara e objetiva</li>
+    <li>Confirme se há justificativa para a quantidade solicitada</li>
+    <li>Anexe o DFD assinado ao processo nesta etapa</li>
+  </ul>
+</div>
+
+<div class="step-box">
+  <div class="step-num">Etapa 2</div>
+  <div class="step-name">Estudo Técnico Preliminar (ETP)</div>
+  <div class="step-legal">Fundamento: Art. 18, §2º da Lei 14.133/2021</div>
+  <p><strong>O que fazer:</strong> Verificar se o objeto da contratação exige a elaboração de Estudo Técnico Preliminar. Para compras simples, padronizadas e de baixo valor, o ETP pode ser dispensado. Para contratações de maior complexidade, como serviços contínuos, tecnologia da informação ou obras, o ETP é obrigatório.</p>
+  <ul>
+    <li>Avalie a complexidade e o valor da contratação</li>
+    <li>Se o ETP for dispensável, registre a justificativa no campo de observações</li>
+    <li>Se exigido, anexe o ETP elaborado pela área técnica competente</li>
+  </ul>
+  <div class="nota" style="margin-top:8pt;"><strong>Nota:</strong> A dispensa do ETP deve ser fundamentada e registrada no processo, não sendo automática. Consulte as normas internas do órgão e orientações do TCU sobre os casos de obrigatoriedade.</div>
+</div>
+
+<div class="step-box">
+  <div class="step-num">Etapa 3</div>
+  <div class="step-name">Termo de Referência (TR)</div>
+  <div class="step-legal">Fundamento: Art. 6º, XXIII da Lei 14.133/2021</div>
+  <p><strong>O que fazer:</strong> O Termo de Referência é o documento que define com precisão o objeto da contratação. Deve conter especificações técnicas do objeto, critérios de aceitação, obrigações do contratado, prazo de entrega ou execução, local de entrega e qualquer outro requisito técnico relevante. O TR é elaborado pela área técnica ou requisitante e deve ser juntado ao processo.</p>
+  <ul>
+    <li>Receba o TR da unidade técnica responsável</li>
+    <li>Verifique se as especificações são claras, objetivas e não direcionam para marca ou fornecedor específico</li>
+    <li>Confirme se os critérios de aceitação e prazo de entrega estão definidos</li>
+    <li>Anexe o TR aprovado ao processo nesta etapa</li>
+  </ul>
+</div>
+
+<div class="step-box">
+  <div class="step-num">Etapa 4</div>
+  <div class="step-name">Pesquisa de Preços</div>
+  <div class="step-legal">Fundamento: IN SEGES nº 65/2021 — mínimo de 3 cotações</div>
+  <p><strong>O que fazer:</strong> Realizar pesquisa de mercado para estimar o valor da contratação. A IN SEGES 65/2021 estabelece que a pesquisa deve ser feita em pelo menos 3 fontes, que podem incluir: fornecedores do ramo, portais de preços governamentais (Painel de Preços, BEC, BLL), notas fiscais de compras anteriores e tabelas referenciais de preço.</p>
+  <ul>
+    <li>Solicite cotações a pelo menos 3 fornecedores do ramo por e-mail, telefone ou formulário</li>
+    <li>Registre os valores obtidos na Etapa 5 (campos de propostas de pesquisa)</li>
+    <li>Guarde os comprovantes: e-mails, prints de portais, declarações de fornecedores</li>
+    <li>Documente a data em que cada cotação foi obtida</li>
+  </ul>
+  <div class="aviso" style="margin-top:8pt;"><strong>Atenção:</strong> Propostas com preços inexequíveis (muito abaixo do mercado) ou superfaturados devem ser descartadas e substituídas por outras fontes, com justificativa registrada.</div>
+</div>
+
+<div class="step-box">
+  <div class="step-num">Etapa 5</div>
+  <div class="step-name">Pesquisa de Preços / Estimativa de Valor</div>
+  <div class="step-legal">Fundamento: IN SEGES nº 65/2021</div>
+  <p><strong>O que fazer:</strong> Consolidar as cotações obtidas na Etapa 4 e calcular o valor de referência da contratação. O valor estimado é geralmente a média das propostas válidas obtidas. Preencha o campo <strong>"Valor Estimado"</strong> no painel do processo com o resultado calculado.</p>
+  <ul>
+    <li>Descarte cotações inválidas (desatualizadas, de fornecedores impedidos, inexequíveis)</li>
+    <li>Calcule a média ou o menor valor entre as cotações válidas, conforme a metodologia adotada pelo órgão</li>
+    <li>Registre o valor estimado no sistema</li>
+    <li>Documente a planilha de apuração do valor estimado e anexe ao processo</li>
+  </ul>
+</div>
+
+<div class="step-box">
+  <div class="step-num">Etapa 6</div>
+  <div class="step-name">Enquadramento Legal</div>
+  <div class="step-legal">Fundamento: Art. 75 da Lei 14.133/2021</div>
+  <p><strong>O que fazer:</strong> Fundamentar o enquadramento do processo na hipótese de Dispensa de Licitação cabível, com base nos incisos do Art. 75 da Lei 14.133/2021. A justificativa deve ser explícita e objetiva, demonstrando por que o caso se encaixa na hipótese invocada.</p>
+  <p>As hipóteses mais comuns são:</p>
+  <ul>
+    <li><strong>Art. 75, I:</strong> obras e serviços de engenharia ou serviços de manutenção de veículos automotores até R$ 30.000,00</li>
+    <li><strong>Art. 75, II:</strong> outros bens e serviços até R$ 50.000,00 (nos termos da lei e limites vigentes)</li>
+    <li><strong>Art. 75, III:</strong> hipóteses de emergência ou calamidade pública</li>
+    <li><strong>Art. 75, IV:</strong> contratação com órgãos ou entidades da Administração Pública</li>
+    <li>Incisos V a XVI: outras hipóteses específicas</li>
+  </ul>
+  <div class="nota" style="margin-top:8pt;"><strong>Nota:</strong> Consulte sempre a redação atualizada do Art. 75 da Lei 14.133/2021, pois os valores-limite podem ser atualizados por decreto. Os valores mencionados acima são exemplificativos.</div>
+</div>
+
+<div class="step-box">
+  <div class="step-num">Etapa 7</div>
+  <div class="step-name">Autorização da Autoridade Competente</div>
+  <div class="step-legal">Fundamento: Art. 72 da Lei 14.133/2021</div>
+  <p><strong>O que fazer:</strong> Submeter o processo à autoridade competente (ordenador de despesa) para autorização formal do início do processo de Dispensa de Licitação. Use o botão <strong>"Gerar Autorização"</strong> no sistema para gerar o documento de despacho preenchido com os dados do processo.</p>
+  <ul>
+    <li>Clique em <strong>"Gerar Autorização"</strong> no painel do processo</li>
+    <li>Imprima o documento ou salve como PDF</li>
+    <li>Submeta à assinatura da autoridade competente</li>
+    <li>Digitalize e anexe o documento assinado ao processo nesta etapa</li>
+  </ul>
+</div>
+
+<div class="step-box">
+  <div class="step-num">Etapa 8</div>
+  <div class="step-name">Elaboração do Aviso de Dispensa</div>
+  <div class="step-legal">Fundamento: Art. 75, §3º da Lei 14.133/2021</div>
+  <p><strong>O que fazer:</strong> Elaborar a minuta do Aviso de Dispensa de Licitação, que será publicado no PNCP. O aviso deve conter: objeto da contratação, valor estimado, prazo de entrega, condições de participação, critérios de julgamento e data limite para envio de propostas.</p>
+  <ul>
+    <li>Elabore o aviso com todos os dados do processo</li>
+    <li>Defina o prazo para recebimento de propostas (mínimo de 3 dias úteis após a publicação)</li>
+    <li>Submeta a minuta para revisão e aprovação, se exigido pelo órgão</li>
+    <li>Anexe a minuta aprovada ao processo</li>
+  </ul>
+</div>
+
+<div class="step-box">
+  <div class="step-num">Etapa 9</div>
+  <div class="step-name">Publicação no PNCP</div>
+  <div class="step-legal">Fundamento: Art. 75, §3º da Lei 14.133/2021 — prazo mínimo 3 dias úteis</div>
+  <p><strong>O que fazer:</strong> Publicar o Aviso de Dispensa de Licitação no <strong>Portal Nacional de Contratações Públicas (PNCP)</strong>, conforme exigência do Art. 75, §3º. Após a publicação, é obrigatório aguardar o prazo mínimo de <strong>3 dias úteis</strong> antes de abrir as propostas.</p>
+  <ul>
+    <li>Acesse o PNCP em <em>www.pncp.gov.br</em> com certificado digital ou conta gov.br</li>
+    <li>Registre o aviso com os dados da contratação</li>
+    <li>Anote o número de publicação e a data de divulgação</li>
+    <li>Registre no sistema a data de publicação e a data prevista de abertura de propostas</li>
+    <li>Aguarde o prazo de 3 dias úteis antes de prosseguir</li>
+  </ul>
+  <div class="aviso" style="margin-top:8pt;"><strong>Atenção:</strong> A ausência de publicação ou o não cumprimento do prazo de 3 dias úteis é irregularidade grave que pode nulificar o processo.</div>
+</div>
+
+<div class="step-box">
+  <div class="step-num">Etapa 10</div>
+  <div class="step-name">Recebimento e Análise de Propostas</div>
+  <div class="step-legal">Fundamento: Art. 75, §3º da Lei 14.133/2021</div>
+  <p><strong>O que fazer:</strong> Registrar as propostas recebidas dos fornecedores e realizar a análise comparativa. O SGCD possui uma seção específica para gerenciamento de propostas nesta etapa.</p>
+  <ul>
+    <li>Para cada proposta recebida, clique em <strong>"+ Adicionar Proposta"</strong></li>
+    <li>Preencha: fornecedor, CNPJ, valor proposto, data da proposta, validade e observações</li>
+    <li>Analise as propostas e marque a vencedora</li>
+    <li>Use o botão <strong>"Mapa de Preços"</strong> para gerar o documento comparativo</li>
+  </ul>
+  <p>Veja a Seção 8 deste manual para detalhes completos sobre o gerenciamento de propostas.</p>
+</div>
+
+<div class="step-box">
+  <div class="step-num">Etapa 11</div>
+  <div class="step-name">Habilitação do Fornecedor</div>
+  <div class="step-legal">Fundamento: Art. 62 a 70 da Lei 14.133/2021</div>
+  <p><strong>O que fazer:</strong> Verificar a regularidade fiscal, trabalhista, previdenciária e jurídica do fornecedor vencedor. A habilitação é etapa obrigatória antes da adjudicação.</p>
+  <ul>
+    <li>Consulte as certidões negativas de débitos (CND) do fornecedor vencedor</li>
+    <li>Verifique a regularidade: Receita Federal, FGTS, INSS, trabalhista, estadual e municipal</li>
+    <li>Consulte o CEIS e CNEP para verificar impedimentos</li>
+    <li>Registre as certidões no cadastro do fornecedor no sistema</li>
+    <li>Verifique se o fornecedor possui os documentos de habilitação jurídica (contrato social, CNPJ ativo)</li>
+  </ul>
+</div>
+
+<div class="step-box">
+  <div class="step-num">Etapa 12</div>
+  <div class="step-name">Adjudicação</div>
+  <div class="step-legal">Fundamento: Art. 71 da Lei 14.133/2021</div>
+  <p><strong>O que fazer:</strong> Declarar formalmente o vencedor do processo. A adjudicação é o ato pelo qual o agente de contratação (ou comissão) declara o vencedor e o objeto da contratação a ele atribuído, após a habilitação.</p>
+  <ul>
+    <li>Elabore o termo ou despacho de adjudicação com o nome do fornecedor vencedor, CNPJ e valor</li>
+    <li>Assine o documento como agente de contratação</li>
+    <li>Anexe o termo de adjudicação ao processo</li>
+    <li>Marque esta etapa como concluída no sistema</li>
+  </ul>
+</div>
+
+<div class="step-box">
+  <div class="step-num">Etapa 13</div>
+  <div class="step-name">Homologação</div>
+  <div class="step-legal">Fundamento: Art. 71 da Lei 14.133/2021</div>
+  <p><strong>O que fazer:</strong> Submeter o processo à autoridade competente para homologação. A homologação é o ato da autoridade superior que ratifica o processo, conferindo-lhe validade. Após a homologação, o processo está apto para a emissão da Nota de Empenho e celebração do instrumento contratual.</p>
+  <ul>
+    <li>Organize o processo com todos os documentos das etapas anteriores</li>
+    <li>Elabore despacho de encaminhamento para a autoridade competente</li>
+    <li>Submeta para assinatura da autoridade</li>
+    <li>Anexe o despacho de homologação assinado ao processo</li>
+  </ul>
+</div>
+
+<div class="step-box">
+  <div class="step-num">Etapa 14</div>
+  <div class="step-name">Nota de Empenho</div>
+  <div class="step-legal">Fundamento: Art. 58 da Lei 4.320/1964</div>
+  <p><strong>O que fazer:</strong> Após a homologação, acionar o setor financeiro/orçamentário para emissão da <strong>Nota de Empenho (NE)</strong>, que reserva o crédito orçamentário para a despesa. A NE é emitida no sistema de execução orçamentária do órgão (ex.: SIAFEM, SIAFEWEB, sistema municipal).</p>
+  <ul>
+    <li>Encaminhe o processo ao setor financeiro com despacho solicitando emissão da NE</li>
+    <li>Informe: fornecedor, CNPJ, valor, dotação orçamentária, objeto e prazo</li>
+    <li>Receba a NE emitida e anexe ao processo</li>
+    <li>Registre o número da NE no campo correspondente no SGCD</li>
+  </ul>
+</div>
+
+<div class="step-box">
+  <div class="step-num">Etapa 15</div>
+  <div class="step-name">Instrumento Contratual</div>
+  <div class="step-legal">Fundamento: Art. 95 da Lei 14.133/2021</div>
+  <p><strong>O que fazer:</strong> Formalizar o instrumento contratual com o fornecedor vencedor. A lei permite diferentes instrumentos conforme o valor e a natureza:</p>
+  <ul>
+    <li><strong>Contrato formal:</strong> obrigatório para contratações de maior valor ou duração</li>
+    <li><strong>Carta-contrato, nota de empenho ou autorização de compra:</strong> dispensam o contrato formal nos casos previstos no Art. 95</li>
+    <li><strong>Ata de Registro de Preços (ARP):</strong> quando aplicável</li>
+  </ul>
+  <p>Para contratações por Dispensa de Licitação de pequeno valor, frequentemente é suficiente a Nota de Empenho acompanhada do Pedido de Compra ou Fornecimento.</p>
+  <ul>
+    <li>Verifique o instrumento adequado para o valor e tipo de contratação</li>
+    <li>Elabore e assine o instrumento com o fornecedor</li>
+    <li>Anexe o instrumento assinado ao processo</li>
+  </ul>
+</div>
+
+<div class="step-box">
+  <div class="step-num">Etapa 16</div>
+  <div class="step-name">Publicação do Contrato no PNCP</div>
+  <div class="step-legal">Fundamento: Art. 94 da Lei 14.133/2021 — obrigatória em até 20 dias úteis</div>
+  <p><strong>O que fazer:</strong> Publicar o instrumento contratual (contrato, ARP ou NE) no PNCP. O Art. 94 da Lei 14.133/2021 exige a publicação em até <strong>20 dias úteis</strong> a partir da assinatura do instrumento.</p>
+  <ul>
+    <li>Acesse o PNCP e registre o contrato na forma exigida</li>
+    <li>Anexe o arquivo do instrumento contratual no portal</li>
+    <li>Anote o número e a data de publicação</li>
+    <li>Registre no SGCD a data de publicação</li>
+    <li>Marque esta etapa como concluída — o processo estará finalizado</li>
+  </ul>
+  <div class="aviso" style="margin-top:8pt;"><strong>Atenção:</strong> O prazo de 20 dias úteis para publicação do contrato no PNCP é improrrogável. O descumprimento sujeita o agente responsável às sanções administrativas previstas na lei.</div>
+</div>
+
+<hr class="section-divider">
+
+<!-- ─────────────────────────────────────────────── SEÇÃO 7 -->
+<h2 id="sec7">7. Trabalhando com o Processo</h2>
+
+<h3 id="sec7-1">7.1 Expandir e recolher etapas</h3>
+<p>No painel do processo, cada etapa é exibida como um painel retrátil. Para <strong>expandir</strong> uma etapa e ver seus campos e opções, clique no cabeçalho da etapa. Para <strong>recolher</strong>, clique novamente no cabeçalho. Isso permite focar na etapa em que está trabalhando sem perder a visão geral do processo.</p>
+
+<h3 id="sec7-2">7.2 Status das etapas</h3>
+<p>Cada etapa pode ter um dos seguintes status:</p>
+<ul>
+  <li><strong>Pendente:</strong> etapa ainda não iniciada (status inicial)</li>
+  <li><strong>Em andamento:</strong> etapa iniciada mas não concluída</li>
+  <li><strong>Concluída:</strong> etapa finalizada com sucesso</li>
+  <li><strong>Bloqueada:</strong> etapa que não pode ser avançada por alguma razão (ex.: pendência em etapa anterior, prazo de publicação aguardando)</li>
+</ul>
+<p>Para alterar o status, clique no seletor de status dentro de cada etapa e escolha a opção correspondente. A barra de progresso do processo é atualizada automaticamente.</p>
+
+<h3 id="sec7-3">7.3 Anexar documentos</h3>
+<p>Cada etapa possui uma área para anexo de documentos. Para anexar:</p>
+<ol>
+  <li>Expanda a etapa desejada</li>
+  <li>Localize a seção <strong>"Documentos"</strong> ou o botão de clipe/anexo</li>
+  <li>Clique em <strong>"Anexar Arquivo"</strong> e selecione o arquivo no computador</li>
+  <li>Formatos aceitos: PDF, DOCX, DOC, PNG, JPG</li>
+  <li>O arquivo será armazenado no IndexedDB junto com o processo</li>
+</ol>
+<div class="aviso">
+  <strong>Atenção:</strong> Arquivos anexados ficam armazenados no navegador. Arquivos muito grandes podem afetar o desempenho do sistema. Recomenda-se compactar PDFs antes de anexar.
+</div>
+
+<h3 id="sec7-4">7.4 Editar informações do processo</h3>
+<p>Para editar as informações gerais do processo (objeto, valor, fundamentação, unidade etc.), localize o <strong>painel lateral direito</strong> quando o processo está aberto, ou clique no botão <strong>"Editar"</strong> no cabeçalho do processo. Altere os campos desejados e clique em <strong>"Salvar"</strong>.</p>
+
+<h3 id="sec7-5">7.5 Reordenar etapas</h3>
+<p>Embora as 16 etapas sigam uma ordem lógica sugerida, é possível reordená-las conforme as necessidades específicas do processo. Para reordenar:</p>
+<ol>
+  <li>Localize a alça de arrastar <strong>⠿</strong> no lado esquerdo do cabeçalho da etapa</li>
+  <li>Clique e mantenha pressionado sobre a alça</li>
+  <li>Arraste a etapa para a posição desejada</li>
+  <li>Solte para confirmar a nova posição</li>
+</ol>
+<div class="nota">
+  <strong>Nota:</strong> A reordenação altera apenas a visualização no sistema e não implica alteração da ordem legal das atividades do processo. O agente de contratação é responsável por garantir a conformidade jurídica da sequência adotada.
+</div>
+
+<h3 id="sec7-6">7.6 Histórico e log de auditoria</h3>
+<p>O SGCD registra automaticamente todas as alterações realizadas no processo: mudanças de status de etapas, edições de campos, adição de propostas e anexos. Para visualizar o histórico:</p>
+<ol>
+  <li>No painel do processo, localize a aba ou botão <strong>"Histórico"</strong> ou <strong>"Log de Auditoria"</strong></li>
+  <li>O log exibe cada alteração com: campo alterado, valor anterior, novo valor, usuário (configurado) e data/hora</li>
+</ol>
+<p>O log de auditoria é somente leitura e não pode ser editado, garantindo a rastreabilidade das ações no processo.</p>
+
+<hr class="section-divider">
+
+<!-- ─────────────────────────────────────────────── SEÇÃO 8 -->
+<h2 id="sec8">8. Gerenciamento de Propostas (Etapa 10)</h2>
+<p>A Etapa 10 conta com uma seção dedicada ao gerenciamento de propostas recebidas, que permite registrar, comparar e selecionar a proposta vencedora de forma organizada e com documentação automática.</p>
+
+<h3>Como adicionar uma proposta</h3>
+<ol>
+  <li>Expanda a Etapa 10 no checklist do processo</li>
+  <li>Clique em <strong>"+ Adicionar Proposta"</strong></li>
+  <li>Preencha os campos:</li>
+</ol>
+<table>
+  <tr><th>Campo</th><th>Descrição</th></tr>
+  <tr><td><strong>Fornecedor</strong></td><td>Nome ou razão social do fornecedor que enviou a proposta</td></tr>
+  <tr><td><strong>CNPJ</strong></td><td>CNPJ do fornecedor (ou CPF, para pessoa física)</td></tr>
+  <tr><td><strong>Valor Proposto</strong></td><td>Valor total da proposta em reais</td></tr>
+  <tr><td><strong>Data da Proposta</strong></td><td>Data em que a proposta foi recebida</td></tr>
+  <tr><td><strong>Validade</strong></td><td>Data até quando a proposta é válida</td></tr>
+  <tr><td><strong>Situação</strong></td><td>Em análise, Aceita, Vencedora ou Recusada</td></tr>
+  <tr><td><strong>Observações</strong></td><td>Campo livre para anotações (ex.: motivo de recusa)</td></tr>
+</table>
+<p>Para vincular o fornecedor ao cadastro do sistema, clique no botão <strong>📋</strong> ao lado do campo de fornecedor e selecione o fornecedor já cadastrado. Isso popula automaticamente nome e CNPJ e vincula o histórico.</p>
+
+<h3>Definindo o vencedor</h3>
+<p>Ao alterar a situação de uma proposta para <strong>"Vencedora"</strong>:</p>
+<ul>
+  <li>O sistema marca automaticamente as demais propostas como <strong>"Aceita"</strong></li>
+  <li>O fornecedor vencedor é vinculado ao processo</li>
+  <li>Os dados do vencedor são utilizados nos documentos gerados (Ata de Sessão, Autorização de Abertura)</li>
+</ul>
+<div class="nota">
+  <strong>Nota:</strong> Apenas uma proposta pode ter a situação "Vencedora". Ao marcar uma nova proposta como vencedora, a anterior é automaticamente reclassificada.
+</div>
+
+<h3>Mapa de Preços</h3>
+<p>O <strong>Mapa de Preços</strong> é um documento comparativo das propostas recebidas, exigido pela IN SEGES 65/2021. Para gerá-lo:</p>
+<ol>
+  <li>Registre todas as propostas na Etapa 10</li>
+  <li>Clique em <strong>"Gerar Mapa de Preços"</strong></li>
+  <li>O documento será aberto em nova janela, pronto para impressão ou salvamento como PDF</li>
+</ol>
+<p>O Mapa de Preços contém: cabeçalho com dados do processo, tabela comparativa com todos os fornecedores e valores, identificação do vencedor e o menor preço, data de geração e código de autenticidade.</p>
+
+<hr class="section-divider">
+
+<!-- ─────────────────────────────────────────────── SEÇÃO 9 -->
+<h2 id="sec9">9. Documentos Gerados</h2>
+<p>O SGCD gera automaticamente os principais documentos do processo de Dispensa de Licitação, preenchidos com os dados cadastrados no sistema. Todos os documentos podem ser impressos ou salvos como PDF diretamente do navegador.</p>
+
+<table>
+  <tr>
+    <th>Documento</th>
+    <th>Descrição</th>
+    <th>Como gerar</th>
+  </tr>
+  <tr>
+    <td><strong>Autorização de Abertura</strong></td>
+    <td>Despacho formal da autoridade competente autorizando o início do processo (Etapa 7)</td>
+    <td>Botão "Gerar Autorização" no cabeçalho do processo ou na Etapa 7</td>
+  </tr>
+  <tr>
+    <td><strong>Extrato de Publicação</strong></td>
+    <td>Texto formatado para publicação no Diário Oficial (Art. 54, §1º). Contém: número, objeto, valor, fundamento e dados do órgão</td>
+    <td>Botão "Extrato" no cabeçalho do processo</td>
+  </tr>
+  <tr>
+    <td><strong>Ata de Sessão</strong></td>
+    <td>Documento completo do processo com: dados da contratação, propostas recebidas, habilitação, resultado e espaços para assinatura</td>
+    <td>Botão "Ata de Sessão" no cabeçalho do processo</td>
+  </tr>
+  <tr>
+    <td><strong>Mapa de Preços</strong></td>
+    <td>Tabela comparativa de todas as propostas recebidas, com identificação do vencedor</td>
+    <td>Botão "Mapa de Preços" na Etapa 10</td>
+  </tr>
+  <tr>
+    <td><strong>Relatório Geral</strong></td>
+    <td>Visão consolidada de todos os processos, com filtros aplicados, agrupados por status</td>
+    <td>Botão "Relatório" no dashboard</td>
+  </tr>
+  <tr>
+    <td><strong>Impressão do Processo</strong></td>
+    <td>Checklist completo do processo com todos os campos preenchidos e status de cada etapa</td>
+    <td>Botão "Imprimir" no cabeçalho do processo aberto</td>
+  </tr>
+</table>
+
+<h3>Código de autenticidade</h3>
+<p>Todos os documentos gerados pelo SGCD possuem um <strong>código de autenticidade único</strong> no rodapé, composto por um hash gerado a partir dos dados do processo. Esse código permite verificar a integridade do documento e rastrear sua origem.</p>
+
+<hr class="section-divider">
+
+<!-- ─────────────────────────────────────────────── SEÇÃO 10 -->
+<h2 id="sec10">10. Verificação de Conformidade</h2>
+<p>A funcionalidade de Verificação de Conformidade analisa automaticamente o processo e identifica pendências, inconsistências e itens que precisam de atenção antes da continuidade ou encerramento do processo.</p>
+
+<h3>Como usar</h3>
+<ol>
+  <li>Com o processo aberto, clique no botão <strong>"✔ Conformidade"</strong> no cabeçalho</li>
+  <li>O sistema realizará a verificação automática e exibirá o resultado em uma lista</li>
+</ol>
+
+<h3>O que é verificado</h3>
+<ul>
+  <li><strong>Objeto:</strong> campo preenchido e com descrição suficiente</li>
+  <li><strong>Fundamentação legal:</strong> inciso do Art. 75 informado</li>
+  <li><strong>Valor estimado:</strong> valor preenchido e dentro dos limites da hipótese de dispensa</li>
+  <li><strong>Unidade solicitante:</strong> campo preenchido</li>
+  <li><strong>Número do processo:</strong> PA e DL informados</li>
+  <li><strong>Fornecedor vencedor:</strong> vinculado ao processo</li>
+  <li><strong>Propostas:</strong> mínimo de 3 propostas registradas (conforme IN SEGES 65/2021)</li>
+  <li><strong>Certidões:</strong> regularidade fiscal do fornecedor vencedor</li>
+  <li><strong>Checklist:</strong> etapas obrigatórias concluídas</li>
+</ul>
+<p>O resultado exibe cada item como <strong>conforme</strong> (em verde) ou <strong>não conforme / pendente</strong> (em vermelho ou amarelo), com uma orientação sobre o que deve ser corrigido ou completado.</p>
+
+<hr class="section-divider">
+
+<!-- ─────────────────────────────────────────────── SEÇÃO 11 -->
+<h2 id="sec11">11. Dashboard e Filtros</h2>
+
+<h3>Stat cards</h3>
+<p>No topo do dashboard, quatro cartões exibem um resumo rápido dos processos cadastrados:</p>
+<ul>
+  <li><strong>Total:</strong> número total de processos</li>
+  <li><strong>Em andamento:</strong> processos com pelo menos uma etapa iniciada e não concluídos</li>
+  <li><strong>Concluídos:</strong> processos com todas as etapas marcadas como concluídas</li>
+  <li><strong>Não iniciados:</strong> processos criados mas sem nenhuma etapa iniciada</li>
+</ul>
+<p>Clique em qualquer stat card para filtrar automaticamente a lista pelo status correspondente.</p>
+
+<h3>Filtros</h3>
+<p>A barra de filtros permite refinar a lista de processos:</p>
+<ul>
+  <li><strong>Busca textual:</strong> pesquisa em número, objeto, fornecedor e unidade</li>
+  <li><strong>Status:</strong> Todos, Em andamento, Concluído, Não iniciado, Bloqueado</li>
+  <li><strong>Unidade solicitante:</strong> filtra por setor</li>
+  <li><strong>Período:</strong> data de criação ou data do processo</li>
+  <li><strong>Faixa de valor:</strong> valor mínimo e máximo estimado</li>
+</ul>
+
+<h3>Ordenação e visualização</h3>
+<ul>
+  <li><strong>Ordenação:</strong> por data de criação, prazo, progresso ou valor estimado</li>
+  <li><strong>Visualização em cards:</strong> exibe cada processo como um cartão com resumo visual</li>
+  <li><strong>Visualização em tabela:</strong> botão ⊞ alterna para modo tabela. Clique nos cabeçalhos das colunas para ordenar</li>
+</ul>
+
+<h3>Exportar e relatório</h3>
+<ul>
+  <li><strong>Exportar CSV:</strong> exporta os processos atualmente visíveis (com filtros aplicados) para um arquivo CSV compatível com Excel</li>
+  <li><strong>Relatório:</strong> gera documento imprimível com os processos agrupados por status</li>
+</ul>
+
+<h3>Busca global</h3>
+<p>Pressione <code>Ctrl+K</code> para abrir a busca global. A busca pesquisa em todos os campos de todos os processos cadastrados (objeto, número, fornecedor, unidade, observações etc.) e exibe os resultados em tempo real.</p>
+
+<h3>Alertas no dashboard</h3>
+<p>O dashboard exibe alertas automáticos para situações que requerem atenção:</p>
+<ul>
+  <li><strong>Processo parado:</strong> processo sem alteração há mais de 15 dias (ícone amarelo)</li>
+  <li><strong>Prazo vencido:</strong> processo com prazo de entrega ou execução ultrapassado (ícone vermelho)</li>
+</ul>
+
+<hr class="section-divider">
+
+<!-- ─────────────────────────────────────────────── SEÇÃO 12 -->
+<h2 id="sec12">12. Backup e Restauração</h2>
+<p>Como os dados do SGCD ficam armazenados exclusivamente no navegador, é fundamental realizar backups regulares para evitar perda de informações.</p>
+
+<h3>Como fazer backup</h3>
+<ol>
+  <li>Clique no ícone de <strong>engrenagem (⚙)</strong> para abrir as Configurações</li>
+  <li>Localize a seção <strong>"Backup de Dados"</strong></li>
+  <li>Clique em <strong>"Exportar Backup"</strong></li>
+  <li>Um arquivo JSON será baixado automaticamente pelo navegador com o nome <code>sgcd-backup-[data].json</code></li>
+  <li>Salve o arquivo em local seguro (pasta local, nuvem, pen drive)</li>
+</ol>
+<div class="dica">
+  <strong>Dica:</strong> Faça backup ao menos uma vez por semana, ou sempre antes de limpar o cache do navegador, atualizar o sistema ou formatar o computador.
+</div>
+
+<h3>Como restaurar um backup</h3>
+<ol>
+  <li>Nas Configurações, seção "Backup de Dados", clique em <strong>"Restaurar Backup"</strong></li>
+  <li>Selecione o arquivo JSON do backup salvo anteriormente</li>
+  <li>Confirme a operação — todos os dados atuais serão substituídos pelos dados do backup</li>
+</ol>
+<div class="aviso">
+  <strong>Atenção:</strong> A restauração substitui completamente todos os dados atuais (processos, fornecedores e configurações) pelos dados do arquivo de backup. Essa operação não pode ser desfeita. Faça um backup do estado atual antes de restaurar, se necessário.
+</div>
+
+<h3>Snapshot automático</h3>
+<p>O sistema oferece a opção de <strong>snapshot automático</strong>: uma cópia dos dados é salva automaticamente no próprio navegador (localStorage) ao fechar a aba. Esse recurso serve como proteção adicional, mas não substitui o backup em arquivo. Para ativar, veja a opção correspondente em Configurações.</p>
+
+<hr class="section-divider">
+
+<!-- ─────────────────────────────────────────────── SEÇÃO 13 -->
+<h2 id="sec13">13. Alertas de Fracionamento</h2>
+<p>O fracionamento de despesas é uma prática vedada pela Lei 14.133/2021. Consiste em dividir artificialmente uma contratação em parcelas menores para se enquadrar nos limites de Dispensa de Licitação e fugir de modalidades mais rigorosas. O SGCD possui um mecanismo automático de detecção de fracionamento.</p>
+
+<h3>Como funciona</h3>
+<p>O sistema monitora os processos cadastrados e:</p>
+<ul>
+  <li>Detecta processos com <strong>objetos similares</strong> (mesma categoria e subcategoria)</li>
+  <li>Calcula a <strong>soma dos valores estimados</strong> no exercício fiscal ou na janela temporal configurada</li>
+  <li>Emite um <strong>alerta</strong> quando a soma se aproxima ou ultrapassa os limites do Art. 75</li>
+</ul>
+
+<h3>Configurar a janela temporal</h3>
+<p>Em Configurações, é possível definir o período para o cálculo de fracionamento:</p>
+<ul>
+  <li><strong>Ano civil:</strong> considera todos os processos do exercício fiscal (1º de janeiro a 31 de dezembro)</li>
+  <li><strong>Período personalizado:</strong> define uma janela em meses (ex.: últimos 12 meses)</li>
+</ul>
+<div class="nota">
+  <strong>Nota:</strong> O alerta de fracionamento é uma ferramenta de apoio ao agente de contratação. A análise jurídica de configuração de fracionamento deve sempre ser realizada pelo agente e pela assessoria jurídica do órgão, levando em conta as especificidades de cada caso.
+</div>
+
+<hr class="section-divider">
+
+<!-- ─────────────────────────────────────────────── SEÇÃO 14 -->
+<h2 id="sec14">14. Dicas e Boas Práticas</h2>
+<p>As orientações abaixo ajudam a usar o SGCD de forma eficiente e segura:</p>
+
+<div class="dica">
+  <strong>Backup antes de limpar o cache:</strong> os dados do SGCD ficam no navegador. Antes de limpar o histórico ou cache, sempre exporte um backup em Configurações → Backup de Dados.
+</div>
+
+<div class="dica">
+  <strong>Use sempre o mesmo navegador:</strong> os dados ficam vinculados ao perfil do navegador. Se você usar Chrome no trabalho, use sempre o Chrome para acessar o SGCD. Não misture navegadores (Chrome e Edge não compartilham dados).
+</div>
+
+<div class="dica">
+  <strong>Preencha PA e DL logo ao criar o processo:</strong> mesmo que provisórios, os números de PA e DL facilitam a rastreabilidade desde o início e são usados nos documentos gerados. Você pode editá-los posteriormente.
+</div>
+
+<div class="dica">
+  <strong>Vincule fornecedores do cadastro:</strong> em vez de digitar nome e CNPJ na proposta manualmente, use o botão 📋 para vincular fornecedores já cadastrados. Isso mantém o histórico de participações e aproveita os dados já registrados (certidões, endereço etc.).
+</div>
+
+<div class="dica">
+  <strong>Registre as propostas com data exata:</strong> a data de cada proposta é importante para demonstrar a conformidade da pesquisa de preços com a IN SEGES 65/2021. Propostas muito antigas podem ser desconsideradas.
+</div>
+
+<div class="dica">
+  <strong>Use a Verificação de Conformidade antes de gerar documentos:</strong> o botão "✔ Conformidade" aponta pendências que podem fazer os documentos saírem incompletos. Corrija-as antes de gerar a Ata ou a Autorização.
+</div>
+
+<div class="dica">
+  <strong>Mantenha o checklist atualizado:</strong> marque as etapas como concluídas à medida que avança. Isso garante que a barra de progresso e os alertas do dashboard reflitam a situação real do processo.
+</div>
+
+<div class="dica">
+  <strong>Registre observações nas etapas:</strong> cada etapa tem um campo de observações. Use-o para registrar informações relevantes: quem enviou o DFD, qual foi o resultado da consulta ao CEIS, por que uma proposta foi recusada etc. Isso documenta o processo e protege o agente de contratação em eventuais auditorias.
+</div>
+
+<div class="nota">
+  <strong>Base legal complementar para consulta:</strong>
+  <ul style="margin-top:6pt;">
+    <li>Lei Federal nº 14.133/2021 — disponível em <em>www.planalto.gov.br</em></li>
+    <li>IN SEGES/ME nº 65, de 7 de julho de 2021 — pesquisa de preços</li>
+    <li>Decreto nº 11.317/2022 — atualização dos limites de dispensa</li>
+    <li>TCU — Licitações e Contratos: Orientações e Jurisprudência</li>
+    <li>Portal PNCP — <em>www.pncp.gov.br</em></li>
+  </ul>
+</div>
+
+<hr class="section-divider">
+<p style="text-align:center; font-size:9pt; color:#888; margin-top:20pt;">
+  SGCD v1.6.0 — Manual Operacional<br>
+  Sistema de Gestão de Contratação Direta<br>
+  Lei Federal nº 14.133/2021
+</p>
+
+</div><!-- /page -->
+</body>
+</html>
