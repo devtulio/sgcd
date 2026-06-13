@@ -865,6 +865,7 @@
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn btn-outline btn-sm" onclick="printProcess()">&#128438; Imprimir</button>
+        <button class="btn btn-outline btn-sm" onclick="gerarAutorizacao()" style="border-color:var(--aubergine-mid);color:var(--aubergine-mid)">&#128196; Autorização</button>
         <button class="btn btn-outline btn-sm" onclick="gerarAta()" style="border-color:var(--aubergine-mid);color:var(--aubergine-mid)">&#128196; Gerar Ata</button>
         <button class="btn btn-danger  btn-sm" onclick="deleteProcess()">Excluir</button>
       </div>
@@ -1028,6 +1029,22 @@
         </div>
       </fieldset>
     </div>
+      <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-top:16px">
+        <legend style="font-size:.72rem;font-weight:700;color:var(--aubergine-mid);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Backup de Dados</legend>
+        <p style="font-size:.72rem;color:var(--gray-500);margin-bottom:12px;line-height:1.5">Os dados ficam armazenados neste navegador. Faça backups periódicos para evitar perda em caso de limpeza do cache ou troca de dispositivo.</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-outline btn-sm" onclick="exportBackup()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Exportar Backup
+          </button>
+          <label class="btn btn-outline btn-sm" style="cursor:pointer">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Restaurar Backup
+            <input type="file" accept=".json" style="display:none" onchange="importBackup(this.files[0]).then(()=>this.value='')">
+          </label>
+        </div>
+      </fieldset>
+    </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeSettings()">Cancelar</button>
       <button class="btn btn-primary" onclick="saveSettings()">Salvar</button>
@@ -1155,6 +1172,76 @@ function dbGetByIndexPrefix(store, indexName, prefix) {
     req.onsuccess = () => res(req.result);
     req.onerror   = e => rej(e);
   });
+}
+
+// ══════════════════════════════════════════════════════════════
+// BACKUP / RESTORE
+// ══════════════════════════════════════════════════════════════
+function _bufToBase64(buf) {
+  const bytes = new Uint8Array(buf);
+  let bin = '';
+  for (let i = 0; i < bytes.byteLength; i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin);
+}
+function _base64ToBuf(b64) {
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes.buffer;
+}
+function dbClearStore(store) {
+  return new Promise((res, rej) => {
+    const tx = db.transaction(store, 'readwrite');
+    const req = tx.objectStore(store).clear();
+    req.onsuccess = () => res();
+    req.onerror   = e => rej(e);
+  });
+}
+
+async function exportBackup() {
+  try {
+    const [processes, fornecedores, rawFiles] = await Promise.all([
+      dbGetAll('processes'), dbGetAll('fornecedores'), dbGetAll('files')
+    ]);
+    const files = rawFiles.map(f => ({
+      ...f,
+      data: f.data ? _bufToBase64(f.data) : null,
+      _enc: 'base64'
+    }));
+    const backup = { _sgcd: true, version: 1, exportedAt: new Date().toISOString(), processes, fornecedores, files };
+    const blob = new Blob([JSON.stringify(backup)], { type: 'application/json' });
+    const url  = URL.createObjectURL(blob);
+    const a    = Object.assign(document.createElement('a'), {
+      href: url,
+      download: `SGCD_backup_${new Date().toISOString().slice(0,10)}.json`
+    });
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast(`Backup exportado — ${processes.length} processos, ${fornecedores.length} fornecedores, ${files.length} arquivos.`, 'success');
+  } catch(e) { toast('Erro ao exportar: ' + e.message, 'error'); }
+}
+
+async function importBackup(file) {
+  try {
+    const backup = JSON.parse(await file.text());
+    if (!backup._sgcd) { toast('Arquivo inválido — não é um backup do SGCD.', 'error'); return; }
+    const ok = await customConfirm(
+      `Exportado em ${new Date(backup.exportedAt).toLocaleString('pt-BR')}.\n\nIsso substituirá TODOS os dados atuais por ${backup.processes?.length||0} processos, ${backup.fornecedores?.length||0} fornecedores e ${backup.files?.length||0} arquivos. Esta ação não pode ser desfeita.`,
+      { title: 'Restaurar Backup', icon: '⚠️', okLabel: 'Restaurar', okClass: 'btn-danger' }
+    );
+    if (!ok) return;
+    await Promise.all(['processes','fornecedores','files'].map(s => dbClearStore(s)));
+    for (const p of backup.processes   || []) await dbPut('processes',   p);
+    for (const f of backup.fornecedores|| []) await dbPut('fornecedores', f);
+    for (const f of backup.files       || []) {
+      const rec = { ...f };
+      if (rec._enc === 'base64' && rec.data) { rec.data = _base64ToBuf(rec.data); delete rec._enc; }
+      await dbPut('files', rec);
+    }
+    closeSettings();
+    toast(`Backup restaurado! ${backup.processes?.length||0} processos importados.`, 'success');
+    showDash();
+  } catch(e) { toast('Erro ao importar: ' + e.message, 'error'); }
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -3074,6 +3161,113 @@ async function deleteProcess() {
 function printProcess() {
   expandedSteps = new Set(STEPS.map((_,i)=>i));
   renderChecklist().then(() => setTimeout(() => window.print(), 300));
+}
+
+// ══════════════════════════════════════════════════════════════
+// AUTORIZAÇÃO DE ABERTURA — Lei 14.133/2021
+// ══════════════════════════════════════════════════════════════
+function gerarAutorizacao() {
+  const p = currentProcess;
+  const u = getUser();
+  const hoje = new Date().toLocaleDateString('pt-BR', { day:'numeric', month:'long', year:'numeric' });
+  const blank = txt => txt || '_'.repeat(40);
+  const fmtVal = v => v ? 'R$ ' + parseFloat(String(v).replace(/\./g,'').replace(',','.')).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}) : '_______________';
+
+  const fornNome = typeof p.fornecedor === 'object' ? (p.fornecedor?.razao_social || '') : (p.fornecedor || '');
+  const fornCnpj = typeof p.fornecedor === 'object' ? (p.fornecedor?.cnpj || '') : '';
+
+  const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Autorização de Abertura — ${p.num || 'DL'}</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; color: #000; background: #fff; padding: 2cm 2.5cm; }
+  .header { text-align: center; margin-bottom: 24pt; border-bottom: 2px solid #000; padding-bottom: 14pt; }
+  .header img { height: 70pt; width: auto; margin-bottom: 8pt; }
+  .header h1 { font-size: 13pt; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+  .header h2 { font-size: 11pt; font-weight: 400; margin-top: 2pt; }
+  .doc-title { text-align: center; margin: 20pt 0 18pt; }
+  .doc-title h3 { font-size: 13pt; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid #000; display: inline-block; padding-bottom: 4pt; }
+  .doc-title .num { font-size: 11pt; margin-top: 6pt; }
+  .section { margin-bottom: 14pt; }
+  .section p { line-height: 1.7; text-align: justify; }
+  .field-table { width: 100%; border-collapse: collapse; margin: 14pt 0; }
+  .field-table td { padding: 5pt 8pt; border: 1px solid #333; font-size: 11pt; vertical-align: top; }
+  .field-table td.lbl { font-weight: 700; text-transform: uppercase; font-size: 9pt; letter-spacing: .4px; width: 38%; background: #f5f5f5; }
+  .signature-block { margin-top: 40pt; }
+  .signature-line { border-top: 1px solid #000; width: 280pt; margin: 0 auto; text-align: center; padding-top: 4pt; font-size: 10pt; }
+  .city-date { text-align: right; margin-top: 30pt; margin-bottom: 6pt; font-size: 11pt; }
+  .despacho { background: #f9f9f9; border-left: 3px solid #555; padding: 10pt 14pt; margin: 16pt 0; font-size: 11pt; line-height: 1.8; }
+  .footer { margin-top: 40pt; border-top: 1px solid #ccc; padding-top: 6pt; text-align: center; font-size: 8pt; color: #666; }
+  @media print { body { padding: 0; } }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <img src="data:image/png;base64,__BRASAO_PLACEHOLDER__" alt="Brasão">
+  <h1>${blank(u.orgao)}</h1>
+  <h2>${blank(u.municipio)}</h2>
+</div>
+
+<div class="doc-title">
+  <h3>Autorização de Abertura de Processo</h3>
+  <div class="num">Dispensa de Licitação nº ${blank(p.num)}</div>
+</div>
+
+<div class="section">
+  <div class="despacho">
+    <strong>DESPACHO:</strong> Nos termos do Art. 75, ${p.legal ? 'inciso ' + p.legal + ',' : ''} da Lei Federal nº 14.133/2021, e considerando a justificativa da necessidade apresentada pela unidade requisitante, <strong>AUTORIZO</strong> a abertura do processo administrativo de Dispensa de Licitação visando à aquisição/contratação descrita abaixo, determinando à ${blank(u.orgao)} que adote as providências necessárias à instrução do processo.
+  </div>
+</div>
+
+<table class="field-table">
+  <tr><td class="lbl">Número do Processo</td><td>${blank(p.num)}</td></tr>
+  <tr><td class="lbl">Objeto</td><td>${blank(p.objeto)}</td></tr>
+  <tr><td class="lbl">Valor Estimado</td><td>${fmtVal(p.valor)}</td></tr>
+  <tr><td class="lbl">Unidade Requisitante</td><td>${blank(p.unidade)}</td></tr>
+  <tr><td class="lbl">Fundamento Legal</td><td>Art. 75${p.legal ? ', ' + p.legal : ''} — Lei Federal nº 14.133/2021</td></tr>
+  ${fornNome ? `<tr><td class="lbl">Fornecedor Indicado</td><td>${fornNome}${fornCnpj ? ' — CNPJ: ' + fornCnpj : ''}</td></tr>` : ''}
+  <tr><td class="lbl">Agente de Contratação</td><td>${blank(u.nome)}${u.matricula ? ' — Matrícula: ' + u.matricula : ''}</td></tr>
+</table>
+
+<div class="section">
+  <p>Determino ainda que o processo seja instruído com: Documento de Formalização da Demanda (DFD), pesquisa de preços, Termo de Referência, documentação de habilitação do fornecedor e demais peças exigidas pela legislação vigente, em especial pela Lei Federal nº 14.133/2021 e pelo Decreto Municipal regulamentador.</p>
+</div>
+
+<div class="city-date">${blank(u.municipio)}, ${hoje}</div>
+
+<div class="signature-block">
+  <div class="signature-line">
+    <div>${blank(u.autNome)}</div>
+    <div style="font-size:9pt;margin-top:2pt">${blank(u.autCargo)}</div>
+  </div>
+</div>
+
+<div class="footer">Documento gerado pelo SGCD — Sistema de Gestão de Contratação Direta</div>
+</body>
+</html>`;
+
+  // inject real brasão base64 tail (extracted from ATA generation)
+  const win = window.open('', '_blank', 'width=900,height=700');
+  // We need the full brasão — reuse the same source as gerarAta
+  _gerarDocumento(win, html);
+}
+
+function _getBrasaoB64() {
+  if (window._BRASAO_CACHE) return window._BRASAO_CACHE;
+  // Extract from gerarAta source — avoids duplicating 92KB base64
+  const src = gerarAta.toString();
+  const m = src.match(/base64,([A-Za-z0-9+/=]{200,})/);
+  window._BRASAO_CACHE = m ? m[1] : '';
+  return window._BRASAO_CACHE;
+}
+function _gerarDocumento(win, html) {
+  const finalHtml = html.replace('__BRASAO_PLACEHOLDER__', _getBrasaoB64());
+  win.document.write(finalHtml);
+  win.document.close();
 }
 
 // ══════════════════════════════════════════════════════════════
