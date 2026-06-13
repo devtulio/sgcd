@@ -966,7 +966,7 @@ const STEPS = [
   {
     name: 'Habilitação do Fornecedor',
     sub: 'Verificação regularidade fiscal, trabalhista e jurídica',
-    fields: ['responsavel','fornecedor','cnpj','observacoes'],
+    fields: ['responsavel','fornecedor','observacoes'],
     certidoes: true
   },
   {
@@ -1868,12 +1868,16 @@ function renderStepFields(i, step, data, certFileMap = {}) {
       return `<label>${label}</label>
         <input type="text" value="${val}" oninput="maskMoney(this)" onchange="updateField(${i},'${f}',this.value)">`;
     }
-    return `<label>${label}</label>
+    const fieldHtml = `<label>${label}</label>
       <input type="text" value="${val}" onchange="updateField(${i},'${f}',this.value)">`;
+    // Inject CNPJ lookup right after the fornecedor field
+    if (f === 'fornecedor' && step.certidoes) {
+      return fieldHtml + renderFornecedorLookup(i);
+    }
+    return fieldHtml;
   }).join('');
 
   if (step.certidoes) {
-    html += renderFornecedorLookup(i);
     html += renderCertidoesSection(i, data, certFileMap);
   }
   if (step.propostas) {
@@ -2478,7 +2482,7 @@ function gerarAta() {
   <div class="secao-titulo">V — Habilitação do Fornecedor</div>
   <p>O(A) Agente de Contratação procedeu à verificação da regularidade fiscal, trabalhista e jurídica do fornecedor com menor preço:</p>
   <div class="dado"><strong>Fornecedor:</strong> ${blank(v(10,'fornecedor'))}</div>
-  <div class="dado"><strong>CNPJ:</strong> ${blank(v(10,'cnpj'))}</div>
+  <div class="dado"><strong>CNPJ:</strong> ${blank(currentProcess?.fornecedor?.cnpj || v(10,'cnpj'))}</div>
   <br>
   <table>
     <thead><tr><th>Certidão</th><th>Descrição</th><th>Situação</th></tr></thead>
