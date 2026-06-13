@@ -30,16 +30,48 @@
     --shadow-md: 0 4px 12px rgba(0,0,0,.15), 0 2px 4px rgba(0,0,0,.08);
   }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; text-transform: uppercase; }
-  ::placeholder { text-transform: uppercase; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
     font-family: 'Ubuntu', -apple-system, BlinkMacSystemFont, sans-serif;
     background: var(--gray-50);
     color: var(--gray-900);
     min-height: 100vh;
-    text-transform: uppercase;
+    padding-left: 48px;
   }
+
+  /* ── Sidebar ─────────────────────────────────────── */
+  #sidebar {
+    position: fixed;
+    left: 0; top: 56px; bottom: 0;
+    width: 48px;
+    background: var(--aubergine);
+    display: flex; flex-direction: column;
+    align-items: center;
+    padding: 8px 0;
+    z-index: 90;
+    gap: 2px;
+  }
+  .nav-btn {
+    width: 36px; height: 36px; border-radius: 8px;
+    border: none; background: transparent;
+    color: rgba(255,255,255,.55); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem; transition: background .15s, color .15s;
+    position: relative;
+  }
+  .nav-btn:hover { background: rgba(255,255,255,.12); color: #fff; }
+  .nav-btn.active { background: var(--brand); color: #fff; }
+  .nav-btn .nav-tooltip {
+    position: absolute; left: 44px; top: 50%; transform: translateY(-50%);
+    background: var(--gray-900); color: #fff; font-size: .72rem; font-weight: 500;
+    padding: 4px 8px; border-radius: 4px; white-space: nowrap; pointer-events: none;
+    opacity: 0; transition: opacity .15s; z-index: 200;
+    text-transform: none; letter-spacing: 0;
+  }
+  .nav-btn:hover .nav-tooltip { opacity: 1; }
+  .nav-spacer { flex: 1; }
+  .nav-divider { width: 28px; height: 1px; background: rgba(255,255,255,.12); margin: 4px 0; }
 
   /* ── Header ─────────────────────────────────────── */
   header {
@@ -66,6 +98,7 @@
 
   /* ── Layout ──────────────────────────────────────── */
   #app { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
+  @media (max-width: 600px) { body { padding-left: 0; } #sidebar { display: none; } }
 
   /* ── Views ───────────────────────────────────────── */
   .view { display: none; }
@@ -83,14 +116,19 @@
     gap: 12px; margin-bottom: 24px;
   }
   .stat {
-    background: #fff; border-radius: var(--radius); padding: 16px 18px;
-    box-shadow: var(--shadow); border-left: 4px solid var(--brand);
+    background: #fff; border-radius: var(--radius); padding: 14px 16px;
+    box-shadow: var(--shadow); border: 1px solid var(--gray-200);
   }
-  .stat.done  { border-color: var(--success); }
-  .stat.prog  { border-color: var(--warning); }
-  .stat.pend  { border-color: var(--gray-300); }
-  .stat-val { font-size: 1.8rem; font-weight: 800; line-height: 1; }
-  .stat-lbl { font-size: .75rem; color: var(--gray-500); margin-top: 4px; text-transform: uppercase; letter-spacing: .5px; }
+  .stat.done  { background: var(--success-light); border-color: var(--success); }
+  .stat.prog  { background: var(--warning-light); border-color: var(--warning); }
+  .stat.pend  { background: var(--gray-50); border-color: var(--gray-200); }
+  .stat-icon { font-size: 1.3rem; line-height: 1; margin-bottom: 6px; }
+  .stat-val { font-size: 1.8rem; font-weight: 500; line-height: 1; }
+  .stat.done .stat-val { color: var(--success); }
+  .stat.prog .stat-val { color: #7a5800; }
+  .stat-lbl { font-size: .72rem; color: var(--gray-500); margin-top: 3px; text-transform: uppercase; letter-spacing: .5px; }
+  .stat.done .stat-lbl { color: #27500A; }
+  .stat.prog .stat-lbl { color: #7a5800; }
 
   /* search / filter */
   .filters { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
@@ -105,13 +143,21 @@
   /* process cards */
   .process-list { display: flex; flex-direction: column; gap: 10px; }
   .process-card {
-    background: #fff; border-radius: var(--radius); padding: 16px 18px;
+    background: #fff; border-radius: var(--radius); padding: 0;
     box-shadow: var(--shadow); cursor: pointer; border: 1px solid var(--gray-200);
     transition: box-shadow .15s, border-color .15s;
-    display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center;
+    display: grid; grid-template-columns: 4px 1fr auto; gap: 0; align-items: stretch;
+    overflow: hidden;
   }
   .process-card:hover { box-shadow: var(--shadow-md); border-color: var(--brand); }
-  .process-card .num { font-size: .72rem; font-weight: 600; color: var(--brand); text-transform: uppercase; }
+  .process-card .pc-stripe { border-radius: var(--radius) 0 0 var(--radius); background: var(--gray-300); }
+  .process-card.pc-progress .pc-stripe { background: var(--warning); }
+  .process-card.pc-done     .pc-stripe { background: var(--success); }
+  .process-card.pc-blocked  .pc-stripe { background: var(--danger); }
+  .process-card.pc-todo     .pc-stripe { background: var(--gray-300); }
+  .process-card .pc-body { padding: 14px 16px; }
+  .process-card .pc-right { padding: 14px 16px 14px 0; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 8px; }
+  .process-card .num { font-size: .72rem; font-weight: 600; color: var(--brand); text-transform: uppercase; letter-spacing: .3px; }
   .process-card .title { font-weight: 600; font-size: .95rem; margin: 2px 0 4px; }
   .process-card .meta { font-size: .78rem; color: var(--gray-500); display: flex; gap: 14px; flex-wrap: wrap; }
   .process-card .meta span { display: flex; align-items: center; gap: 3px; }
@@ -439,7 +485,9 @@
     --shadow-md:    0 4px 12px rgba(0,0,0,.6), 0 2px 4px rgba(0,0,0,.3);
   }
   body.dark { background: #1a1a1a; color: #f0ece8; }
-  body.dark .stat          { background: #2a2a2a; border-right-color: #383838; border-top-color: #383838; border-bottom-color: #383838; }
+  body.dark .stat          { background: #2a2a2a; border-color: #383838; }
+  body.dark .stat.done     { background: #0d2e15; border-color: var(--success); }
+  body.dark .stat.prog     { background: #2e1e00; border-color: var(--warning); }
   body.dark .process-card,
   body.dark .step-card,
   body.dark .sidebar-card,
@@ -628,18 +676,26 @@
     <h1><strong>SGCD</strong> — Sistema de Gestão de Contratação Direta</h1>
   </div>
   <div style="display:flex;align-items:center;gap:14px">
-    <button class="settings-btn" onclick="showFornecedores()" title="Cadastro de fornecedores">
-      🏢 <span>Fornecedores</span>
-    </button>
-    <button class="settings-btn" onclick="openSettings()" title="Configurações do usuário">
-      ⚙ <span class="user-name-badge" id="hdr-user-name">Configurações do Usuário</span>
-    </button>
-    <button class="theme-toggle" onclick="toggleTheme()" id="theme-btn" title="Alternar tema">
-      <span class="icon">🌙</span><span id="theme-lbl">Escuro</span>
-    </button>
-    <span id="hdr-date"></span>
+    <span id="hdr-date" style="font-size:.75rem;opacity:.65;font-weight:300"></span>
   </div>
 </header>
+
+<nav id="sidebar">
+  <button class="nav-btn active" id="nav-dash" onclick="showDash()" title="Processos">
+    📁<span class="nav-tooltip">Processos</span>
+  </button>
+  <button class="nav-btn" id="nav-forn" onclick="showFornecedores()" title="Fornecedores">
+    🏢<span class="nav-tooltip">Fornecedores</span>
+  </button>
+  <div class="nav-spacer"></div>
+  <div class="nav-divider"></div>
+  <button class="nav-btn" id="nav-settings" onclick="openSettings()" title="Configurações">
+    ⚙️<span class="nav-tooltip">Configurações</span>
+  </button>
+  <button class="nav-btn" onclick="toggleTheme()" id="theme-btn" title="Alternar tema">
+    <span id="theme-lbl">🌙</span><span class="nav-tooltip">Alternar tema</span>
+  </button>
+</nav>
 
 <div id="app">
   <!-- ── Dashboard ── -->
@@ -653,10 +709,10 @@
     </div>
 
     <div class="stats">
-      <div class="stat pend"><div class="stat-val" id="st-total">0</div><div class="stat-lbl">Total</div></div>
-      <div class="stat prog"><div class="stat-val" id="st-prog">0</div><div class="stat-lbl">Em andamento</div></div>
-      <div class="stat done"><div class="stat-val" id="st-done">0</div><div class="stat-lbl">Concluídos</div></div>
-      <div class="stat"    ><div class="stat-val" id="st-pend">0</div><div class="stat-lbl">Não iniciados</div></div>
+      <div class="stat"><div class="stat-icon">📁</div><div class="stat-val" id="st-total">0</div><div class="stat-lbl">Total</div></div>
+      <div class="stat prog"><div class="stat-icon">⏳</div><div class="stat-val" id="st-prog">0</div><div class="stat-lbl">Em andamento</div></div>
+      <div class="stat done"><div class="stat-icon">✅</div><div class="stat-val" id="st-done">0</div><div class="stat-lbl">Concluídos</div></div>
+      <div class="stat pend"><div class="stat-icon">⏸</div><div class="stat-val" id="st-pend">0</div><div class="stat-lbl">Não iniciados</div></div>
     </div>
 
     <div class="filters">
@@ -683,7 +739,6 @@
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
           Novo Fornecedor
         </button>
-        <button class="btn btn-ghost" onclick="showDash()">← Processos</button>
       </div>
     </div>
     <div class="filters">
@@ -1643,6 +1698,7 @@ async function showFornecedores() {
   document.getElementById('view-dash').classList.remove('active');
   document.getElementById('view-detail').classList.remove('active');
   document.getElementById('view-fornecedores').classList.add('active');
+  setNavActive('nav-forn');
   await renderFornecedores();
 }
 async function renderFornecedores() {
@@ -1704,10 +1760,17 @@ async function renderFornecedores() {
   }).join('');
 }
 
+function setNavActive(id) {
+  document.querySelectorAll('#sidebar .nav-btn[id]').forEach(b => b.classList.remove('active'));
+  const el = document.getElementById(id);
+  if (el) el.classList.add('active');
+}
+
 function showDash() {
   document.getElementById('view-dash').classList.add('active');
   document.getElementById('view-detail').classList.remove('active');
   document.getElementById('view-fornecedores').classList.remove('active');
+  setNavActive('nav-dash');
   currentId = null;
   currentProcess = null;
   expandedSteps.clear();
@@ -1762,8 +1825,9 @@ function renderDash() {
     const fracBadge = frac && frac.nivel !== 'ok'
       ? `<span class="frac-badge ${frac.nivel}">${frac.nivel === 'alerta' ? '🔴 Alerta Fracionamento' : '🟡 Atenção Fracionamento'} ${frac.pct}%</span>`
       : '';
-    return `<div class="process-card" onclick="openProcess('${p.id}')">
-      <div>
+    return `<div class="process-card pc-${st}" onclick="openProcess('${p.id}')">
+      <div class="pc-stripe"></div>
+      <div class="pc-body">
         <div class="num">${escHtml(p.num || '—')}</div>
         <div class="title">${escHtml(p.objeto)}</div>
         <div class="meta">
@@ -1773,7 +1837,7 @@ function renderDash() {
           ${fracBadge}
         </div>
       </div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
+      <div class="pc-right">
         <span class="badge ${stl}">${statusLabel(st)}</span>
         <div class="progress-wrap">
           <div class="progress-bar"><div class="progress-fill ${pc===100?'done':''}" style="width:${pc}%"></div></div>
@@ -3269,10 +3333,7 @@ function applyTheme(dark) {
   document.body.classList.toggle('dark', dark);
   const btn = document.getElementById('theme-btn');
   const lbl = document.getElementById('theme-lbl');
-  if (btn) {
-    btn.querySelector('.icon').textContent = dark ? '☀️' : '🌙';
-    lbl.textContent = dark ? 'Claro' : 'Escuro';
-  }
+  if (lbl) lbl.textContent = dark ? '☀️' : '🌙';
 }
 
 // ══════════════════════════════════════════════════════════════
