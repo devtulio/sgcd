@@ -511,6 +511,44 @@
   .frac-total { display: flex; justify-content: space-between; padding: 6px 8px; border-top: 1px solid var(--gray-200);
     margin-top: 4px; font-weight: 700; font-size: .8rem; }
 
+  /* ── Fornecedor lookup (passo habilitação) ── */
+  .forn-lookup { margin-bottom: 14px; padding: 12px; background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: var(--radius); }
+  .forn-input-row { display: flex; gap: 8px; align-items: center; }
+  .forn-input-row input { flex: 1; border: 1px solid var(--gray-200); border-radius: 6px; padding: 7px 10px; font-size: .85rem; font-family: inherit; color: var(--gray-900); outline: none; }
+  .forn-input-row input:focus { border-color: var(--brand); }
+  .forn-card { margin-top: 10px; background: #fff; border: 1px solid var(--gray-200); border-radius: var(--radius); overflow: hidden; }
+  .forn-card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--gray-100); }
+  .forn-razao { font-size: .85rem; font-weight: 700; color: var(--gray-900); }
+  .forn-fantasia { font-size: .75rem; color: var(--gray-500); }
+  .forn-cnpj-row { display: flex; align-items: center; gap: 6px; margin-top: 3px; }
+  .forn-cnpj-txt { font-size: .78rem; color: var(--brand); font-weight: 600; letter-spacing: .3px; }
+  .copy-btn { background: none; border: 1px solid var(--gray-200); border-radius: 4px; padding: 1px 6px; font-size: .65rem; cursor: pointer; color: var(--gray-500); }
+  .copy-btn:hover { border-color: var(--brand); color: var(--brand); }
+  .forn-sit { font-size: .7rem; font-weight: 700; padding: 2px 8px; border-radius: 20px; white-space: nowrap; }
+  .forn-sit.ativa   { background: #d4edda; color: #155724; }
+  .forn-sit.inativa { background: #f8d7da; color: #721c24; }
+  .forn-sit.outra   { background: #fff3cd; color: #856404; }
+  .forn-details { padding: 8px 12px; display: flex; flex-direction: column; gap: 4px; }
+  .forn-detail-row { font-size: .73rem; color: var(--gray-600); }
+  .forn-qsa { padding: 8px 12px; border-top: 1px solid var(--gray-100); }
+  .forn-qsa-title { font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--gray-500); margin-bottom: 4px; }
+  .forn-qsa-item { font-size: .75rem; color: var(--gray-700); padding: 2px 0; }
+  .cnpj-strip { display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: var(--aubergine); border-radius: var(--radius); margin-bottom: 10px; }
+  .cnpj-strip span { font-size: .75rem; color: rgba(255,255,255,.7); }
+  .cnpj-strip strong { color: #fff; font-size: .8rem; letter-spacing: .5px; }
+
+  /* ── Fornecedores view ── */
+  .forn-list-item { background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 10px; }
+  .forn-list-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 8px; }
+  .forn-proc-list { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+  .forn-proc-link { font-size: .7rem; background: var(--brand); color: #fff; padding: 2px 8px; border-radius: 12px; cursor: pointer; }
+  .forn-proc-link:hover { opacity: .85; }
+  body.dark .forn-card, body.dark .forn-lookup { background: #2a2a2a; border-color: #383838; }
+  body.dark .forn-card-header { border-color: #383838; }
+  body.dark .forn-input-row input { background: #1e1e1e; color: #e0e0e0; border-color: #444; }
+  body.dark .forn-list-item { background: #2a2a2a; border-color: #383838; }
+  body.dark .copy-btn { border-color: #555; color: #aaa; }
+
   /* print */
   @media print {
     header, .btn, .step-actions, .upload-zone, .filters, .dash-top button { display: none !important; }
@@ -534,6 +572,9 @@
     <h1><strong>SGCD</strong> — Sistema de Gestão de Contratação Direta</h1>
   </div>
   <div style="display:flex;align-items:center;gap:14px">
+    <button class="settings-btn" onclick="showFornecedores()" title="Cadastro de fornecedores">
+      🏢 <span>Fornecedores</span>
+    </button>
     <button class="settings-btn" onclick="openSettings()" title="Configurações do usuário">
       ⚙ <span class="user-name-badge" id="hdr-user-name">Configurações do Usuário</span>
     </button>
@@ -574,6 +615,18 @@
     </div>
 
     <div class="process-list" id="process-list"></div>
+  </div>
+
+  <!-- ── Fornecedores ── -->
+  <div id="view-fornecedores" class="view">
+    <div class="dash-top">
+      <h2>Fornecedores</h2>
+      <button class="btn btn-ghost" onclick="showDash()">← Processos</button>
+    </div>
+    <div class="filters">
+      <input type="text" id="forn-search" placeholder="Buscar por CNPJ, razão social…" oninput="renderFornecedores()">
+    </div>
+    <div id="forn-list"></div>
   </div>
 
   <!-- ── Process Detail ── -->
@@ -711,33 +764,33 @@
 
       <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
         <legend style="font-size:.72rem;font-weight:700;color:var(--brand);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Agente de Contratação</legend>
-        <div class="form-group"><label>Nome Completo *</label>
+        <div class="info-field"><label>Nome Completo *</label>
           <input type="text" id="s-nome" placeholder="Ex: João da Silva"></div>
-        <div class="form-group"><label>Cargo / Função</label>
+        <div class="info-field"><label>Cargo / Função</label>
           <input type="text" id="s-cargo" placeholder="Ex: Agente de Contratação"></div>
-        <div class="form-group"><label>Matrícula</label>
+        <div class="info-field"><label>Matrícula</label>
           <input type="text" id="s-matricula" placeholder="Ex: 12345"></div>
       </fieldset>
 
       <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
         <legend style="font-size:.72rem;font-weight:700;color:var(--aubergine-mid);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Órgão</legend>
-        <div class="form-group"><label>Nome do Órgão</label>
+        <div class="info-field"><label>Nome do Órgão</label>
           <input type="text" id="s-orgao" placeholder="Ex: Prefeitura Municipal de Orindiúva"></div>
-        <div class="form-group"><label>Município / UF</label>
+        <div class="info-field"><label>Município / UF</label>
           <input type="text" id="s-municipio" placeholder="Ex: Orindiúva/SP"></div>
       </fieldset>
 
       <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
         <legend style="font-size:.72rem;font-weight:700;color:var(--aubergine-mid);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Autoridade Competente</legend>
-        <div class="form-group"><label>Nome Completo</label>
+        <div class="info-field"><label>Nome Completo</label>
           <input type="text" id="s-aut-nome" placeholder="Ex: Maria Souza"></div>
-        <div class="form-group"><label>Cargo</label>
+        <div class="info-field"><label>Cargo</label>
           <input type="text" id="s-aut-cargo" placeholder="Ex: Prefeita Municipal"></div>
       </fieldset>
 
       <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px">
         <legend style="font-size:.72rem;font-weight:700;color:var(--aubergine-mid);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Controle de Fracionamento</legend>
-        <div class="form-group">
+        <div class="info-field">
           <label>Janela temporal de análise</label>
           <select id="s-frac-janela">
             <option value="exercicio">Exercício financeiro — 1º jan a 31 dez (recomendado)</option>
@@ -785,7 +838,7 @@
 // DB — IndexedDB wrapper
 // ══════════════════════════════════════════════════════════════
 let db;
-const DB_NAME = 'dispensaDB', DB_VER = 1;
+const DB_NAME = 'dispensaDB', DB_VER = 2;
 
 function initDB() {
   return new Promise((res, rej) => {
@@ -799,6 +852,9 @@ function initDB() {
         const fs = d.createObjectStore('files', { keyPath: 'id', autoIncrement: true });
         fs.createIndex('processId', 'processId');
         fs.createIndex('stepIdx', ['processId','stepIdx']);
+      }
+      if (!d.objectStoreNames.contains('fornecedores')) {
+        d.createObjectStore('fornecedores', { keyPath: 'id' });
       }
     };
     req.onsuccess = e => { db = e.target.result; res(); };
@@ -1314,9 +1370,175 @@ async function saveProcess(p) {
 // ══════════════════════════════════════════════════════════════
 // DASHBOARD
 // ══════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════
+// FORNECEDORES
+// ══════════════════════════════════════════════════════════════
+function cleanCnpj(s) { return (s || '').replace(/\D/g, ''); }
+function formatCnpj(s) {
+  const d = cleanCnpj(s);
+  if (d.length !== 14) return s;
+  return `${d.slice(0,2)}.${d.slice(2,5)}.${d.slice(5,8)}/${d.slice(8,12)}-${d.slice(12)}`;
+}
+function maskCnpj(input) {
+  let v = cleanCnpj(input.value).slice(0, 14);
+  if (v.length > 12) v = v.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{0,2})/, '$1.$2.$3/$4-$5');
+  else if (v.length > 8) v = v.replace(/^(\d{2})(\d{3})(\d{3})(\d{0,4})/, '$1.$2.$3/$4');
+  else if (v.length > 5) v = v.replace(/^(\d{2})(\d{3})(\d{0,3})/, '$1.$2.$3');
+  else if (v.length > 2) v = v.replace(/^(\d{2})(\d{0,3})/, '$1.$2');
+  input.value = v;
+}
+function cnpjSitClass(sit) {
+  if (!sit) return 'outra';
+  const s = sit.toUpperCase();
+  if (s.includes('ATIVA')) return 'ativa';
+  if (s.includes('BAIXADA') || s.includes('INAPTA') || s.includes('CANCELADA')) return 'inativa';
+  return 'outra';
+}
+async function buscarCnpj(stepIdx) {
+  const input = document.getElementById(`cnpj-fld-${stepIdx}`);
+  const digits = cleanCnpj(input.value);
+  if (digits.length !== 14) { toast('CNPJ deve ter 14 dígitos.', 'error'); return; }
+  toast('Consultando BrasilAPI…', '');
+  try {
+    const r = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${digits}`);
+    if (!r.ok) throw new Error('CNPJ não encontrado ou inválido.');
+    const d = await r.json();
+    const end = [d.logradouro, d.numero, d.complemento, d.bairro, d.municipio ? `${d.municipio}/${d.uf}` : '', d.cep ? `CEP ${d.cep}` : ''].filter(Boolean).join(', ');
+    const forn = {
+      id: digits,
+      cnpj: formatCnpj(digits),
+      cnpj_digits: digits,
+      razao_social: d.razao_social || '',
+      nome_fantasia: d.nome_fantasia || '',
+      situacao: d.descricao_situacao_cadastral || '',
+      porte: d.descricao_porte || '',
+      abertura: d.data_inicio_atividade || '',
+      natureza_juridica: d.natureza_juridica || '',
+      cnae: d.cnae_fiscal_descricao || '',
+      endereco: end,
+      qsa: (d.qsa || []).map(s => ({ nome: s.nome_socio, qual: s.qualificacao_socio })),
+      consultadoEm: Date.now()
+    };
+    currentProcess.fornecedor = forn;
+    await saveProcess(currentProcess);
+    await saveFornecedor(forn, currentProcess.id);
+    toast('Fornecedor encontrado e salvo!', 'success');
+    playSuccess();
+    expandedSteps.add(stepIdx);
+    renderChecklist();
+  } catch (e) {
+    toast(e.message || 'Erro ao consultar CNPJ.', 'error');
+    playError();
+  }
+}
+async function saveFornecedor(forn, processId) {
+  const existing = await dbGet('fornecedores', forn.id);
+  const processos = existing
+    ? [...new Set([...(existing.processos || []), processId])]
+    : [processId];
+  await dbPut('fornecedores', { ...forn, processos, addedAt: existing?.addedAt || Date.now(), updatedAt: Date.now() });
+}
+function renderFornecedorLookup(stepIdx) {
+  const p = currentProcess;
+  const f = p.fornecedor;
+  const cnpjVal = f ? f.cnpj : '';
+
+  let cardHtml = '';
+  if (f) {
+    const sitCls = cnpjSitClass(f.situacao);
+    const qsaHtml = (f.qsa || []).length
+      ? `<div class="forn-qsa">
+          <div class="forn-qsa-title">Quadro Societário (QSA)</div>
+          ${f.qsa.map(s => `<div class="forn-qsa-item">👤 ${escHtml(s.nome)}${s.qual ? ` — ${escHtml(s.qual)}` : ''}</div>`).join('')}
+        </div>` : '';
+    cardHtml = `<div class="forn-card">
+      <div class="forn-card-header">
+        <div>
+          <div class="forn-razao">${escHtml(f.razao_social)}</div>
+          ${f.nome_fantasia ? `<div class="forn-fantasia">${escHtml(f.nome_fantasia)}</div>` : ''}
+          <div class="forn-cnpj-row">
+            <span class="forn-cnpj-txt">${escHtml(f.cnpj)}</span>
+            <button class="copy-btn" onclick="navigator.clipboard.writeText('${f.cnpj_digits}');toast('CNPJ copiado!','success')">📋 copiar</button>
+          </div>
+        </div>
+        <span class="forn-sit ${sitCls}">${escHtml(f.situacao || '—')}</span>
+      </div>
+      <div class="forn-details">
+        ${f.endereco ? `<div class="forn-detail-row">📍 ${escHtml(f.endereco)}</div>` : ''}
+        ${f.abertura ? `<div class="forn-detail-row">📅 Abertura: ${escHtml(f.abertura)}</div>` : ''}
+        ${f.porte ? `<div class="forn-detail-row">🏢 Porte: ${escHtml(f.porte)}</div>` : ''}
+        ${f.cnae ? `<div class="forn-detail-row">🔧 CNAE: ${escHtml(f.cnae)}</div>` : ''}
+        ${f.natureza_juridica ? `<div class="forn-detail-row">📋 Nat. Jurídica: ${escHtml(f.natureza_juridica)}</div>` : ''}
+      </div>
+      ${qsaHtml}
+    </div>`;
+  }
+
+  return `<div class="forn-lookup">
+    <label style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-500);display:block;margin-bottom:6px">CNPJ do Fornecedor</label>
+    <div class="forn-input-row">
+      <input type="text" id="cnpj-fld-${stepIdx}" value="${cnpjVal}" placeholder="00.000.000/0000-00" oninput="maskCnpj(this)" maxlength="18">
+      <button class="btn btn-primary btn-sm" onclick="buscarCnpj(${stepIdx})">🔍 Consultar</button>
+    </div>
+    ${cardHtml}
+  </div>`;
+}
+async function showFornecedores() {
+  document.getElementById('view-dash').classList.remove('active');
+  document.getElementById('view-detail').classList.remove('active');
+  document.getElementById('view-fornecedores').classList.add('active');
+  await renderFornecedores();
+}
+async function renderFornecedores() {
+  const all = await dbGetAll('fornecedores');
+  const q = (document.getElementById('forn-search')?.value || '').toLowerCase();
+  const lista = all
+    .filter(f => !q || f.razao_social?.toLowerCase().includes(q) || f.cnpj?.includes(q) || f.nome_fantasia?.toLowerCase().includes(q))
+    .sort((a, b) => (b.updatedAt || b.addedAt || 0) - (a.updatedAt || a.addedAt || 0));
+
+  const el = document.getElementById('forn-list');
+  if (!lista.length) {
+    el.innerHTML = `<p style="color:var(--gray-500);text-align:center;padding:40px 20px">
+      ${q ? 'Nenhum fornecedor encontrado.' : 'Nenhum fornecedor cadastrado ainda.<br><small>Fornecedores são adicionados automaticamente ao consultar o CNPJ no passo de Habilitação.</small>'}
+    </p>`;
+    return;
+  }
+  el.innerHTML = lista.map(f => {
+    const sitCls = cnpjSitClass(f.situacao);
+    const procLinks = (f.processos || []).map(pid => {
+      const p = processes.find(x => x.id === pid);
+      return p ? `<span class="forn-proc-link" onclick="openProcess('${escHtml(pid)}')">${escHtml(p.num || p.objeto.slice(0, 25))}</span>` : '';
+    }).filter(Boolean).join('');
+    const qsaNames = (f.qsa || []).map(s => escHtml(s.nome)).join(', ');
+    return `<div class="forn-list-item">
+      <div class="forn-list-header">
+        <div>
+          <div class="forn-razao">${escHtml(f.razao_social)}</div>
+          ${f.nome_fantasia ? `<div class="forn-fantasia">${escHtml(f.nome_fantasia)}</div>` : ''}
+          <div class="forn-cnpj-row" style="margin-top:4px">
+            <span class="forn-cnpj-txt">${escHtml(f.cnpj)}</span>
+            <button class="copy-btn" onclick="navigator.clipboard.writeText('${f.cnpj_digits}');toast('CNPJ copiado!','success')">📋 copiar</button>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+          <span class="forn-sit ${sitCls}">${escHtml(f.situacao || '—')}</span>
+          ${f.porte ? `<span style="font-size:.65rem;color:var(--gray-500)">${escHtml(f.porte)}</span>` : ''}
+        </div>
+      </div>
+      ${f.endereco ? `<div class="forn-detail-row">📍 ${escHtml(f.endereco)}</div>` : ''}
+      ${f.abertura ? `<div class="forn-detail-row">📅 Abertura: ${escHtml(f.abertura)}</div>` : ''}
+      ${f.cnae ? `<div class="forn-detail-row">🔧 CNAE: ${escHtml(f.cnae)}</div>` : ''}
+      ${qsaNames ? `<div class="forn-detail-row">👥 QSA: ${qsaNames}</div>` : ''}
+      ${procLinks ? `<div class="forn-proc-list" style="margin-top:6px"><span style="font-size:.68rem;color:var(--gray-500);margin-right:4px">Processos:</span>${procLinks}</div>` : ''}
+      <div class="forn-detail-row" style="margin-top:6px;font-size:.65rem;color:var(--gray-400)">Atualizado em ${fmt(f.updatedAt || f.addedAt)}</div>
+    </div>`;
+  }).join('');
+}
+
 function showDash() {
   document.getElementById('view-dash').classList.add('active');
   document.getElementById('view-detail').classList.remove('active');
+  document.getElementById('view-fornecedores').classList.remove('active');
   currentId = null;
   currentProcess = null;
   expandedSteps.clear();
@@ -1479,6 +1701,7 @@ async function openProcess(id) {
   expandedSteps.clear();
 
   document.getElementById('view-dash').classList.remove('active');
+  document.getElementById('view-fornecedores').classList.remove('active');
   document.getElementById('view-detail').classList.add('active');
 
   renderDetail();
@@ -1650,6 +1873,7 @@ function renderStepFields(i, step, data, certFileMap = {}) {
   }).join('');
 
   if (step.certidoes) {
+    html += renderFornecedorLookup(i);
     html += renderCertidoesSection(i, data, certFileMap);
   }
   if (step.propostas) {
@@ -1659,6 +1883,7 @@ function renderStepFields(i, step, data, certFileMap = {}) {
 }
 
 function renderCertidoesSection(stepIdx, data, certFileMap = {}) {
+  const forn = currentProcess.fornecedor || null;
   const saved = data.fields._certidoes ? JSON.parse(data.fields._certidoes) : {};
   const engenharia = !!saved._engenharia;
   const aplicaveis = CERTIDOES.filter(c => !c.engenharia || engenharia);
@@ -1705,13 +1930,21 @@ function renderCertidoesSection(stepIdx, data, certFileMap = {}) {
       </div>
       <div class="cert-actions">
         ${st === 'obtida' ? `<div class="cert-date"><input type="date" value="${date}" onchange="updateCertidao(${stepIdx},'${c.id}','date',this.value)" title="Data de obtenção"></div>` : ''}
-        <a class="cert-link-btn" href="${c.url}" target="_blank" rel="noopener" onclick="playClick()">↗ Acessar</a>
+        <a class="cert-link-btn" href="${c.id === 'transp' && forn ? c.url + '&cnpjCpf=' + forn.cnpj_digits : c.url}" target="_blank" rel="noopener" onclick="playClick()">↗ Acessar</a>
       </div>
       ${fileArea}
     </div>`;
   }).join('');
 
+  const cnpjStrip = forn ? `<div class="cnpj-strip">
+    <span>CNPJ do fornecedor:</span>
+    <strong>${escHtml(forn.cnpj)}</strong>
+    <button class="copy-btn" style="background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3);color:#fff" onclick="navigator.clipboard.writeText('${forn.cnpj_digits}');toast('CNPJ copiado!','success')">📋 copiar</button>
+    ${forn.razao_social ? `<span style="opacity:.6">— ${escHtml(forn.razao_social)}</span>` : ''}
+  </div>` : '';
+
   return `<div style="margin-top:14px">
+    ${cnpjStrip}
     <div class="cert-header">
       <span>Certidões — ${obtidas} de ${aplicaveis.length} obtidas</span>
       <div class="cert-progress-bar"><div class="cert-progress-fill" style="width:${pct}%"></div></div>
