@@ -512,7 +512,7 @@
     margin-top: 4px; font-weight: 700; font-size: .8rem; }
 
   /* ── Fornecedor lookup (passo habilitação) ── */
-  .forn-lookup { margin-bottom: 14px; padding: 12px; background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: var(--radius); }
+  .forn-lookup { margin-top: 12px; margin-bottom: 14px; padding: 12px; background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: var(--radius); }
   .forn-input-row { display: flex; gap: 8px; align-items: center; }
   .forn-input-row input { flex: 1; border: 1px solid var(--gray-200); border-radius: 6px; padding: 7px 10px; font-size: .85rem; font-family: inherit; color: var(--gray-900); outline: none; }
   .forn-input-row input:focus { border-color: var(--brand); }
@@ -1420,6 +1420,8 @@ async function buscarCnpj(stepIdx) {
       consultadoEm: Date.now()
     };
     currentProcess.fornecedor = forn;
+    // Auto-fill fornecedor field with razão social
+    currentProcess.steps[stepIdx].fields.fornecedor = forn.razao_social;
     await saveProcess(currentProcess);
     await saveFornecedor(forn, currentProcess.id);
     toast('Fornecedor encontrado e salvo!', 'success');
