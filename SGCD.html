@@ -747,7 +747,7 @@
         <div class="cert-add-row">
           <div class="info-field">
             <label>Data de Emissão</label>
-            <input type="date" id="ce-emissao">
+            <input type="date" id="ce-emissao" oninput="onCeEmissaoChange()">
           </div>
           <div class="info-field">
             <label>Data de Validade</label>
@@ -1040,6 +1040,16 @@ function dbGetByIndex(store, indexName, value) {
     const tx = db.transaction(store, 'readonly');
     const idx = tx.objectStore(store).index(indexName);
     const req = idx.getAll(value);
+    req.onsuccess = () => res(req.result);
+    req.onerror   = e => rej(e);
+  });
+}
+
+function dbGetByIndexPrefix(store, indexName, prefix) {
+  return new Promise((res, rej) => {
+    const tx = db.transaction(store, 'readonly');
+    const idx = tx.objectStore(store).index(indexName);
+    const req = idx.getAll(IDBKeyRange.bound(prefix, prefix + '￿'));
     req.onsuccess = () => res(req.result);
     req.onerror   = e => rej(e);
   });
@@ -1576,7 +1586,13 @@ async function saveFornecedor(forn, processId) {
   const processos = processId
     ? [...new Set([...prevProcessos, processId])]
     : prevProcessos;
-  await dbPut('fornecedores', { ...forn, processos, addedAt: existing?.addedAt || Date.now(), updatedAt: Date.now() });
+  await dbPut('fornecedores', {
+    ...forn,
+    processos,
+    certidoes: existing?.certidoes || [],
+    addedAt: existing?.addedAt || Date.now(),
+    updatedAt: Date.now()
+  });
 }
 function renderFornecedorLookup(stepIdx) {
   const p = currentProcess;
@@ -1706,17 +1722,25 @@ function renderDash() {
     const st = processStatus(p);
     if (fSt && st !== fSt) return false;
     if (q) {
-      const hay = [p.num, p.objeto, p.fornecedor, p.unidade].join(' ').toLowerCase();
+      const fornNome = typeof p.fornecedor === 'object' ? (p.fornecedor?.razao_social || '') : (p.fornecedor || '');
+      const hay = [p.num, p.objeto, fornNome, p.unidade].join(' ').toLowerCase();
       if (!hay.includes(q)) return false;
     }
     return true;
   });
 
-  // stats
+  // stats — single pass
+  let stProg = 0, stDone = 0, stPend = 0;
+  for (const p of processes) {
+    const s = processStatus(p);
+    if (s === 'progress') stProg++;
+    else if (s === 'done') stDone++;
+    else if (s === 'todo') stPend++;
+  }
   document.getElementById('st-total').textContent = processes.length;
-  document.getElementById('st-prog').textContent  = processes.filter(p => processStatus(p) === 'progress').length;
-  document.getElementById('st-done').textContent  = processes.filter(p => processStatus(p) === 'done').length;
-  document.getElementById('st-pend').textContent  = processes.filter(p => processStatus(p) === 'todo').length;
+  document.getElementById('st-prog').textContent  = stProg;
+  document.getElementById('st-done').textContent  = stDone;
+  document.getElementById('st-pend').textContent  = stPend;
 
   const list = document.getElementById('process-list');
   if (filtered.length === 0) {
@@ -2090,18 +2114,23 @@ function closeCertEdit() {
   document.getElementById('cert-edit-overlay').classList.add('hidden');
 }
 
+function _ceAutoFillValidade() {
+  const emissao = document.getElementById('ce-emissao').value;
+  if (!emissao || document.getElementById('ce-validade').value) return;
+  const tipoId = document.getElementById('ce-tipo').value;
+  const tipo = CERT_TIPOS.find(t => t.id === tipoId);
+  if (!tipo?.diasPadrao) return;
+  const d = new Date(emissao + 'T00:00:00');
+  d.setDate(d.getDate() + tipo.diasPadrao);
+  document.getElementById('ce-validade').value = d.toISOString().slice(0,10);
+}
 function onCeTipoChange() {
   const val = document.getElementById('ce-tipo').value;
   document.getElementById('ce-tipo-outro-wrap').style.display = val === 'outro' ? 'block' : 'none';
-  // Auto-fill validade when emissao changes based on tipo default
-  const emEl = document.getElementById('ce-emissao');
-  if (!emEl.value) return;
-  const tipo = CERT_TIPOS.find(t => t.id === val);
-  if (tipo?.diasPadrao && !document.getElementById('ce-validade').value) {
-    const d = new Date(emEl.value + 'T00:00:00');
-    d.setDate(d.getDate() + tipo.diasPadrao);
-    document.getElementById('ce-validade').value = d.toISOString().slice(0,10);
-  }
+  _ceAutoFillValidade();
+}
+function onCeEmissaoChange() {
+  _ceAutoFillValidade();
 }
 
 async function saveCertEdit() {
@@ -2570,15 +2599,13 @@ async function updateCertidao(stepIdx, id, field, value) {
   await saveCertidoes(stepIdx, obj);
 }
 async function getCertFilesMap(processId, stepIdx) {
-  const all = await dbGetAll('files');
   const prefix = processId + '_' + stepIdx + '_cert_';
+  const files = await dbGetByIndexPrefix('files', 'processId', prefix);
   const map = {};
-  for (const f of all) {
-    if (typeof f.processId === 'string' && f.processId.startsWith(prefix)) {
-      const certId = f.processId.slice(prefix.length);
-      if (!map[certId]) map[certId] = [];
-      map[certId].push(f);
-    }
+  for (const f of files) {
+    const certId = f.processId.slice(prefix.length);
+    if (!map[certId]) map[certId] = [];
+    map[certId].push(f);
   }
   return map;
 }
@@ -2918,12 +2945,14 @@ async function deleteFile(fileId, stepIdx) {
 // ══════════════════════════════════════════════════════════════
 async function deleteProcess() {
   if (!await customConfirm(`Excluir o processo "${currentProcess.objeto}"? Todos os dados e arquivos serão removidos permanentemente.`, { title: 'Excluir Processo', icon: '🚨', okLabel: 'Excluir', okClass: 'btn-danger' })) return;
-  // delete all files
-  for (let i = 0; i < STEPS.length; i++) {
-    const files = await dbGetByIndex('files', 'processId', currentProcess.id + '_' + i);
-    for (const f of files) await dbDelete('files', f.id);
+  const allFiles = await dbGetAll('files');
+  const pid = currentProcess.id;
+  for (const f of allFiles) {
+    if (typeof f.processId === 'string' && f.processId.startsWith(pid + '_')) {
+      await dbDelete('files', f.id);
+    }
   }
-  await dbDelete('processes', currentProcess.id);
+  await dbDelete('processes', pid);
   toast('Processo excluído.', '');
   showDash();
 }
