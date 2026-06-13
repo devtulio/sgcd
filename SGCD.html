@@ -659,6 +659,18 @@
     </div>
   </div>
 
+  <!-- ── Fornecedor Detail/Edit Modal ── -->
+  <div class="overlay hidden" id="forn-detail-overlay" onclick="if(event.target===this)closeFornDetail()">
+    <div class="modal" style="max-width:560px">
+      <div class="modal-header">
+        <h2 id="forn-detail-title">Cadastro do Fornecedor</h2>
+        <button class="btn btn-ghost btn-icon" onclick="closeFornDetail()">✕</button>
+      </div>
+      <div class="modal-body" id="forn-detail-body"></div>
+      <div class="modal-footer" id="forn-detail-footer"></div>
+    </div>
+  </div>
+
   <!-- ── Process Detail ── -->
   <div id="view-detail" class="view">
     <button class="back btn btn-ghost" onclick="showDash()">
@@ -1543,19 +1555,20 @@ async function renderFornecedores() {
       return p ? `<span class="forn-proc-link" onclick="openProcess('${escHtml(pid)}')">${escHtml(p.num || p.objeto.slice(0, 25))}</span>` : '';
     }).filter(Boolean).join('');
     const qsaNames = (f.qsa || []).map(s => escHtml(s.nome)).join(', ');
-    return `<div class="forn-list-item">
+    return `<div class="forn-list-item" style="cursor:pointer" onclick="openFornDetail('${f.id}')">
       <div class="forn-list-header">
         <div>
           <div class="forn-razao">${escHtml(f.razao_social)}</div>
           ${f.nome_fantasia ? `<div class="forn-fantasia">${escHtml(f.nome_fantasia)}</div>` : ''}
           <div class="forn-cnpj-row" style="margin-top:4px">
             <span class="forn-cnpj-txt">${escHtml(f.cnpj)}</span>
-            <button class="copy-btn" onclick="navigator.clipboard.writeText('${f.cnpj_digits}');toast('CNPJ copiado!','success')">📋 copiar</button>
+            <button class="copy-btn" onclick="event.stopPropagation();navigator.clipboard.writeText('${f.cnpj_digits}');toast('CNPJ copiado!','success')">📋 copiar</button>
           </div>
         </div>
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
           <span class="forn-sit ${sitCls}">${escHtml(f.situacao || '—')}</span>
           ${f.porte ? `<span style="font-size:.65rem;color:var(--gray-500)">${escHtml(f.porte)}</span>` : ''}
+          <button class="btn btn-outline btn-sm" style="font-size:.68rem;padding:2px 10px" onclick="event.stopPropagation();openFornDetail('${f.id}',true)">✏ Editar</button>
         </div>
       </div>
       ${f.endereco ? `<div class="forn-detail-row">📍 ${escHtml(f.endereco)}</div>` : ''}
@@ -1678,6 +1691,131 @@ function populateModalNatureza() {
 }
 
 let _fornModalData = null;
+let _currentForn   = null;
+
+function _fornViewHtml(f) {
+  const sitCls = cnpjSitClass(f.situacao);
+  const qsaHtml = (f.qsa || []).length
+    ? `<div class="forn-qsa">
+        <div class="forn-qsa-title">Quadro Societário (QSA)</div>
+        ${f.qsa.map(s => `<div class="forn-qsa-item">👤 ${escHtml(s.nome)}${s.qual ? ` — ${escHtml(s.qual)}` : ''}</div>`).join('')}
+      </div>` : '';
+  const procLinks = (f.processos || []).map(pid => {
+    const p = processes.find(x => x.id === pid);
+    return p ? `<span class="forn-proc-link" onclick="closeFornDetail();openProcess('${escHtml(pid)}')">${escHtml(p.num || p.objeto.slice(0,25))}</span>` : '';
+  }).filter(Boolean).join('');
+  return `<div class="forn-card" style="border:none;background:transparent;padding:0">
+    <div class="forn-card-header" style="padding:0 0 10px">
+      <div>
+        <div class="forn-razao">${escHtml(f.razao_social)}</div>
+        ${f.nome_fantasia ? `<div class="forn-fantasia">${escHtml(f.nome_fantasia)}</div>` : ''}
+        <div class="forn-cnpj-row" style="margin-top:4px">
+          <span class="forn-cnpj-txt">${escHtml(f.cnpj)}</span>
+          <button class="copy-btn" onclick="navigator.clipboard.writeText('${f.cnpj_digits}');toast('CNPJ copiado!','success')">📋 copiar</button>
+        </div>
+      </div>
+      <span class="forn-sit ${sitCls}">${escHtml(f.situacao || '—')}</span>
+    </div>
+    <div class="forn-details" style="padding:0;gap:6px">
+      ${f.endereco         ? `<div class="forn-detail-row">📍 ${escHtml(f.endereco)}</div>` : ''}
+      ${f.abertura         ? `<div class="forn-detail-row">📅 Abertura: ${escHtml(f.abertura)}</div>` : ''}
+      ${f.porte            ? `<div class="forn-detail-row">🏢 Porte: ${escHtml(f.porte)}</div>` : ''}
+      ${f.cnae             ? `<div class="forn-detail-row">🔧 CNAE: ${escHtml(f.cnae)}</div>` : ''}
+      ${f.natureza_juridica? `<div class="forn-detail-row">📋 Nat. Jurídica: ${escHtml(f.natureza_juridica)}</div>` : ''}
+    </div>
+    ${qsaHtml}
+    ${procLinks ? `<div class="forn-proc-list" style="margin-top:10px"><span style="font-size:.68rem;color:var(--gray-500);margin-right:4px">Processos vinculados:</span>${procLinks}</div>` : ''}
+    <div style="font-size:.65rem;color:var(--gray-400);margin-top:10px">Consultado em ${fmt(f.consultadoEm)} · Atualizado em ${fmt(f.updatedAt || f.addedAt)}</div>
+  </div>`;
+}
+
+async function openFornDetail(id, editMode = false) {
+  _currentForn = await dbGet('fornecedores', id);
+  if (!_currentForn) return;
+  document.getElementById('forn-detail-overlay').classList.remove('hidden');
+  playClick();
+  if (editMode) _renderFornEdit(); else _renderFornView();
+}
+function closeFornDetail() {
+  document.getElementById('forn-detail-overlay').classList.add('hidden');
+  _currentForn = null;
+}
+function _renderFornView() {
+  document.getElementById('forn-detail-title').textContent = 'Cadastro do Fornecedor';
+  document.getElementById('forn-detail-body').innerHTML = _fornViewHtml(_currentForn);
+  document.getElementById('forn-detail-footer').innerHTML = `
+    <button class="btn btn-outline" onclick="closeFornDetail()">Fechar</button>
+    <button class="btn btn-primary" onclick="_renderFornEdit()">✏ Editar</button>`;
+}
+function _renderFornEdit() {
+  const f = _currentForn;
+  document.getElementById('forn-detail-title').textContent = 'Editar Fornecedor';
+  document.getElementById('forn-detail-body').innerHTML = `
+    <div class="forn-lookup" style="margin-top:0;margin-bottom:14px">
+      <label style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-500);display:block;margin-bottom:6px">Reconsultar CNPJ (atualiza dados da Receita Federal)</label>
+      <div class="forn-input-row">
+        <input type="text" id="forn-edit-cnpj" value="${escHtml(f.cnpj)}" oninput="maskCnpj(this)" maxlength="18">
+        <button class="btn btn-outline btn-sm" onclick="_reconsultarForn()">🔄 Atualizar</button>
+      </div>
+    </div>
+    <div class="info-field"><label>Razão Social</label>
+      <input type="text" id="fe-razao" value="${escHtml(f.razao_social)}"></div>
+    <div class="info-field"><label>Nome Fantasia</label>
+      <input type="text" id="fe-fantasia" value="${escHtml(f.nome_fantasia || '')}"></div>
+    <div class="info-field"><label>Situação Cadastral</label>
+      <input type="text" id="fe-situacao" value="${escHtml(f.situacao || '')}"></div>
+    <div class="info-field"><label>Endereço</label>
+      <input type="text" id="fe-endereco" value="${escHtml(f.endereco || '')}"></div>
+    <div class="info-field"><label>Observações</label>
+      <textarea id="fe-obs" rows="2">${escHtml(f.obs || '')}</textarea></div>`;
+  document.getElementById('forn-detail-footer').innerHTML = `
+    <button class="btn btn-outline" onclick="_renderFornView()">Cancelar</button>
+    <button class="btn btn-primary" onclick="_saveFornEdit()">Salvar alterações</button>`;
+}
+async function _reconsultarForn() {
+  const digits = cleanCnpj(document.getElementById('forn-edit-cnpj').value);
+  if (digits.length !== 14) { toast('CNPJ inválido.', 'error'); return; }
+  toast('Consultando BrasilAPI…', '');
+  try {
+    const r = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${digits}`);
+    if (!r.ok) throw new Error('CNPJ não encontrado.');
+    const d = await r.json();
+    const end = [d.logradouro, d.numero, d.complemento, d.bairro,
+      d.municipio ? `${d.municipio}/${d.uf}` : '', d.cep ? `CEP ${d.cep}` : ''].filter(Boolean).join(', ');
+    _currentForn = {
+      ..._currentForn,
+      razao_social: d.razao_social || _currentForn.razao_social,
+      nome_fantasia: d.nome_fantasia || '',
+      situacao: d.descricao_situacao_cadastral || '',
+      porte: d.descricao_porte || '',
+      abertura: d.data_inicio_atividade || '',
+      natureza_juridica: d.natureza_juridica || '',
+      cnae: d.cnae_fiscal_descricao || '',
+      endereco: end,
+      qsa: (d.qsa || []).map(s => ({ nome: s.nome_socio, qual: s.qualificacao_socio })),
+      consultadoEm: Date.now()
+    };
+    _renderFornEdit();
+    toast('Dados atualizados da Receita Federal!', 'success');
+    playSuccess();
+  } catch(e) { toast(e.message || 'Erro na consulta.', 'error'); playError(); }
+}
+async function _saveFornEdit() {
+  _currentForn = {
+    ..._currentForn,
+    razao_social:  document.getElementById('fe-razao').value.trim(),
+    nome_fantasia: document.getElementById('fe-fantasia').value.trim(),
+    situacao:      document.getElementById('fe-situacao').value.trim(),
+    endereco:      document.getElementById('fe-endereco').value.trim(),
+    obs:           document.getElementById('fe-obs').value.trim(),
+    updatedAt:     Date.now()
+  };
+  await dbPut('fornecedores', _currentForn);
+  toast('Fornecedor atualizado!', 'success');
+  playSuccess();
+  _renderFornView();
+  renderFornecedores();
+}
 
 function openFornModal() {
   _fornModalData = null;
