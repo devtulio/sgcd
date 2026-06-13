@@ -3171,7 +3171,7 @@ function gerarAutorizacao() {
   const u = getUser();
   const hoje = new Date().toLocaleDateString('pt-BR', { day:'numeric', month:'long', year:'numeric' });
   const blank = txt => txt || '_'.repeat(40);
-  const fmtVal = v => v ? 'R$ ' + parseFloat(String(v).replace(/\./g,'').replace(',','.')).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}) : '_______________';
+  const fmtVal = v => v ? fmtMoney(v) : '_______________';
 
   const fornNome = typeof p.fornecedor === 'object' ? (p.fornecedor?.razao_social || '') : (p.fornecedor || '');
   const fornCnpj = typeof p.fornecedor === 'object' ? (p.fornecedor?.cnpj || '') : '';
@@ -3219,7 +3219,7 @@ function gerarAutorizacao() {
 
 <div class="section">
   <div class="despacho">
-    <strong>DESPACHO:</strong> Nos termos do Art. 75, ${p.legal ? 'inciso ' + p.legal + ',' : ''} da Lei Federal nº 14.133/2021, e considerando a justificativa da necessidade apresentada pela unidade requisitante, <strong>AUTORIZO</strong> a abertura do processo administrativo de Dispensa de Licitação visando à aquisição/contratação descrita abaixo, determinando à ${blank(u.orgao)} que adote as providências necessárias à instrução do processo.
+    <strong>DESPACHO:</strong> Nos termos ${p.legal ? 'do ' + p.legal : 'do Art. 75 da Lei Federal nº 14.133/2021'}, e considerando a justificativa da necessidade apresentada pela unidade requisitante, <strong>AUTORIZO</strong> a abertura do processo administrativo de Dispensa de Licitação visando à aquisição/contratação descrita abaixo, determinando ao Departamento de Licitações e Contratos que adote as providências necessárias à instrução do processo.
   </div>
 </div>
 
@@ -3228,7 +3228,7 @@ function gerarAutorizacao() {
   <tr><td class="lbl">Objeto</td><td>${blank(p.objeto)}</td></tr>
   <tr><td class="lbl">Valor Estimado</td><td>${fmtVal(p.valor)}</td></tr>
   <tr><td class="lbl">Unidade Requisitante</td><td>${blank(p.unidade)}</td></tr>
-  <tr><td class="lbl">Fundamento Legal</td><td>Art. 75${p.legal ? ', ' + p.legal : ''} — Lei Federal nº 14.133/2021</td></tr>
+  <tr><td class="lbl">Fundamento Legal</td><td>${p.legal || 'Art. 75 — Lei Federal nº 14.133/2021'}</td></tr>
   ${fornNome ? `<tr><td class="lbl">Fornecedor Indicado</td><td>${fornNome}${fornCnpj ? ' — CNPJ: ' + fornCnpj : ''}</td></tr>` : ''}
   <tr><td class="lbl">Agente de Contratação</td><td>${blank(u.nome)}${u.matricula ? ' — Matrícula: ' + u.matricula : ''}</td></tr>
 </table>
