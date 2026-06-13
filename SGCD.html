@@ -1828,7 +1828,10 @@ function renderDash() {
     return `<div class="process-card pc-${st}" onclick="openProcess('${p.id}')">
       <div class="pc-stripe"></div>
       <div class="pc-body">
-        <div class="num">${escHtml(p.num || '—')}</div>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+          <div class="num">${escHtml(p.num || '—')}</div>
+          <span class="badge ${stl}">${statusLabel(st)}</span>
+        </div>
         <div class="title">${escHtml(p.objeto)}</div>
         <div class="meta">
           ${p.valor ? `<span>💰 ${fmtMoney(p.valor)}</span>` : ''}
@@ -1836,11 +1839,8 @@ function renderDash() {
           <span>📅 ${fmt(p.createdAt)}</span>
           ${fracBadge}
         </div>
-      </div>
-      <div class="pc-right">
-        <span class="badge ${stl}">${statusLabel(st)}</span>
-        <div class="progress-wrap">
-          <div class="progress-bar"><div class="progress-fill ${pc===100?'done':''}" style="width:${pc}%"></div></div>
+        <div class="progress-wrap" style="margin-top:8px">
+          <div class="progress-bar" style="flex:1"><div class="progress-fill ${pc===100?'done':''}" style="width:${pc}%"></div></div>
           <span class="progress-pct">${pc}%</span>
         </div>
       </div>
