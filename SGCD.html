@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SGCD v${SGCD_VERSION} — Sistema de Gestão de Contratação Direta</title>
+<title>SGCD</title>
 <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -1253,7 +1253,8 @@ const ICONS = {
 // DB — IndexedDB wrapper
 // ══════════════════════════════════════════════════════════════
 let db;
-const SGCD_VERSION = '1.6.0';
+const SGCD_VERSION = '1.7.0';
+document.title = `SGCD v${SGCD_VERSION}`;
 const DB_NAME = 'dispensaDB', DB_VER = 2;
 
 function initDB() {
@@ -1516,19 +1517,12 @@ const FIELD_LABELS = {
 const DATE_FIELDS  = new Set(['data_conclusao','data_publicacao','data_encerramento','vigencia']);
 const MONEY_FIELDS = new Set(['valor_estimado','valor_adjudicado']);
 
-// Mapeamento bidirecional entre IDs da etapa 11 e IDs do cadastro de fornecedores
-const CERT_MAP_TO_TIPO = {
-  'rfb':   'cnd_federal',
-  'pge_sp':'cnd_estadual',
-  'fgts':  'crf_fgts',
-  'cndt':  'cndt',
-};
-const CERT_MAP_TO_STEP = Object.fromEntries(Object.entries(CERT_MAP_TO_TIPO).map(([k,v])=>[v,k]));
-
+// Lista unificada de certidões e cadastros oficiais — usada na etapa 11 E no cadastro de fornecedores
 const CERTIDOES = [
+  // ── Cadastros e Consultas Oficiais ─────────────────────────────────────────
   { id:'cnpj',         nome:'CNPJ — Receita Federal',              url:'https://solucoes.receita.fazenda.gov.br/servicos/cnpjreva/cnpjreva_solicitacao.asp',                                                                     desc:'Comprovante de inscrição e situação cadastral' },
   { id:'qsa',          nome:'QSA — Quadro Societário',             url:'https://solucoes.receita.fazenda.gov.br/servicos/cnpjreva/cnpjreva_solicitacao.asp',                                                                     desc:'Quadro de sócios e administradores' },
-  { id:'sicaf_crc',    nome:'SICAF — CRC',                         url:'https://www3.comprasnet.gov.br/sicaf-web/public/pages/consultas/consultarCRC.jsf',                                                                       desc:'Certificado de Registro Cadastral' },
+  { id:'sicaf_crc',    nome:'SICAF — CRC',                         url:'https://www3.comprasnet.gov.br/sicaf-web/public/pages/consultas/consultarCRC.jsf',                                                                       desc:'Certificado de Registro Cadastral',          diasPadrao: 365 },
   { id:'sicaf_rest',   nome:'SICAF — Restrição Contratar',         url:'https://www3.comprasnet.gov.br/sicaf-web/public/pages/consultas/consultarRestricaoContratarAdministracaoPublica.jsf',                                   desc:'Restrição de contratar com a Adm. Pública' },
   { id:'tcu_consult',  nome:'TCU — Consulta Consolidada PJ',       url:'https://certidoes-apf.apps.tcu.gov.br/',                                                                                                                desc:'Consulta consolidada de pessoa jurídica' },
   { id:'tcu_inidone',  nome:'TCU — Inabilitados e Inidôneos',      url:'https://contas.tcu.gov.br/ords/f?p=1660:3:17397976312703::::P3_TIPO_RELACAO:INIDONEO',                                                                   desc:'Certidão de inabilitados e inidôneos' },
@@ -1537,13 +1531,23 @@ const CERTIDOES = [
   { id:'tcesp_lic',    nome:'TCESP — Apenados Licitação',          url:'https://www4.tce.sp.gov.br/apenados/publico/#/publicas/certificado',                                                                                     desc:'Certidão de impedimentos de licitação' },
   { id:'tcesp_rep',    nome:'TCESP — Apenados Repasse',            url:'https://www4.tce.sp.gov.br/apenados/publico/#/publicas/certificado/repasse',                                                                             desc:'Certidão de impedimentos de repasse' },
   { id:'transp',       nome:'Portal Transparência — Sanções',      url:'https://portaldatransparencia.gov.br/sancoes/consulta?paginacaoSimples=true&tamanhoPagina=&offset=&direcaoOrdenacao=asc&cadastro=1%2C2',                desc:'Consulta de sanções federais' },
-  { id:'fgts',         nome:'FGTS — CRF',                         url:'https://consulta-crf.caixa.gov.br/consultacrf/pages/consultaEmpregador.jsf',                                                                             desc:'Certidão de Regularidade do FGTS' },
-  { id:'cndt',         nome:'CNDT — TST',                          url:'https://cndt-certidao.tst.jus.br/inicio.faces',                                                                                                         desc:'Certidão Negativa de Débitos Trabalhistas' },
-  { id:'rfb',          nome:'Dívida Ativa da União — RFB/PGFN',   url:'https://servicos.receitafederal.gov.br/servico/certidoes/#/home/cnpj#',                                                                                  desc:'Certidão conjunta RFB/PGFN' },
-  { id:'pge_sp',       nome:'Dívida Ativa SP — PGE',              url:'https://www.dividaativa.pge.sp.gov.br/sc/pages/crda/emitirCrda.jsf',                                                                                     desc:'Certidão de regularidade fiscal estadual SP' },
-  { id:'susep_lic',    nome:'SUSEP — Certidão Licenciamento',      url:'https://www2.susep.gov.br/safe/certidoes/app/certidao/emitir',                                                                                           desc:'Certidão de licenciamento e apontamento',  engenharia:true },
-  { id:'susep_apo',    nome:'SUSEP — Apólice Seguro Garantia',    url:'https://www2.susep.gov.br/safe/apolices/app/garantia',                                                                                                    desc:'Apólice de seguro garantia',               engenharia:true },
+  // ── Certidões Fiscais e Trabalhistas ───────────────────────────────────────
+  { id:'rfb',          nome:'CND Federal — RFB/PGFN',              url:'https://servicos.receitafederal.gov.br/servico/certidoes/#/home/cnpj#',                                                                                  desc:'Certidão conjunta de débitos relativos a tributos federais e dívida ativa da União', diasPadrao: 180 },
+  { id:'pge_sp',       nome:'CND Estadual — PGE/SP',               url:'https://www.dividaativa.pge.sp.gov.br/sc/pages/crda/emitirCrda.jsf',                                                                                     desc:'Certidão de regularidade fiscal estadual SP', diasPadrao: 180 },
+  { id:'cnd_municipal',nome:'CND Municipal',                        url:'',                                                                                                                                                      desc:'Certidão Negativa de Débitos junto ao município sede do fornecedor', diasPadrao: 180 },
+  { id:'fgts',         nome:'CRF — FGTS (Caixa Econômica)',        url:'https://consulta-crf.caixa.gov.br/consultacrf/pages/consultaEmpregador.jsf',                                                                             desc:'Certidão de Regularidade do FGTS',           diasPadrao: 30  },
+  { id:'cndt',         nome:'CNDT — Débitos Trabalhistas (TST)',   url:'https://cndt-certidao.tst.jus.br/inicio.faces',                                                                                                         desc:'Certidão Negativa de Débitos Trabalhistas',  diasPadrao: 180 },
+  { id:'simples',      nome:'Certidão Simples Nacional',            url:'https://cas.receita.fazenda.gov.br/cas/pages/emissaoCertidao/formEmissaoCertidao.jsf',                                                                  desc:'Comprovante de opção pelo Simples Nacional',  diasPadrao: 60  },
+  { id:'falencia',     nome:'Certidão de Falência e Concordata',   url:'',                                                                                                                                                      desc:'Emitida pelo distribuidor judicial da sede do fornecedor', diasPadrao: 60  },
+  // ── Engenharia (somente quando aplicável) ──────────────────────────────────
+  { id:'susep_lic',    nome:'SUSEP — Certidão Licenciamento',      url:'https://www2.susep.gov.br/safe/certidoes/app/certidao/emitir',                                                                                           desc:'Certidão de licenciamento e apontamento',    engenharia: true },
+  { id:'susep_apo',    nome:'SUSEP — Apólice Seguro Garantia',    url:'https://www2.susep.gov.br/safe/apolices/app/garantia',                                                                                                    desc:'Apólice de seguro garantia',                 engenharia: true },
+  // ── Outra ──────────────────────────────────────────────────────────────────
+  { id:'outro',        nome:'Outra',                               url:'',                                                                                                                                                      desc:'Certidão ou documento não listado acima' },
 ];
+
+// Mapa de migração: IDs antigos do CERT_TIPOS → IDs unificados do CERTIDOES
+const _CERT_MIGRA = { cnd_federal:'rfb', cnd_estadual:'pge_sp', crf_fgts:'fgts' };
 
 // ══════════════════════════════════════════════════════════════
 // STATE
@@ -2387,16 +2391,8 @@ async function _saveFornEdit() {
 // ══════════════════════════════════════════════════════════════
 // CERTIDÕES
 // ══════════════════════════════════════════════════════════════
-const CERT_TIPOS = [
-  { id: 'cnd_federal',   label: 'CND Federal (Receita Federal / PGFN)',  diasPadrao: 180 },
-  { id: 'cnd_estadual',  label: 'CND Estadual (SEFAZ)',                  diasPadrao: 180 },
-  { id: 'cnd_municipal', label: 'CND Municipal',                          diasPadrao: 180 },
-  { id: 'crf_fgts',     label: 'CRF — FGTS (Caixa Econômica)',          diasPadrao: 30  },
-  { id: 'cndt',         label: 'CNDT — Débitos Trabalhistas (TST)',      diasPadrao: 180 },
-  { id: 'simples',      label: 'Certidão Simples Nacional',              diasPadrao: 365 },
-  { id: 'falencia',     label: 'Certidão de Falência e Concordata',      diasPadrao: 60  },
-  { id: 'outro',        label: 'Outra',                                   diasPadrao: null },
-];
+// CERT_TIPOS é agora derivado de CERTIDOES — lista unificada
+const CERT_TIPOS = CERTIDOES.map(c => ({ id: c.id, label: c.nome, diasPadrao: c.diasPadrao || null }));
 
 function certDaysLeft(cert) {
   if (!cert.validade) return null;
@@ -2422,7 +2418,7 @@ function certStatusLabel(status, days) {
 
 function certTipoLabel(cert) {
   if (cert.tipoId === 'outro') return cert.tipoDesc || 'Outra';
-  return CERT_TIPOS.find(t => t.id === cert.tipoId)?.label || cert.tipoDesc || 'Certidão';
+  return CERTIDOES.find(c => c.id === cert.tipoId)?.nome || cert.tipoDesc || 'Certidão';
 }
 
 function fmtDateBR(iso) {
@@ -2580,7 +2576,7 @@ function openCertEdit(fornId, idx) {
     const f = _currentForn;
     const c = (f.certidoes || [])[idx];
     if (c) {
-      sel.value = c.tipoId || 'cnd_federal';
+      sel.value = c.tipoId || CERTIDOES[0].id;
       onCeTipoChange();
       if (c.tipoId === 'outro') document.getElementById('ce-tipo-outro').value = c.tipoDesc || '';
       document.getElementById('ce-emissao').value  = c.emissao  || '';
@@ -3038,11 +3034,12 @@ function renderCertidoesSection(stepIdx, data, certFileMap = {}) {
       dbGet('fornecedores', fornId).then(fornData => {
         if (!fornData?.certidoes?.length) return;
         let changed = false;
-        for (const [certId, tipoId] of Object.entries(CERT_MAP_TO_TIPO)) {
+        for (const c of CERTIDOES) {
+          const certId = c.id;
           const entry = saved[certId];
           if (!entry || entry.status !== 'obtida') continue;
           if (entry.data_emissao && entry.data_validade) continue; // já tem
-          const fornCert = fornData.certidoes.find(c => c.tipoId === tipoId);
+          const fornCert = fornData.certidoes.find(c => c.tipoId === certId);
           if (!fornCert) continue;
           saved[certId] = { ...entry,
             data_emissao:  entry.data_emissao  || fornCert.emissao  || '',
@@ -3107,7 +3104,7 @@ function renderCertidoesSection(stepIdx, data, certFileMap = {}) {
             <span>Validade</span>
             <input type="date" value="${(saved[c.id]||{}).data_validade||''}" onchange="updateCertidao(${stepIdx},'${c.id}','data_validade',this.value)" title="Data de validade" style="font-size:.75rem;padding:2px 4px">
           </div>
-          ${CERT_MAP_TO_TIPO[c.id] ? `<span style="font-size:.65rem;color:var(--success);opacity:.8" title="Sincroniza com cadastro do fornecedor">⇄ fornecedor</span>` : ''}
+          ${c.diasPadrao ? `<span style="font-size:.65rem;color:var(--success);opacity:.8" title="Sincroniza com cadastro do fornecedor">⇄ fornecedor</span>` : ''}
         </div>` : ''}
         <a class="cert-link-btn" href="${c.id === 'transp' && forn ? c.url + '&cnpjCpf=' + forn.cnpj_digits : c.url}" target="_blank" rel="noopener" onclick="playClick()">↗ Acessar</a>
       </div>
@@ -3173,40 +3170,35 @@ async function updateCertidao(stepIdx, id, field, value) {
   const obj = getCertidoes(stepIdx);
   obj[id] = { ...(obj[id]||{}), [field]: value };
   await saveCertidoes(stepIdx, obj);
-  // sincroniza com cadastro do fornecedor se for campo de data e tiver mapeamento
-  if ((field === 'data_emissao' || field === 'data_validade') && CERT_MAP_TO_TIPO[id]) {
+  if (field === 'data_emissao' || field === 'data_validade') {
     await _syncCertToForn(id, obj[id]);
   }
 }
 
-// Busca datas de uma certidão no cadastro do fornecedor vinculado
+// Busca datas de uma certidão no cadastro do fornecedor vinculado (ID unificado)
 async function _getCertDatesFromForn(certId) {
-  const tipoId = CERT_MAP_TO_TIPO[certId];
-  if (!tipoId || !currentProcess?.fornecedor) return null;
+  if (!CERTIDOES.find(c => c.id === certId) || !currentProcess?.fornecedor) return null;
   const fornId = typeof currentProcess.fornecedor === 'object'
-    ? currentProcess.fornecedor.id || currentProcess.fornecedor.cnpj_digits
-    : null;
+    ? currentProcess.fornecedor.id || currentProcess.fornecedor.cnpj_digits : null;
   if (!fornId) return null;
   const forn = await dbGet('fornecedores', fornId);
   if (!forn) return null;
-  const cert = (forn.certidoes || []).find(c => c.tipoId === tipoId);
+  const cert = (forn.certidoes || []).find(c => c.tipoId === certId);
   return cert ? { emissao: cert.emissao, validade: cert.validade } : null;
 }
 
-// Sincroniza datas da etapa 11 para o cadastro do fornecedor
+// Sincroniza datas da etapa 11 para o cadastro do fornecedor (ID unificado)
 async function _syncCertToForn(certId, certData) {
-  const tipoId = CERT_MAP_TO_TIPO[certId];
-  if (!tipoId || !currentProcess?.fornecedor) return;
+  if (!CERTIDOES.find(c => c.id === certId)?.diasPadrao || !currentProcess?.fornecedor) return;
   const fornId = typeof currentProcess.fornecedor === 'object'
-    ? currentProcess.fornecedor.id || currentProcess.fornecedor.cnpj_digits
-    : null;
+    ? currentProcess.fornecedor.id || currentProcess.fornecedor.cnpj_digits : null;
   if (!fornId) return;
   const forn = await dbGet('fornecedores', fornId);
   if (!forn) return;
   const certs = forn.certidoes || [];
-  const idx = certs.findIndex(c => c.tipoId === tipoId);
+  const idx = certs.findIndex(c => c.tipoId === certId);
   const entry = {
-    tipoId,
+    tipoId:   certId,
     emissao:  certData.data_emissao  || (idx >= 0 ? certs[idx].emissao  : ''),
     validade: certData.data_validade || (idx >= 0 ? certs[idx].validade : ''),
     obs:      idx >= 0 ? certs[idx].obs : '',
@@ -3216,6 +3208,21 @@ async function _syncCertToForn(certId, certData) {
   forn.updatedAt = Date.now();
   await dbPut('fornecedores', forn);
   renderCertAlerts();
+}
+
+// Migra IDs antigos do CERT_TIPOS para os IDs unificados do CERTIDOES
+async function _migrarCertidoesFornecedores() {
+  const forns = await dbGetAll('fornecedores');
+  for (const forn of forns) {
+    if (!forn.certidoes?.length) continue;
+    let changed = false;
+    forn.certidoes = forn.certidoes.map(c => {
+      const novoId = _CERT_MIGRA[c.tipoId];
+      if (novoId) { changed = true; return { ...c, tipoId: novoId }; }
+      return c;
+    });
+    if (changed) { forn.updatedAt = Date.now(); await dbPut('fornecedores', forn); }
+  }
 }
 async function getCertFilesMap(processId, stepIdx) {
   const prefix = processId + '_' + stepIdx + '_cert_';
@@ -5204,10 +5211,14 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') { fecharGlobalSearch(); }
 });
 
-initDB().then(() => loadProcesses()).then(() => { renderDash(); checkAutoBackupRestore(); });
+initDB()
+  .then(() => _migrarCertidoesFornecedores().catch(console.error))
+  .then(() => loadProcesses())
+  .then(() => { renderDash(); checkAutoBackupRestore(); document.getElementById('footer-version').textContent = `v${SGCD_VERSION}`; })
+  .catch(err => { console.error('Erro ao inicializar SGCD:', err); alert('Erro ao inicializar o sistema. Recarregue a página.'); });
 </script>
 <footer style="text-align:center;padding:18px 16px 14px;font-size:.72rem;color:var(--gray-400);border-top:1px solid var(--gray-100);margin-top:32px">
-  SGCD — Sistema de Gestão de Contratação Direta &nbsp;·&nbsp; <strong>v${SGCD_VERSION}</strong> &nbsp;·&nbsp; Lei Federal nº 14.133/2021
+  SGCD — Sistema de Gestão de Contratação Direta &nbsp;·&nbsp; <strong id="footer-version"></strong> &nbsp;·&nbsp; Lei Federal nº 14.133/2021
 </footer>
 </body>
 </html>
