@@ -1516,6 +1516,15 @@ const FIELD_LABELS = {
 const DATE_FIELDS  = new Set(['data_conclusao','data_publicacao','data_encerramento','vigencia']);
 const MONEY_FIELDS = new Set(['valor_estimado','valor_adjudicado']);
 
+// Mapeamento bidirecional entre IDs da etapa 11 e IDs do cadastro de fornecedores
+const CERT_MAP_TO_TIPO = {
+  'rfb':   'cnd_federal',
+  'pge_sp':'cnd_estadual',
+  'fgts':  'crf_fgts',
+  'cndt':  'cndt',
+};
+const CERT_MAP_TO_STEP = Object.fromEntries(Object.entries(CERT_MAP_TO_TIPO).map(([k,v])=>[v,k]));
+
 const CERTIDOES = [
   { id:'cnpj',         nome:'CNPJ — Receita Federal',              url:'https://solucoes.receita.fazenda.gov.br/servicos/cnpjreva/cnpjreva_solicitacao.asp',                                                                     desc:'Comprovante de inscrição e situação cadastral' },
   { id:'qsa',          nome:'QSA — Quadro Societário',             url:'https://solucoes.receita.fazenda.gov.br/servicos/cnpjreva/cnpjreva_solicitacao.asp',                                                                     desc:'Quadro de sócios e administradores' },
@@ -3022,6 +3031,29 @@ function renderStepFields(i, step, data, certFileMap = {}) {
 function renderCertidoesSection(stepIdx, data, certFileMap = {}) {
   const forn = currentProcess.fornecedor || null;
   const saved = data.fields._certidoes ? JSON.parse(data.fields._certidoes) : {};
+  // pré-preenche datas do cadastro do fornecedor nas certidões mapeadas ainda sem data
+  if (forn) {
+    const fornId = typeof forn === 'object' ? (forn.id || forn.cnpj_digits) : null;
+    if (fornId) {
+      dbGet('fornecedores', fornId).then(fornData => {
+        if (!fornData?.certidoes?.length) return;
+        let changed = false;
+        for (const [certId, tipoId] of Object.entries(CERT_MAP_TO_TIPO)) {
+          const entry = saved[certId];
+          if (!entry || entry.status !== 'obtida') continue;
+          if (entry.data_emissao && entry.data_validade) continue; // já tem
+          const fornCert = fornData.certidoes.find(c => c.tipoId === tipoId);
+          if (!fornCert) continue;
+          saved[certId] = { ...entry,
+            data_emissao:  entry.data_emissao  || fornCert.emissao  || '',
+            data_validade: entry.data_validade || fornCert.validade || '',
+          };
+          changed = true;
+        }
+        if (changed) saveCertidoes(stepIdx, saved);
+      });
+    }
+  }
   const engenharia = !!saved._engenharia;
   const aplicaveis = CERTIDOES.filter(c => !c.engenharia || engenharia);
   const obtidas = aplicaveis.filter(c => (saved[c.id]||{}).status === 'obtida').length;
@@ -3066,7 +3098,17 @@ function renderCertidoesSection(stepIdx, data, certFileMap = {}) {
         <div class="cert-desc">${escHtml(c.desc)}</div>
       </div>
       <div class="cert-actions">
-        ${st === 'obtida' ? `<div class="cert-date"><input type="date" value="${date}" onchange="updateCertidao(${stepIdx},'${c.id}','date',this.value)" title="Data de obtenção"></div>` : ''}
+        ${st === 'obtida' ? `<div class="cert-date" style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">
+          <div style="display:flex;align-items:center;gap:4px;font-size:.7rem;color:var(--gray-500)">
+            <span>Emissão</span>
+            <input type="date" value="${(saved[c.id]||{}).data_emissao||''}" onchange="updateCertidao(${stepIdx},'${c.id}','data_emissao',this.value)" title="Data de emissão" style="font-size:.75rem;padding:2px 4px">
+          </div>
+          <div style="display:flex;align-items:center;gap:4px;font-size:.7rem;color:var(--gray-500)">
+            <span>Validade</span>
+            <input type="date" value="${(saved[c.id]||{}).data_validade||''}" onchange="updateCertidao(${stepIdx},'${c.id}','data_validade',this.value)" title="Data de validade" style="font-size:.75rem;padding:2px 4px">
+          </div>
+          ${CERT_MAP_TO_TIPO[c.id] ? `<span style="font-size:.65rem;color:var(--success);opacity:.8" title="Sincroniza com cadastro do fornecedor">⇄ fornecedor</span>` : ''}
+        </div>` : ''}
         <a class="cert-link-btn" href="${c.id === 'transp' && forn ? c.url + '&cnpjCpf=' + forn.cnpj_digits : c.url}" target="_blank" rel="noopener" onclick="playClick()">↗ Acessar</a>
       </div>
       ${fileArea}
@@ -3110,7 +3152,18 @@ async function cycleCertidao(stepIdx, id) {
   const cur = (obj[id]||{}).status || 'pendente';
   const next = cur === 'pendente' ? 'obtida' : cur === 'obtida' ? 'na' : 'pendente';
   obj[id] = { ...(obj[id]||{}), status: next };
-  if (next !== 'obtida') delete obj[id].date;
+  if (next !== 'obtida') {
+    delete obj[id].date;
+    delete obj[id].data_emissao;
+    delete obj[id].data_validade;
+  } else {
+    // pré-preenche datas do cadastro do fornecedor, se disponíveis
+    const prefill = await _getCertDatesFromForn(id);
+    if (prefill) {
+      obj[id].data_emissao = obj[id].data_emissao || prefill.emissao || '';
+      obj[id].data_validade = obj[id].data_validade || prefill.validade || '';
+    }
+  }
   await saveCertidoes(stepIdx, obj);
   expandedSteps.add(stepIdx);
   renderChecklist();
@@ -3120,6 +3173,49 @@ async function updateCertidao(stepIdx, id, field, value) {
   const obj = getCertidoes(stepIdx);
   obj[id] = { ...(obj[id]||{}), [field]: value };
   await saveCertidoes(stepIdx, obj);
+  // sincroniza com cadastro do fornecedor se for campo de data e tiver mapeamento
+  if ((field === 'data_emissao' || field === 'data_validade') && CERT_MAP_TO_TIPO[id]) {
+    await _syncCertToForn(id, obj[id]);
+  }
+}
+
+// Busca datas de uma certidão no cadastro do fornecedor vinculado
+async function _getCertDatesFromForn(certId) {
+  const tipoId = CERT_MAP_TO_TIPO[certId];
+  if (!tipoId || !currentProcess?.fornecedor) return null;
+  const fornId = typeof currentProcess.fornecedor === 'object'
+    ? currentProcess.fornecedor.id || currentProcess.fornecedor.cnpj_digits
+    : null;
+  if (!fornId) return null;
+  const forn = await dbGet('fornecedores', fornId);
+  if (!forn) return null;
+  const cert = (forn.certidoes || []).find(c => c.tipoId === tipoId);
+  return cert ? { emissao: cert.emissao, validade: cert.validade } : null;
+}
+
+// Sincroniza datas da etapa 11 para o cadastro do fornecedor
+async function _syncCertToForn(certId, certData) {
+  const tipoId = CERT_MAP_TO_TIPO[certId];
+  if (!tipoId || !currentProcess?.fornecedor) return;
+  const fornId = typeof currentProcess.fornecedor === 'object'
+    ? currentProcess.fornecedor.id || currentProcess.fornecedor.cnpj_digits
+    : null;
+  if (!fornId) return;
+  const forn = await dbGet('fornecedores', fornId);
+  if (!forn) return;
+  const certs = forn.certidoes || [];
+  const idx = certs.findIndex(c => c.tipoId === tipoId);
+  const entry = {
+    tipoId,
+    emissao:  certData.data_emissao  || (idx >= 0 ? certs[idx].emissao  : ''),
+    validade: certData.data_validade || (idx >= 0 ? certs[idx].validade : ''),
+    obs:      idx >= 0 ? certs[idx].obs : '',
+  };
+  if (idx >= 0) certs[idx] = entry; else certs.push(entry);
+  forn.certidoes = certs;
+  forn.updatedAt = Date.now();
+  await dbPut('fornecedores', forn);
+  renderCertAlerts();
 }
 async function getCertFilesMap(processId, stepIdx) {
   const prefix = processId + '_' + stepIdx + '_cert_';
