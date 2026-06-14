@@ -753,7 +753,7 @@
   </button>
   <div class="nav-spacer"></div>
   <div class="nav-divider"></div>
-  <button class="nav-btn" id="nav-settings" onclick="openSettings()" aria-label="Configurações">
+  <button class="nav-btn" id="nav-settings" onclick="showSettings()" aria-label="Configurações">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
     <span class="nav-tooltip">Configurações</span>
   </button>
@@ -1021,6 +1021,102 @@
       </div>
     </div>
   </div>
+
+  <!-- ── Settings View (inline) ── -->
+  <div id="view-settings" class="view">
+    <div class="dash-top">
+      <h2>Configurações</h2>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-outline" onclick="showDash()">← Voltar</button>
+        <button class="btn btn-primary" onclick="saveSettings()">Salvar</button>
+      </div>
+    </div>
+    <div style="max-width:560px;padding:0 0 40px">
+      <p style="font-size:.75rem;color:var(--gray-500);margin-bottom:20px">Estas informações serão usadas para pré-preencher os campos de responsável e para subsidiar a geração da Ata.</p>
+
+      <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
+        <legend style="font-size:.72rem;font-weight:700;color:var(--brand);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Agente de Contratação</legend>
+        <div class="info-field"><label>Nome Completo *</label>
+          <input type="text" id="s-nome" placeholder="Ex: João da Silva"></div>
+        <div class="info-field"><label>Cargo / Função</label>
+          <input type="text" id="s-cargo" placeholder="Ex: Agente de Contratação"></div>
+        <div class="info-field"><label>Matrícula</label>
+          <input type="text" id="s-matricula" placeholder="Ex: 12345"></div>
+      </fieldset>
+
+      <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
+        <legend style="font-size:.72rem;font-weight:700;color:var(--aubergine-mid);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Órgão</legend>
+        <div class="info-field"><label>Nome do Órgão</label>
+          <input type="text" id="s-orgao" placeholder="Ex: Prefeitura Municipal de Orindiúva"></div>
+        <div class="info-field"><label>Município / UF</label>
+          <input type="text" id="s-municipio" placeholder="Ex: Orindiúva/SP"></div>
+      </fieldset>
+
+      <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
+        <legend style="font-size:.72rem;font-weight:700;color:var(--aubergine-mid);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Autoridade Competente</legend>
+        <div class="info-field"><label>Nome Completo</label>
+          <input type="text" id="s-aut-nome" placeholder="Ex: Maria Souza"></div>
+        <div class="info-field"><label>Cargo</label>
+          <input type="text" id="s-aut-cargo" placeholder="Ex: Prefeita Municipal"></div>
+      </fieldset>
+
+      <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
+        <legend style="font-size:.72rem;font-weight:700;color:var(--brand);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Brasão do Município</legend>
+        <p style="font-size:.72rem;color:var(--gray-500);margin-bottom:10px;line-height:1.5">Substitua o brasão padrão pelo do seu município. Será usado em todos os documentos gerados.</p>
+        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+          <img id="s-brasao-preview" style="height:56px;width:auto;display:none;border:1px solid var(--gray-200);border-radius:4px;padding:2px">
+          <div style="display:flex;gap:8px">
+            <label class="btn btn-outline btn-sm" style="cursor:pointer">
+              📁 Selecionar imagem
+              <input type="file" id="s-brasao-input" accept="image/*" style="display:none" onchange="previewBrasao(this)">
+            </label>
+            <button class="btn btn-outline btn-sm" onclick="removerBrasao()" id="btn-remove-brasao" style="display:none">✕ Remover</button>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
+        <legend style="font-size:.72rem;font-weight:700;color:var(--aubergine-mid);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Controle de Fracionamento</legend>
+        <div class="info-field">
+          <label>Janela temporal de análise</label>
+          <select id="s-frac-janela">
+            <option value="exercicio">Exercício financeiro — 1º jan a 31 dez (recomendado)</option>
+            <option value="12">Período móvel — últimos 12 meses</option>
+            <option value="18">Período móvel — últimos 18 meses</option>
+            <option value="24">Período móvel — últimos 24 meses</option>
+          </select>
+          <p style="font-size:.68rem;color:var(--gray-500);margin-top:4px;line-height:1.4">
+            <strong>Exercício financeiro</strong> é a interpretação dominante nos TCEs e na AGU (Lei 4.320/64, Art. 34).
+            <strong>Período móvel</strong> é mais rigoroso e evita fracionamento artificial entre dezembro e janeiro.
+          </p>
+        </div>
+      </fieldset>
+
+      <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px">
+        <legend style="font-size:.72rem;font-weight:700;color:var(--aubergine-mid);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Backup de Dados</legend>
+        <p style="font-size:.72rem;color:var(--gray-500);margin-bottom:12px;line-height:1.5">Os dados ficam armazenados neste navegador. Faça backups periódicos para evitar perda em caso de limpeza do cache ou troca de dispositivo.</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+          <button class="btn btn-outline btn-sm" onclick="exportBackup()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Exportar Backup
+          </button>
+          <label class="btn btn-outline btn-sm" style="cursor:pointer">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Restaurar Backup
+            <input type="file" accept=".json" style="display:none" onchange="importBackup(this.files[0]).then(()=>this.value='')">
+          </label>
+        </div>
+        <div style="border-top:1px solid var(--gray-100);padding-top:12px;display:flex;flex-direction:column;gap:10px">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.82rem">
+            <input type="checkbox" id="s-auto-backup-exit" style="width:15px;height:15px">
+            Salvar snapshot automático ao fechar a aba
+          </label>
+          <p style="font-size:.7rem;color:var(--gray-500);margin-left:23px;line-height:1.5">Salva uma cópia no próprio navegador (sem arquivos anexos). Na próxima abertura, o sistema oferecerá restaurar caso o snapshot seja mais recente que o último backup exportado.</p>
+          <div style="font-size:.7rem;color:var(--gray-500);margin-left:23px" id="s-last-autobackup"></div>
+        </div>
+      </fieldset>
+    </div>
+  </div>
 </div>
 
 <!-- ── New Process Modal ── -->
@@ -1112,105 +1208,6 @@
       <kbd style="font-size:.7rem;color:var(--gray-500);background:var(--gray-100);padding:2px 6px;border-radius:4px;flex-shrink:0">Esc</kbd>
     </div>
     <div class="gsearch-results" id="global-search-results"></div>
-  </div>
-</div>
-
-<!-- ── Settings Modal ── -->
-<div class="overlay hidden" id="settings-overlay" onclick="if(event.target===this)closeSettings()">
-  <div class="modal" style="max-width:500px">
-    <div class="modal-header">
-      <h2>⚙ Configurações do Usuário</h2>
-      <button class="btn btn-ghost btn-icon" onclick="closeSettings()">✕</button>
-    </div>
-    <div class="modal-body">
-      <p style="font-size:.75rem;color:var(--gray-500);margin-bottom:16px">Estas informações serão usadas para pré-preencher os campos de responsável e para subsidiar a geração da Ata.</p>
-
-      <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
-        <legend style="font-size:.72rem;font-weight:700;color:var(--brand);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Agente de Contratação</legend>
-        <div class="info-field"><label>Nome Completo *</label>
-          <input type="text" id="s-nome" placeholder="Ex: João da Silva"></div>
-        <div class="info-field"><label>Cargo / Função</label>
-          <input type="text" id="s-cargo" placeholder="Ex: Agente de Contratação"></div>
-        <div class="info-field"><label>Matrícula</label>
-          <input type="text" id="s-matricula" placeholder="Ex: 12345"></div>
-      </fieldset>
-
-      <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
-        <legend style="font-size:.72rem;font-weight:700;color:var(--aubergine-mid);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Órgão</legend>
-        <div class="info-field"><label>Nome do Órgão</label>
-          <input type="text" id="s-orgao" placeholder="Ex: Prefeitura Municipal de Orindiúva"></div>
-        <div class="info-field"><label>Município / UF</label>
-          <input type="text" id="s-municipio" placeholder="Ex: Orindiúva/SP"></div>
-      </fieldset>
-
-      <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
-        <legend style="font-size:.72rem;font-weight:700;color:var(--aubergine-mid);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Autoridade Competente</legend>
-        <div class="info-field"><label>Nome Completo</label>
-          <input type="text" id="s-aut-nome" placeholder="Ex: Maria Souza"></div>
-        <div class="info-field"><label>Cargo</label>
-          <input type="text" id="s-aut-cargo" placeholder="Ex: Prefeita Municipal"></div>
-      </fieldset>
-
-      <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
-        <legend style="font-size:.72rem;font-weight:700;color:var(--brand);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Brasão do Município</legend>
-        <p style="font-size:.72rem;color:var(--gray-500);margin-bottom:10px;line-height:1.5">Substitua o brasão padrão pelo do seu município. Será usado em todos os documentos gerados.</p>
-        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
-          <img id="s-brasao-preview" style="height:56px;width:auto;display:none;border:1px solid var(--gray-200);border-radius:4px;padding:2px">
-          <div style="display:flex;gap:8px">
-            <label class="btn btn-outline btn-sm" style="cursor:pointer">
-              📁 Selecionar imagem
-              <input type="file" id="s-brasao-input" accept="image/*" style="display:none" onchange="previewBrasao(this)">
-            </label>
-            <button class="btn btn-outline btn-sm" onclick="removerBrasao()" id="btn-remove-brasao" style="display:none">✕ Remover</button>
-          </div>
-        </div>
-      </fieldset>
-
-      <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px">
-        <legend style="font-size:.72rem;font-weight:700;color:var(--aubergine-mid);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Controle de Fracionamento</legend>
-        <div class="info-field">
-          <label>Janela temporal de análise</label>
-          <select id="s-frac-janela">
-            <option value="exercicio">Exercício financeiro — 1º jan a 31 dez (recomendado)</option>
-            <option value="12">Período móvel — últimos 12 meses</option>
-            <option value="18">Período móvel — últimos 18 meses</option>
-            <option value="24">Período móvel — últimos 24 meses</option>
-          </select>
-          <p style="font-size:.68rem;color:var(--gray-500);margin-top:4px;line-height:1.4">
-            <strong>Exercício financeiro</strong> é a interpretação dominante nos TCEs e na AGU (Lei 4.320/64, Art. 34).
-            <strong>Período móvel</strong> é mais rigoroso e evita fracionamento artificial entre dezembro e janeiro.
-          </p>
-        </div>
-      </fieldset>
-    </div>
-      <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-top:16px">
-        <legend style="font-size:.72rem;font-weight:700;color:var(--aubergine-mid);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Backup de Dados</legend>
-        <p style="font-size:.72rem;color:var(--gray-500);margin-bottom:12px;line-height:1.5">Os dados ficam armazenados neste navegador. Faça backups periódicos para evitar perda em caso de limpeza do cache ou troca de dispositivo.</p>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
-          <button class="btn btn-outline btn-sm" onclick="exportBackup()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            Exportar Backup
-          </button>
-          <label class="btn btn-outline btn-sm" style="cursor:pointer">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-            Restaurar Backup
-            <input type="file" accept=".json" style="display:none" onchange="importBackup(this.files[0]).then(()=>this.value='')">
-          </label>
-        </div>
-        <div style="border-top:1px solid var(--gray-100);padding-top:12px;display:flex;flex-direction:column;gap:10px">
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.82rem">
-            <input type="checkbox" id="s-auto-backup-exit" style="width:15px;height:15px">
-            Salvar snapshot automático ao fechar a aba
-          </label>
-          <p style="font-size:.7rem;color:var(--gray-500);margin-left:23px;line-height:1.5">Salva uma cópia no próprio navegador (sem arquivos anexos). Na próxima abertura, o sistema oferecerá restaurar caso o snapshot seja mais recente que o último backup exportado.</p>
-          <div style="font-size:.7rem;color:var(--gray-500);margin-left:23px" id="s-last-autobackup"></div>
-        </div>
-      </fieldset>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closeSettings()">Cancelar</button>
-      <button class="btn btn-primary" onclick="saveSettings()">Salvar</button>
-    </div>
   </div>
 </div>
 
@@ -1400,7 +1397,6 @@ async function importBackup(file) {
       if (rec._enc === 'base64' && rec.data) { rec.data = _base64ToBuf(rec.data); delete rec._enc; }
       await dbPut('files', rec);
     }
-    closeSettings();
     toast(`Backup restaurado! ${backup.processes?.length||0} processos importados.`, 'success');
     showDash();
   } catch(e) { toast('Erro ao importar: ' + e.message, 'error'); }
@@ -1996,6 +1992,7 @@ function renderFornecedorLookup(stepIdx) {
 async function showFornecedores() {
   document.getElementById('view-dash').classList.remove('active');
   document.getElementById('view-detail').classList.remove('active');
+  document.getElementById('view-settings').classList.remove('active');
   document.getElementById('view-fornecedores').classList.add('active');
   setNavActive('nav-forn');
   await renderFornecedores();
@@ -2069,6 +2066,7 @@ function showDash() {
   document.getElementById('view-dash').classList.add('active');
   document.getElementById('view-detail').classList.remove('active');
   document.getElementById('view-fornecedores').classList.remove('active');
+  document.getElementById('view-settings').classList.remove('active');
   setNavActive('nav-dash');
   currentId = null;
   currentProcess = null;
@@ -2804,6 +2802,7 @@ async function openProcess(id) {
 
   document.getElementById('view-dash').classList.remove('active');
   document.getElementById('view-fornecedores').classList.remove('active');
+  document.getElementById('view-settings').classList.remove('active');
   document.getElementById('view-detail').classList.add('active');
 
   renderDetail();
@@ -4567,15 +4566,15 @@ function updateHeaderUser() {
   const el = document.getElementById('hdr-user-name');
   if (el) el.textContent = u.nome ? u.nome : 'Configurações do Usuário';
 }
-function openSettings() {
+function showSettings() {
   const u = getUser();
-  document.getElementById('s-nome').value      = u.nome      || '';
-  document.getElementById('s-cargo').value     = u.cargo     || '';
-  document.getElementById('s-matricula').value = u.matricula || '';
-  document.getElementById('s-orgao').value     = u.orgao     || '';
-  document.getElementById('s-municipio').value = u.municipio || '';
-  document.getElementById('s-aut-nome').value  = u.aut_nome  || '';
-  document.getElementById('s-aut-cargo').value = u.aut_cargo || '';
+  document.getElementById('s-nome').value        = u.nome        || '';
+  document.getElementById('s-cargo').value       = u.cargo       || '';
+  document.getElementById('s-matricula').value   = u.matricula   || '';
+  document.getElementById('s-orgao').value       = u.orgao       || '';
+  document.getElementById('s-municipio').value   = u.municipio   || '';
+  document.getElementById('s-aut-nome').value    = u.aut_nome    || '';
+  document.getElementById('s-aut-cargo').value   = u.aut_cargo   || '';
   document.getElementById('s-frac-janela').value = u.frac_janela || 'exercicio';
   document.getElementById('s-auto-backup-exit').checked = !!u.auto_backup_exit;
 
@@ -4591,12 +4590,13 @@ function openSettings() {
   const abEl = document.getElementById('s-last-autobackup');
   if (abEl) abEl.textContent = abAt ? `Último snapshot: ${new Date(parseInt(abAt)).toLocaleString('pt-BR')}` : '';
 
-  document.getElementById('settings-overlay').classList.remove('hidden');
+  document.getElementById('view-dash').classList.remove('active');
+  document.getElementById('view-detail').classList.remove('active');
+  document.getElementById('view-fornecedores').classList.remove('active');
+  document.getElementById('view-settings').classList.add('active');
+  setNavActive('nav-settings');
   document.getElementById('s-nome').focus();
   playClick();
-}
-function closeSettings() {
-  document.getElementById('settings-overlay').classList.add('hidden');
 }
 function saveSettings() {
   const nome = document.getElementById('s-nome').value.trim();
@@ -4614,7 +4614,7 @@ function saveSettings() {
   };
   localStorage.setItem('sgcd-user', JSON.stringify(u));
   updateHeaderUser();
-  closeSettings();
+  showDash();
   playSuccess();
   toast('Configurações salvas!', 'success');
 }
