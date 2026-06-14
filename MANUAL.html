@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Manual Operacional — SGCD v1.6.0</title>
+<title>Manual Operacional — SGCD v1.7.0</title>
 <style>
   /* Reset e base */
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -89,7 +89,7 @@
       margin: 20mm 20mm 25mm;
       size: A4;
       @top-center {
-        content: "SGCD v1.6.0 — Manual Operacional";
+        content: "SGCD v1.7.0 — Manual Operacional";
         font-family: 'Times New Roman', serif;
         font-size: 9pt;
         color: #666;
@@ -118,7 +118,7 @@
     <div class="cover-title">Manual Operacional</div>
     <div class="cover-subtitle">SGCD — Sistema de Gestão de Contratação Direta</div>
     <div class="cover-system">Gestão de Processos de Dispensa de Licitação</div>
-    <div class="cover-version">Versão v1.6.0</div>
+    <div class="cover-version">Versão v1.7.0</div>
     <br>
     <div style="font-size:11pt; color:#555; line-height:1.8;">
       Aplicação web single-file para agentes de contratação pública<br>
@@ -173,6 +173,13 @@
     <div class="toc-item h3"><a href="#sec7-6">7.6 Histórico e log de auditoria</a></div>
 
     <div class="toc-item h2"><a href="#sec8">8. Gerenciamento de Propostas (Etapa 10)</a></div>
+    <div class="toc-item h3"><a href="#sec8-1">8.1 Situações de proposta</a></div>
+    <div class="toc-item h3"><a href="#sec8-2">8.2 Despacho de Recusa / Desclassificação</a></div>
+
+    <div class="toc-item h2"><a href="#sec8b">8B. Habilitação do Fornecedor (Etapa 11)</a></div>
+    <div class="toc-item h3"><a href="#sec8b-1">8B.1 Certidões e consultas oficiais</a></div>
+    <div class="toc-item h3"><a href="#sec8b-2">8B.2 Sincronização com o cadastro de fornecedores</a></div>
+    <div class="toc-item h3"><a href="#sec8b-3">8B.3 Despacho de Inabilitação</a></div>
 
     <div class="toc-item h2"><a href="#sec9">9. Documentos Gerados</a></div>
 
@@ -732,6 +739,8 @@
 <h2 id="sec8">8. Gerenciamento de Propostas (Etapa 10)</h2>
 <p>A Etapa 10 conta com uma seção dedicada ao gerenciamento de propostas recebidas, que permite registrar, comparar e selecionar a proposta vencedora de forma organizada e com documentação automática.</p>
 
+<h3 id="sec8-1">8.1 Situações de proposta</h3>
+
 <h3>Como adicionar uma proposta</h3>
 <ol>
   <li>Expanda a Etapa 10 no checklist do processo</li>
@@ -770,6 +779,70 @@
 </ol>
 <p>O Mapa de Preços contém: cabeçalho com dados do processo, tabela comparativa com todos os fornecedores e valores, identificação do vencedor e o menor preço, data de geração e código de autenticidade.</p>
 
+<h3 id="sec8-2">8.2 Despacho de Recusa / Desclassificação</h3>
+<p>Quando uma proposta é marcada como <strong>"Recusada"</strong>, o sistema exibe automaticamente o botão <strong>"📄 Despacho de Recusa"</strong> no card da proposta. Esse documento formaliza a decisão de recusa ou desclassificação da proposta, com fundamentação jurídica completa.</p>
+<p>O despacho é gerado com base nos dados cadastrados nas <strong>Configurações</strong> (nome, cargo e matrícula do agente de contratação) e contém:</p>
+<ul>
+  <li>Identificação do processo (PA e DL)</li>
+  <li>Relação das propostas recusadas com fornecedor, CNPJ e valor</li>
+  <li>Decisão formal de recusa e desclassificação</li>
+  <li>Fundamentação: Art. 59 da Lei 14.133/2021 e Art. 50 da Lei 9.784/1999</li>
+  <li>Seção "Do Direito de Manifestação" com prazo de 10 dias úteis</li>
+  <li>Espaço para assinatura do agente de contratação</li>
+  <li>Código de autenticidade no rodapé</li>
+</ul>
+<div class="dica">
+  <strong>Dica:</strong> Preencha o campo <strong>"Observações"</strong> da proposta com o motivo técnico da recusa (ex.: "proposta acima do valor de referência", "documentação incompleta"). O motivo é incorporado automaticamente ao despacho.
+</div>
+
+<hr class="section-divider">
+
+<!-- ─────────────────────────────────────────────── SEÇÃO 8B -->
+<h2 id="sec8b">8B. Habilitação do Fornecedor (Etapa 11)</h2>
+<p>A Etapa 11 trata da habilitação jurídica, fiscal, trabalhista e técnica do fornecedor vencedor, conforme Art. 69 da Lei Federal nº 14.133/2021. O sistema oferece uma lista estruturada de 21 certidões e consultas oficiais para controle completo da regularidade do fornecedor.</p>
+
+<h3 id="sec8b-1">8B.1 Certidões e consultas oficiais</h3>
+<p>As certidões estão organizadas em três grupos:</p>
+<table>
+  <tr><th>Grupo</th><th>Itens</th></tr>
+  <tr><td><strong>Cadastros e Consultas Oficiais</strong></td><td>CNPJ, QSA, SICAF (CRC e restrições), TCU (consolidada e inidôneos), CGU, CNJ, TCESP (licitação e repasse), Portal da Transparência</td></tr>
+  <tr><td><strong>Certidões Fiscais e Trabalhistas</strong></td><td>CND Federal (RFB/PGFN), CND Estadual (PGE/SP), CND Municipal, CRF-FGTS, CNDT (TST), Certidão Simples Nacional, Certidão de Falência e Concordata</td></tr>
+  <tr><td><strong>Engenharia</strong></td><td>SUSEP — Certidão de Licenciamento, SUSEP — Apólice de Seguro Garantia (somente quando aplicável)</td></tr>
+</table>
+<p>Para cada certidão é possível registrar:</p>
+<ul>
+  <li><strong>Status:</strong> Pendente / Obtida / N/A (não aplicável)</li>
+  <li><strong>Data de emissão</strong> e <strong>Data de validade</strong> (para certidões com status "Obtida")</li>
+  <li><strong>Arquivo anexado</strong> (PDF ou imagem da certidão)</li>
+</ul>
+<p>O botão <strong>"↗ Acessar"</strong> abre diretamente o portal oficial da certidão no navegador.</p>
+
+<h3 id="sec8b-2">8B.2 Sincronização com o cadastro de fornecedores</h3>
+<p>As datas de emissão e validade preenchidas na Etapa 11 são <strong>automaticamente sincronizadas</strong> com o cadastro do fornecedor vinculado ao processo. Certidões sincronizáveis são identificadas pelo indicador <strong>"⇄ fornecedor"</strong> ao lado dos campos de data.</p>
+<p>A sincronização funciona nos dois sentidos:</p>
+<ul>
+  <li>Ao preencher datas na Etapa 11, o cadastro do fornecedor é atualizado</li>
+  <li>Ao abrir a Etapa 11 com um fornecedor vinculado, datas já cadastradas no fornecedor são pré-preenchidas automaticamente</li>
+</ul>
+<div class="nota">
+  <strong>Nota:</strong> Apenas certidões com prazo de validade definido são sincronizadas (ex.: CND Federal, FGTS, CNDT). Consultas sem validade fixa (CNPJ, QSA, TCU) não geram entrada no cadastro do fornecedor.
+</div>
+
+<h3 id="sec8b-3">8B.3 Despacho de Inabilitação</h3>
+<p>Caso o fornecedor não comprove a regularidade exigida, o botão <strong>"📄 Despacho de Inabilitação"</strong> gera o documento formal de inabilitação. O sistema identifica automaticamente as certidões com status <strong>"Pendente"</strong> e as lista como motivação da decisão.</p>
+<p>O documento contém:</p>
+<ul>
+  <li>Identificação do processo e do fornecedor (razão social e CNPJ)</li>
+  <li>Relação das certidões pendentes que motivam a inabilitação</li>
+  <li>Fundamentação: Art. 69 e Art. 72 da Lei 14.133/2021 e Art. 50 da Lei 9.784/1999</li>
+  <li>Seção "Do Direito de Manifestação" com prazo de 10 dias úteis</li>
+  <li>Espaço para assinatura do agente de contratação</li>
+  <li>Código de autenticidade no rodapé</li>
+</ul>
+<div class="aviso">
+  <strong>Atenção:</strong> Certifique-se de que todas as certidões foram analisadas antes de gerar o despacho. Certidões marcadas como "N/A" não aparecem na lista de pendências.
+</div>
+
 <hr class="section-divider">
 
 <!-- ─────────────────────────────────────────────── SEÇÃO 9 -->
@@ -801,6 +874,16 @@
     <td><strong>Mapa de Preços</strong></td>
     <td>Tabela comparativa de todas as propostas recebidas, com identificação do vencedor</td>
     <td>Botão "Mapa de Preços" na Etapa 10</td>
+  </tr>
+  <tr>
+    <td><strong>Despacho de Recusa / Desclassificação</strong></td>
+    <td>Decisão fundamentada de recusa de proposta (Art. 59 Lei 14.133/2021), com direito de manifestação</td>
+    <td>Botão "📄 Despacho de Recusa" no card da proposta recusada (Etapa 10)</td>
+  </tr>
+  <tr>
+    <td><strong>Despacho de Inabilitação</strong></td>
+    <td>Decisão fundamentada de inabilitação do fornecedor (Art. 69 e 72 Lei 14.133/2021), com lista de certidões pendentes</td>
+    <td>Botão "📄 Despacho de Inabilitação" na Etapa 11</td>
   </tr>
   <tr>
     <td><strong>Relatório Geral</strong></td>
@@ -997,7 +1080,7 @@
 
 <hr class="section-divider">
 <p style="text-align:center; font-size:9pt; color:#888; margin-top:20pt;">
-  SGCD v1.6.0 — Manual Operacional<br>
+  SGCD v1.7.0 — Manual Operacional<br>
   Sistema de Gestão de Contratação Direta<br>
   Lei Federal nº 14.133/2021
 </p>
