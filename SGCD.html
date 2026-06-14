@@ -1031,7 +1031,7 @@
         <button class="btn btn-primary" onclick="saveSettings()">Salvar</button>
       </div>
     </div>
-    <div style="max-width:560px;padding:0 0 40px">
+    <div style="max-width:560px;padding:0 0 40px;margin:0 auto">
       <p style="font-size:.75rem;color:var(--gray-500);margin-bottom:20px">Estas informações serão usadas para pré-preencher os campos de responsável e para subsidiar a geração da Ata.</p>
 
       <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
@@ -3207,6 +3207,9 @@ function renderPropostasSection(stepIdx, data) {
           <input type="text" value="${escHtml(p.obs||'')}" onchange="updateProposta(${stepIdx},${pi},'obs',this.value)">
         </div>
       </div>
+      ${p.situacao === 'recusada' ? `<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--gray-200)">
+        <button class="btn btn-outline btn-sm" onclick="gerarDespachoRecusa(${stepIdx},${pi})">📄 Despacho de Recusa</button>
+      </div>` : ''}
     </div>`).join('');
 
   const vencedora = lista.find(p => p.situacao === 'vencedora');
@@ -4136,6 +4139,106 @@ function exportarCSV() {
 
 // AUTORIZAÇÃO DE ABERTURA — Lei 14.133/2021
 // ══════════════════════════════════════════════════════════════
+function gerarDespachoRecusa(stepIdx, pi) {
+  const proc = currentProcess;
+  const u = getUser();
+  const data = proc.steps[stepIdx] || {};
+  const lista = data.fields?._propostas ? JSON.parse(data.fields._propostas) : [];
+  const prop = lista[pi];
+  if (!prop) return;
+
+  const hoje = new Date().toLocaleDateString('pt-BR', { day:'numeric', month:'long', year:'numeric' });
+  const blank = txt => txt || '_'.repeat(40);
+
+  const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Despacho de Recusa — ${prop.fornecedor || 'Fornecedor'}</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; color: #000; background: #fff; padding: 2cm 2.5cm; }
+  .header { text-align: center; margin-bottom: 24pt; border-bottom: 2px solid #000; padding-bottom: 14pt; }
+  .header img { height: 90pt; width: auto; margin-bottom: 8pt; }
+  .header h1 { font-size: 13pt; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+  .header h2 { font-size: 11pt; font-weight: 400; margin-top: 2pt; }
+  .doc-title { text-align: center; margin: 20pt 0 18pt; }
+  .doc-title h3 { font-size: 13pt; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid #000; display: inline-block; padding-bottom: 4pt; }
+  .doc-title .num { font-size: 11pt; margin-top: 6pt; }
+  .section { margin-bottom: 14pt; }
+  .section p { line-height: 1.7; text-align: justify; }
+  .field-table { width: 100%; border-collapse: collapse; margin: 14pt 0; }
+  .field-table td { padding: 5pt 8pt; border: 1px solid #333; font-size: 11pt; vertical-align: top; }
+  .field-table td.lbl { font-weight: 700; text-transform: uppercase; font-size: 9pt; letter-spacing: .4px; width: 38%; background: #f5f5f5; }
+  .despacho { background: #f9f9f9; border-left: 3px solid #555; padding: 10pt 14pt; margin: 16pt 0; font-size: 11pt; line-height: 1.8; text-align: justify; }
+  .motivo-box { border: 1px solid #ccc; border-radius: 4px; padding: 10pt 14pt; margin: 14pt 0; font-size: 11pt; line-height: 1.7; min-height: 60pt; }
+  .motivo-label { font-size: 9pt; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 4pt; color: #555; }
+  .signature-block { margin-top: 40pt; }
+  .signature-line { border-top: 1px solid #000; width: 280pt; margin: 0 auto; text-align: center; padding-top: 4pt; font-size: 10pt; }
+  .city-date { text-align: right; margin-top: 30pt; margin-bottom: 6pt; font-size: 11pt; }
+  .footer { margin-top: 40pt; border-top: 1px solid #ccc; padding-top: 6pt; text-align: center; font-size: 8pt; color: #666; }
+  .btn-print { display: block; margin: 0 auto 20pt; padding: 8pt 24pt; background: #2C001E; color: #fff; border: none; border-radius: 4px; font-size: 11pt; cursor: pointer; letter-spacing: .5px; }
+  .btn-print:hover { background: #5E2750; }
+  @media print { body { padding: 0; } .no-print { display: none !important; } }
+</style>
+</head>
+<body>
+<button class="btn-print no-print" onclick="window.print()">🖨 Imprimir / Salvar PDF</button>
+
+<div class="header">
+  <img src="data:image/png;base64,__BRASAO_PLACEHOLDER__" alt="Brasão">
+  <h1>${blank(u.orgao)}</h1>
+  <h2>${blank(u.municipio)}</h2>
+</div>
+
+<div class="doc-title">
+  <h3>Despacho de Recusa / Desclassificação de Proposta</h3>
+  <div class="num">Dispensa de Licitação nº ${blank(proc.num_dl || proc.num)}</div>
+</div>
+
+<div class="section">
+  <div class="despacho">
+    <strong>DESPACHO:</strong> O(A) Agente de Contratação, no exercício de suas atribuições legais e nos termos do Art. 59 c/c Art. 70 da Lei Federal nº 14.133/2021, e tendo em vista a análise das propostas recebidas no âmbito do presente processo de Dispensa de Licitação, <strong>DECIDE</strong> pela recusa e desclassificação da proposta apresentada pelo fornecedor abaixo identificado, pelas razões descritas neste despacho.
+  </div>
+</div>
+
+<table class="field-table">
+  <tr><td class="lbl">Processo Administrativo</td><td>${blank(proc.num_proc || proc.num)}</td></tr>
+  <tr><td class="lbl">Dispensa de Licitação nº</td><td>${blank(proc.num_dl || proc.num)}</td></tr>
+  <tr><td class="lbl">Objeto</td><td>${blank(proc.objeto)}</td></tr>
+  <tr><td class="lbl">Unidade Requisitante</td><td>${blank(proc.unidade)}</td></tr>
+  <tr><td class="lbl">Fornecedor Recusado</td><td>${blank(prop.fornecedor)}</td></tr>
+  ${prop.cnpj ? `<tr><td class="lbl">CNPJ</td><td>${prop.cnpj}</td></tr>` : ''}
+  ${prop.valor ? `<tr><td class="lbl">Valor da Proposta</td><td>${prop.valor}</td></tr>` : ''}
+  ${prop.data_proposta ? `<tr><td class="lbl">Data da Proposta</td><td>${new Date(prop.data_proposta).toLocaleDateString('pt-BR')}</td></tr>` : ''}
+</table>
+
+<div class="section">
+  <div class="motivo-label">Motivo da Recusa / Desclassificação</div>
+  <div class="motivo-box">${prop.obs ? escHtml(prop.obs) : '&nbsp;'}</div>
+</div>
+
+<div class="section">
+  <p>Em decorrência da recusa/desclassificação, o processo prosseguirá com as demais propostas válidas, na forma prevista na legislação vigente. O fornecedor poderá, querendo, interpor recurso administrativo no prazo legal, nos termos do Art. 165 e seguintes da Lei Federal nº 14.133/2021.</p>
+</div>
+
+<div class="city-date">${blank(u.municipio)}, ${hoje}</div>
+
+<div class="signature-block">
+  <div class="signature-line">
+    <div>${blank(u.nome)}</div>
+    <div style="font-size:9pt;margin-top:2pt">${blank(u.cargo)}${u.matricula ? ' — Matrícula: ' + u.matricula : ''}</div>
+  </div>
+</div>
+
+<div class="footer">Documento gerado pelo SGCD — Sistema de Gestão de Contratação Direta &nbsp;·&nbsp; Lei Federal nº 14.133/2021 &nbsp;·&nbsp; Cód. ${_docAuthCode(proc)}</div>
+</body>
+</html>`;
+
+  const win = window.open('', '_blank', 'width=900,height=700');
+  _gerarDocumento(win, html);
+}
+
 function gerarAutorizacao() {
   const p = currentProcess;
   const u = getUser();
