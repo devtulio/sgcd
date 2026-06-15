@@ -1,6 +1,6 @@
 # SGCD — Sistema de Gestão de Contratação Direta
 
-![Versão](https://img.shields.io/badge/versão-v1.8.1-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-HTML5%20puro-orange) ![Licença](https://img.shields.io/badge/licença-uso%20interno-lightgrey)
+![Versão](https://img.shields.io/badge/versão-v1.9.0-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-HTML5%20puro-orange) ![Licença](https://img.shields.io/badge/licença-uso%20interno-lightgrey)
 
 ## Descrição
 
@@ -12,7 +12,7 @@ Não requer instalação, servidor ou conexão à internet. Todos os dados ficam
 
 ## Funcionalidades Principais
 
-- **Checklist estruturado com 16 etapas** do processo de Dispensa de Licitação, cada uma com fundamento legal e orientação de preenchimento
+- **Checklist estruturado com 15 etapas** do processo de Dispensa de Licitação, cada uma com fundamento legal e orientação de preenchimento
 - **Geração de documentos** prontos para assinatura e publicação: Autorização de Abertura, Extrato para Diário Oficial, Ata de Sessão e Mapa de Preços
 - **Relatório geral** de processos com filtros por status, unidade, período e faixa de valor
 - **Cadastro de fornecedores** com consulta automática de CNPJ via BrasilAPI e controle de certidões
