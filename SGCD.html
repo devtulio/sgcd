@@ -1174,6 +1174,15 @@
           <div style="font-size:.7rem;color:var(--gray-500);margin-left:23px" id="s-last-autobackup"></div>
         </div>
       </fieldset>
+
+      <fieldset style="border:1.5px solid #dc2626;border-radius:8px;padding:14px 16px;margin-top:18px">
+        <legend style="font-size:.72rem;font-weight:700;color:#dc2626;padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Zona de Perigo</legend>
+        <p style="font-size:.72rem;color:var(--gray-500);margin-bottom:12px;line-height:1.5">Esta operação apaga <strong>permanentemente</strong> todos os processos, fornecedores, arquivos e configurações do sistema. A ação é irreversível. Um backup completo será exportado automaticamente antes do wipe.</p>
+        <button class="btn btn-sm" onclick="factoryReset()" style="background:#dc2626;color:#fff;border:none;gap:6px;display:flex;align-items:center">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+          Factory Reset / Wipe Data
+        </button>
+      </fieldset>
     </div>
   </div>
 </div>
@@ -1312,7 +1321,7 @@ const ICONS = {
 // DB — IndexedDB wrapper
 // ══════════════════════════════════════════════════════════════
 let db;
-const SGCD_VERSION = '1.10.6';
+const SGCD_VERSION = '1.10.7';
 document.title = `SGCD v${SGCD_VERSION}`;
 const DB_NAME = 'dispensaDB', DB_VER = 3;
 
@@ -1421,6 +1430,110 @@ function dbClearStore(store) {
     req.onsuccess = () => res();
     req.onerror   = e => rej(e);
   });
+}
+
+async function factoryReset() {
+  // — Confirmação 1: aviso geral —
+  const c1 = await customConfirm(
+    'Você está prestes a apagar TODOS os dados do SGCD:\n\n• Todos os processos e documentos\n• Todos os fornecedores cadastrados\n• Todos os arquivos anexados\n• Todas as configurações\n• Toda a trilha de auditoria\n\nEsta ação é IRREVERSÍVEL e não pode ser desfeita.',
+    { title: '⚠️ Atenção — Wipe de Dados', icon: '🗑️', okLabel: 'Continuar', okClass: 'btn-danger' }
+  );
+  if (!c1) return;
+
+  // — Confirmação 2: digitação da frase de confirmação —
+  const frase = 'APAGAR TUDO';
+  const digitado = await new Promise(resolve => {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center';
+    overlay.innerHTML = `
+      <div style="background:var(--bg-card);border-radius:12px;padding:28px 32px;max-width:420px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.3);border:2px solid #dc2626">
+        <div style="font-size:1.1rem;font-weight:700;color:#dc2626;margin-bottom:12px">Confirmação de segurança</div>
+        <p style="font-size:.88rem;line-height:1.6;margin-bottom:16px;color:var(--text)">Para continuar, digite exatamente a frase abaixo no campo:</p>
+        <div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:6px;padding:8px 12px;font-family:monospace;font-size:.95rem;font-weight:700;color:#dc2626;text-align:center;letter-spacing:2px;margin-bottom:16px">${frase}</div>
+        <input id="_wipe-input" type="text" placeholder="Digite a frase aqui..." autocomplete="off"
+          style="width:100%;padding:9px 12px;border:1.5px solid var(--gray-300);border-radius:6px;font-size:.88rem;box-sizing:border-box;background:var(--bg);color:var(--text)">
+        <div style="display:flex;gap:10px;margin-top:18px;justify-content:flex-end">
+          <button id="_wipe-cancel" class="btn btn-ghost btn-sm">Cancelar</button>
+          <button id="_wipe-ok" class="btn btn-sm" style="background:#dc2626;color:#fff;border:none" disabled>Confirmar</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    const inp = overlay.querySelector('#_wipe-input');
+    const ok  = overlay.querySelector('#_wipe-ok');
+    inp.addEventListener('input', () => { ok.disabled = inp.value !== frase; });
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter' && !ok.disabled) ok.click(); });
+    overlay.querySelector('#_wipe-cancel').addEventListener('click', () => { document.body.removeChild(overlay); resolve(false); });
+    ok.addEventListener('click', () => { document.body.removeChild(overlay); resolve(true); });
+    setTimeout(() => inp.focus(), 50);
+  });
+  if (!digitado) return;
+
+  // — Confirmação 3: contagem regressiva com contagem de dados —
+  const [processes, fornecedores, files] = await Promise.all([
+    dbGetAll('processes'), dbGetAll('fornecedores'), dbGetAll('files')
+  ]);
+  const c3 = await new Promise(resolve => {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center';
+    overlay.innerHTML = `
+      <div style="background:var(--bg-card);border-radius:12px;padding:28px 32px;max-width:440px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.3);border:2px solid #dc2626;text-align:center">
+        <div style="font-size:2rem;margin-bottom:10px">☢️</div>
+        <div style="font-size:1rem;font-weight:700;color:#dc2626;margin-bottom:14px">Última confirmação — sem volta</div>
+        <p style="font-size:.85rem;line-height:1.6;color:var(--text);margin-bottom:14px">
+          Serão apagados permanentemente:<br>
+          <strong>${processes.length}</strong> processo(s) &nbsp;·&nbsp;
+          <strong>${fornecedores.length}</strong> fornecedor(es) &nbsp;·&nbsp;
+          <strong>${files.length}</strong> arquivo(s)
+        </p>
+        <p style="font-size:.82rem;color:var(--gray-500);margin-bottom:20px">Um backup completo será salvo automaticamente antes do wipe.</p>
+        <button id="_wipe-final" class="btn btn-sm" style="background:#dc2626;color:#fff;border:none;min-width:160px" disabled>
+          Aguarde <span id="_wipe-count">5</span>s…
+        </button>
+        <br><button id="_wipe-abort" class="btn btn-ghost btn-sm" style="margin-top:10px">Cancelar</button>
+      </div>`;
+    document.body.appendChild(overlay);
+    const btn   = overlay.querySelector('#_wipe-final');
+    const count = overlay.querySelector('#_wipe-count');
+    let n = 5;
+    const t = setInterval(() => {
+      n--;
+      if (n <= 0) {
+        clearInterval(t);
+        btn.disabled = false;
+        btn.textContent = '🗑️ Executar Wipe Agora';
+      } else {
+        count.textContent = n;
+      }
+    }, 1000);
+    overlay.querySelector('#_wipe-abort').addEventListener('click', () => {
+      clearInterval(t); document.body.removeChild(overlay); resolve(false);
+    });
+    btn.addEventListener('click', () => { document.body.removeChild(overlay); resolve(true); });
+  });
+  if (!c3) return;
+
+  // — Backup automático antes do wipe —
+  try {
+    const backupFiles = files.map(f => ({ ...f, data: f.data ? _bufToBase64(f.data) : null, _enc: 'base64' }));
+    const backup = { _sgcd: true, version: 1, exportedAt: new Date().toISOString(), processes, fornecedores, files: backupFiles };
+    const blob = new Blob([JSON.stringify(backup)], { type: 'application/json' });
+    const url  = URL.createObjectURL(blob);
+    const a    = Object.assign(document.createElement('a'), {
+      href: url,
+      download: `SGCD_wipe_backup_${new Date().toISOString().slice(0,10)}.json`
+    });
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } catch(e) { /* continua mesmo se o backup falhar */ }
+
+  // — Wipe —
+  await Promise.all(['processes','fornecedores','files','auditGlobal'].map(s => dbClearStore(s)));
+  Object.keys(localStorage).filter(k => k.startsWith('sgcd-')).forEach(k => localStorage.removeItem(k));
+  window._BRASAO_CACHE = null;
+  currentProcess = null;
+
+  toast('✅ Wipe concluído. O sistema foi redefinido ao estado inicial.', 'success');
+  setTimeout(() => location.reload(), 1800);
 }
 
 async function exportBackup() {
