@@ -751,6 +751,10 @@
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 0-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></svg>
     <span class="nav-tooltip">Fornecedores</span>
   </button>
+  <button class="nav-btn" id="nav-audit" onclick="showAudit()" aria-label="Auditoria">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    <span class="nav-tooltip">Auditoria</span>
+  </button>
   <div class="nav-spacer"></div>
   <div class="nav-divider"></div>
   <button class="nav-btn" id="nav-settings" onclick="showSettings()" aria-label="Configurações">
@@ -840,6 +844,10 @@
     <div class="dash-top">
       <h2>Fornecedores</h2>
       <div style="display:flex;gap:8px">
+        <button class="btn btn-outline" onclick="gerarRelatorioFornecedores()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          Relatório
+        </button>
         <button class="btn btn-primary" onclick="openFornModal()">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
           Novo Fornecedor
@@ -1018,6 +1026,58 @@
           </h4>
           <div class="body" id="audit-log-body"></div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Audit View ── -->
+  <div id="view-audit" class="view">
+    <div class="dash-top">
+      <h2>Trilha de Auditoria</h2>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-outline btn-sm" onclick="gerarRelatorioAuditoria()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          Relatório
+        </button>
+      </div>
+    </div>
+    <div style="max-width:960px;margin:0 auto;padding:0 16px">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:flex-end">
+        <div>
+          <label style="font-size:.72rem;font-weight:600;color:var(--gray-500);display:block;margin-bottom:4px">Tipo de evento</label>
+          <select id="audit-filter-tipo" onchange="renderAudit()" style="font-size:.8rem;padding:4px 8px;border:1px solid var(--gray-200);border-radius:4px;background:var(--gray-50)">
+            <option value="">Todos</option>
+            <option value="ETAPA_DONE">Etapa concluída</option>
+            <option value="ETAPA_BLOCKED">Etapa bloqueada</option>
+            <option value="ETAPA_PENDING">Etapa reaberta</option>
+            <option value="ARQUIVO_ANEXADO">Arquivo anexado</option>
+            <option value="ARQUIVO_REMOVIDO">Arquivo removido</option>
+            <option value="DOCUMENTO_GERADO">Documento gerado</option>
+            <option value="PROCESSO_EXCLUIDO">Processo excluído</option>
+            <option value="CERTIDAO_ATUALIZADA">Certidão atualizada</option>
+            <option value="CERTIDAO_SINCRONIZADA">Certidão sincronizada</option>
+            <option value="FORNECEDOR_ALTERADO">Fornecedor alterado</option>
+            <option value="CAMPO_ALTERADO">Campo alterado</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:.72rem;font-weight:600;color:var(--gray-500);display:block;margin-bottom:4px">De</label>
+          <input type="date" id="audit-filter-de" onchange="renderAudit()" style="font-size:.8rem;padding:4px 8px;border:1px solid var(--gray-200);border-radius:4px;background:var(--gray-50)">
+        </div>
+        <div>
+          <label style="font-size:.72rem;font-weight:600;color:var(--gray-500);display:block;margin-bottom:4px">Até</label>
+          <input type="date" id="audit-filter-ate" onchange="renderAudit()" style="font-size:.8rem;padding:4px 8px;border:1px solid var(--gray-200);border-radius:4px;background:var(--gray-50)">
+        </div>
+        <div>
+          <label style="font-size:.72rem;font-weight:600;color:var(--gray-500);display:block;margin-bottom:4px">Usuário</label>
+          <input type="text" id="audit-filter-user" oninput="renderAuditDebounced()" placeholder="Filtrar por usuário…" style="font-size:.8rem;padding:4px 8px;border:1px solid var(--gray-200);border-radius:4px;background:var(--gray-50);width:180px">
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="limparFiltrosAudit()" style="margin-top:20px">✕ Limpar</button>
+        <span id="audit-count" style="font-size:.75rem;color:var(--gray-500);margin-top:24px"></span>
+      </div>
+      <div id="audit-timeline" style="padding-bottom:8px"></div>
+      <div id="audit-load-more" style="text-align:center;margin:16px 0;display:none">
+        <button class="btn btn-outline btn-sm" onclick="renderAudit(true)">Carregar mais registros</button>
       </div>
     </div>
   </div>
@@ -1253,9 +1313,9 @@ const ICONS = {
 // DB — IndexedDB wrapper
 // ══════════════════════════════════════════════════════════════
 let db;
-const SGCD_VERSION = '1.7.0';
+const SGCD_VERSION = '1.8.1';
 document.title = `SGCD v${SGCD_VERSION}`;
-const DB_NAME = 'dispensaDB', DB_VER = 2;
+const DB_NAME = 'dispensaDB', DB_VER = 3;
 
 function initDB() {
   return new Promise((res, rej) => {
@@ -1272,6 +1332,11 @@ function initDB() {
       }
       if (!d.objectStoreNames.contains('fornecedores')) {
         d.createObjectStore('fornecedores', { keyPath: 'id' });
+      }
+      if (!d.objectStoreNames.contains('auditGlobal')) {
+        const ag = d.createObjectStore('auditGlobal', { keyPath: 'id' });
+        ag.createIndex('at', 'at');
+        ag.createIndex('processId', 'processId');
       }
     };
     req.onsuccess = e => { db = e.target.result; res(); };
@@ -1843,6 +1908,8 @@ function toast(msg, type = '') {
   el.textContent = msg;
   document.getElementById('toast').appendChild(el);
   setTimeout(() => el.remove(), 3000);
+  if (type === 'success') playSuccess();
+  else if (type === 'error') playError();
 }
 
 function parseValor(v) {
@@ -1898,6 +1965,31 @@ function maskCnpj(input) {
   else if (v.length > 2) v = v.replace(/^(\d{2})(\d{0,3})/, '$1.$2');
   input.value = v;
 }
+function formatCep(s) {
+  const d = (s || '').replace(/\D/g, '').slice(0, 8);
+  if (d.length === 8) return d.replace(/^(\d{2})(\d{3})(\d{3})/, '$1.$2-$3');
+  return s;
+}
+function maskCep(input) {
+  let v = input.value.replace(/\D/g, '').slice(0, 8);
+  if (v.length > 5) v = v.replace(/^(\d{2})(\d{3})(\d{0,3})/, '$1.$2-$3');
+  else if (v.length > 2) v = v.replace(/^(\d{2})(\d{0,3})/, '$1.$2');
+  input.value = v;
+}
+function formatPhone(s) {
+  const d = (s || '').replace(/\D/g, '').slice(0, 11);
+  if (d.length === 11) return d.replace(/^(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+  if (d.length === 10) return d.replace(/^(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+  return s;
+}
+function maskPhone(input) {
+  let v = input.value.replace(/\D/g, '').slice(0, 11);
+  if (v.length > 10) v = v.replace(/^(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+  else if (v.length > 6) v = v.replace(/^(\d{2})(\d{4,5})(\d{0,4})/, '($1) $2-$3');
+  else if (v.length > 2) v = v.replace(/^(\d{2})(\d{0,5})/, '($1) $2');
+  else if (v.length > 0) v = v.replace(/^(\d{0,2})/, '($1');
+  input.value = v;
+}
 function cnpjSitClass(sit) {
   if (!sit) return 'outra';
   const s = sit.toUpperCase();
@@ -1922,12 +2014,29 @@ async function buscarCnpj(stepIdx) {
       razao_social: d.razao_social || '',
       nome_fantasia: d.nome_fantasia || '',
       situacao: d.descricao_situacao_cadastral || '',
+      data_situacao: d.data_situacao_cadastral || '',
+      motivo_situacao: d.motivo_situacao_cadastral || 0,
+      matriz_filial: d.descricao_matriz_filial || '',
       porte: d.descricao_porte || '',
+      capital_social: d.capital_social || null,
       abertura: d.data_inicio_atividade || '',
       natureza_juridica: d.natureza_juridica || '',
+      cnae_cod: d.cnae_fiscal || '',
       cnae: d.cnae_fiscal_descricao || '',
+      cnaes_secundarios: (d.cnaes_secundarios || []).map(c => ({ codigo: c.codigo, descricao: c.descricao })),
+      logradouro: [d.descricao_tipo_logradouro, d.logradouro].filter(Boolean).join(' '),
+      numero: d.numero || '',
+      complemento: d.complemento || '',
+      bairro: d.bairro || '',
+      municipio: d.municipio || '',
+      uf: d.uf || '',
+      cep: d.cep || '',
       endereco: end,
-      qsa: (d.qsa || []).map(s => ({ nome: s.nome_socio, qual: s.qualificacao_socio })),
+      telefone: d.ddd_telefone_1 || '',
+      telefone2: d.ddd_telefone_2 || '',
+      opcao_simples: !!d.opcao_pelo_simples,
+      opcao_mei: !!d.opcao_pelo_mei,
+      qsa: (d.qsa || []).map(s => ({ nome: s.nome_socio, qual: s.qualificacao_socio, entrada: s.data_entrada_sociedade || '' })),
       consultadoEm: Date.now()
     };
     currentProcess.fornecedor = forn;
@@ -1951,7 +2060,8 @@ async function saveFornecedor(forn, processId) {
     ? [...new Set([...prevProcessos, processId])]
     : prevProcessos;
   await dbPut('fornecedores', {
-    ...forn,
+    ...(existing || {}),   // preserva campos manuais (obs, email, website, qsa editado etc.)
+    ...forn,               // sobrescreve com dados frescos da Receita Federal
     processos,
     certidoes: existing?.certidoes || [],
     addedAt: existing?.addedAt || Date.now(),
@@ -2004,9 +2114,7 @@ function renderFornecedorLookup(stepIdx) {
   </div>`;
 }
 async function showFornecedores() {
-  document.getElementById('view-dash').classList.remove('active');
-  document.getElementById('view-detail').classList.remove('active');
-  document.getElementById('view-settings').classList.remove('active');
+  _hideAllViews();
   document.getElementById('view-fornecedores').classList.add('active');
   setNavActive('nav-forn');
   await renderFornecedores();
@@ -2076,11 +2184,281 @@ function setNavActive(id) {
   if (el) el.classList.add('active');
 }
 
+const _ALL_VIEWS = ['view-dash','view-detail','view-fornecedores','view-audit','view-settings'];
+function _hideAllViews() { _ALL_VIEWS.forEach(id => document.getElementById(id)?.classList.remove('active')); }
+
+let _auditPage = 0;
+let _auditLastDay = null;
+const _AUDIT_PAGE_SIZE = 50;
+
+async function showAudit() {
+  _hideAllViews();
+  document.getElementById('view-audit').classList.add('active');
+  setNavActive('nav-audit');
+  _auditPage = 0;
+  _auditLastDay = null;
+  await renderAudit();
+}
+
+function limparFiltrosAudit() {
+  document.getElementById('audit-filter-tipo').value = '';
+  document.getElementById('audit-filter-de').value = '';
+  document.getElementById('audit-filter-ate').value = '';
+  document.getElementById('audit-filter-user').value = '';
+  _auditPage = 0;
+  _auditLastDay = null;
+  renderAudit();
+}
+
+const _AUDIT_EVENT_LABELS = {
+  ETAPA_DONE: 'Etapa concluída', ETAPA_BLOCKED: 'Etapa bloqueada', ETAPA_PENDING: 'Etapa reaberta',
+  ARQUIVO_ANEXADO: 'Arquivo anexado', ARQUIVO_REMOVIDO: 'Arquivo removido',
+  DOCUMENTO_GERADO: 'Documento gerado', PROCESSO_EXCLUIDO: 'Processo excluído',
+  CERTIDAO_ATUALIZADA: 'Certidão atualizada', CERTIDAO_SINCRONIZADA: 'Certidão sincronizada',
+  FORNECEDOR_ALTERADO: 'Fornecedor alterado', CAMPO_ALTERADO: 'Campo alterado'
+};
+
+const _AUDIT_EVENT_META = {
+  ETAPA_DONE:           { bg: '#EEEDFE', color: '#534AB7' },
+  ETAPA_BLOCKED:        { bg: '#FCEBEB', color: '#A32D2D' },
+  ETAPA_PENDING:        { bg: '#FFF3D8', color: '#854F0B' },
+  ARQUIVO_ANEXADO:      { bg: '#E6F1FB', color: '#185FA5' },
+  ARQUIVO_REMOVIDO:     { bg: '#FCEBEB', color: '#A32D2D' },
+  DOCUMENTO_GERADO:     { bg: '#F3EDF8', color: '#5E2750' },
+  PROCESSO_EXCLUIDO:    { bg: '#FCEBEB', color: '#A32D2D' },
+  CERTIDAO_ATUALIZADA:  { bg: '#FFF3D8', color: '#854F0B' },
+  CERTIDAO_SINCRONIZADA:{ bg: '#E1F5EE', color: '#0F6E56' },
+  FORNECEDOR_ALTERADO:  { bg: '#E1F5EE', color: '#0F6E56' },
+  CAMPO_ALTERADO:       { bg: '#EBEBEB', color: '#666360' }
+};
+
+const _AUDIT_ICON_SVG = {
+  ETAPA_DONE:           `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`,
+  ETAPA_BLOCKED:        `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
+  ETAPA_PENDING:        `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.88"/></svg>`,
+  ARQUIVO_ANEXADO:      `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>`,
+  ARQUIVO_REMOVIDO:     `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>`,
+  DOCUMENTO_GERADO:     `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`,
+  PROCESSO_EXCLUIDO:    `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+  CERTIDAO_ATUALIZADA:  `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
+  CERTIDAO_SINCRONIZADA:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>`,
+  FORNECEDOR_ALTERADO:  `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`,
+  CAMPO_ALTERADO:       `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`
+};
+
+const _AUDIT_EVENT_COLORS = {
+  ETAPA_DONE: 'var(--success)', ETAPA_BLOCKED: 'var(--danger)', ETAPA_PENDING: 'var(--warning)',
+  ARQUIVO_ANEXADO: '#0ea5e9', ARQUIVO_REMOVIDO: 'var(--danger)',
+  DOCUMENTO_GERADO: 'var(--aubergine-mid)', PROCESSO_EXCLUIDO: 'var(--danger)',
+  CERTIDAO_ATUALIZADA: '#7c3aed', CERTIDAO_SINCRONIZADA: 'var(--success)',
+  FORNECEDOR_ALTERADO: '#0369a1', CAMPO_ALTERADO: 'var(--gray-500)'
+};
+
+// Fix #10: debounce para evitar scan completo do IndexedDB a cada tecla digitada no filtro
+let _auditFilterTimer = null;
+function renderAuditDebounced() {
+  clearTimeout(_auditFilterTimer);
+  _auditFilterTimer = setTimeout(renderAudit, 300);
+}
+
+async function renderAudit(loadMore = false) {
+  if (!loadMore) { _auditPage = 0; _auditLastDay = null; }
+  const todos = (await dbGetAll('auditGlobal')).sort((a, b) => b.at - a.at);
+  const fTipo = document.getElementById('audit-filter-tipo')?.value || '';
+  const fDe   = document.getElementById('audit-filter-de')?.value;
+  const fAte  = document.getElementById('audit-filter-ate')?.value;
+  const fUser = (document.getElementById('audit-filter-user')?.value || '').toLowerCase();
+
+  const filtered = todos.filter(e => {
+    if (fTipo && e.evento !== fTipo) return false;
+    if (fDe  && e.at < new Date(fDe  + 'T00:00:00').getTime()) return false;
+    if (fAte && e.at > new Date(fAte + 'T23:59:59').getTime()) return false;
+    if (fUser && !(e.usuario || '').toLowerCase().includes(fUser)) return false;
+    return true;
+  });
+
+  const countEl = document.getElementById('audit-count');
+  if (countEl) countEl.textContent = `${filtered.length} registro${filtered.length !== 1 ? 's' : ''}`;
+
+  const limit = (_auditPage + 1) * _AUDIT_PAGE_SIZE;
+  const shown = loadMore
+    ? filtered.slice(_auditPage * _AUDIT_PAGE_SIZE, limit)
+    : filtered.slice(0, limit);
+
+  const timeline = document.getElementById('audit-timeline');
+  if (!timeline) return;
+
+  const today = new Date(); today.setHours(0,0,0,0);
+  const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
+
+  function _dayLabel(ts) {
+    const d = new Date(ts); d.setHours(0,0,0,0);
+    if (d.getTime() === today.getTime()) return 'Hoje';
+    if (d.getTime() === yesterday.getTime()) return 'Ontem';
+    return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+  }
+
+  function _timeStr(ts) {
+    return new Date(ts).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  let html = '';
+
+  if (shown.length === 0 && !loadMore) {
+    html = `<div style="padding:48px 0;text-align:center;color:var(--gray-400)">
+      <div style="font-size:2rem;margin-bottom:8px">📋</div>
+      <div>Nenhum registro de auditoria encontrado.</div>
+    </div>`;
+    timeline.innerHTML = html;
+    const moreBtn = document.getElementById('audit-load-more');
+    if (moreBtn) moreBtn.style.display = 'none';
+    return;
+  }
+
+  for (let i = 0; i < shown.length; i++) {
+    const e = shown[i];
+    const dayLabel = _dayLabel(e.at);
+    const isLast = (i === shown.length - 1) && filtered.length <= limit;
+
+    if (dayLabel !== _auditLastDay) {
+      _auditLastDay = dayLabel;
+      html += `<div style="display:flex;align-items:center;gap:10px;margin:${i === 0 && !loadMore ? '4px' : '20px'} 0 12px">
+        <div style="flex:none;width:32px"></div>
+        <div style="font-size:.7rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--gray-400);white-space:nowrap">${escHtml(dayLabel)}</div>
+        <div style="flex:1;height:1px;background:var(--gray-100)"></div>
+      </div>`;
+    }
+
+    const meta  = _AUDIT_EVENT_META[e.evento]  || { bg: '#EBEBEB', color: '#666360' };
+    const icon  = _AUDIT_ICON_SVG[e.evento]    || _AUDIT_ICON_SVG['CAMPO_ALTERADO'];
+    const label = _AUDIT_EVENT_LABELS[e.evento] || e.evento;
+    const proc  = e.processId ? processes.find(p => p.id === e.processId) : null;
+    const procLabel = proc ? (proc.num_dl || proc.num_proc || proc.objeto?.slice(0,40) || '') : '';
+
+    html += `<div style="display:flex;gap:0;align-items:stretch;min-height:48px">
+      <!-- dot + line column -->
+      <div style="flex:none;width:32px;display:flex;flex-direction:column;align-items:center">
+        <div style="flex:none;width:28px;height:28px;border-radius:50%;background:${meta.bg};color:${meta.color};display:flex;align-items:center;justify-content:center;margin-top:2px">${icon}</div>
+        ${!isLast ? `<div style="flex:1;width:2px;background:var(--gray-100);margin:4px 0"></div>` : ''}
+      </div>
+      <!-- content -->
+      <div style="flex:1;padding:0 0 ${isLast ? '4' : '16'}px 12px;padding-top:4px">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span style="font-size:.7rem;font-weight:700;color:${meta.color};background:${meta.bg};padding:2px 8px;border-radius:99px;white-space:nowrap">${escHtml(label)}</span>
+          <span style="font-size:.72rem;color:var(--gray-400);white-space:nowrap">${_timeStr(e.at)}</span>
+          ${e.usuario ? `<span style="font-size:.72rem;color:var(--gray-500)">${escHtml(e.usuario)}</span>` : ''}
+        </div>
+        ${e.detalhe ? `<div style="margin-top:4px;font-size:.8rem;color:var(--gray-700)">${escHtml(e.detalhe)}</div>` : ''}
+        ${procLabel ? `<div style="margin-top:3px;font-size:.7rem;color:var(--gray-400)">${escHtml(procLabel)}</div>` : ''}
+      </div>
+    </div>`;
+  }
+
+  if (loadMore) {
+    timeline.insertAdjacentHTML('beforeend', html);
+  } else {
+    timeline.innerHTML = html;
+  }
+
+  const moreBtn = document.getElementById('audit-load-more');
+  if (moreBtn) {
+    moreBtn.style.display = filtered.length > limit ? '' : 'none';
+    if (filtered.length > limit) _auditPage++;
+  }
+}
+
+async function gerarRelatorioAuditoria() {
+  const todos = (await dbGetAll('auditGlobal')).sort((a, b) => b.at - a.at);
+  const fTipo = document.getElementById('audit-filter-tipo')?.value || '';
+  const fDe   = document.getElementById('audit-filter-de')?.value;
+  const fAte  = document.getElementById('audit-filter-ate')?.value;
+  const fUser = (document.getElementById('audit-filter-user')?.value || '').toLowerCase();
+
+  const lista = todos.filter(e => {
+    if (fTipo && e.evento !== fTipo) return false;
+    if (fDe  && e.at < new Date(fDe  + 'T00:00:00').getTime()) return false;
+    if (fAte && e.at > new Date(fAte + 'T23:59:59').getTime()) return false;
+    if (fUser && !(e.usuario || '').toLowerCase().includes(fUser)) return false;
+    return true;
+  });
+
+  const u = getUser();
+  const orgao = u.orgao || 'Órgão Público';
+  const municipio = u.municipio || '';
+  const dtGer = new Date().toLocaleString('pt-BR');
+
+  const filtrosAtivos = [
+    fTipo && `Evento: ${_AUDIT_EVENT_LABELS[fTipo] || fTipo}`,
+    fDe && `De: ${new Date(fDe+'T00:00:00').toLocaleDateString('pt-BR')}`,
+    fAte && `Até: ${new Date(fAte+'T00:00:00').toLocaleDateString('pt-BR')}`,
+    fUser && `Usuário: ${fUser}`
+  ].filter(Boolean).join(' | ');
+
+  const tbody = lista.map(e => {
+    const label = _AUDIT_EVENT_LABELS[e.evento] || e.evento;
+    const proc = e.processId ? processes.find(p => p.id === e.processId) : null;
+    const procRef = proc ? (proc.num_dl || proc.num_proc || proc.objeto?.slice(0,30) || '') : (e.processId || '—');
+    return `<tr>
+      <td>${fmt(e.at)}</td>
+      <td>${escHtml(label)}</td>
+      <td>${escHtml(procRef)}</td>
+      <td>${escHtml(e.detalhe || '—')}</td>
+      <td>${escHtml(e.usuario || '—')}</td>
+    </tr>`;
+  }).join('');
+
+  const now = new Date();
+  const dtGerFmt = now.toLocaleDateString('pt-BR') + ' às ' + now.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
+
+  const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+<title>Trilha de Auditoria — SGCD</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Times New Roman', Times, serif; font-size: 11pt; color: #000; background: #fff; padding: 2cm 2.5cm; }
+  .header { text-align: center; margin-bottom: 20pt; border-bottom: 2px solid #000; padding-bottom: 12pt; }
+  .header img { height: 90pt; width: auto; margin-bottom: 6pt; }
+  .header h1 { font-size: 13pt; font-weight: 700; text-transform: uppercase; }
+  .header h2 { font-size: 11pt; font-weight: 400; margin-top: 2pt; }
+  .doc-title { text-align: center; margin: 14pt 0 10pt; }
+  .doc-title h3 { font-size: 13pt; font-weight: 700; text-transform: uppercase; }
+  .doc-title .sub { font-size: 10pt; color: #444; margin-top: 4pt; }
+  .meta { font-size: 9pt; color: #555; margin-bottom: 10pt; text-align: center; }
+  table { width: 100%; border-collapse: collapse; margin-top: 8pt; font-size: 9pt; }
+  th { background: #1a1a2e; color: #fff; padding: 5pt 7pt; text-align: left; font-weight: 600; }
+  td { padding: 4pt 7pt; vertical-align: top; border-bottom: 1px solid #e0e0e0; }
+  tr:nth-child(even) td { background: #f7f7f7; }
+  tr:hover td { background: #fafafa; }
+  .footer-line { margin-top: 30pt; border-top: 1px solid #ccc; padding-top: 5pt; text-align: center; font-size: 8pt; color: #666; }
+  .btn-print { display: block; margin: 0 auto 20pt; padding: 8pt 24pt; background: #2C001E; color: #fff; border: none; border-radius: 4px; font-size: 11pt; cursor: pointer; letter-spacing: .5px; }
+  .btn-print:hover { background: #5E2750; }
+  @media print { body { padding: 0; } .no-print { display: none !important; } }
+</style></head><body>
+<button class="btn-print no-print" onclick="window.print()">🖨 Imprimir / Salvar PDF</button>
+<div class="header">
+  <img src="data:image/png;base64,__BRASAO_PLACEHOLDER__" alt="Brasão">
+  <h1>${escHtml(orgao)}</h1>
+  <h2>${escHtml(municipio)}</h2>
+</div>
+<div class="doc-title">
+  <h3>Relatório de Trilha de Auditoria</h3>
+  <div class="sub">Sistema de Gestão de Contratação Direta — SGCD &nbsp;·&nbsp; Lei Federal nº 14.133/2021</div>
+</div>
+<div class="meta">
+  ${filtrosAtivos ? `Filtros aplicados: ${escHtml(filtrosAtivos)} &nbsp;·&nbsp; ` : ''}Gerado em: ${dtGerFmt} &nbsp;·&nbsp; ${lista.length} registro${lista.length !== 1 ? 's' : ''}
+</div>
+<table>
+  <thead><tr><th style="width:110pt">Data/Hora</th><th style="width:100pt">Evento</th><th style="width:85pt">Processo</th><th>Detalhe</th><th style="width:120pt">Usuário</th></tr></thead>
+  <tbody>${tbody || '<tr><td colspan="5" style="text-align:center;color:#aaa;padding:20pt">Nenhum registro encontrado.</td></tr>'}</tbody>
+</table>
+<div class="footer-line">Documento gerado pelo SGCD — Sistema de Gestão de Contratação Direta &nbsp;·&nbsp; v${SGCD_VERSION} &nbsp;·&nbsp; ${dtGerFmt} &nbsp;·&nbsp; Uso interno</div>
+</body></html>`;
+
+  _gerarDocumento(window.open('', '_blank', 'width=1000,height=720'), html, 'Relatório de Auditoria');
+}
+
 function showDash() {
+  _hideAllViews();
   document.getElementById('view-dash').classList.add('active');
-  document.getElementById('view-detail').classList.remove('active');
-  document.getElementById('view-fornecedores').classList.remove('active');
-  document.getElementById('view-settings').classList.remove('active');
   setNavActive('nav-dash');
   currentId = null;
   currentProcess = null;
@@ -2258,42 +2636,118 @@ let _currentForn   = null;
 
 function _fornViewHtml(f) {
   const sitCls = cnpjSitClass(f.situacao);
+  const fmtD = s => s ? new Date(s+'T00:00:00').toLocaleDateString('pt-BR') : '—';
+  const fmtCap = v => v != null ? v.toLocaleString('pt-BR', {style:'currency',currency:'BRL'}) : null;
+  const row = (icon, label, val) => val ? `<div style="display:flex;gap:6px;align-items:baseline;font-size:.78rem;color:var(--gray-700);padding:3px 0;border-bottom:1px solid var(--gray-100)"><span style="min-width:14px">${icon}</span><span style="color:var(--gray-400);min-width:110px;font-size:.72rem">${label}</span><span>${val}</span></div>` : '';
+
+  // Endereço estruturado (novo) ou fallback legado
+  let endStr = '';
+  if (f.logradouro || f.municipio) {
+    endStr = [
+      [f.logradouro, f.numero].filter(Boolean).join(', '),
+      f.complemento,
+      f.bairro,
+      f.cep ? `CEP ${f.cep}` : '',
+      [f.municipio, f.uf].filter(Boolean).join('/')
+    ].filter(Boolean).join(' — ');
+  } else { endStr = f.endereco || ''; }
+
+  const cnaesSecHtml = (f.cnaes_secundarios || []).length
+    ? `<div style="margin-top:4px"><span style="font-size:.68rem;color:var(--gray-400);font-weight:600;text-transform:uppercase;letter-spacing:.4px">CNAEs Secundários</span>${(f.cnaes_secundarios).map(c => `<div style="font-size:.75rem;color:var(--gray-600);padding:1px 0">${c.codigo ? `<span style="color:var(--gray-400)">${c.codigo}</span> — ` : ''}${escHtml(c.descricao)}</div>`).join('')}</div>` : '';
+
   const qsaHtml = (f.qsa || []).length
-    ? `<div class="forn-qsa">
+    ? `<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--gray-100)">
         <div class="forn-qsa-title">Quadro Societário (QSA)</div>
-        ${f.qsa.map(s => `<div class="forn-qsa-item">👤 ${escHtml(s.nome)}${s.qual ? ` — ${escHtml(s.qual)}` : ''}</div>`).join('')}
+        ${f.qsa.map(s => `<div style="display:flex;justify-content:space-between;align-items:baseline;padding:3px 0;border-bottom:1px solid var(--gray-100)">
+          <span style="font-size:.78rem;color:var(--gray-700)">👤 ${escHtml(s.nome)}${s.qual ? ` <span style="color:var(--gray-400);font-size:.72rem">— ${escHtml(s.qual)}</span>` : ''}</span>
+          ${s.entrada ? `<span style="font-size:.68rem;color:var(--gray-400)">desde ${fmtD(s.entrada)}</span>` : ''}
+        </div>`).join('')}
       </div>` : '';
+
+  const regimeBadges = [
+    f.opcao_simples ? `<span style="font-size:.68rem;background:#dcfce7;color:#166534;border-radius:20px;padding:2px 8px;font-weight:600">Simples Nacional</span>` : '',
+    f.opcao_mei     ? `<span style="font-size:.68rem;background:#dbeafe;color:#1e40af;border-radius:20px;padding:2px 8px;font-weight:600">MEI</span>` : '',
+  ].filter(Boolean).join(' ');
+
   const procLinks = (f.processos || []).map(pid => {
     const p = processes.find(x => x.id === pid);
-    return p ? `<span class="forn-proc-link" onclick="closeFornDetail();openProcess('${escHtml(pid)}')">${escHtml(p.num || p.objeto.slice(0,25))}</span>` : '';
+    return p ? `<span class="forn-proc-link" onclick="closeFornDetail();openProcess('${escHtml(pid)}')">${escHtml(p.num_proc ? `PA ${p.num_proc}` : p.num || p.objeto.slice(0,25))}</span>` : '';
   }).filter(Boolean).join('');
-  return `<div class="forn-card" style="border:none;background:transparent;padding:0">
-    <div class="forn-card-header" style="padding:0 0 10px">
-      <div>
-        <div class="forn-razao">${escHtml(f.razao_social)}</div>
-        ${f.nome_fantasia ? `<div class="forn-fantasia">${escHtml(f.nome_fantasia)}</div>` : ''}
-        <div class="forn-cnpj-row" style="margin-top:4px">
+
+  return `<div style="padding:0">
+    <!-- Cabeçalho -->
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:10px;border-bottom:2px solid var(--gray-100);margin-bottom:10px">
+      <div style="flex:1;min-width:0">
+        <div class="forn-razao" style="font-size:.95rem">${escHtml(f.razao_social)}</div>
+        ${f.nome_fantasia && f.nome_fantasia !== f.razao_social ? `<div class="forn-fantasia">${escHtml(f.nome_fantasia)}</div>` : ''}
+        <div class="forn-cnpj-row" style="margin-top:5px">
           <span class="forn-cnpj-txt">${escHtml(f.cnpj)}</span>
           <button class="copy-btn" onclick="navigator.clipboard.writeText('${f.cnpj_digits}');toast('CNPJ copiado!','success')">📋 copiar</button>
+          ${f.matriz_filial ? `<span style="font-size:.68rem;color:var(--gray-400);margin-left:4px">${escHtml(f.matriz_filial)}</span>` : ''}
         </div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
-          <a href="https://certidoes-apf.apps.tcu.gov.br/" target="_blank" rel="noopener" class="btn btn-outline btn-sm" style="font-size:.7rem;padding:2px 8px" title="Verificar impedimento no CEIS">CEIS</a>
-          <a href="https://certidoes-apf.apps.tcu.gov.br/" target="_blank" rel="noopener" class="btn btn-outline btn-sm" style="font-size:.7rem;padding:2px 8px" title="Verificar impedimento no CNEP">CNEP</a>
-          <a href="https://portaldatransparencia.gov.br/sancoes/consulta?cpfCnpj=${f.cnpj_digits}" target="_blank" rel="noopener" class="btn btn-outline btn-sm" style="font-size:.7rem;padding:2px 8px" title="Portal da Transparência — Sanções">Sanções</a>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:7px">
+          <a href="https://certidoes-apf.apps.tcu.gov.br/" target="_blank" rel="noopener" class="btn btn-outline btn-sm" style="font-size:.7rem;padding:2px 8px">CEIS</a>
+          <a href="https://certidoes-apf.apps.tcu.gov.br/" target="_blank" rel="noopener" class="btn btn-outline btn-sm" style="font-size:.7rem;padding:2px 8px">CNEP</a>
+          <a href="https://portaldatransparencia.gov.br/sancoes/consulta?cpfCnpj=${f.cnpj_digits}" target="_blank" rel="noopener" class="btn btn-outline btn-sm" style="font-size:.7rem;padding:2px 8px">Sanções</a>
         </div>
       </div>
-      <span class="forn-sit ${sitCls}">${escHtml(f.situacao || '—')}</span>
+      <div style="text-align:right;flex-shrink:0;margin-left:10px">
+        <span class="forn-sit ${sitCls}">${escHtml(f.situacao || '—')}</span>
+        ${f.data_situacao ? `<div style="font-size:.65rem;color:var(--gray-400);margin-top:3px">desde ${fmtD(f.data_situacao)}</div>` : ''}
+      </div>
     </div>
-    <div class="forn-details" style="padding:0;gap:6px">
-      ${f.endereco         ? `<div class="forn-detail-row">📍 ${escHtml(f.endereco)}</div>` : ''}
-      ${f.abertura         ? `<div class="forn-detail-row">📅 Abertura: ${escHtml(f.abertura)}</div>` : ''}
-      ${f.porte            ? `<div class="forn-detail-row">🏢 Porte: ${escHtml(f.porte)}</div>` : ''}
-      ${f.cnae             ? `<div class="forn-detail-row">🔧 CNAE: ${escHtml(f.cnae)}</div>` : ''}
-      ${f.natureza_juridica? `<div class="forn-detail-row">📋 Nat. Jurídica: ${escHtml(f.natureza_juridica)}</div>` : ''}
+
+    <!-- Seção: Identificação -->
+    <div style="margin-bottom:10px">
+      <div class="forn-qsa-title" style="margin-bottom:4px">Identificação</div>
+      ${row('📅','Data de Abertura', f.abertura ? fmtD(f.abertura) : null)}
+      ${row('🏢','Porte', f.porte || null)}
+      ${row('📋','Natureza Jurídica', f.natureza_juridica || null)}
+      ${row('💰','Capital Social', fmtCap(f.capital_social))}
+      ${regimeBadges ? `<div style="margin-top:5px;display:flex;gap:4px;flex-wrap:wrap">${regimeBadges}</div>` : ''}
     </div>
+
+    <!-- Seção: Endereço -->
+    ${endStr ? `<div style="margin-bottom:10px">
+      <div class="forn-qsa-title" style="margin-bottom:4px">Endereço</div>
+      <div style="font-size:.78rem;color:var(--gray-700);line-height:1.6">
+        ${f.logradouro ? escHtml([f.logradouro, f.numero].filter(Boolean).join(', ')) : ''}
+        ${f.complemento ? `<span style="color:var(--gray-400)"> — ${escHtml(f.complemento)}</span>` : ''}
+        ${f.bairro ? `<br>${escHtml(f.bairro)}` : ''}
+        ${f.municipio ? `<br>${escHtml(f.municipio)}${f.uf ? `/${escHtml(f.uf)}` : ''}` : ''}
+        ${f.cep ? ` <span style="color:var(--gray-400)">CEP ${escHtml(f.cep)}</span>` : ''}
+        ${!f.logradouro && f.endereco ? escHtml(f.endereco) : ''}
+      </div>
+    </div>` : ''}
+
+    <!-- Seção: Atividade Econômica -->
+    <div style="margin-bottom:10px">
+      <div class="forn-qsa-title" style="margin-bottom:4px">Atividade Econômica</div>
+      ${f.cnae ? `<div style="font-size:.78rem;color:var(--gray-700);padding:3px 0;border-bottom:1px solid var(--gray-100)"><span style="color:var(--gray-400);font-size:.72rem">Principal${f.cnae_cod ? ` (${f.cnae_cod})` : ''} </span>${escHtml(f.cnae)}</div>` : ''}
+      ${cnaesSecHtml}
+    </div>
+
+    <!-- Seção: Contato -->
+    ${(f.telefone || f.telefone2 || f.email || f.website) ? `<div style="margin-bottom:10px">
+      <div class="forn-qsa-title" style="margin-bottom:4px">Contato</div>
+      ${row('📞','Telefone', f.telefone || null)}
+      ${row('📞','Telefone 2', f.telefone2 || null)}
+      ${row('✉️','E-mail', f.email ? `<a href="mailto:${escHtml(f.email)}" style="color:var(--brand)">${escHtml(f.email)}</a>` : null)}
+      ${row('🌐','Website', f.website ? `<a href="${escHtml(f.website)}" target="_blank" rel="noopener" style="color:var(--brand)">${escHtml(f.website)}</a>` : null)}
+    </div>` : ''}
+
+    <!-- QSA -->
     ${qsaHtml}
+
+    <!-- Observações -->
+    ${f.obs ? `<div style="margin-top:10px;padding:8px 10px;background:var(--gray-50);border-radius:var(--radius);font-size:.78rem;color:var(--gray-700);border-left:3px solid var(--brand)"><strong>Obs:</strong> ${escHtml(f.obs)}</div>` : ''}
+
+    <!-- Processos vinculados -->
     ${procLinks ? `<div class="forn-proc-list" style="margin-top:10px"><span style="font-size:.68rem;color:var(--gray-500);margin-right:4px">Processos vinculados:</span>${procLinks}</div>` : ''}
-    <div style="font-size:.65rem;color:var(--gray-400);margin-top:10px">Consultado em ${fmt(f.consultadoEm)} · Atualizado em ${fmt(f.updatedAt || f.addedAt)}</div>
+
+    <div style="font-size:.65rem;color:var(--gray-400);margin-top:10px;padding-top:8px;border-top:1px solid var(--gray-100)">
+      ${f.consultadoEm ? `Consultado em ${fmt(f.consultadoEm)} · ` : ''}Atualizado em ${fmt(f.updatedAt || f.addedAt)}
+    </div>
   </div>`;
 }
 
@@ -2318,6 +2772,22 @@ function _renderFornView() {
     <button class="btn btn-outline" onclick="closeFornDetail()">Fechar</button>
     <button class="btn btn-primary" onclick="_renderFornEdit()">✏ Editar</button>`;
 }
+function _qsaRowHtml(i, s = {}) {
+  return `<div class="fe-qsa-row" style="display:grid;grid-template-columns:1fr 1fr 110px 28px;gap:6px;align-items:end;margin-bottom:6px">
+    <div class="info-field" style="margin:0"><label style="font-size:.68rem">Nome</label>
+      <input type="text" class="fe-qsa-nome" value="${escHtml(s.nome || '')}" placeholder="Nome do sócio/administrador"></div>
+    <div class="info-field" style="margin:0"><label style="font-size:.68rem">Qualificação</label>
+      <input type="text" class="fe-qsa-qual" value="${escHtml(s.qual || '')}" placeholder="Ex: Sócio-Administrador"></div>
+    <div class="info-field" style="margin:0"><label style="font-size:.68rem">Entrada</label>
+      <input type="date" class="fe-qsa-entrada" value="${escHtml(s.entrada || '')}"></div>
+    <button onclick="this.closest('.fe-qsa-row').remove()" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:1rem;padding:0 4px;margin-bottom:2px" title="Remover">✕</button>
+  </div>`;
+}
+function _addQsaRow() {
+  const list = document.getElementById('fe-qsa-list');
+  if (list) list.insertAdjacentHTML('beforeend', _qsaRowHtml(list.children.length));
+}
+
 function _renderFornEdit() {
   const f = _currentForn;
   document.getElementById('forn-detail-title').textContent = 'Editar Fornecedor';
@@ -2329,15 +2799,126 @@ function _renderFornEdit() {
         <button class="btn btn-outline btn-sm" onclick="_reconsultarForn()">🔄 Atualizar</button>
       </div>
     </div>
+    <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-400);margin:10px 0 6px">Identificação</div>
     <div class="info-field"><label>Razão Social</label>
-      <input type="text" id="fe-razao" value="${escHtml(f.razao_social)}"></div>
+      <input type="text" id="fe-razao" value="${escHtml(f.razao_social || '')}"></div>
     <div class="info-field"><label>Nome Fantasia</label>
       <input type="text" id="fe-fantasia" value="${escHtml(f.nome_fantasia || '')}"></div>
     <div class="info-field"><label>Situação Cadastral</label>
       <input type="text" id="fe-situacao" value="${escHtml(f.situacao || '')}"></div>
-    <div class="info-field"><label>Endereço</label>
-      <input type="text" id="fe-endereco" value="${escHtml(f.endereco || '')}"></div>
-    <div class="info-field"><label>Observações</label>
+    <div class="info-field"><label>Porte</label>
+      <select id="fe-porte">
+        <option value="">— selecione —</option>
+        ${['MICRO EMPRESA','EMPRESA DE PEQUENO PORTE','EMPRESA DE MÉDIO PORTE','EMPRESA DE GRANDE PORTE','DEMAIS'].map(o=>`<option value="${o}" ${(f.porte||'').toUpperCase()===o||f.porte===o?'selected':''}>${o}</option>`).join('')}
+      </select></div>
+    <div class="info-field"><label>Natureza Jurídica</label>
+      <select id="fe-nat-jur">
+        <option value="">— selecione —</option>
+        ${[
+          '101-5 Órgão Público do Poder Executivo Federal',
+          '102-3 Órgão Público do Poder Executivo Estadual ou do Distrito Federal',
+          '103-1 Órgão Público do Poder Executivo Municipal',
+          '104-0 Órgão Público do Poder Legislativo Federal',
+          '105-8 Órgão Público do Poder Legislativo Estadual ou do Distrito Federal',
+          '106-6 Órgão Público do Poder Legislativo Municipal',
+          '107-4 Órgão Público do Poder Judiciário Federal',
+          '108-2 Órgão Público do Poder Judiciário Estadual',
+          '110-4 Autarquia Federal',
+          '111-2 Autarquia Estadual ou do Distrito Federal',
+          '112-0 Autarquia Municipal',
+          '113-9 Fundação Pública de Direito Público Federal',
+          '114-7 Fundação Pública de Direito Público Estadual ou do Distrito Federal',
+          '115-5 Fundação Pública de Direito Público Municipal',
+          '120-1 Fundo Público',
+          '124-4 Empresa Pública',
+          '128-7 Serviço Social Autônomo',
+          '131-7 Entidade Sindical',
+          '134-1 Organização Religiosa',
+          '137-6 Associação Privada',
+          '201-1 Empresa Pública',
+          '202-0 Sociedade de Economia Mista',
+          '203-8 Sociedade Anônima Aberta',
+          '204-6 Sociedade Anônima Fechada',
+          '205-4 Sociedade Empresária Limitada',
+          '206-2 Sociedade Empresária em Nome Coletivo',
+          '207-0 Sociedade Empresária em Comandita Simples',
+          '208-9 Sociedade Empresária em Comandita por Ações',
+          '210-0 Empresário (Individual)',
+          '211-9 Cooperativa',
+          '213-5 Grupo de Sociedades',
+          '214-3 Estabelecimento, no Brasil, de Sociedade Estrangeira',
+          '221-6 Empresa Individual de Responsabilidade Limitada (de Natureza Empresária)',
+          '222-4 Empresa Individual de Responsabilidade Limitada (de Natureza Simples)',
+          '223-2 Sociedade Simples Pura',
+          '224-0 Sociedade Simples Limitada',
+          '230-5 Empresa Individual de Responsabilidade Limitada',
+          '240-2 Produtor Rural (Pessoa Física)',
+          '251-8 Partido Político',
+          '301-7 Fundação Privada',
+          '303-3 Condomínio Edilício',
+          '310-6 Organização Religiosa',
+          '313-0 Associação Privada',
+          '320-3 Pessoa Física',
+          '399-0 Associação e Sociedade Civil',
+          '401-6 Clube/Fundo de Investimento',
+          '402-4 Sociedade Seguradora',
+          '409-1 Microempreendedor Individual (MEI)',
+        ].map(o => {
+          const selected = f.natureza_juridica && (f.natureza_juridica === o || o.includes(f.natureza_juridica) || f.natureza_juridica.includes(o.replace(/^\d{3}-\d\s/,'')));
+          return `<option value="${escHtml(o)}" ${selected?'selected':''}>${escHtml(o)}</option>`;
+        }).join('')}
+      </select></div>
+    <div class="info-field"><label>Capital Social</label>
+      <input type="text" id="fe-capital" value="${f.capital_social != null ? 'R$ ' + f.capital_social.toLocaleString('pt-BR', {minimumFractionDigits:2,maximumFractionDigits:2}) : ''}" oninput="maskMoney(this)" placeholder="R$ 0,00"></div>
+    <div style="display:flex;gap:16px;margin:4px 0 8px">
+      <label style="display:flex;align-items:center;gap:6px;font-size:.8rem;cursor:pointer">
+        <input type="checkbox" id="fe-simples" ${f.opcao_simples ? 'checked' : ''}> Simples Nacional
+      </label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:.8rem;cursor:pointer">
+        <input type="checkbox" id="fe-mei" ${f.opcao_mei ? 'checked' : ''}> MEI
+      </label>
+    </div>
+
+    <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-400);margin:10px 0 6px">Endereço</div>
+    <div style="display:grid;grid-template-columns:1fr auto;gap:8px">
+      <div class="info-field" style="margin:0"><label>Logradouro</label>
+        <input type="text" id="fe-logradouro" value="${escHtml(f.logradouro || '')}"></div>
+      <div class="info-field" style="margin:0;width:80px"><label>Número</label>
+        <input type="text" id="fe-numero" value="${escHtml(f.numero || '')}"></div>
+    </div>
+    <div class="info-field"><label>Complemento</label>
+      <input type="text" id="fe-complemento" value="${escHtml(f.complemento || '')}"></div>
+    <div class="info-field"><label>Bairro</label>
+      <input type="text" id="fe-bairro" value="${escHtml(f.bairro || '')}"></div>
+    <div style="display:grid;grid-template-columns:1fr 60px 90px;gap:8px">
+      <div class="info-field" style="margin:0"><label>Município</label>
+        <input type="text" id="fe-municipio" value="${escHtml(f.municipio || '')}"></div>
+      <div class="info-field" style="margin:0"><label>UF</label>
+        <input type="text" id="fe-uf" value="${escHtml(f.uf || '')}" maxlength="2" style="text-transform:uppercase"></div>
+      <div class="info-field" style="margin:0"><label>CEP</label>
+        <input type="text" id="fe-cep" value="${escHtml(formatCep(f.cep || ''))}" oninput="maskCep(this)" maxlength="10" placeholder="00.000-000"></div>
+    </div>
+
+    <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-400);margin:10px 0 6px">Contato</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div class="info-field" style="margin:0"><label>Telefone</label>
+        <input type="text" id="fe-telefone" value="${escHtml(formatPhone(f.telefone || ''))}" oninput="maskPhone(this)" maxlength="15" placeholder="(00) 00000-0000"></div>
+      <div class="info-field" style="margin:0"><label>Telefone 2</label>
+        <input type="text" id="fe-telefone2" value="${escHtml(formatPhone(f.telefone2 || ''))}" oninput="maskPhone(this)" maxlength="15" placeholder="(00) 00000-0000"></div>
+    </div>
+    <div class="info-field"><label>E-mail</label>
+      <input type="email" id="fe-email" value="${escHtml(f.email || '')}"></div>
+    <div class="info-field"><label>Website</label>
+      <input type="url" id="fe-website" value="${escHtml(f.website || '')}" placeholder="https://"></div>
+
+    <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-400);margin:10px 0 6px">Quadro Societário (QSA)</div>
+    <div id="fe-qsa-list">
+      ${(f.qsa || []).map((s, i) => _qsaRowHtml(i, s)).join('')}
+    </div>
+    <button class="btn btn-ghost btn-sm" onclick="_addQsaRow()" style="margin:4px 0 10px;font-size:.75rem">+ Adicionar sócio</button>
+
+    <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-400);margin:10px 0 6px">Observações</div>
+    <div class="info-field"><label>Observações internas</label>
       <textarea id="fe-obs" rows="2">${escHtml(f.obs || '')}</textarea></div>`;
   document.getElementById('forn-detail-footer').innerHTML = `
     <button class="btn btn-outline" onclick="_renderFornView()">Cancelar</button>
@@ -2358,12 +2939,29 @@ async function _reconsultarForn() {
       razao_social: d.razao_social || _currentForn.razao_social,
       nome_fantasia: d.nome_fantasia || '',
       situacao: d.descricao_situacao_cadastral || '',
+      data_situacao: d.data_situacao_cadastral || '',
+      motivo_situacao: d.motivo_situacao_cadastral || 0,
+      matriz_filial: d.descricao_matriz_filial || '',
       porte: d.descricao_porte || '',
+      capital_social: d.capital_social || null,
       abertura: d.data_inicio_atividade || '',
       natureza_juridica: d.natureza_juridica || '',
+      cnae_cod: d.cnae_fiscal || '',
       cnae: d.cnae_fiscal_descricao || '',
+      cnaes_secundarios: (d.cnaes_secundarios || []).map(c => ({ codigo: c.codigo, descricao: c.descricao })),
+      logradouro: [d.descricao_tipo_logradouro, d.logradouro].filter(Boolean).join(' '),
+      numero: d.numero || '',
+      complemento: d.complemento || '',
+      bairro: d.bairro || '',
+      municipio: d.municipio || '',
+      uf: d.uf || '',
+      cep: d.cep || '',
       endereco: end,
-      qsa: (d.qsa || []).map(s => ({ nome: s.nome_socio, qual: s.qualificacao_socio })),
+      telefone: d.ddd_telefone_1 || '',
+      telefone2: d.ddd_telefone_2 || '',
+      opcao_simples: !!d.opcao_pelo_simples,
+      opcao_mei: !!d.opcao_pelo_mei,
+      qsa: (d.qsa || []).map(s => ({ nome: s.nome_socio, qual: s.qualificacao_socio, entrada: s.data_entrada_sociedade || '' })),
       consultadoEm: Date.now()
     };
     _renderFornEdit();
@@ -2372,16 +2970,59 @@ async function _reconsultarForn() {
   } catch(e) { toast(e.message || 'Erro na consulta.', 'error'); playError(); }
 }
 async function _saveFornEdit() {
+  const _fornAntes = { ..._currentForn };
+  const logr = document.getElementById('fe-logradouro').value.trim();
+  const num  = document.getElementById('fe-numero').value.trim();
+  const comp = document.getElementById('fe-complemento').value.trim();
+  const bair = document.getElementById('fe-bairro').value.trim();
+  const mun  = document.getElementById('fe-municipio').value.trim();
+  const uf   = document.getElementById('fe-uf').value.trim().toUpperCase();
+  const cep  = document.getElementById('fe-cep').value.replace(/\D/g,'').trim();
+  const capVal = parseValor(document.getElementById('fe-capital').value);
   _currentForn = {
     ..._currentForn,
-    razao_social:  document.getElementById('fe-razao').value.trim(),
-    nome_fantasia: document.getElementById('fe-fantasia').value.trim(),
-    situacao:      document.getElementById('fe-situacao').value.trim(),
-    endereco:      document.getElementById('fe-endereco').value.trim(),
-    obs:           document.getElementById('fe-obs').value.trim(),
-    updatedAt:     Date.now()
+    razao_social:    document.getElementById('fe-razao').value.trim(),
+    nome_fantasia:   document.getElementById('fe-fantasia').value.trim(),
+    situacao:        document.getElementById('fe-situacao').value.trim(),
+    porte:           document.getElementById('fe-porte').value.trim(),
+    natureza_juridica: document.getElementById('fe-nat-jur').value.trim(),
+    capital_social:  capVal || null,
+    opcao_simples:   document.getElementById('fe-simples').checked,
+    opcao_mei:       document.getElementById('fe-mei').checked,
+    logradouro:      logr,
+    numero:          num,
+    complemento:     comp,
+    bairro:          bair,
+    municipio:       mun,
+    uf,
+    cep,
+    endereco:        [logr, num, comp, bair, cep ? `CEP ${cep}` : '', [mun, uf].filter(Boolean).join('/')].filter(Boolean).join(', '),
+    telefone:        document.getElementById('fe-telefone').value.trim(),
+    telefone2:       document.getElementById('fe-telefone2').value.trim(),
+    email:           document.getElementById('fe-email').value.trim(),
+    website:         document.getElementById('fe-website').value.trim(),
+    obs:             document.getElementById('fe-obs').value.trim(),
+    updatedAt:       Date.now()
   };
+  _currentForn.qsa = Array.from(document.querySelectorAll('#fe-qsa-list .fe-qsa-row')).map(row => ({
+    nome:    row.querySelector('.fe-qsa-nome')?.value.trim() || '',
+    qual:    row.querySelector('.fe-qsa-qual')?.value.trim() || '',
+    entrada: row.querySelector('.fe-qsa-entrada')?.value || ''
+  })).filter(s => s.nome);
+
   await dbPut('fornecedores', _currentForn);
+  const _camposForn = ['razao_social','nome_fantasia','situacao','porte','natureza_juridica','capital_social',
+    'logradouro','numero','complemento','bairro','municipio','uf','cep',
+    'telefone','telefone2','email','website','opcao_simples','opcao_mei','obs'];
+  const _mudancas = _camposForn.filter(k => String(_fornAntes[k]||'') !== String(_currentForn[k]||''));
+  // Fix #9: QSA não estava no _camposForn; comparar separadamente para auditar alterações societárias
+  if (JSON.stringify(_fornAntes.qsa || []) !== JSON.stringify(_currentForn.qsa || [])) {
+    _mudancas.push('qsa');
+  }
+  if (_mudancas.length) {
+    await _auditEvento('FORNECEDOR_ALTERADO',
+      `${_currentForn.razao_social} (${_currentForn.cnpj}): campos alterados: ${_mudancas.join(', ')}`, null);
+  }
   toast('Fornecedor atualizado!', 'success');
   playSuccess();
   _renderFornView();
@@ -2806,9 +3447,23 @@ async function openProcess(id) {
   currentProcess = await dbGet('processes', id);
   expandedSteps.clear();
 
-  document.getElementById('view-dash').classList.remove('active');
-  document.getElementById('view-fornecedores').classList.remove('active');
-  document.getElementById('view-settings').classList.remove('active');
+  // Pré-preenche "Responsável" com o Agente de Contratação configurado em todas as
+  // etapas que ainda não têm o campo preenchido (cobre processos criados antes da configuração)
+  const u = getUser();
+  if (u.nome) {
+    let changed = false;
+    (currentProcess.steps || []).forEach((step, i) => {
+      const stepDef = STEPS[i];
+      if (stepDef?.fields?.includes('responsavel') && !step.fields?.responsavel) {
+        if (!step.fields) step.fields = {};
+        step.fields.responsavel = u.nome;
+        changed = true;
+      }
+    });
+    if (changed) await saveProcess(currentProcess);
+  }
+
+  _hideAllViews();
   document.getElementById('view-detail').classList.add('active');
 
   renderDetail();
@@ -3162,16 +3817,33 @@ async function cycleCertidao(stepIdx, id) {
     }
   }
   await saveCertidoes(stepIdx, obj);
+  // Fix #7: quando sai de 'obtida', limpa as datas no cadastro do fornecedor para evitar alertas fantasmas
+  if (cur === 'obtida' && next !== 'obtida') {
+    await _syncCertToForn(id, { data_emissao: '', data_validade: '' });
+  }
   expandedSteps.add(stepIdx);
   renderChecklist();
   playClick();
 }
 async function updateCertidao(stepIdx, id, field, value) {
   const obj = getCertidoes(stepIdx);
+  const oldValue = (obj[id] || {})[field] || '';
   obj[id] = { ...(obj[id]||{}), [field]: value };
   await saveCertidoes(stepIdx, obj);
+  if (oldValue !== value) {
+    const certNome = CERTIDOES.find(c => c.id === id)?.nome || id;
+    const fieldLabel = { status: 'status', data_emissao: 'data de emissão', data_validade: 'data de validade' }[field] || field;
+    if (!currentProcess.auditLog) currentProcess.auditLog = [];
+    currentProcess.auditLog.push({ at: Date.now(), field: `cert:${id}:${field}`,
+      oldValue, newValue: value, user: _getAuditor() });
+    await saveProcess(currentProcess);
+    renderAuditLog();
+    await _auditEvento('CERTIDAO_ATUALIZADA',
+      `${certNome}: ${fieldLabel} de "${oldValue || '(vazio)'}" para "${value || '(vazio)'}"`, currentProcess?.id);
+  }
   if (field === 'data_emissao' || field === 'data_validade') {
-    await _syncCertToForn(id, obj[id]);
+    // Fix #5: debounce para evitar race condition quando dois campos de data são alterados em sequência
+    _debouncedSyncCertToForn(id, obj[id]);
   }
 }
 
@@ -3187,6 +3859,14 @@ async function _getCertDatesFromForn(certId) {
   return cert ? { emissao: cert.emissao, validade: cert.validade } : null;
 }
 
+// Fix #5: debounce para evitar race condition (read-modify-write) quando dois campos de data
+// são alterados em sequência rápida — a sincronização efetiva aguarda 400 ms de inatividade
+let _syncCertTimer = null;
+function _debouncedSyncCertToForn(certId, certData) {
+  clearTimeout(_syncCertTimer);
+  _syncCertTimer = setTimeout(() => _syncCertToForn(certId, certData), 400);
+}
+
 // Sincroniza datas da etapa 11 para o cadastro do fornecedor (ID unificado)
 async function _syncCertToForn(certId, certData) {
   if (!CERTIDOES.find(c => c.id === certId)?.diasPadrao || !currentProcess?.fornecedor) return;
@@ -3199,14 +3879,18 @@ async function _syncCertToForn(certId, certData) {
   const idx = certs.findIndex(c => c.tipoId === certId);
   const entry = {
     tipoId:   certId,
-    emissao:  certData.data_emissao  || (idx >= 0 ? certs[idx].emissao  : ''),
-    validade: certData.data_validade || (idx >= 0 ? certs[idx].validade : ''),
+    // Fix #6: usar ?? em vez de || para permitir que string vazia limpe a data no fornecedor
+    emissao:  certData.data_emissao  ?? (idx >= 0 ? certs[idx].emissao  : ''),
+    validade: certData.data_validade ?? (idx >= 0 ? certs[idx].validade : ''),
     obs:      idx >= 0 ? certs[idx].obs : '',
   };
   if (idx >= 0) certs[idx] = entry; else certs.push(entry);
   forn.certidoes = certs;
   forn.updatedAt = Date.now();
   await dbPut('fornecedores', forn);
+  const certNomeSinc = CERTIDOES.find(c => c.id === certId)?.nome || certId;
+  await _auditEvento('CERTIDAO_SINCRONIZADA',
+    `${certNomeSinc}: datas sincronizadas para o fornecedor ${forn.razao_social} (${forn.cnpj})`, currentProcess?.id);
   renderCertAlerts();
 }
 
@@ -3446,7 +4130,7 @@ function renderTimeline() {
       <div class="tl-dot ${types[ev.type]||''}"></div>
       <div class="tl-content">
         <div class="tl-action">${escHtml(ev.action)}</div>
-        <div class="tl-time">${fmt(ev.at)}</div>
+        <div class="tl-time">${fmt(ev.at)}${ev.user ? ' · ' + escHtml(ev.user) : ''}</div>
       </div>
     </div>`).join('') || '<p style="color:var(--gray-500);font-size:.8rem">Sem histórico ainda.</p>';
   renderAuditLog();
@@ -3466,7 +4150,7 @@ function renderAuditLog() {
     const oldStr = ev.oldValue != null ? String(ev.oldValue) : '—';
     const newStr = ev.newValue != null ? String(ev.newValue) : '—';
     return `<div class="audit-item">
-      <div class="audit-field">${escHtml(FIELD_LABELS_PT[ev.field]||ev.field)}</div>
+      <div class="audit-field">${escHtml(FIELD_LABELS_PT[ev.field] || (ev.field?.startsWith('cert:') ? 'Certidão: ' + ev.field.split(':').slice(1).join(' — ') : ev.field))}</div>
       <div class="audit-vals"><span style="text-decoration:line-through;color:var(--gray-400)">${escHtml(oldStr.slice(0,60))}</span> → ${escHtml(newStr.slice(0,60))}</div>
       <div class="audit-time">${fmt(ev.at)}${ev.user ? ' · ' + escHtml(ev.user) : ''}</div>
     </div>`;
@@ -3482,11 +4166,19 @@ function toggleStep(i) {
   renderChecklist();
 }
 
+let _cycleStatusLock = false;
 async function cycleStatus(i) {
-  const p = currentProcess;
-  const cur = p.steps[i].status;
-  const next = cur === 'done' ? 'pending' : cur === 'blocked' ? 'pending' : 'done';
-  await setStepStatus(i, next);
+  // Fix #4: impede clique duplo rápido de disparar duas gravações concorrentes
+  if (_cycleStatusLock) return;
+  _cycleStatusLock = true;
+  try {
+    const p = currentProcess;
+    const cur = p.steps[i].status;
+    const next = cur === 'done' ? 'pending' : cur === 'blocked' ? 'pending' : 'done';
+    await setStepStatus(i, next);
+  } finally {
+    _cycleStatusLock = false;
+  }
 }
 
 async function markStep(i, status) {
@@ -3503,8 +4195,11 @@ async function setStepStatus(i, status) {
   p.timeline.push({
     action: `${labels[status] || status}: ${STEPS[i].name}`,
     at: Date.now(),
-    type: status
+    type: status,
+    user: _getAuditor()
   });
+  await _auditEvento(`ETAPA_${status.toUpperCase()}`,
+    `${labels[status] || status}: Etapa ${i + 1} — ${STEPS[i].name}`, p.id);
 
   await saveProcess(p);
   renderDetail();
@@ -3570,9 +4265,11 @@ async function updateProcessField(key, value) {
   if (oldValue === value) return;
   p[key] = value;
   if (!p.auditLog) p.auditLog = [];
-  p.auditLog.push({ at: Date.now(), field: key, oldValue, newValue: value, user: getUser().nome || '' });
+  p.auditLog.push({ at: Date.now(), field: key, oldValue, newValue: value, user: _getAuditor() });
   if (!p.timeline) p.timeline = [];
-  p.timeline.push({ action: `Campo "${FIELD_LABELS_PT[key]||key}" alterado`, at: Date.now(), type: 'audit' });
+  p.timeline.push({ action: `Campo "${FIELD_LABELS_PT[key]||key}" alterado`, at: Date.now(), type: 'audit', user: _getAuditor() });
+  await _auditEvento('CAMPO_ALTERADO',
+    `${FIELD_LABELS_PT[key]||key}: "${String(oldValue||'').slice(0,60)}" → "${String(value||'').slice(0,60)}"`, p.id);
   if (key === 'objeto') document.getElementById('d-title').textContent = value;
   await saveProcess(p);
   renderTimeline();
@@ -3612,7 +4309,13 @@ async function processFileList(stepIdx, fileList) {
       addedAt: Date.now()
     });
   }
-  p.timeline.push({ action: `${fileList.length} arquivo(s) anexado(s) à etapa ${stepIdx+1}: ${STEPS[stepIdx].name}`, at: Date.now(), type: '' });
+  const nomesArqs = Array.from(fileList).map(f => f.name).join(', ');
+  p.timeline.push({
+    action: `${fileList.length} arquivo(s) anexado(s) à etapa ${stepIdx+1}: ${STEPS[stepIdx].name}`,
+    at: Date.now(), type: '', user: _getAuditor()
+  });
+  await _auditEvento('ARQUIVO_ANEXADO',
+    `Etapa ${stepIdx+1} (${STEPS[stepIdx].name}): ${nomesArqs}`, p.id);
   await saveProcess(p);
   toast(`${fileList.length} arquivo(s) anexado(s).`, 'success');
   expandedSteps.add(stepIdx);
@@ -3634,10 +4337,25 @@ async function downloadFile(fileId) {
 
 async function deleteFile(fileId, stepIdx) {
   if (!await customConfirm('Remover este arquivo?', { title: 'Remover Arquivo', icon: '🗑️', okLabel: 'Remover' })) return;
+  // Fix #8: dbGet pode falhar (ex: quota excedida); a deleção não deve depender dessa leitura
+  let arq = null;
+  try { arq = await dbGet('files', fileId); } catch {}
   await dbDelete('files', fileId);
+  if (currentProcess) {
+    const p = currentProcess;
+    if (!p.timeline) p.timeline = [];
+    p.timeline.push({
+      action: `Arquivo removido da etapa ${stepIdx+1}: ${arq?.name || fileId}`,
+      at: Date.now(), type: '', user: _getAuditor()
+    });
+    await saveProcess(p);
+    await _auditEvento('ARQUIVO_REMOVIDO',
+      `Etapa ${stepIdx+1} (${STEPS[stepIdx]?.name || ''}): ${arq?.name || fileId}`, p.id);
+  }
   toast('Arquivo removido.', '');
   expandedSteps.add(stepIdx);
   renderChecklist();
+  renderTimeline();
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -3645,8 +4363,11 @@ async function deleteFile(fileId, stepIdx) {
 // ══════════════════════════════════════════════════════════════
 async function deleteProcess() {
   if (!await customConfirm(`Excluir o processo "${currentProcess.objeto}"? Todos os dados e arquivos serão removidos permanentemente.`, { title: 'Excluir Processo', icon: '🚨', okLabel: 'Excluir', okClass: 'btn-danger' })) return;
+  const p = currentProcess;
+  await _auditEvento('PROCESSO_EXCLUIDO',
+    `PA: ${p.num_proc || '—'} | DL: ${p.num_dl || '—'} | Objeto: ${p.objeto}`, p.id);
   const allFiles = await dbGetAll('files');
-  const pid = currentProcess.id;
+  const pid = p.id;
   for (const f of allFiles) {
     if (typeof f.processId === 'string' && f.processId.startsWith(pid + '_')) {
       await dbDelete('files', f.id);
@@ -3850,7 +4571,129 @@ function gerarRelatorio() {
 ${totalGeral ? `<div class="total-row">Total Geral: ${fmtMoney(totalGeral)}</div>` : ''}
 <div class="footer-line">Documento gerado pelo SGCD — Sistema de Gestão de Contratação Direta &nbsp;·&nbsp; v${SGCD_VERSION} &nbsp;·&nbsp; Lei Federal nº 14.133/2021</div>
 </body></html>`;
-  _gerarDocumento(window.open('', '_blank', 'width=900,height=700'), html);
+  _gerarDocumento(window.open('', '_blank', 'width=900,height=700'), html, 'Relatório Geral de Processos');
+}
+
+// RELATÓRIO DE FORNECEDORES
+// ══════════════════════════════════════════════════════════════
+async function gerarRelatorioFornecedores() {
+  const u = getUser();
+  const orgao = u.orgao || '';
+  const municipio = u.municipio || '';
+  const now = new Date();
+  const dtGer = now.toLocaleDateString('pt-BR') + ' às ' + now.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
+  const q = (document.getElementById('forn-search')?.value || '').toLowerCase();
+
+  const todos = await dbGetAll('fornecedores');
+  const lista = q
+    ? todos.filter(f => (f.razao_social||'').toLowerCase().includes(q) || (f.cnpj_digits||'').includes(q) || (f.nome_fantasia||'').toLowerCase().includes(q))
+    : todos;
+
+  lista.sort((a,b) => (a.razao_social||'').localeCompare(b.razao_social||'', 'pt-BR'));
+
+  const fmtCnpj = d => d ? d.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/,'$1.$2.$3/$4-$5') : '—';
+  const fmtDate = s => s ? new Date(s+'T00:00:00').toLocaleDateString('pt-BR') : '—';
+
+  const certAlertColor = days => {
+    if (days === null) return '';
+    if (days < 0)  return '#fef2f2';
+    if (days <= 30) return '#fff8e1';
+    return '#f0fdf4';
+  };
+
+  let tbody = '';
+  for (const f of lista) {
+    const certs = f.certidoes || [];
+    const certsObtidas = certs.filter(c => c.validade);
+    const certRows = certsObtidas.map(c => {
+      const days = certDaysLeft(c);
+      const bg = certAlertColor(days);
+      const daysLabel = days === null ? '' : days < 0 ? ` <span style="color:#dc2626">(vencida)</span>` : days <= 30 ? ` <span style="color:#d97706">(${days}d)</span>` : ` <span style="color:#16a34a">(${days}d)</span>`;
+      return `<tr style="font-size:8.5pt;background:${bg}">
+        <td style="padding:2pt 7pt 2pt 20pt;color:#444">${escHtml(certTipoLabel(c))}</td>
+        <td style="padding:2pt 7pt;color:#444">${fmtDate(c.emissao)}</td>
+        <td style="padding:2pt 7pt;color:#444">${fmtDate(c.validade)}${daysLabel}</td>
+        <td style="padding:2pt 7pt;color:#444">${escHtml(c.obs||'')}</td>
+      </tr>`;
+    }).join('');
+
+    const porte = f.porte ? escHtml(f.porte) : '—';
+    const situacao = f.situacao ? escHtml(f.situacao) : '—';
+    const municipioForn = [f.municipio, f.uf].filter(Boolean).map(escHtml).join('/') || '—';
+
+    tbody += `
+    <tr class="forn-row">
+      <td colspan="4" style="background:#f0f4ff;font-weight:700;padding:6pt 7pt;border-top:2px solid #aaa">
+        ${escHtml(f.razao_social || '—')}
+        ${f.nome_fantasia && f.nome_fantasia !== f.razao_social ? `<span style="font-weight:400;font-size:9pt;color:#555"> — ${escHtml(f.nome_fantasia)}</span>` : ''}
+      </td>
+    </tr>
+    <tr style="font-size:9pt">
+      <td style="color:#444"><strong>CNPJ:</strong> ${fmtCnpj(f.cnpj_digits)}</td>
+      <td style="color:#444"><strong>Situação:</strong> ${situacao}</td>
+      <td style="color:#444"><strong>Porte:</strong> ${porte}</td>
+      <td style="color:#444"><strong>Município:</strong> ${municipioForn}</td>
+    </tr>
+    ${certsObtidas.length ? `
+    <tr style="font-size:8.5pt;background:#f9f9f9">
+      <td style="padding:3pt 7pt 2pt 20pt;color:#777;font-style:italic" colspan="4">Certidões</td>
+    </tr>
+    ${certRows}` : ''}`;
+  }
+
+  if (!lista.length) {
+    tbody = `<tr><td colspan="4" style="text-align:center;padding:20pt;color:#888">Nenhum fornecedor encontrado.</td></tr>`;
+  }
+
+  const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+<title>Relatório de Fornecedores — SGCD</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Times New Roman', Times, serif; font-size: 11pt; color: #000; background: #fff; padding: 2cm 2.5cm; }
+  .header { text-align: center; margin-bottom: 20pt; border-bottom: 2px solid #000; padding-bottom: 12pt; }
+  .header img { height: 90pt; width: auto; margin-bottom: 6pt; }
+  .header h1 { font-size: 13pt; font-weight: 700; text-transform: uppercase; }
+  .header h2 { font-size: 11pt; font-weight: 400; margin-top: 2pt; }
+  .doc-title { text-align: center; margin: 14pt 0 10pt; }
+  .doc-title h3 { font-size: 13pt; font-weight: 700; text-transform: uppercase; }
+  .doc-title .sub { font-size: 10pt; color: #444; margin-top: 4pt; }
+  .meta { font-size: 9pt; color: #555; margin-bottom: 10pt; text-align: center; }
+  table { width: 100%; border-collapse: collapse; margin-top: 8pt; font-size: 10pt; }
+  th { background: #1a1a2e; color: #fff; padding: 5pt 7pt; text-align: left; font-weight: 600; font-size: 9.5pt; }
+  td { padding: 4pt 7pt; vertical-align: top; border-bottom: 1px solid #e8e8e8; }
+  .forn-row td { border-bottom: none; }
+  .total-row { margin-top: 12pt; text-align: right; font-weight: 700; font-size: 11pt; border-top: 2px solid #000; padding-top: 6pt; }
+  .footer-line { margin-top: 30pt; border-top: 1px solid #ccc; padding-top: 5pt; text-align: center; font-size: 8pt; color: #666; }
+  .btn-print { display: block; margin: 0 auto 20pt; padding: 8pt 24pt; background: #2C001E; color: #fff; border: none; border-radius: 4px; font-size: 11pt; cursor: pointer; }
+  .btn-print:hover { background: #5E2750; }
+  @media print { body { padding: 0; } .no-print { display: none !important; } }
+</style></head><body>
+<button class="btn-print no-print" onclick="window.print()">🖨 Imprimir / Salvar PDF</button>
+<div class="header">
+  <img src="data:image/png;base64,__BRASAO_PLACEHOLDER__" alt="Brasão">
+  <h1>${escHtml(orgao)}</h1>
+  <h2>${escHtml(municipio)}</h2>
+</div>
+<div class="doc-title">
+  <h3>Relatório de Fornecedores Cadastrados</h3>
+  <div class="sub">Sistema de Gestão de Contratação Direta — Lei Federal nº 14.133/2021</div>
+</div>
+<div class="meta">
+  ${q ? `Filtro: "${escHtml(q)}" &nbsp;·&nbsp; ` : ''}Gerado em: ${dtGer} &nbsp;·&nbsp; Total: ${lista.length} fornecedor${lista.length !== 1 ? 'es' : ''}
+</div>
+<table>
+  <thead><tr>
+    <th style="width:30%">Razão Social / Nome</th>
+    <th style="width:22%">Situação</th>
+    <th style="width:18%">Porte</th>
+    <th style="width:30%">Município</th>
+  </tr></thead>
+  <tbody>${tbody}</tbody>
+</table>
+<div class="footer-line">Documento gerado pelo SGCD — Sistema de Gestão de Contratação Direta &nbsp;·&nbsp; v${SGCD_VERSION} &nbsp;·&nbsp; Lei Federal nº 14.133/2021</div>
+</body></html>`;
+
+  _gerarDocumento(window.open('', '_blank', 'width=900,height=700'), html, 'Relatório de Fornecedores');
 }
 
 // EXTRATO PARA PUBLICAÇÃO — Art. 54, §1º Lei 14.133/2021
@@ -3915,7 +4758,7 @@ function gerarExtrato() {
 </div>
 <div class="footer-line">Documento gerado pelo SGCD — Sistema de Gestão de Contratação Direta &nbsp;·&nbsp; v${SGCD_VERSION} &nbsp;·&nbsp; Lei Federal nº 14.133/2021 &nbsp;·&nbsp; Cód. ${_docAuthCode(p)}</div>
 </body></html>`;
-  _gerarDocumento(window.open('', '_blank', 'width=900,height=700'), html);
+  _gerarDocumento(window.open('', '_blank', 'width=900,height=700'), html, 'Extrato de Publicação (Diário Oficial)');
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -3999,7 +4842,7 @@ ${mediaRef?`<div class="ref-box">
 </div>
 <div class="footer-line">Documento gerado pelo SGCD — Sistema de Gestão de Contratação Direta &nbsp;·&nbsp; v${SGCD_VERSION} &nbsp;·&nbsp; Lei Federal nº 14.133/2021 &nbsp;·&nbsp; ${new Date().toLocaleString('pt-BR')} &nbsp;·&nbsp; Cód. ${_docAuthCode(p)}</div>
 </body></html>`;
-  _gerarDocumento(window.open('','_blank','width=900,height=700'), html);
+  _gerarDocumento(window.open('','_blank','width=900,height=700'), html, 'Mapa de Preços');
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -4365,7 +5208,7 @@ function gerarDespachoRecusa(stepIdx, pi) {
 </html>`;
 
   const win = window.open('', '_blank', 'width=900,height=700');
-  _gerarDocumento(win, html);
+  _gerarDocumento(win, html, 'Despacho de Recusa / Desclassificação');
 }
 
 function gerarDespachoInabilitacao(stepIdx) {
@@ -4504,7 +5347,7 @@ function gerarDespachoInabilitacao(stepIdx) {
 </html>`;
 
   const win = window.open('', '_blank', 'width=900,height=700');
-  _gerarDocumento(win, html);
+  _gerarDocumento(win, html, 'Despacho de Inabilitação');
 }
 
 function gerarAutorizacao() {
@@ -4595,10 +5438,8 @@ function gerarAutorizacao() {
 </body>
 </html>`;
 
-  // inject real brasão base64 tail (extracted from ATA generation)
   const win = window.open('', '_blank', 'width=900,height=700');
-  // We need the full brasão — reuse the same source as gerarAta
-  _gerarDocumento(win, html);
+  _gerarDocumento(win, html, 'Autorização de Abertura');
 }
 
 function _getBrasaoB64() {
@@ -4609,11 +5450,28 @@ function _getBrasaoB64() {
   window._BRASAO_CACHE = m ? m[1] : '';
   return window._BRASAO_CACHE;
 }
-function _gerarDocumento(win, html) {
+function _gerarDocumento(win, html, docNome) {
+  // Fix #1: window.open retorna null quando bloqueador de popup está ativo
+  if (!win) {
+    toast('Popup bloqueado pelo navegador. Permita popups para este site e tente novamente.', 'danger');
+    return;
+  }
+  if (docNome) {
+    const ref = currentProcess ? ` — ${currentProcess.num_dl || currentProcess.objeto?.slice(0, 40) || ''}` : '';
+    _auditEvento('DOCUMENTO_GERADO', `${docNome}${ref}`, currentProcess?.id || null);
+  }
   const custom = localStorage.getItem('sgcd-brasao-dataurl');
-  const finalHtml = custom
-    ? html.replace('data:image/png;base64,__BRASAO_PLACEHOLDER__', custom)
-    : html.replace('__BRASAO_PLACEHOLDER__', _getBrasaoB64());
+  let finalHtml;
+  if (custom) {
+    // Fix #2: gerarAta embute o brasão como base64 direto (sem placeholder);
+    // tenta substituir o placeholder primeiro e, se ausente, substitui qualquer base64 longo de imagem
+    finalHtml = html.includes('__BRASAO_PLACEHOLDER__')
+      ? html.replace('data:image/png;base64,__BRASAO_PLACEHOLDER__', custom)
+      : html.replace(/data:image\/png;base64,[A-Za-z0-9+\/=]{200,}/, custom);
+  } else {
+    // gerarAta já tem o base64 padrão embutido; o replace abaixo é no-op (sem placeholder) — correto
+    finalHtml = html.replace('__BRASAO_PLACEHOLDER__', _getBrasaoB64());
+  }
   win.document.write(finalHtml);
   win.document.close();
 }
@@ -4803,8 +5661,7 @@ function gerarAta() {
 </html>`;
 
   const win = window.open('', '_blank', 'width=900,height=700');
-  win.document.write(html);
-  win.document.close();
+  _gerarDocumento(win, html, 'Ata de Sessão');
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -4932,6 +5789,26 @@ function applyTheme(dark) {
 function getUser() {
   try { return JSON.parse(localStorage.getItem('sgcd-user') || '{}'); } catch { return {}; }
 }
+
+function _getAuditor() {
+  const u = getUser();
+  const mat = u.matricula ? ` (mat. ${u.matricula})` : '';
+  return (u.nome || 'Sistema') + mat;
+}
+
+async function _auditEvento(evento, detalhe, processId) {
+  const entry = {
+    id: Date.now() + '-' + Math.random().toString(36).slice(2, 7),
+    at: Date.now(),
+    evento,
+    detalhe: detalhe || '',
+    processId: processId || null,
+    usuario: _getAuditor()
+  };
+  try { await dbPut('auditGlobal', entry); } catch (e) { console.warn('Falha ao gravar auditoria:', e); }
+  return entry;
+}
+
 function updateHeaderUser() {
   const u = getUser();
   const el = document.getElementById('hdr-user-name');
@@ -4961,9 +5838,7 @@ function showSettings() {
   const abEl = document.getElementById('s-last-autobackup');
   if (abEl) abEl.textContent = abAt ? `Último snapshot: ${new Date(parseInt(abAt)).toLocaleString('pt-BR')}` : '';
 
-  document.getElementById('view-dash').classList.remove('active');
-  document.getElementById('view-detail').classList.remove('active');
-  document.getElementById('view-fornecedores').classList.remove('active');
+  _hideAllViews();
   document.getElementById('view-settings').classList.add('active');
   setNavActive('nav-settings');
   document.getElementById('s-nome').focus();
@@ -5038,9 +5913,10 @@ async function editarTituloCard(e, id) {
     const old = p.objeto;
     p.objeto = novo;
     if (!p.auditLog) p.auditLog = [];
-    p.auditLog.push({ at: Date.now(), field: 'objeto', oldValue: old, newValue: novo, user: getUser().nome || '' });
+    p.auditLog.push({ at: Date.now(), field: 'objeto', oldValue: old, newValue: novo, user: _getAuditor() });
     if (!p.timeline) p.timeline = [];
-    p.timeline.push({ action: 'Campo "Objeto" alterado', at: Date.now(), type: 'audit' });
+    p.timeline.push({ action: 'Campo "Objeto" alterado', at: Date.now(), type: 'audit', user: _getAuditor() });
+    await _auditEvento('CAMPO_ALTERADO', `Objeto: "${String(old||'').slice(0,60)}" → "${String(novo||'').slice(0,60)}"`, p.id);
     await saveProcess(p);
     await loadProcesses();
     renderDash();
