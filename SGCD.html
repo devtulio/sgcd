@@ -1312,7 +1312,7 @@ const ICONS = {
 // DB — IndexedDB wrapper
 // ══════════════════════════════════════════════════════════════
 let db;
-const SGCD_VERSION = '1.10.3';
+const SGCD_VERSION = '1.10.4';
 document.title = `SGCD v${SGCD_VERSION}`;
 const DB_NAME = 'dispensaDB', DB_VER = 3;
 
@@ -4948,7 +4948,7 @@ function gerarExtrato() {
 <div class="city-date">${escHtml(blank(u.municipio))}, ${hoje}</div>
 <div class="sign">
   <div class="sign-line">
-    <div>${escHtml(blank(u.aut_nome))}</div>
+    <div><strong>${escHtml(blank(u.aut_nome))}</strong></div>
     <div style="font-size:9.5pt;margin-top:2pt">${escHtml(blank(u.aut_cargo))}</div>
   </div>
 </div>
@@ -5032,7 +5032,7 @@ ${mediaRef?`<div class="ref-box">
 <div class="city-date">${escHtml(u.municipio||'')}, ${hoje}</div>
 <div class="sign">
   <div class="sign-line">
-    <div>${escHtml(u.nome||'_'.repeat(40))}</div>
+    <div><strong>${escHtml(u.nome||'_'.repeat(40))}</strong></div>
     <div style="font-size:9.5pt;margin-top:2pt">${escHtml(u.cargo||'Agente de Contratação')}</div>
   </div>
 </div>
@@ -5394,7 +5394,7 @@ function gerarDespachoRecusa(stepIdx, pi) {
 
 <div class="signature-block">
   <div class="signature-line">
-    <div>${blank(u.nome)}</div>
+    <div><strong>${blank(u.nome)}</strong></div>
     <div style="font-size:9pt;margin-top:2pt">${blank(u.cargo)}${u.matricula ? ' — Matrícula: ' + u.matricula : ''}</div>
   </div>
 </div>
@@ -5533,7 +5533,7 @@ function gerarDespachoInabilitacao(stepIdx) {
 
 <div class="signature-block">
   <div class="signature-line">
-    <div>${blank(u.nome)}</div>
+    <div><strong>${blank(u.nome)}</strong></div>
     <div style="font-size:9pt;margin-top:2pt">${blank(u.cargo)}${u.matricula ? ' — Matrícula: ' + u.matricula : ''}</div>
   </div>
 </div>
@@ -5650,7 +5650,7 @@ function gerarDespachoHabilitacao(stepIdx) {
 
 <div class="signature-block">
   <div class="signature-line">
-    <div>${blank(u.nome)}</div>
+    <div><strong>${blank(u.nome)}</strong></div>
     <div style="font-size:9pt;margin-top:2pt">${blank(u.cargo)}${u.matricula ? ' — Matrícula: ' + u.matricula : ''}</div>
   </div>
 </div>
@@ -5966,7 +5966,7 @@ function gerarAvisoDispensa() {
 
 <div class="signature-block">
   <div class="signature-line">
-    <div>${blank(u.aut_nome || u.nome)}</div>
+    <div><strong>${blank(u.aut_nome || u.nome)}</strong></div>
     <div style="font-size:9pt;margin-top:2pt">${blank(u.aut_cargo || u.cargo)}</div>
   </div>
 </div>
@@ -6068,12 +6068,12 @@ function gerarExtratoContrato() {
 
 <div class="signature-block">
   <div class="signature-line">
-    <div>${blank(contratante)}</div>
+    <div><strong>${blank(contratante)}</strong></div>
     <div style="font-size:9pt;margin-top:2pt">${blank(u.aut_nome || u.nome)}</div>
     <div style="font-size:9pt">${blank(u.aut_cargo || u.cargo)}</div>
   </div>
   <div class="signature-line">
-    <div>${blank(contratado)}</div>
+    <div><strong>${blank(contratado)}</strong></div>
     ${cnpjContratado ? `<div style="font-size:9pt;margin-top:2pt">CNPJ: ${escHtml(cnpjContratado)}</div>` : ''}
   </div>
 </div>
@@ -6165,7 +6165,7 @@ function gerarAutorizacao() {
 
 <div class="signature-block">
   <div class="signature-line">
-    <div>${blank(u.aut_nome)}</div>
+    <div><strong>${blank(u.aut_nome)}</strong></div>
     <div style="font-size:9pt;margin-top:2pt">${blank(u.aut_cargo)}</div>
   </div>
 </div>

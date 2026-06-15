@@ -5,6 +5,13 @@
 
 ---
 
+## [1.10.4] — 2026-06-15
+
+### Corrigido
+- **Nomes em negrito nas assinaturas** — em todos os documentos gerados (Autorização, Extrato, Ata, Despacho de Inabilitação, Despacho de Habilitação, Aviso de Dispensa, Termo de Adjudicação, Termo de Homologação, Extrato de Contrato e Relatório), o nome do signatário agora aparece em negrito no bloco de assinatura
+
+---
+
 ## [1.10.3] — 2026-06-15
 
 ### Corrigido
