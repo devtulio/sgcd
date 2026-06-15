@@ -975,8 +975,7 @@
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn btn-outline btn-sm" onclick="printProcess()">&#128438; Imprimir</button>
-        <button class="btn btn-outline btn-sm" onclick="gerarAutorizacao()" style="border-color:var(--aubergine-mid);color:var(--aubergine-mid)">&#128196; Autorização</button>
-        <button class="btn btn-outline btn-sm" onclick="gerarExtrato()" style="border-color:var(--aubergine-mid);color:var(--aubergine-mid)">&#128240; Extrato</button>
+<button class="btn btn-outline btn-sm" onclick="gerarExtrato()" style="border-color:var(--aubergine-mid);color:var(--aubergine-mid)">&#128240; Extrato</button>
         <button class="btn btn-outline btn-sm" onclick="gerarAta()" style="border-color:var(--aubergine-mid);color:var(--aubergine-mid)">&#128196; Gerar Ata</button>
         <button class="btn btn-outline btn-sm" onclick="verificarConformidade()" style="border-color:#7c3aed;color:#7c3aed">✔ Conformidade</button>
         <button class="btn btn-outline btn-sm" onclick="duplicarProcess()" title="Criar cópia deste processo">⎘ Duplicar</button>
@@ -1313,7 +1312,7 @@ const ICONS = {
 // DB — IndexedDB wrapper
 // ══════════════════════════════════════════════════════════════
 let db;
-const SGCD_VERSION = '1.10.0';
+const SGCD_VERSION = '1.10.1';
 document.title = `SGCD v${SGCD_VERSION}`;
 const DB_NAME = 'dispensaDB', DB_VER = 3;
 
@@ -1502,7 +1501,8 @@ const STEPS = [
   {
     name: 'Autorização da Autoridade Competente',
     sub: 'Despacho de autorização do ordenador de despesa',
-    fields: ['responsavel','data_conclusao','autoridade','observacoes']
+    fields: ['responsavel','data_conclusao','autoridade','observacoes'],
+    autorizacao: true
   },
   {
     name: 'Elaboração do Aviso de Dispensa',
@@ -3728,6 +3728,9 @@ function renderStepFields(i, step, data, certFileMap = {}) {
   if (step.cotacoes) {
     html += renderCotacoesSection(i, data);
   }
+  if (step.autorizacao) {
+    html += `<div style="margin-top:12px"><button class="btn btn-outline btn-sm" onclick="gerarAutorizacao()">📄 Gerar Autorização</button></div>`;
+  }
   if (step.avisoDispensa) {
     html += `<div style="margin-top:12px"><button class="btn btn-outline btn-sm" onclick="gerarAvisoDispensa()">📰 Gerar Aviso de Dispensa</button></div>`;
   }
@@ -4101,7 +4104,7 @@ function _calcValorRef(lista, metodo) {
   } else {
     result = vals.reduce((a,b) => a+b, 0) / vals.length;
   }
-  return fmtMoney(result);
+  return result.toLocaleString('pt-BR', { style:'currency', currency:'BRL' });
 }
 
 async function _autoFillValorEstimado(stepIdx) {
@@ -4155,10 +4158,10 @@ function renderCotacoesSection(stepIdx, data) {
     <div style="display:flex;align-items:center;gap:16px;margin-top:14px;margin-bottom:6px;flex-wrap:wrap">
       <span style="font-size:.8rem;color:var(--gray-600)">Método de cálculo:</span>
       <label style="display:flex;align-items:center;gap:4px;font-size:.8rem;cursor:pointer">
-        <input type="radio" name="cotacao-metodo-${stepIdx}" value="media" ${metodo==='media'?'checked':''} onchange="localStorage.setItem('sgcd-cotacao-metodo','media');renderChecklist()"> Média
+        <input type="radio" name="cotacao-metodo-${stepIdx}" value="media" ${metodo==='media'?'checked':''} onchange="localStorage.setItem('sgcd-cotacao-metodo','media');_autoFillValorEstimado(${stepIdx}).then(()=>renderChecklist())"> Média
       </label>
       <label style="display:flex;align-items:center;gap:4px;font-size:.8rem;cursor:pointer">
-        <input type="radio" name="cotacao-metodo-${stepIdx}" value="mediana" ${metodo==='mediana'?'checked':''} onchange="localStorage.setItem('sgcd-cotacao-metodo','mediana');renderChecklist()"> Mediana
+        <input type="radio" name="cotacao-metodo-${stepIdx}" value="mediana" ${metodo==='mediana'?'checked':''} onchange="localStorage.setItem('sgcd-cotacao-metodo','mediana');_autoFillValorEstimado(${stepIdx}).then(()=>renderChecklist())"> Mediana
       </label>
       ${valorRef !== null ? `<span style="font-size:.8rem;color:var(--success);font-weight:600">Valor de referência calculado (${metodo}): ${escHtml(valorRef)}</span>` : ''}
     </div>
@@ -5711,7 +5714,7 @@ function gerarAvisoDispensa() {
   <tr><td class="lbl">Fundamentação Legal</td><td>${blank(v(4,'fundamento'))}</td></tr>
   <tr><td class="lbl">Valor Estimado</td><td>${blank(v(3,'valor_estimado'))}</td></tr>
   <tr><td class="lbl">Unidade Requisitante</td><td>${blank(proc.unidade)}</td></tr>
-  <tr><td class="lbl">Prazo para Propostas</td><td>${blank(v(6,'prazo_propostas'))}</td></tr>
+  <tr><td class="lbl">Prazo para Propostas</td><td>${blank(v(6,'prazo_propostas') ? new Date(v(6,'prazo_propostas')+'T00:00:00').toLocaleDateString('pt-BR') : '')}</td></tr>
   <tr><td class="lbl">Endereço / E-mail para Envio</td><td>${blank(v(6,'endereco_envio'))}</td></tr>
 </table>
 
