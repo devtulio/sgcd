@@ -1312,7 +1312,7 @@ const ICONS = {
 // DB — IndexedDB wrapper
 // ══════════════════════════════════════════════════════════════
 let db;
-const SGCD_VERSION = '1.10.5';
+const SGCD_VERSION = '1.10.6';
 document.title = `SGCD v${SGCD_VERSION}`;
 const DB_NAME = 'dispensaDB', DB_VER = 3;
 
@@ -6306,6 +6306,7 @@ function gerarAta() {
   td { border: 1px solid #999; padding: 4pt 6pt; vertical-align: top; }
   .cert-obtida td:last-child { color: #0a5c0a; }
   .cert-pendente td:last-child { color: #b00; }
+  .city-date { text-align: right; margin-top: 30pt; margin-bottom: 6pt; font-size: 11pt; }
   .assinaturas { margin-top: 40pt; display: flex; gap: 40pt; justify-content: center; flex-wrap: wrap; }
   .assinatura { text-align: center; min-width: 200px; }
   .assinatura .linha { border-top: 1px solid #000; padding-top: 4pt; margin-top: 40pt; font-size: 10pt; }
@@ -6405,7 +6406,7 @@ function gerarAta() {
 <div class="secao">
   <div class="secao-titulo">IX — Encerramento</div>
   <p>Nada mais havendo a tratar, o(a) Agente de Contratação declara encerrada a presente sessão, determinando a lavratura da presente ata, que vai assinada pelos presentes.</p>
-  <p>${u.municipio || blank('')}, ${hoje}.</p>
+  <div class="city-date">${u.municipio || blank('')}, ${hoje}.</div>
 </div>
 
 <div class="assinaturas">

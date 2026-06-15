@@ -5,6 +5,13 @@
 
 ---
 
+## [1.10.6] — 2026-06-15
+
+### Corrigido
+- **Data final da Ata alinhada à direita** — linha de local e data no encerramento da Ata agora usa `.city-date` (alinhada à direita, margem e fonte idênticas aos demais documentos)
+
+---
+
 ## [1.10.5] — 2026-06-15
 
 ### Corrigido
