@@ -1,6 +1,6 @@
 # SGCD — Sistema de Gestão de Contratação Direta
 
-![Versão](https://img.shields.io/badge/versão-v1.9.0-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-HTML5%20puro-orange) ![Licença](https://img.shields.io/badge/licença-uso%20interno-lightgrey)
+![Versão](https://img.shields.io/badge/versão-v1.10.0-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-HTML5%20puro-orange) ![Licença](https://img.shields.io/badge/licença-uso%20interno-lightgrey)
 
 ## Descrição
 
@@ -13,12 +13,15 @@ Não requer instalação, servidor ou conexão à internet. Todos os dados ficam
 ## Funcionalidades Principais
 
 - **Checklist estruturado com 15 etapas** do processo de Dispensa de Licitação, cada uma com fundamento legal e orientação de preenchimento
-- **Geração de documentos** prontos para assinatura e publicação: Autorização de Abertura, Extrato para Diário Oficial, Ata de Sessão e Mapa de Preços
+- **Geração de documentos** prontos para assinatura e publicação: Autorização de Abertura, Aviso de Dispensa, Extrato para Diário Oficial, Ata de Sessão, Mapa de Preços e Extrato de Contrato
 - **Relatório geral** de processos com filtros por status, unidade, período e faixa de valor
 - **Cadastro de fornecedores** com consulta automática de CNPJ via BrasilAPI e controle de certidões
 - **Gestão de propostas** com mapa de preços comparativo e vínculo automático do fornecedor vencedor
-- **Despacho de Recusa / Desclassificação** — gerado automaticamente na etapa 10 para propostas recusadas, com fundamentação jurídica e direito de manifestação
-- **Despacho de Inabilitação** — gerado na etapa 11 quando o fornecedor é inabilitado, listando as certidões pendentes como motivação
+- **Gestão de cotações** na etapa de pesquisa de preços com cálculo automático de média ou mediana como valor de referência
+- **Fundamento legal** como seleção dos 16 incisos do Art. 75 da Lei 14.133/2021
+- **Despacho de Recusa / Desclassificação** — gerado automaticamente na etapa 9 para propostas recusadas, com fundamentação jurídica e direito de manifestação
+- **Despacho de Habilitação** — gerado na etapa 10 quando o fornecedor apresenta toda a documentação de regularidade, com lista das certidões verificadas
+- **Despacho de Inabilitação** — gerado na etapa 10 quando o fornecedor é inabilitado, listando as certidões pendentes como motivação
 - **Certidões unificadas** — lista de 21 certidões e consultas oficiais compartilhada entre a etapa 11 e o cadastro de fornecedores; sincronização automática bidirecional de datas de emissão e validade
 - **Verificação de conformidade** automática: o sistema analisa o processo e aponta pendências e inconsistências
 - **Alerta de fracionamento**: detecta processos com objetos similares e calcula a soma dos valores no exercício
@@ -85,8 +88,11 @@ Essas informações serão usadas automaticamente em todos os documentos gerados
 | **Extrato de Publicação** | Texto formatado para publicação no Diário Oficial (Art. 54 §1º) |
 | **Ata de Sessão** | Documento completo do processo com propostas, certidões e espaço para assinaturas |
 | **Mapa de Preços** | Tabela comparativa de propostas recebidas (Etapa 10) |
+| **Aviso de Dispensa** | Aviso formatado para publicação no PNCP com objeto, valor, condições e critério de seleção (Art. 75, §3º) |
 | **Despacho de Recusa / Desclassificação** | Decisão fundamentada de recusa de proposta (Art. 59 Lei 14.133/2021) |
+| **Despacho de Habilitação** | Decisão formal de habilitação do fornecedor com lista das certidões verificadas (Art. 69 Lei 14.133/2021) |
 | **Despacho de Inabilitação** | Decisão fundamentada de inabilitação do fornecedor (Art. 69 e 72 Lei 14.133/2021) |
+| **Extrato de Contrato** | Extrato para publicação no Diário Oficial e PNCP com todos os dados contratuais (Art. 94 Lei 14.133/2021) |
 | **Relatório Geral** | Visão consolidada de todos os processos com filtros aplicados |
 | **Impressão do Processo** | Checklist completo com todos os campos preenchidos |
 

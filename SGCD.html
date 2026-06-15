@@ -1313,7 +1313,7 @@ const ICONS = {
 // DB — IndexedDB wrapper
 // ══════════════════════════════════════════════════════════════
 let db;
-const SGCD_VERSION = '1.9.0';
+const SGCD_VERSION = '1.10.0';
 document.title = `SGCD v${SGCD_VERSION}`;
 const DB_NAME = 'dispensaDB', DB_VER = 3;
 
@@ -1507,7 +1507,8 @@ const STEPS = [
   {
     name: 'Elaboração do Aviso de Dispensa',
     sub: 'Minuta do aviso com objeto, valor e condições',
-    fields: ['responsavel','data_conclusao','observacoes']
+    fields: ['responsavel','data_conclusao','prazo_propostas','endereco_envio','observacoes'],
+    avisoDispensa: true
   },
   {
     name: 'Publicação no PNCP',
@@ -1544,7 +1545,8 @@ const STEPS = [
   {
     name: 'Instrumento Contratual',
     sub: 'Contrato, ARP, PCA ou dispensa de instrumento — Art. 95',
-    fields: ['responsavel','data_conclusao','num_contrato','vigencia','observacoes']
+    fields: ['responsavel','num_contrato','data_assinatura','vigencia_inicial','vigencia_final','valor_contrato','contratante','contratado','cnpj_contratado','gestor_contrato','fiscal_contrato','observacoes'],
+    extratoContrato: true
   },
   {
     name: 'Publicação do Contrato no PNCP',
@@ -1572,11 +1574,43 @@ const FIELD_LABELS = {
   num_empenho: 'Nº da nota de empenho',
   dotacao: 'Dotação orçamentária',
   num_contrato: 'Nº do instrumento contratual',
-  vigencia: 'Vigência'
+  vigencia: 'Vigência',
+  prazo_propostas: 'Prazo para recebimento de propostas',
+  endereco_envio: 'Endereço/e-mail para envio das propostas',
+  data_assinatura: 'Data de assinatura',
+  vigencia_inicial: 'Vigência inicial',
+  vigencia_final: 'Vigência final',
+  valor_contrato: 'Valor do contrato (R$)',
+  contratante: 'Contratante (órgão)',
+  contratado: 'Contratado (fornecedor)',
+  cnpj_contratado: 'CNPJ do contratado',
+  gestor_contrato: 'Gestor do contrato',
+  fiscal_contrato: 'Fiscal do contrato'
 };
 
-const DATE_FIELDS  = new Set(['data_conclusao','data_publicacao','data_encerramento','vigencia']);
-const MONEY_FIELDS = new Set(['valor_estimado','valor_adjudicado']);
+const DATE_FIELDS  = new Set(['data_conclusao','data_publicacao','data_encerramento','vigencia_inicial','vigencia_final','data_assinatura','prazo_propostas']);
+const MONEY_FIELDS = new Set(['valor_estimado','valor_adjudicado','valor_contrato']);
+
+const SELECT_FIELDS = {
+  fundamento: [
+    { v: 'Art. 75, I — obras e serviços de engenharia e serviços de manutenção de veículos automotores até R$ 30.000,00', l: 'Art. 75, I — Obras/Eng. (até R$ 30.000)' },
+    { v: 'Art. 75, II — outros bens e serviços até R$ 50.000,00', l: 'Art. 75, II — Bens e Serviços (até R$ 50.000)' },
+    { v: 'Art. 75, III — situação de emergência ou calamidade pública', l: 'Art. 75, III — Emergência/Calamidade' },
+    { v: 'Art. 75, IV — contratação com órgãos ou entidades da Administração Pública', l: 'Art. 75, IV — Contratação com Adm. Pública' },
+    { v: 'Art. 75, V — compras de gêneros perecíveis e hortifrutigranjeiros', l: 'Art. 75, V — Gêneros Perecíveis' },
+    { v: 'Art. 75, VI — contratação de remanescente de obra ou serviço', l: 'Art. 75, VI — Remanescente' },
+    { v: 'Art. 75, VII — contratação de profissional do setor artístico', l: 'Art. 75, VII — Profissional Artístico' },
+    { v: 'Art. 75, VIII — objeto destinado a pesquisa, ensino ou desenvolvimento institucional', l: 'Art. 75, VIII — Pesquisa/Ensino' },
+    { v: 'Art. 75, IX — contratação de fornecedor exclusivo (produto ou serviço singular)', l: 'Art. 75, IX — Fornecedor Exclusivo' },
+    { v: 'Art. 75, X — intervenção no domínio econômico para regular preços ou normalizar abastecimento', l: 'Art. 75, X — Intervenção Econômica' },
+    { v: 'Art. 75, XI — compra ou locação de imóvel para atendimento das finalidades precípuas da Adm.', l: 'Art. 75, XI — Imóvel' },
+    { v: 'Art. 75, XII — contratação de associação de pessoas com deficiência', l: 'Art. 75, XII — PcD' },
+    { v: 'Art. 75, XIII — contratação de instituição científica, tecnológica ou de inovação', l: 'Art. 75, XIII — C&T&I' },
+    { v: 'Art. 75, XIV — contratação de coleta, processamento e comercialização de resíduos sólidos', l: 'Art. 75, XIV — Resíduos Sólidos' },
+    { v: 'Art. 75, XV — aquisição por pessoa jurídica de direito público de bens destinados à pesquisa', l: 'Art. 75, XV — Bens de Pesquisa' },
+    { v: 'Art. 75, XVI — contratação de entidade privada sem fins lucrativos para atividades de interesse público', l: 'Art. 75, XVI — Entidade sem fins lucrativos' },
+  ]
+};
 
 // Lista unificada de certidões e cadastros oficiais — usada na etapa 11 E no cadastro de fornecedores
 const CERTIDOES = [
@@ -3642,9 +3676,18 @@ async function renderChecklist() {
 }
 
 function renderStepFields(i, step, data, certFileMap = {}) {
+  // Auto-fill defaults for contrato fields (display only, not saved)
+  const autoDefaults = {};
+  if (step.extratoContrato) {
+    const u = getUser(); const forn = currentProcess?.fornecedor;
+    if (!data.fields.contratante) autoDefaults.contratante = u.orgao || '';
+    if (!data.fields.contratado) autoDefaults.contratado = forn?.razao_social || forn?.nome_fantasia || '';
+    if (!data.fields.cnpj_contratado) autoDefaults.cnpj_contratado = forn?.cnpj || '';
+  }
+
   let html = step.fields.map(f => {
     const label = FIELD_LABELS[f] || f;
-    const val   = escHtml(data.fields[f] || '');
+    const val   = escHtml(data.fields[f] || autoDefaults[f] || '');
     if (f === 'observacoes') {
       return `<label>${label}</label>
         <textarea rows="2" onchange="updateField(${i},'${f}',this.value)">${val}</textarea>`;
@@ -3656,6 +3699,16 @@ function renderStepFields(i, step, data, certFileMap = {}) {
     if (MONEY_FIELDS.has(f)) {
       return `<label>${label}</label>
         <input type="text" value="${val}" oninput="maskMoney(this)" onchange="updateField(${i},'${f}',this.value)">`;
+    }
+    if (SELECT_FIELDS[f]) {
+      const opts = SELECT_FIELDS[f];
+      const rawVal = data.fields[f] || '';
+      const optHtml = opts.map(o => `<option value="${escHtml(o.v)}" ${rawVal === o.v ? 'selected' : ''}>${escHtml(o.l)}</option>`).join('');
+      return `<label>${label}</label>
+        <select onchange="updateField(${i},'${f}',this.value)">
+          <option value="">— Selecione —</option>
+          ${optHtml}
+        </select>`;
     }
     const fieldHtml = `<label>${label}</label>
       <input type="text" value="${val}" onchange="updateField(${i},'${f}',this.value)">`;
@@ -3674,6 +3727,12 @@ function renderStepFields(i, step, data, certFileMap = {}) {
   }
   if (step.cotacoes) {
     html += renderCotacoesSection(i, data);
+  }
+  if (step.avisoDispensa) {
+    html += `<div style="margin-top:12px"><button class="btn btn-outline btn-sm" onclick="gerarAvisoDispensa()">📰 Gerar Aviso de Dispensa</button></div>`;
+  }
+  if (step.extratoContrato) {
+    html += `<div style="margin-top:12px"><button class="btn btn-outline btn-sm" onclick="gerarExtratoContrato()">📄 Gerar Extrato de Contrato</button></div>`;
   }
   return html;
 }
@@ -3780,6 +3839,7 @@ function renderCertidoesSection(stepIdx, data, certFileMap = {}) {
       <div class="cert-progress-bar"><div class="cert-progress-fill" style="width:${pct}%"></div></div>
       <span>${pct}%</span>
       <button class="btn btn-outline btn-sm" onclick="gerarDespachoInabilitacao(${stepIdx})" style="margin-left:8px">📄 Despacho de Inabilitação</button>
+      <button class="btn btn-outline btn-sm" onclick="gerarDespachoHabilitacao(${stepIdx})" style="margin-left:8px">✅ Despacho de Habilitação</button>
     </div>
     <label style="display:flex;align-items:center;gap:8px;font-size:.75rem;margin-bottom:10px;cursor:pointer;padding:6px 10px;background:var(--gray-100);border-radius:var(--radius);border:1px solid var(--gray-200)">
       <input type="checkbox" ${engenharia ? 'checked' : ''} onchange="toggleEngenharia(${stepIdx},this.checked)" style="width:15px;height:15px;accent-color:var(--brand)">
@@ -4023,10 +4083,41 @@ function renderPropostasSection(stepIdx, data) {
   </div>`;
 }
 
+function _calcValorRef(lista, metodo) {
+  const vals = lista
+    .filter(c => c.situacao === 'valida' || !c.situacao)
+    .map(c => {
+      if (!c.valor) return null;
+      const n = parseFloat(String(c.valor).replace(/R\$\s*/,'').replace(/\./g,'').replace(',','.'));
+      return isNaN(n) ? null : n;
+    })
+    .filter(v => v !== null);
+  if (!vals.length) return null;
+  let result;
+  if (metodo === 'mediana') {
+    const sorted = [...vals].sort((a,b) => a-b);
+    const mid = Math.floor(sorted.length / 2);
+    result = sorted.length % 2 === 0 ? (sorted[mid-1] + sorted[mid]) / 2 : sorted[mid];
+  } else {
+    result = vals.reduce((a,b) => a+b, 0) / vals.length;
+  }
+  return fmtMoney(result);
+}
+
+async function _autoFillValorEstimado(stepIdx) {
+  const lista = getCotacoes(stepIdx);
+  const metodo = localStorage.getItem('sgcd-cotacao-metodo') || 'media';
+  const val = _calcValorRef(lista, metodo);
+  if (val === null) return;
+  await updateField(stepIdx, 'valor_estimado', val);
+}
+
 function renderCotacoesSection(stepIdx, data) {
   const lista = data.fields._cotacoes ? JSON.parse(data.fields._cotacoes) : [];
+  const metodo = localStorage.getItem('sgcd-cotacao-metodo') || 'media';
   const sitLabels = { valida: 'Válida', descartada: 'Descartada' };
   const validas = lista.filter(c => c.situacao === 'valida' || !c.situacao);
+  const valorRef = _calcValorRef(lista, metodo);
   const cards = lista.map((c, ci) => `
     <div class="proposta-card ${c.situacao === 'descartada' ? 'recusada' : ''}">
       <button class="del-btn" onclick="removeCotacao(${stepIdx},${ci})" title="Remover">✕</button>
@@ -4061,7 +4152,17 @@ function renderCotacoesSection(stepIdx, data) {
     </div>`).join('');
 
   return `<div class="propostas-wrap">
-    <label style="display:flex;align-items:center;justify-content:space-between;margin-top:14px">
+    <div style="display:flex;align-items:center;gap:16px;margin-top:14px;margin-bottom:6px;flex-wrap:wrap">
+      <span style="font-size:.8rem;color:var(--gray-600)">Método de cálculo:</span>
+      <label style="display:flex;align-items:center;gap:4px;font-size:.8rem;cursor:pointer">
+        <input type="radio" name="cotacao-metodo-${stepIdx}" value="media" ${metodo==='media'?'checked':''} onchange="localStorage.setItem('sgcd-cotacao-metodo','media');renderChecklist()"> Média
+      </label>
+      <label style="display:flex;align-items:center;gap:4px;font-size:.8rem;cursor:pointer">
+        <input type="radio" name="cotacao-metodo-${stepIdx}" value="mediana" ${metodo==='mediana'?'checked':''} onchange="localStorage.setItem('sgcd-cotacao-metodo','mediana');renderChecklist()"> Mediana
+      </label>
+      ${valorRef !== null ? `<span style="font-size:.8rem;color:var(--success);font-weight:600">Valor de referência calculado (${metodo}): ${escHtml(valorRef)}</span>` : ''}
+    </div>
+    <label style="display:flex;align-items:center;justify-content:space-between;margin-top:6px">
       <span>Cotações registradas (${lista.length}${validas.length !== lista.length ? ` — ${validas.length} válida${validas.length!==1?'s':''}` : ''})</span>
       <button class="btn btn-outline btn-sm" onclick="addCotacao(${stepIdx})">+ Adicionar cotação</button>
     </label>
@@ -4081,6 +4182,7 @@ async function addCotacao(stepIdx) {
   const lista = getCotacoes(stepIdx);
   lista.push({ fornecedor:'', cnpj:'', valor:'', data:'', situacao:'valida', obs:'' });
   await saveCotacoes(stepIdx, lista);
+  await _autoFillValorEstimado(stepIdx);
   expandedSteps.add(stepIdx);
   renderChecklist();
 }
@@ -4089,6 +4191,7 @@ async function removeCotacao(stepIdx, ci) {
   const lista = getCotacoes(stepIdx);
   lista.splice(ci, 1);
   await saveCotacoes(stepIdx, lista);
+  await _autoFillValorEstimado(stepIdx);
   expandedSteps.add(stepIdx);
   renderChecklist();
 }
@@ -4096,6 +4199,7 @@ async function updateCotacao(stepIdx, ci, field, value) {
   const lista = getCotacoes(stepIdx);
   lista[ci][field] = value;
   await saveCotacoes(stepIdx, lista);
+  await _autoFillValorEstimado(stepIdx);
   if (field === 'situacao') {
     expandedSteps.add(stepIdx);
     renderChecklist();
@@ -5426,6 +5530,334 @@ function gerarDespachoInabilitacao(stepIdx) {
 
   const win = window.open('', '_blank', 'width=900,height=700');
   _gerarDocumento(win, html, 'Despacho de Inabilitação');
+}
+
+function gerarDespachoHabilitacao(stepIdx) {
+  const proc = currentProcess;
+  const u = getUser();
+  const data = proc.steps[stepIdx] || {};
+  const saved = data.fields?._certidoes ? JSON.parse(data.fields._certidoes) : {};
+  const forn = proc.fornecedor || null;
+  const fornNome = forn ? (forn.razao_social || forn.nome_fantasia || '') : (data.fields?.fornecedor || '');
+  const fornCnpj = forn ? (forn.cnpj || '') : '';
+
+  const obtidas = CERTIDOES.filter(c => {
+    const st = (saved[c.id] || {}).status;
+    return st === 'obtida' || st === 'na';
+  });
+
+  const hoje = new Date().toLocaleDateString('pt-BR', { day:'numeric', month:'long', year:'numeric' });
+  const blank = txt => txt || '_'.repeat(40);
+  const dec = u.dec_municipal || '';
+  const decRef = dec ? `, aplicado ao presente procedimento por força do art. 79, §4°, do referido Decreto Municipal` : '';
+
+  const certsHtml = obtidas.length
+    ? `<ul>${obtidas.map(c => {
+        const entry = saved[c.id] || {};
+        const dataPart = entry.data_validade ? ` — validade: ${entry.data_validade}` : '';
+        return `<li>${escHtml(c.nome)}${dataPart}</li>`;
+      }).join('')}</ul>`
+    : '<p>Documentação analisada e aprovada.</p>';
+
+  const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Despacho de Habilitação — ${escHtml(fornNome || 'Fornecedor')}</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; color: #000; background: #fff; padding: 2cm 2.5cm; }
+  .header { text-align: center; margin-bottom: 24pt; border-bottom: 2px solid #000; padding-bottom: 14pt; }
+  .header img { height: 90pt; width: auto; margin-bottom: 8pt; }
+  .header h1 { font-size: 13pt; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+  .header h2 { font-size: 11pt; font-weight: 400; margin-top: 2pt; }
+  .doc-title { text-align: center; margin: 20pt 0 18pt; }
+  .doc-title h3 { font-size: 13pt; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid #000; display: inline-block; padding-bottom: 4pt; }
+  .doc-title .num { font-size: 11pt; margin-top: 6pt; }
+  .section { margin-bottom: 16pt; }
+  .section-title { font-size: 11pt; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 8pt; border-bottom: 1px solid #ccc; padding-bottom: 4pt; }
+  .section p { line-height: 1.7; text-align: justify; margin-bottom: 8pt; }
+  .section ul { padding-left: 20pt; line-height: 1.7; }
+  .section ul li { text-align: justify; margin-bottom: 4pt; }
+  .field-table { width: 100%; border-collapse: collapse; margin: 14pt 0; }
+  .field-table td { padding: 5pt 8pt; border: 1px solid #333; font-size: 11pt; vertical-align: top; }
+  .field-table td.lbl { font-weight: 700; text-transform: uppercase; font-size: 9pt; letter-spacing: .4px; width: 38%; background: #f5f5f5; }
+  .despacho { background: #f9f9f9; border-left: 3px solid #555; padding: 10pt 14pt; margin: 16pt 0; font-size: 11pt; line-height: 1.8; text-align: justify; }
+  .signature-block { margin-top: 40pt; }
+  .signature-line { border-top: 1px solid #000; width: 280pt; margin: 0 auto; text-align: center; padding-top: 4pt; font-size: 10pt; }
+  .city-date { text-align: right; margin-top: 30pt; margin-bottom: 6pt; font-size: 11pt; }
+  .footer { margin-top: 40pt; border-top: 1px solid #ccc; padding-top: 6pt; text-align: center; font-size: 8pt; color: #666; }
+  .btn-print { display: block; margin: 0 auto 20pt; padding: 8pt 24pt; background: #2C001E; color: #fff; border: none; border-radius: 4px; font-size: 11pt; cursor: pointer; letter-spacing: .5px; }
+  .btn-print:hover { background: #5E2750; }
+  @media print { body { padding: 0; } .no-print { display: none !important; } }
+</style>
+</head>
+<body>
+<button class="btn-print no-print" onclick="window.print()">🖨 Imprimir / Salvar PDF</button>
+
+<div class="header">
+  <img src="data:image/png;base64,__BRASAO_PLACEHOLDER__" alt="Brasão">
+  <h1>${blank(u.orgao)}</h1>
+  <h2>${blank(u.municipio)}</h2>
+</div>
+
+<div class="doc-title">
+  <h3>Despacho de Habilitação de Fornecedor</h3>
+  <div class="num">Processo Administrativo nº ${blank(proc.num_proc || proc.num)} &nbsp;|&nbsp; Dispensa de Licitação nº ${blank(proc.num_dl || proc.num)}</div>
+</div>
+
+<div class="section">
+  <div class="despacho">
+    <strong>DESPACHO:</strong> O(A) Agente de Contratação <strong>${blank(u.nome)}</strong>${u.matricula ? ', Matrícula ' + u.matricula : ''}, no exercício das atribuições que lhe são conferidas${u.cargo ? ' pelo cargo de ' + u.cargo : ''} e nos termos do art. 69 da Lei Federal nº 14.133, de 1º de abril de 2021${decRef}, após análise da documentação de habilitação apresentada no âmbito do processo de Dispensa de Licitação em epígrafe, <u><strong>DECIDE</strong></u> pela <strong>habilitação</strong> do fornecedor abaixo identificado, cuja regularidade fiscal, trabalhista e jurídica restou devidamente comprovada.
+  </div>
+</div>
+
+<table class="field-table">
+  <tr><td class="lbl">Processo Administrativo</td><td>${blank(proc.num_proc || proc.num)}</td></tr>
+  <tr><td class="lbl">Dispensa de Licitação nº</td><td>${blank(proc.num_dl || proc.num)}</td></tr>
+  <tr><td class="lbl">Objeto</td><td>${blank(proc.objeto)}</td></tr>
+  <tr><td class="lbl">Unidade Requisitante</td><td>${blank(proc.unidade)}</td></tr>
+  <tr><td class="lbl">Fornecedor Habilitado</td><td>${blank(fornNome)}</td></tr>
+  ${fornCnpj ? `<tr><td class="lbl">CNPJ</td><td>${escHtml(fornCnpj)}</td></tr>` : ''}
+</table>
+
+<div class="section">
+  <div class="section-title">Certidões Verificadas</div>
+  <p>Foram analisados os seguintes documentos de habilitação, todos em situação regular:</p>
+  ${certsHtml}
+</div>
+
+<div class="section">
+  <div class="section-title">Resultado</div>
+  <p>Com base na análise da documentação apresentada e nos termos do art. 69 da Lei Federal nº 14.133/2021, declara-se o fornecedor <strong>${blank(fornNome)}</strong>${fornCnpj ? ', CNPJ ' + escHtml(fornCnpj) + ',' : ''} <strong>HABILITADO</strong> para prosseguir no presente processo de Dispensa de Licitação, estando apto à eventual contratação.</p>
+</div>
+
+<div class="city-date">${blank(u.municipio)}, ${hoje}</div>
+
+<div class="signature-block">
+  <div class="signature-line">
+    <div>${blank(u.nome)}</div>
+    <div style="font-size:9pt;margin-top:2pt">${blank(u.cargo)}${u.matricula ? ' — Matrícula: ' + u.matricula : ''}</div>
+  </div>
+</div>
+
+<div class="footer">Documento gerado pelo SGCD — Sistema de Gestão de Contratação Direta &nbsp;·&nbsp; v${SGCD_VERSION} &nbsp;·&nbsp; Lei Federal nº 14.133/2021 &nbsp;·&nbsp; Cód. ${_docAuthCode(proc)}</div>
+</body>
+</html>`;
+
+  const win = window.open('', '_blank', 'width=900,height=700');
+  _gerarDocumento(win, html, 'Despacho de Habilitação');
+}
+
+function gerarAvisoDispensa() {
+  const proc = currentProcess;
+  const u = getUser();
+  const p = i => proc.steps[i]?.fields || {};
+  const v = (i, f) => p(i)[f] || '';
+  const hoje = new Date().toLocaleDateString('pt-BR', { day:'numeric', month:'long', year:'numeric' });
+  const blank = txt => txt || '_'.repeat(40);
+
+  const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Aviso de Dispensa de Licitação — ${escHtml(proc.num_dl || proc.num || 'DL')}</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; color: #000; background: #fff; padding: 2cm 2.5cm; }
+  .header { text-align: center; margin-bottom: 24pt; border-bottom: 2px solid #000; padding-bottom: 14pt; }
+  .header img { height: 90pt; width: auto; margin-bottom: 8pt; }
+  .header h1 { font-size: 13pt; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+  .header h2 { font-size: 11pt; font-weight: 400; margin-top: 2pt; }
+  .doc-title { text-align: center; margin: 20pt 0 18pt; }
+  .doc-title h3 { font-size: 13pt; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid #000; display: inline-block; padding-bottom: 4pt; }
+  .doc-title .num { font-size: 11pt; margin-top: 6pt; }
+  .section { margin-bottom: 16pt; }
+  .section-title { font-size: 11pt; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 8pt; border-bottom: 1px solid #ccc; padding-bottom: 4pt; }
+  .section p { line-height: 1.7; text-align: justify; margin-bottom: 8pt; }
+  .section ul { padding-left: 20pt; line-height: 1.7; }
+  .section ul li { text-align: justify; margin-bottom: 4pt; }
+  .field-table { width: 100%; border-collapse: collapse; margin: 14pt 0; }
+  .field-table td { padding: 5pt 8pt; border: 1px solid #333; font-size: 11pt; vertical-align: top; }
+  .field-table td.lbl { font-weight: 700; text-transform: uppercase; font-size: 9pt; letter-spacing: .4px; width: 38%; background: #f5f5f5; }
+  .signature-block { margin-top: 40pt; }
+  .signature-line { border-top: 1px solid #000; width: 280pt; margin: 0 auto; text-align: center; padding-top: 4pt; font-size: 10pt; }
+  .city-date { text-align: right; margin-top: 30pt; margin-bottom: 6pt; font-size: 11pt; }
+  .footer { margin-top: 40pt; border-top: 1px solid #ccc; padding-top: 6pt; text-align: center; font-size: 8pt; color: #666; }
+  .btn-print { display: block; margin: 0 auto 20pt; padding: 8pt 24pt; background: #2C001E; color: #fff; border: none; border-radius: 4px; font-size: 11pt; cursor: pointer; letter-spacing: .5px; }
+  .btn-print:hover { background: #5E2750; }
+  @media print { body { padding: 0; } .no-print { display: none !important; } }
+</style>
+</head>
+<body>
+<button class="btn-print no-print" onclick="window.print()">🖨 Imprimir / Salvar PDF</button>
+
+<div class="header">
+  <img src="data:image/png;base64,__BRASAO_PLACEHOLDER__" alt="Brasão">
+  <h1>${blank(u.orgao)}</h1>
+  <h2>${blank(u.municipio)}</h2>
+</div>
+
+<div class="doc-title">
+  <h3>Aviso de Dispensa de Licitação</h3>
+  <div class="num">Processo Administrativo nº ${blank(proc.num_proc || proc.num)} &nbsp;|&nbsp; Dispensa de Licitação nº ${blank(proc.num_dl || proc.num)}</div>
+  <div class="num" style="margin-top:4pt;font-size:10pt">Fundamento: Art. 75, §3º da Lei Federal nº 14.133/2021</div>
+</div>
+
+<table class="field-table">
+  <tr><td class="lbl">Processo Administrativo</td><td>${blank(proc.num_proc || proc.num)}</td></tr>
+  <tr><td class="lbl">Dispensa de Licitação nº</td><td>${blank(proc.num_dl || proc.num)}</td></tr>
+  <tr><td class="lbl">Objeto</td><td>${blank(proc.objeto)}</td></tr>
+  <tr><td class="lbl">Fundamentação Legal</td><td>${blank(v(4,'fundamento'))}</td></tr>
+  <tr><td class="lbl">Valor Estimado</td><td>${blank(v(3,'valor_estimado'))}</td></tr>
+  <tr><td class="lbl">Unidade Requisitante</td><td>${blank(proc.unidade)}</td></tr>
+  <tr><td class="lbl">Prazo para Propostas</td><td>${blank(v(6,'prazo_propostas'))}</td></tr>
+  <tr><td class="lbl">Endereço / E-mail para Envio</td><td>${blank(v(6,'endereco_envio'))}</td></tr>
+</table>
+
+<div class="section">
+  <div class="section-title">Da Participação</div>
+  <p>Os interessados deverão encaminhar suas propostas comerciais para o endereço/e-mail indicado acima até a data e hora do prazo fixado, observando os requisitos estabelecidos neste Aviso.</p>
+</div>
+
+<div class="section">
+  <div class="section-title">Das Condições de Participação</div>
+  <p>Poderão participar do presente procedimento quaisquer fornecedores do ramo pertinente ao objeto, desde que atendam às condições exigidas neste Aviso. A proposta deverá conter:</p>
+  <ul>
+    <li>Identificação completa do fornecedor (razão social e CNPJ);</li>
+    <li>Descrição do objeto ofertado, com especificações técnicas que atendam ao Termo de Referência;</li>
+    <li>Valor global ou unitário, conforme o caso, em moeda corrente nacional;</li>
+    <li>Prazo de validade mínima da proposta de 60 (sessenta) dias, contados da data de apresentação.</li>
+  </ul>
+</div>
+
+<div class="section">
+  <div class="section-title">Do Critério de Seleção</div>
+  <p>A seleção da proposta mais vantajosa será realizada com base no critério de <strong>menor preço</strong>, em conformidade com o art. 75 da Lei Federal nº 14.133/2021, considerando o objeto e as condições estabelecidas no Termo de Referência.</p>
+</div>
+
+<div class="city-date">${blank(u.municipio)}, ${hoje}</div>
+
+<div class="signature-block">
+  <div class="signature-line">
+    <div>${blank(u.aut_nome || u.nome)}</div>
+    <div style="font-size:9pt;margin-top:2pt">${blank(u.aut_cargo || u.cargo)}</div>
+  </div>
+</div>
+
+<div class="footer">Documento gerado pelo SGCD — Sistema de Gestão de Contratação Direta &nbsp;·&nbsp; v${SGCD_VERSION} &nbsp;·&nbsp; Lei Federal nº 14.133/2021 &nbsp;·&nbsp; Cód. ${_docAuthCode(proc)}</div>
+</body>
+</html>`;
+
+  const win = window.open('', '_blank', 'width=900,height=700');
+  _gerarDocumento(win, html, 'Aviso de Dispensa de Licitação');
+}
+
+function gerarExtratoContrato() {
+  const proc = currentProcess;
+  const u = getUser();
+  const data = proc.steps[13]?.fields || {};
+  const hoje = new Date().toLocaleDateString('pt-BR', { day:'numeric', month:'long', year:'numeric' });
+  const blank = txt => txt || '_'.repeat(40);
+  const forn = proc.fornecedor;
+  const contratante = data.contratante || u.orgao || '';
+  const contratado = data.contratado || (forn ? (forn.razao_social || forn.nome_fantasia || '') : '');
+  const cnpjContratado = data.cnpj_contratado || (forn ? (forn.cnpj || '') : '');
+  const vigencia = data.vigencia_inicial && data.vigencia_final
+    ? `${data.vigencia_inicial} a ${data.vigencia_final}`
+    : (data.vigencia_inicial || data.vigencia_final || '');
+  const fundamento = proc.steps[4]?.fields?.fundamento || '';
+
+  const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Extrato de Contrato — ${escHtml(data.num_contrato || proc.num_dl || proc.num || 'DL')}</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; color: #000; background: #fff; padding: 2cm 2.5cm; }
+  .header { text-align: center; margin-bottom: 24pt; border-bottom: 2px solid #000; padding-bottom: 14pt; }
+  .header img { height: 90pt; width: auto; margin-bottom: 8pt; }
+  .header h1 { font-size: 13pt; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+  .header h2 { font-size: 11pt; font-weight: 400; margin-top: 2pt; }
+  .doc-title { text-align: center; margin: 20pt 0 18pt; }
+  .doc-title h3 { font-size: 13pt; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid #000; display: inline-block; padding-bottom: 4pt; }
+  .doc-title .num { font-size: 11pt; margin-top: 6pt; }
+  .section { margin-bottom: 16pt; }
+  .section-title { font-size: 11pt; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 8pt; border-bottom: 1px solid #ccc; padding-bottom: 4pt; }
+  .section p { line-height: 1.7; text-align: justify; margin-bottom: 8pt; }
+  .field-table { width: 100%; border-collapse: collapse; margin: 14pt 0; }
+  .field-table td { padding: 5pt 8pt; border: 1px solid #333; font-size: 11pt; vertical-align: top; }
+  .field-table td.lbl { font-weight: 700; text-transform: uppercase; font-size: 9pt; letter-spacing: .4px; width: 38%; background: #f5f5f5; }
+  .signature-block { margin-top: 40pt; display: flex; justify-content: space-around; }
+  .signature-line { border-top: 1px solid #000; width: 240pt; text-align: center; padding-top: 4pt; font-size: 10pt; }
+  .city-date { text-align: right; margin-top: 30pt; margin-bottom: 6pt; font-size: 11pt; }
+  .footer { margin-top: 40pt; border-top: 1px solid #ccc; padding-top: 6pt; text-align: center; font-size: 8pt; color: #666; }
+  .btn-print { display: block; margin: 0 auto 20pt; padding: 8pt 24pt; background: #2C001E; color: #fff; border: none; border-radius: 4px; font-size: 11pt; cursor: pointer; letter-spacing: .5px; }
+  .btn-print:hover { background: #5E2750; }
+  @media print { body { padding: 0; } .no-print { display: none !important; } }
+</style>
+</head>
+<body>
+<button class="btn-print no-print" onclick="window.print()">🖨 Imprimir / Salvar PDF</button>
+
+<div class="header">
+  <img src="data:image/png;base64,__BRASAO_PLACEHOLDER__" alt="Brasão">
+  <h1>${blank(u.orgao)}</h1>
+  <h2>${blank(u.municipio)}</h2>
+</div>
+
+<div class="doc-title">
+  <h3>Extrato de Contrato</h3>
+  <div class="num" style="font-size:10pt;color:#555">Para publicação no Diário Oficial / PNCP</div>
+  <div class="num">Fundamento: Art. 94 da Lei Federal nº 14.133/2021</div>
+</div>
+
+<table class="field-table">
+  <tr><td class="lbl">Nº do Instrumento</td><td>${blank(data.num_contrato)}</td></tr>
+  <tr><td class="lbl">Processo Administrativo</td><td>${blank(proc.num_proc || proc.num)}</td></tr>
+  <tr><td class="lbl">Dispensa de Licitação nº</td><td>${blank(proc.num_dl || proc.num)}</td></tr>
+  <tr><td class="lbl">Data de Assinatura</td><td>${blank(data.data_assinatura)}</td></tr>
+  <tr><td class="lbl">Vigência</td><td>${blank(vigencia)}</td></tr>
+  <tr><td class="lbl">Valor</td><td>${blank(data.valor_contrato)}</td></tr>
+  <tr><td class="lbl">Contratante</td><td>${blank(contratante)}${u.cnpj ? ' — CNPJ: ' + escHtml(u.cnpj) : ''}</td></tr>
+  <tr><td class="lbl">Contratado</td><td>${blank(contratado)}${cnpjContratado ? ' — CNPJ: ' + escHtml(cnpjContratado) : ''}</td></tr>
+  <tr><td class="lbl">Objeto</td><td>${blank(proc.objeto)}</td></tr>
+  <tr><td class="lbl">Fundamentação</td><td>PA nº ${blank(proc.num_proc || proc.num)} · DL nº ${blank(proc.num_dl || proc.num)}${fundamento ? ' · ' + escHtml(fundamento) : ''}</td></tr>
+  <tr><td class="lbl">Gestor do Contrato</td><td>${blank(data.gestor_contrato)}</td></tr>
+  <tr><td class="lbl">Fiscal do Contrato</td><td>${blank(data.fiscal_contrato)}</td></tr>
+</table>
+
+<div class="section">
+  <div class="section-title">Objeto</div>
+  <p>O presente instrumento tem por objeto a contratação de <strong>${blank(proc.objeto)}</strong>, em atendimento às necessidades da unidade requisitante <strong>${blank(proc.unidade)}</strong>, nos termos do Termo de Referência integrante do processo administrativo acima referenciado e da proposta vencedora da Dispensa de Licitação nº ${blank(proc.num_dl || proc.num)}.</p>
+</div>
+
+<div class="section">
+  <div class="section-title">Assinatura</div>
+  <p>As partes, de pleno acordo com o estabelecido, firmam o presente instrumento.</p>
+</div>
+
+<div class="city-date">${blank(u.municipio)}, ${hoje}</div>
+
+<div class="signature-block">
+  <div class="signature-line">
+    <div>${blank(contratante)}</div>
+    <div style="font-size:9pt;margin-top:2pt">${blank(u.aut_nome || u.nome)}</div>
+    <div style="font-size:9pt">${blank(u.aut_cargo || u.cargo)}</div>
+  </div>
+  <div class="signature-line">
+    <div>${blank(contratado)}</div>
+    ${cnpjContratado ? `<div style="font-size:9pt;margin-top:2pt">CNPJ: ${escHtml(cnpjContratado)}</div>` : ''}
+  </div>
+</div>
+
+<div class="footer">Documento gerado pelo SGCD — Sistema de Gestão de Contratação Direta &nbsp;·&nbsp; v${SGCD_VERSION} &nbsp;·&nbsp; Lei Federal nº 14.133/2021 &nbsp;·&nbsp; Cód. ${_docAuthCode(proc)}</div>
+</body>
+</html>`;
+
+  const win = window.open('', '_blank', 'width=900,height=700');
+  _gerarDocumento(win, html, 'Extrato de Contrato');
 }
 
 function gerarAutorizacao() {
