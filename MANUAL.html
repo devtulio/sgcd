@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Manual Operacional — SGCD v1.7.0</title>
+<title>Manual Operacional — SGCD v1.8.1</title>
 <style>
   /* Reset e base */
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -89,7 +89,7 @@
       margin: 20mm 20mm 25mm;
       size: A4;
       @top-center {
-        content: "SGCD v1.7.0 — Manual Operacional";
+        content: "SGCD v1.8.1 — Manual Operacional";
         font-family: 'Times New Roman', serif;
         font-size: 9pt;
         color: #666;
@@ -118,7 +118,7 @@
     <div class="cover-title">Manual Operacional</div>
     <div class="cover-subtitle">SGCD — Sistema de Gestão de Contratação Direta</div>
     <div class="cover-system">Gestão de Processos de Dispensa de Licitação</div>
-    <div class="cover-version">Versão v1.7.0</div>
+    <div class="cover-version">Versão v1.8.1</div>
     <br>
     <div style="font-size:11pt; color:#555; line-height:1.8;">
       Aplicação web single-file para agentes de contratação pública<br>
@@ -192,6 +192,11 @@
     <div class="toc-item h2"><a href="#sec13">13. Alertas de Fracionamento</a></div>
 
     <div class="toc-item h2"><a href="#sec14">14. Dicas e Boas Práticas</a></div>
+
+    <div class="toc-item h2"><a href="#sec15">15. Trilha de Auditoria Global</a></div>
+    <div class="toc-item h3"><a href="#sec15-1">15.1 Acessando a trilha de auditoria</a></div>
+    <div class="toc-item h3"><a href="#sec15-2">15.2 Tipos de eventos registrados</a></div>
+    <div class="toc-item h3"><a href="#sec15-3">15.3 Filtros e relatório de auditoria</a></div>
   </div>
 </div>
 
@@ -326,6 +331,7 @@
 <ul>
   <li><strong>Ícone de pasta / lista:</strong> retorna ao dashboard de processos</li>
   <li><strong>Ícone de prédio / empresa:</strong> acessa o cadastro de fornecedores</li>
+  <li><strong>Ícone de trilha (histórico):</strong> abre a Trilha de Auditoria Global — registro de todas as ações realizadas no sistema</li>
   <li><strong>Ícone de engrenagem (⚙):</strong> abre as configurações do sistema</li>
   <li><strong>Ícone de lua / sol:</strong> alterna entre o tema claro e o tema escuro</li>
 </ul>
@@ -726,12 +732,22 @@
 </div>
 
 <h3 id="sec7-6">7.6 Histórico e log de auditoria</h3>
-<p>O SGCD registra automaticamente todas as alterações realizadas no processo: mudanças de status de etapas, edições de campos, adição de propostas e anexos. Para visualizar o histórico:</p>
+<p>O SGCD registra automaticamente todas as alterações realizadas no processo: mudanças de status de etapas, edições de campos, adição de propostas e anexos. Para visualizar o histórico do processo:</p>
 <ol>
-  <li>No painel do processo, localize a aba ou botão <strong>"Histórico"</strong> ou <strong>"Log de Auditoria"</strong></li>
+  <li>No painel do processo, localize o botão <strong>"Histórico"</strong> no cabeçalho</li>
   <li>O log exibe cada alteração com: campo alterado, valor anterior, novo valor, usuário (configurado) e data/hora</li>
 </ol>
 <p>O log de auditoria é somente leitura e não pode ser editado, garantindo a rastreabilidade das ações no processo.</p>
+<div class="nota">
+  <strong>Nota:</strong> O histórico exibido aqui é relativo ao processo aberto. Para visualizar o registro consolidado de <em>todas</em> as ações de todos os processos e fornecedores, acesse a <strong>Trilha de Auditoria Global</strong> pelo ícone na barra lateral (ver Seção 15).
+</div>
+
+<h3 id="sec7-7">7.7 Responsável preenchido automaticamente</h3>
+<p>Ao abrir um processo, o SGCD verifica se o campo <strong>Responsável</strong> das etapas está preenchido. Caso alguma etapa esteja sem responsável, o sistema preenche automaticamente com o nome do <strong>Agente de Contratação</strong> configurado nas Configurações do sistema.</p>
+<p>Isso garante que nenhum processo fique com o campo de responsável vazio, sem exigir ação manual do usuário. O campo pode ser editado a qualquer momento dentro da etapa.</p>
+<div class="dica">
+  <strong>Dica:</strong> Configure o nome do agente de contratação em Configurações → Perfil antes de criar os primeiros processos para que o preenchimento automático funcione desde o início.
+</div>
 
 <hr class="section-divider">
 
@@ -1079,8 +1095,61 @@
 </div>
 
 <hr class="section-divider">
+
+<!-- ─────────────────────────────────────────────── SEÇÃO 15 -->
+<h2 id="sec15">15. Trilha de Auditoria Global</h2>
+<p>A partir da versão 1.8.0, o SGCD possui uma <strong>Trilha de Auditoria Global</strong> independente dos processos. Todas as ações realizadas no sistema — em processos, fornecedores, documentos e certidões — são gravadas automaticamente nessa trilha e permanecem mesmo após a exclusão de processos.</p>
+
+<h3 id="sec15-1">15.1 Acessando a trilha de auditoria</h3>
+<p>Para acessar a trilha de auditoria:</p>
+<ol>
+  <li>Clique no <strong>ícone de trilha (histórico)</strong> na barra lateral esquerda</li>
+  <li>A view de Auditoria será exibida com a <strong>timeline vertical</strong> de registros</li>
+</ol>
+<p>A timeline exibe os registros em ordem cronológica decrescente (mais recentes no topo), agrupados por dia com separadores "Hoje", "Ontem" e a data por extenso para os dias anteriores. Cada item exibe:</p>
+<ul>
+  <li><strong>Ícone colorido</strong> identificando a categoria do evento</li>
+  <li><strong>Badge</strong> com o tipo de evento</li>
+  <li><strong>Horário</strong> exato do registro</li>
+  <li><strong>Usuário</strong> que realizou a ação (nome + matrícula)</li>
+  <li><strong>Descrição</strong> detalhada da ação</li>
+  <li><strong>Referência ao processo</strong> relacionado, quando aplicável</li>
+</ul>
+<p>Por padrão, são exibidos 50 registros por vez. Clique em <strong>"Carregar mais registros"</strong> no final da lista para exibir os registros anteriores.</p>
+
+<h3 id="sec15-2">15.2 Tipos de eventos registrados</h3>
+<table>
+  <tr><th>Evento</th><th>O que registra</th></tr>
+  <tr><td><strong>Etapa concluída</strong></td><td>Quando uma etapa do processo é marcada como concluída</td></tr>
+  <tr><td><strong>Etapa bloqueada</strong></td><td>Quando uma etapa é marcada como bloqueada</td></tr>
+  <tr><td><strong>Etapa reaberta</strong></td><td>Quando uma etapa volta ao status pendente</td></tr>
+  <tr><td><strong>Arquivo anexado</strong></td><td>Nome do arquivo e etapa onde foi anexado</td></tr>
+  <tr><td><strong>Arquivo removido</strong></td><td>Nome do arquivo removido e etapa</td></tr>
+  <tr><td><strong>Documento gerado</strong></td><td>Qual documento foi gerado e para qual processo</td></tr>
+  <tr><td><strong>Processo excluído</strong></td><td>PA, DL e objeto do processo antes da exclusão</td></tr>
+  <tr><td><strong>Certidão atualizada</strong></td><td>Campo alterado com valor anterior e novo</td></tr>
+  <tr><td><strong>Certidão sincronizada</strong></td><td>Sincronização de datas entre processo e cadastro de fornecedor</td></tr>
+  <tr><td><strong>Fornecedor alterado</strong></td><td>Lista dos campos alterados no cadastro do fornecedor</td></tr>
+  <tr><td><strong>Campo alterado</strong></td><td>Edições nos campos do painel de informações do processo</td></tr>
+</table>
+
+<h3 id="sec15-3">15.3 Filtros e relatório de auditoria</h3>
+<p>A view de auditoria oferece quatro filtros para refinar os registros exibidos:</p>
+<ul>
+  <li><strong>Tipo de evento:</strong> exibe apenas registros de uma categoria específica</li>
+  <li><strong>Data de início (De):</strong> filtra registros a partir de uma data</li>
+  <li><strong>Data de fim (Até):</strong> filtra registros até uma data</li>
+  <li><strong>Usuário:</strong> busca registros pelo nome do usuário que realizou a ação</li>
+</ul>
+<p>O contador no topo exibe a quantidade de registros encontrados com os filtros ativos. Clique em <strong>"Limpar filtros"</strong> para remover todos os filtros aplicados.</p>
+<p>Para gerar um relatório imprimível da trilha de auditoria, clique no botão <strong>"Relatório"</strong>. O documento será aberto em nova janela com todos os registros filtrados, no mesmo padrão visual dos demais documentos do sistema.</p>
+<div class="nota">
+  <strong>Nota:</strong> A geração do próprio relatório de auditoria também é registrada na trilha, garantindo rastreabilidade completa.
+</div>
+
+<hr class="section-divider">
 <p style="text-align:center; font-size:9pt; color:#888; margin-top:20pt;">
-  SGCD v1.7.0 — Manual Operacional<br>
+  SGCD v1.8.1 — Manual Operacional<br>
   Sistema de Gestão de Contratação Direta<br>
   Lei Federal nº 14.133/2021
 </p>

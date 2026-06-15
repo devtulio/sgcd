@@ -26,6 +26,8 @@ Não requer instalação, servidor ou conexão à internet. Todos os dados ficam
 - **Filtros avançados** no dashboard: busca textual, status, unidade, período, faixa de valor e ordenação múltipla
 - **Exportação CSV** da lista de processos com filtros ativos
 - **Busca global** (Ctrl+K) em todos os campos de todos os processos
+- **Trilha de auditoria global** com timeline vertical agrupada por dia, ícones coloridos por categoria e filtros por tipo de evento, período e usuário — acessível pelo ícone de auditoria na barra lateral
+- **Responsável preenchido automaticamente** — ao abrir um processo, o campo Responsável das etapas é preenchido automaticamente com o Agente de Contratação configurado nas configurações
 - **Histórico e log de auditoria** com registro de data/hora de cada alteração
 - **Anexo de documentos** por etapa (PDF, DOCX, imagens)
 - **Backup e restauração** de dados em arquivo JSON
