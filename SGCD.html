@@ -1489,14 +1489,10 @@ const STEPS = [
     fields: ['responsavel','data_conclusao','observacoes']
   },
   {
-    name: 'Pesquisa de Preços',
-    sub: 'Mínimo 3 cotações válidas — IN SEGES nº 65/2021',
-    fields: ['responsavel','data_conclusao','num_cotacoes','observacoes']
-  },
-  {
-    name: 'Pesquisa de Preços / Estimativa de Valor',
-    sub: 'Cotações de mercado e definição do valor de referência',
-    fields: ['responsavel','data_conclusao','valor_estimado','observacoes']
+    name: 'Pesquisa de Preços / Estimativa do Valor',
+    sub: 'Registro de cotações e definição do preço de referência — IN SEGES nº 65/2021',
+    fields: ['responsavel','data_conclusao','valor_estimado','observacoes'],
+    cotacoes: true
   },
   {
     name: 'Enquadramento Legal',
@@ -3676,6 +3672,9 @@ function renderStepFields(i, step, data, certFileMap = {}) {
   if (step.propostas) {
     html += renderPropostasSection(i, data);
   }
+  if (step.cotacoes) {
+    html += renderCotacoesSection(i, data);
+  }
   return html;
 }
 
@@ -4022,6 +4021,85 @@ function renderPropostasSection(stepIdx, data) {
     ${cards || '<p style="color:var(--gray-500);font-size:.8rem;margin-top:8px">Nenhuma proposta cadastrada ainda.</p>'}
     ${resumoHtml}
   </div>`;
+}
+
+function renderCotacoesSection(stepIdx, data) {
+  const lista = data.fields._cotacoes ? JSON.parse(data.fields._cotacoes) : [];
+  const sitLabels = { valida: 'Válida', descartada: 'Descartada' };
+  const validas = lista.filter(c => c.situacao === 'valida' || !c.situacao);
+  const cards = lista.map((c, ci) => `
+    <div class="proposta-card ${c.situacao === 'descartada' ? 'recusada' : ''}">
+      <button class="del-btn" onclick="removeCotacao(${stepIdx},${ci})" title="Remover">✕</button>
+      <div class="proposta-grid">
+        <div>
+          <label>Fornecedor</label>
+          <input type="text" value="${escHtml(c.fornecedor||'')}" onchange="updateCotacao(${stepIdx},${ci},'fornecedor',this.value)">
+        </div>
+        <div>
+          <label>CNPJ</label>
+          <input type="text" value="${escHtml(c.cnpj||'')}" placeholder="00.000.000/0000-00" onchange="updateCotacao(${stepIdx},${ci},'cnpj',this.value)">
+        </div>
+        <div>
+          <label>Valor cotado (R$)</label>
+          <input type="text" value="${escHtml(c.valor||'')}" oninput="maskMoney(this)" onchange="updateCotacao(${stepIdx},${ci},'valor',this.value)">
+        </div>
+        <div>
+          <label>Data da cotação</label>
+          <input type="date" value="${c.data||''}" onchange="updateCotacao(${stepIdx},${ci},'data',this.value)">
+        </div>
+        <div>
+          <label>Situação</label>
+          <select onchange="updateCotacao(${stepIdx},${ci},'situacao',this.value)">
+            ${Object.entries(sitLabels).map(([v,l]) => `<option value="${v}" ${(c.situacao||'valida')===v?'selected':''}>${l}</option>`).join('')}
+          </select>
+        </div>
+        <div class="full">
+          <label>Observações</label>
+          <input type="text" value="${escHtml(c.obs||'')}" onchange="updateCotacao(${stepIdx},${ci},'obs',this.value)">
+        </div>
+      </div>
+    </div>`).join('');
+
+  return `<div class="propostas-wrap">
+    <label style="display:flex;align-items:center;justify-content:space-between;margin-top:14px">
+      <span>Cotações registradas (${lista.length}${validas.length !== lista.length ? ` — ${validas.length} válida${validas.length!==1?'s':''}` : ''})</span>
+      <button class="btn btn-outline btn-sm" onclick="addCotacao(${stepIdx})">+ Adicionar cotação</button>
+    </label>
+    ${cards || '<p style="color:var(--gray-500);font-size:.8rem;margin-top:8px">Nenhuma cotação cadastrada ainda.</p>'}
+  </div>`;
+}
+
+function getCotacoes(stepIdx) {
+  const raw = currentProcess.steps[stepIdx].fields._cotacoes;
+  return raw ? JSON.parse(raw) : [];
+}
+async function saveCotacoes(stepIdx, lista) {
+  currentProcess.steps[stepIdx].fields._cotacoes = JSON.stringify(lista);
+  await saveProcess(currentProcess);
+}
+async function addCotacao(stepIdx) {
+  const lista = getCotacoes(stepIdx);
+  lista.push({ fornecedor:'', cnpj:'', valor:'', data:'', situacao:'valida', obs:'' });
+  await saveCotacoes(stepIdx, lista);
+  expandedSteps.add(stepIdx);
+  renderChecklist();
+}
+async function removeCotacao(stepIdx, ci) {
+  if (!await customConfirm('Remover esta cotação?', { title: 'Remover Cotação', icon: '🗑️', okLabel: 'Remover' })) return;
+  const lista = getCotacoes(stepIdx);
+  lista.splice(ci, 1);
+  await saveCotacoes(stepIdx, lista);
+  expandedSteps.add(stepIdx);
+  renderChecklist();
+}
+async function updateCotacao(stepIdx, ci, field, value) {
+  const lista = getCotacoes(stepIdx);
+  lista[ci][field] = value;
+  await saveCotacoes(stepIdx, lista);
+  if (field === 'situacao') {
+    expandedSteps.add(stepIdx);
+    renderChecklist();
+  }
 }
 
 function renderFileList(files, stepIdx) {
@@ -5487,15 +5565,21 @@ function gerarAta() {
   const d = s => s ? new Date(s).toLocaleDateString('pt-BR') : '___/___/______';
   const blank = txt => txt || '_'.repeat(40);
 
-  // Propostas (step 10, idx 9)
+  // Cotações (step 4, idx 3)
+  const cotacoes = (() => {
+    try { return JSON.parse(f(3)._cotacoes || '[]'); } catch { return []; }
+  })();
+  const cotacoesValidas = cotacoes.filter(c => c.situacao === 'valida' || !c.situacao);
+
+  // Propostas (step 9, idx 8)
   const propostas = (() => {
-    try { return JSON.parse(f(9)._propostas || '[]'); } catch { return []; }
+    try { return JSON.parse(f(8)._propostas || '[]'); } catch { return []; }
   })();
   const vencedora = propostas.find(x => x.situacao === 'vencedora') || propostas.find(x => x.situacao === 'aceita') || {};
 
-  // Certidões (step 11, idx 10)
+  // Certidões (step 10, idx 9)
   const certSaved = (() => {
-    try { return JSON.parse(f(10)._certidoes || '{}'); } catch { return {}; }
+    try { return JSON.parse(f(9)._certidoes || '{}'); } catch { return {}; }
   })();
   const engenharia = !!certSaved._engenharia;
   const certAplicaveis = CERTIDOES.filter(c => !c.engenharia || engenharia);
@@ -5503,6 +5587,20 @@ function gerarAta() {
   const resultadoHab = todasObtidas ? 'HABILITADO' : 'HABILITAÇÃO PENDENTE DE VERIFICAÇÃO';
 
   const hoje = new Date().toLocaleDateString('pt-BR', { day:'numeric', month:'long', year:'numeric' });
+
+  const cotacoesHtml = cotacoes.length ? `
+    <table>
+      <thead><tr><th>Fornecedor</th><th>CNPJ</th><th>Valor Cotado</th><th>Data</th><th>Situação</th></tr></thead>
+      <tbody>${cotacoes.map(c => `
+        <tr>
+          <td>${c.fornecedor || '—'}</td>
+          <td>${c.cnpj || '—'}</td>
+          <td>${c.valor || '—'}</td>
+          <td>${c.data ? new Date(c.data+'T00:00:00').toLocaleDateString('pt-BR') : '—'}</td>
+          <td>${{valida:'Válida', descartada:'Descartada'}[c.situacao] || 'Válida'}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>` : '<p><em>Nenhuma cotação registrada.</em></p>';
 
   const propostasHtml = propostas.length ? `
     <table>
@@ -5581,7 +5679,7 @@ function gerarAta() {
 
 <div class="secao">
   <div class="secao-titulo">II — Abertura da Sessão</div>
-  <p>Aos ${hoje}, o(a) ${u.cargo || 'Agente de Contratação'} ${u.nome || blank(v(6,'responsavel'))}${u.matricula ? ', matrícula nº ' + u.matricula + ',' : ''} designado(a) para conduzir o procedimento de Dispensa de Licitação nº ${blank(p.num)}, declara aberta a sessão pública, dando continuidade à análise do processo administrativo referente à contratação de <strong>${blank(p.objeto)}</strong>, com fundamento no art. 75 da Lei nº 14.133, de 1º de abril de 2021${p.legal ? ' — ' + p.legal : ''}.</p>
+  <p>Aos ${hoje}, o(a) ${u.cargo || 'Agente de Contratação'} ${u.nome || blank(v(5,'responsavel'))}${u.matricula ? ', matrícula nº ' + u.matricula + ',' : ''} designado(a) para conduzir o procedimento de Dispensa de Licitação nº ${blank(p.num)}, declara aberta a sessão pública, dando continuidade à análise do processo administrativo referente à contratação de <strong>${blank(p.objeto)}</strong>, com fundamento no art. 75 da Lei nº 14.133, de 1º de abril de 2021${p.legal ? ' — ' + p.legal : ''}.</p>
 </div>
 
 <div class="secao">
@@ -5589,68 +5687,74 @@ function gerarAta() {
   <div class="dado"><strong>Documento de Formalização da Demanda (DFD):</strong> concluído em ${d(v(0,'data_conclusao'))} — ${blank(v(0,'responsavel'))}</div>
   <div class="dado"><strong>Estudo Técnico Preliminar (ETP):</strong> ${p.steps[1].status === 'done' ? `concluído em ${d(v(1,'data_conclusao'))}` : 'dispensado / não aplicável'}</div>
   <div class="dado"><strong>Termo de Referência (TR):</strong> concluído em ${d(v(2,'data_conclusao'))} — ${blank(v(2,'responsavel'))}</div>
-  <div class="dado"><strong>Pesquisa de Preços:</strong> ${blank(v(3,'num_cotacoes'))} cotações obtidas — concluída em ${d(v(3,'data_conclusao'))}</div>
-  <div class="dado"><strong>Valor de Referência (Mapa de Preços):</strong> ${v(4,'valor_estimado') ? fmtMoney(v(4,'valor_estimado')) : '_'.repeat(20)} — concluído em ${d(v(4,'data_conclusao'))}</div>
-  <div class="dado"><strong>Enquadramento Legal:</strong> ${blank(v(5,'fundamento'))} — concluído em ${d(v(5,'data_conclusao'))}</div>
-  <div class="dado"><strong>Autorização da Autoridade Competente:</strong> ${blank(v(6,'autoridade'))} em ${d(v(6,'data_conclusao'))}</div>
-  <div class="dado"><strong>Aviso de Dispensa elaborado em:</strong> ${d(v(7,'data_conclusao'))}</div>
-  <div class="dado"><strong>Publicação no PNCP:</strong> de ${d(v(8,'data_publicacao'))} a ${d(v(8,'data_encerramento'))}${v(8,'link_pncp') ? ' — ' + v(8,'link_pncp') : ''}</div>
+  <div class="dado"><strong>Pesquisa de Preços / Estimativa do Valor:</strong> ${cotacoesValidas.length} cotação(ões) válida(s) — concluída em ${d(v(3,'data_conclusao'))} — valor de referência: ${v(3,'valor_estimado') ? fmtMoney(v(3,'valor_estimado')) : '_'.repeat(20)}</div>
+  <div class="dado"><strong>Enquadramento Legal:</strong> ${blank(v(4,'fundamento'))} — concluído em ${d(v(4,'data_conclusao'))}</div>
+  <div class="dado"><strong>Autorização da Autoridade Competente:</strong> ${blank(v(5,'autoridade'))} em ${d(v(5,'data_conclusao'))}</div>
+  <div class="dado"><strong>Aviso de Dispensa elaborado em:</strong> ${d(v(6,'data_conclusao'))}</div>
+  <div class="dado"><strong>Publicação no PNCP:</strong> de ${d(v(7,'data_publicacao'))} a ${d(v(7,'data_encerramento'))}${v(7,'link_pncp') ? ' — ' + v(7,'link_pncp') : ''}</div>
 </div>
 
 <div class="secao">
-  <div class="secao-titulo">IV — Propostas Recebidas</div>
+  <div class="secao-titulo">IV — Cotações Recebidas</div>
+  <p>Foram obtidas as seguintes cotações de preço para composição do valor de referência:</p>
+  ${cotacoesHtml}
+  ${v(3,'observacoes') ? `<p><strong>Observações:</strong> ${v(3,'observacoes')}</p>` : ''}
+</div>
+
+<div class="secao">
+  <div class="secao-titulo">V — Propostas Recebidas</div>
   <p>Encerrado o prazo de recebimento, foram analisadas as seguintes propostas:</p>
   ${propostasHtml}
-  ${v(9,'observacoes') ? `<p><strong>Observações:</strong> ${v(9,'observacoes')}</p>` : ''}
+  ${v(8,'observacoes') ? `<p><strong>Observações:</strong> ${v(8,'observacoes')}</p>` : ''}
 </div>
 
 <div class="secao">
-  <div class="secao-titulo">V — Habilitação do Fornecedor</div>
+  <div class="secao-titulo">VI — Habilitação do Fornecedor</div>
   <p>O(A) Agente de Contratação procedeu à verificação da regularidade fiscal, trabalhista e jurídica do fornecedor com menor preço:</p>
-  <div class="dado"><strong>Fornecedor:</strong> ${blank(v(10,'fornecedor'))}</div>
-  <div class="dado"><strong>CNPJ:</strong> ${blank(currentProcess?.fornecedor?.cnpj || v(10,'cnpj'))}</div>
+  <div class="dado"><strong>Fornecedor:</strong> ${blank(v(9,'fornecedor'))}</div>
+  <div class="dado"><strong>CNPJ:</strong> ${blank(currentProcess?.fornecedor?.cnpj || v(9,'cnpj'))}</div>
   <br>
   <table>
     <thead><tr><th>Certidão</th><th>Descrição</th><th>Situação</th></tr></thead>
     <tbody>${certHtml}</tbody>
   </table>
-  ${v(10,'observacoes') ? `<p style="margin-top:8pt"><strong>Observações:</strong> ${v(10,'observacoes')}</p>` : ''}
+  ${v(9,'observacoes') ? `<p style="margin-top:8pt"><strong>Observações:</strong> ${v(9,'observacoes')}</p>` : ''}
   <div class="resultado-hab ${todasObtidas ? 'habilitado' : 'pendente'}">${resultadoHab}</div>
 </div>
 
 <div class="secao">
-  <div class="secao-titulo">VI — Adjudicação</div>
+  <div class="secao-titulo">VII — Adjudicação</div>
   <p>Com base na análise das propostas e na verificação da habilitação, o(a) Agente de Contratação adjudica o objeto ao seguinte fornecedor:</p>
-  <div class="dado"><strong>Fornecedor:</strong> ${blank(v(10,'fornecedor') || vencedora.fornecedor)}</div>
-  <div class="dado"><strong>CNPJ:</strong> ${blank(v(10,'cnpj') || vencedora.cnpj)}</div>
-  <div class="dado"><strong>Valor Adjudicado:</strong> ${v(11,'valor_adjudicado') ? fmtMoney(v(11,'valor_adjudicado')) : '_'.repeat(20)}</div>
+  <div class="dado"><strong>Fornecedor:</strong> ${blank(v(9,'fornecedor') || vencedora.fornecedor)}</div>
+  <div class="dado"><strong>CNPJ:</strong> ${blank(v(9,'cnpj') || vencedora.cnpj)}</div>
+  <div class="dado"><strong>Valor Adjudicado:</strong> ${v(10,'valor_adjudicado') ? fmtMoney(v(10,'valor_adjudicado')) : '_'.repeat(20)}</div>
+  <div class="dado"><strong>Data:</strong> ${d(v(10,'data_conclusao'))}</div>
+  ${v(10,'observacoes') ? `<p><strong>Observações:</strong> ${v(10,'observacoes')}</p>` : ''}
+</div>
+
+<div class="secao">
+  <div class="secao-titulo">VIII — Homologação</div>
+  <p>A autoridade competente homologa o procedimento de Dispensa de Licitação nº ${blank(p.num)}, declarando válidos todos os atos praticados.</p>
+  <div class="dado"><strong>Autoridade:</strong> ${blank(v(11,'autoridade'))}</div>
   <div class="dado"><strong>Data:</strong> ${d(v(11,'data_conclusao'))}</div>
   ${v(11,'observacoes') ? `<p><strong>Observações:</strong> ${v(11,'observacoes')}</p>` : ''}
 </div>
 
 <div class="secao">
-  <div class="secao-titulo">VII — Homologação</div>
-  <p>A autoridade competente homologa o procedimento de Dispensa de Licitação nº ${blank(p.num_dl || p.num)}, declarando válidos todos os atos praticados.</p>
-  <div class="dado"><strong>Autoridade:</strong> ${blank(v(12,'autoridade'))}</div>
-  <div class="dado"><strong>Data:</strong> ${d(v(12,'data_conclusao'))}</div>
-  ${v(12,'observacoes') ? `<p><strong>Observações:</strong> ${v(12,'observacoes')}</p>` : ''}
-</div>
-
-<div class="secao">
-  <div class="secao-titulo">VIII — Encerramento</div>
+  <div class="secao-titulo">IX — Encerramento</div>
   <p>Nada mais havendo a tratar, o(a) Agente de Contratação declara encerrada a presente sessão, determinando a lavratura da presente ata, que vai assinada pelos presentes.</p>
   <p>${u.municipio || blank('')}, ${hoje}.</p>
 </div>
 
 <div class="assinaturas">
   <div class="assinatura">
-    <div class="linha">${u.nome || v(6,'responsavel') || ''}<br>${u.cargo || 'Agente de Contratação'}${u.matricula ? '<br>Matrícula: ' + u.matricula : ''}</div>
+    <div class="linha">${u.nome || v(5,'responsavel') || ''}<br>${u.cargo || 'Agente de Contratação'}${u.matricula ? '<br>Matrícula: ' + u.matricula : ''}</div>
   </div>
   <div class="assinatura">
-    <div class="linha">${u.aut_nome || v(12,'autoridade') || v(6,'autoridade') || ''}<br>${u.aut_cargo || 'Autoridade Competente'}</div>
+    <div class="linha">${u.aut_nome || v(11,'autoridade') || v(5,'autoridade') || ''}<br>${u.aut_cargo || 'Autoridade Competente'}</div>
   </div>
   <div class="assinatura">
-    <div class="linha">${v(10,'fornecedor') || ''}<br>Representante do Fornecedor</div>
+    <div class="linha">${v(9,'fornecedor') || ''}<br>Representante do Fornecedor</div>
   </div>
 </div>
 
