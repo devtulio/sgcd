@@ -5,6 +5,13 @@
 
 ---
 
+## [1.10.7] — 2026-06-15
+
+### Adicionado
+- **Factory Reset / Wipe Data** — novo botão na "Zona de Perigo" das Configurações; apaga permanentemente todos os processos, fornecedores, arquivos, trilha de auditoria e configurações do sistema; protegido por 3 confirmações distintas: (1) aviso geral com lista do que será apagado, (2) digitação obrigatória da frase "APAGAR TUDO", (3) contagem regressiva de 5 segundos antes do botão final ser habilitado; um backup completo é exportado automaticamente antes do wipe ser executado; ao concluir, a página é recarregada
+
+---
+
 ## [1.10.6] — 2026-06-15
 
 ### Corrigido
