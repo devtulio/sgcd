@@ -1312,7 +1312,7 @@ const ICONS = {
 // DB — IndexedDB wrapper
 // ══════════════════════════════════════════════════════════════
 let db;
-const SGCD_VERSION = '1.10.2';
+const SGCD_VERSION = '1.10.3';
 document.title = `SGCD v${SGCD_VERSION}`;
 const DB_NAME = 'dispensaDB', DB_VER = 3;
 
@@ -5667,14 +5667,17 @@ function gerarTermoAdjudicacao() {
   const proc = currentProcess;
   const u = getUser();
   const stepIdx = proc.steps.findIndex(s => s.name === 'Adjudicação');
+  const propStepIdx = proc.steps.findIndex(s => s.propostas);
   const data = stepIdx >= 0 ? (proc.steps[stepIdx]?.fields || {}) : {};
+  const propLista = propStepIdx >= 0 ? JSON.parse(proc.steps[propStepIdx]?.fields?._propostas || '[]') : [];
+  const propVencedora = propLista.find(p => p.situacao === 'vencedora');
   const forn = proc.fornecedor || null;
   const fornNome = forn ? (forn.razao_social || forn.nome_fantasia || '') : '';
   const fornCnpj = forn ? (forn.cnpj || '') : '';
   const hoje = new Date().toLocaleDateString('pt-BR', { day:'numeric', month:'long', year:'numeric' });
   const blank = t => t || '_'.repeat(40);
   const dataAdj = data.data_conclusao ? new Date(data.data_conclusao + 'T00:00:00').toLocaleDateString('pt-BR') : hoje;
-  const valorAdj = data.valor_adjudicado || proc.valor || '';
+  const valorAdj = propVencedora?.valor || data.valor_adjudicado || proc.valor || '';
   const dec = u.dec_municipal || '';
   const decRef = dec ? `, nos termos do Decreto Municipal nº ${escHtml(dec)}` : '';
 
@@ -5746,7 +5749,7 @@ function gerarTermoAdjudicacao() {
 <div class="section">
   <div class="section-title">III — Decisão</div>
   <div class="despacho">
-    <p>Com fundamento no art. 18, §1º, da Lei Federal nº 14.133/2021${decRef}, e tendo em vista que a proposta apresentada pela empresa <strong>${blank(fornNome)}</strong>${fornCnpj ? `, CNPJ nº ${escHtml(fornCnpj)},` : ''} mostrou-se compatível com o valor estimado, consoante a pesquisa de preços realizada, e sendo o fornecedor devidamente habilitado nos termos da legislação vigente, <strong>ADJUDICO</strong> o objeto da presente dispensa de licitação à referida empresa, pelo valor de <strong>${blank(valorAdj ? fmtMoney(valorAdj) : '')}</strong>.</p>
+    <p>Com fundamento no art. 18, §1º, da Lei Federal nº 14.133/2021${decRef}, e tendo em vista que a proposta apresentada pela empresa <strong>${blank(fornNome)}</strong>${fornCnpj ? `, CNPJ nº ${escHtml(fornCnpj)},` : ''} mostrou-se compatível com o valor estimado, consoante a pesquisa de preços realizada, e sendo o fornecedor devidamente habilitado nos termos da legislação vigente, <strong><u>ADJUDICO</u></strong> o objeto da presente dispensa de licitação à referida empresa, pelo valor de <strong>${blank(valorAdj ? fmtMoney(valorAdj) : '')}</strong>.</p>
     <p>Encaminhe-se à autoridade competente para fins de homologação.</p>
   </div>
 </div>
@@ -5756,8 +5759,7 @@ function gerarTermoAdjudicacao() {
 <div class="signature-block">
   <div class="signature-line">
     <strong>${blank(u.nome)}</strong><br>
-    ${blank(u.cargo)}<br>
-    Agente de Contratação${u.matricula ? ' — Matrícula: ' + escHtml(u.matricula) : ''}
+    ${blank(u.cargo)}${u.matricula ? ' — Matrícula: ' + escHtml(u.matricula) : ''}
   </div>
 </div>
 
@@ -5777,7 +5779,7 @@ function gerarTermoHomologacao() {
   const dataAdj = stepAdj >= 0 ? (proc.steps[stepAdj]?.fields?.data_conclusao || '') : '';
   const dataAdjFmt = dataAdj ? new Date(dataAdj + 'T00:00:00').toLocaleDateString('pt-BR') : '_'.repeat(20);
   const dataFields = stepHom >= 0 ? (proc.steps[stepHom]?.fields || {}) : {};
-  const autoridade = dataFields.autoridade || u.autoridade || '';
+  const autoridade = dataFields.autoridade || u.aut_nome || '';
   const forn = proc.fornecedor || null;
   const fornNome = forn ? (forn.razao_social || forn.nome_fantasia || '') : '';
   const fornCnpj = forn ? (forn.cnpj || '') : '';
@@ -5852,7 +5854,7 @@ function gerarTermoHomologacao() {
   <div class="despacho">
     <p>Examinados os autos do presente processo de Dispensa de Licitação, verifico que foram observadas as formalidades legais e os princípios que regem a Administração Pública, nos termos da Lei Federal nº 14.133/2021${decRef}.</p>
     <p>Constata-se que o procedimento foi conduzido com regularidade, tendo sido realizada a pesquisa de preços, elaborado o enquadramento legal, divulgado o Aviso de Dispensa no PNCP, recebidas e analisadas as propostas, e procedida a habilitação e adjudicação do objeto à empresa <strong>${blank(fornNome)}</strong>${fornCnpj ? `, CNPJ nº ${escHtml(fornCnpj)},` : ''} pelo valor de <strong>${blank(valorAdj ? fmtMoney(valorAdj) : '')}</strong>.</p>
-    <p>Diante do exposto, <strong>HOMOLOGO</strong> o procedimento de Dispensa de Licitação e o resultado da adjudicação, determinando o prosseguimento do processo para a emissão da Nota de Empenho e celebração do respectivo instrumento contratual.</p>
+    <p>Diante do exposto, <strong><u>HOMOLOGO</u></strong> o procedimento de Dispensa de Licitação e o resultado da adjudicação, determinando o prosseguimento do processo para a emissão da Nota de Empenho e celebração do respectivo instrumento contratual.</p>
   </div>
 </div>
 
@@ -5860,8 +5862,8 @@ function gerarTermoHomologacao() {
 
 <div class="signature-block">
   <div class="signature-line">
-    <strong>${blank(autoridade || u.autoridade)}</strong><br>
-    Autoridade Competente / Ordenador de Despesa
+    <strong>${blank(autoridade)}</strong><br>
+    ${blank(u.aut_cargo || 'Autoridade Competente / Ordenador de Despesa')}
   </div>
 </div>
 
@@ -6140,7 +6142,7 @@ function gerarAutorizacao() {
 
 <div class="section">
   <div class="despacho">
-    <strong>DESPACHO:</strong> Nos termos do ${p.legal ? p.legal.split(' — ')[0] + ' da Lei Federal nº 14.133/2021' : 'Art. 75 da Lei Federal nº 14.133/2021'}, e considerando a justificativa da necessidade apresentada pela unidade requisitante, <strong>AUTORIZO</strong> a abertura do processo administrativo de Dispensa de Licitação visando à aquisição/contratação descrita abaixo, determinando ao Departamento de Licitações e Contratos que adote as providências necessárias à instrução do processo.
+    <strong>DESPACHO:</strong> Nos termos do ${p.legal ? p.legal.split(' — ')[0] + ' da Lei Federal nº 14.133/2021' : 'Art. 75 da Lei Federal nº 14.133/2021'}, e considerando a justificativa da necessidade apresentada pela unidade requisitante, <strong><u>AUTORIZO</u></strong> a abertura do processo administrativo de Dispensa de Licitação visando à aquisição/contratação descrita abaixo, determinando ao Departamento de Licitações e Contratos que adote as providências necessárias à instrução do processo.
   </div>
 </div>
 
