@@ -5,6 +5,13 @@
 
 ---
 
+## [1.10.5] — 2026-06-15
+
+### Corrigido
+- **Ata de Sessão alinhada ao padrão dos demais documentos** — cabeçalho reestruturado com div `.header` (bordas, espaçamento e brasão no padrão), município exibido abaixo do órgão, título da ata em `<h3>` consistente com os outros documentos, e nomes dos signatários (agente, autoridade e representante do fornecedor) agora exibidos em negrito nas assinaturas
+
+---
+
 ## [1.10.4] — 2026-06-15
 
 ### Corrigido
