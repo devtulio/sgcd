@@ -1312,7 +1312,7 @@ const ICONS = {
 // DB — IndexedDB wrapper
 // ══════════════════════════════════════════════════════════════
 let db;
-const SGCD_VERSION = '1.10.1';
+const SGCD_VERSION = '1.10.2';
 document.title = `SGCD v${SGCD_VERSION}`;
 const DB_NAME = 'dispensaDB', DB_VER = 3;
 
@@ -1530,12 +1530,14 @@ const STEPS = [
   {
     name: 'Adjudicação',
     sub: 'Declaração do vencedor pelo agente de contratação',
-    fields: ['responsavel','data_conclusao','valor_adjudicado','observacoes']
+    fields: ['responsavel','data_conclusao','valor_adjudicado','observacoes'],
+    adjudicacao: true
   },
   {
     name: 'Homologação',
     sub: 'Aprovação pela autoridade competente — Art. 71',
-    fields: ['responsavel','data_conclusao','autoridade','observacoes']
+    fields: ['responsavel','data_conclusao','autoridade','observacoes'],
+    homologacao: true
   },
   {
     name: 'Nota de Empenho',
@@ -3731,6 +3733,12 @@ function renderStepFields(i, step, data, certFileMap = {}) {
   if (step.autorizacao) {
     html += `<div style="margin-top:12px"><button class="btn btn-outline btn-sm" onclick="gerarAutorizacao()">📄 Gerar Autorização</button></div>`;
   }
+  if (step.adjudicacao) {
+    html += `<div style="margin-top:12px"><button class="btn btn-outline btn-sm" onclick="gerarTermoAdjudicacao()">📄 Gerar Termo de Adjudicação</button></div>`;
+  }
+  if (step.homologacao) {
+    html += `<div style="margin-top:12px"><button class="btn btn-outline btn-sm" onclick="gerarTermoHomologacao()">📄 Gerar Termo de Homologação</button></div>`;
+  }
   if (step.avisoDispensa) {
     html += `<div style="margin-top:12px"><button class="btn btn-outline btn-sm" onclick="gerarAvisoDispensa()">📰 Gerar Aviso de Dispensa</button></div>`;
   }
@@ -4113,6 +4121,9 @@ async function _autoFillValorEstimado(stepIdx) {
   const val = _calcValorRef(lista, metodo);
   if (val === null) return;
   await updateField(stepIdx, 'valor_estimado', val);
+  currentProcess.valor = val;
+  await saveProcess(currentProcess);
+  renderInfoFields();
 }
 
 function renderCotacoesSection(stepIdx, data) {
@@ -5650,6 +5661,216 @@ function gerarDespachoHabilitacao(stepIdx) {
 
   const win = window.open('', '_blank', 'width=900,height=700');
   _gerarDocumento(win, html, 'Despacho de Habilitação');
+}
+
+function gerarTermoAdjudicacao() {
+  const proc = currentProcess;
+  const u = getUser();
+  const stepIdx = proc.steps.findIndex(s => s.name === 'Adjudicação');
+  const data = stepIdx >= 0 ? (proc.steps[stepIdx]?.fields || {}) : {};
+  const forn = proc.fornecedor || null;
+  const fornNome = forn ? (forn.razao_social || forn.nome_fantasia || '') : '';
+  const fornCnpj = forn ? (forn.cnpj || '') : '';
+  const hoje = new Date().toLocaleDateString('pt-BR', { day:'numeric', month:'long', year:'numeric' });
+  const blank = t => t || '_'.repeat(40);
+  const dataAdj = data.data_conclusao ? new Date(data.data_conclusao + 'T00:00:00').toLocaleDateString('pt-BR') : hoje;
+  const valorAdj = data.valor_adjudicado || proc.valor || '';
+  const dec = u.dec_municipal || '';
+  const decRef = dec ? `, nos termos do Decreto Municipal nº ${escHtml(dec)}` : '';
+
+  const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Termo de Adjudicação — ${escHtml(proc.num_dl || proc.num || 'DL')}</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; color: #000; background: #fff; padding: 2cm 2.5cm; }
+  .header { text-align: center; margin-bottom: 24pt; border-bottom: 2px solid #000; padding-bottom: 14pt; }
+  .header img { height: 90pt; width: auto; margin-bottom: 8pt; }
+  .header h1 { font-size: 13pt; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+  .header h2 { font-size: 11pt; font-weight: 400; margin-top: 2pt; }
+  .doc-title { text-align: center; margin: 20pt 0 18pt; }
+  .doc-title h3 { font-size: 14pt; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid #000; display: inline-block; padding-bottom: 4pt; }
+  .doc-title .num { font-size: 11pt; margin-top: 6pt; }
+  .section { margin-bottom: 16pt; }
+  .section-title { font-size: 11pt; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 8pt; border-bottom: 1px solid #ccc; padding-bottom: 4pt; }
+  .section p { line-height: 1.7; text-align: justify; margin-bottom: 8pt; }
+  .field-table { width: 100%; border-collapse: collapse; margin: 14pt 0; }
+  .field-table td { padding: 5pt 8pt; border: 1px solid #333; font-size: 11pt; vertical-align: top; }
+  .field-table td.lbl { font-weight: 700; text-transform: uppercase; font-size: 9pt; letter-spacing: .4px; width: 38%; background: #f5f5f5; }
+  .despacho { background: #f9f9f9; border-left: 3px solid #555; padding: 10pt 14pt; margin: 16pt 0; font-size: 11pt; line-height: 1.8; text-align: justify; }
+  .signature-block { margin-top: 48pt; display: flex; justify-content: center; }
+  .signature-line { border-top: 1px solid #000; width: 280pt; text-align: center; padding-top: 4pt; font-size: 10pt; }
+  .city-date { text-align: right; margin-top: 30pt; margin-bottom: 6pt; font-size: 11pt; }
+  .footer { margin-top: 40pt; border-top: 1px solid #ccc; padding-top: 6pt; text-align: center; font-size: 8pt; color: #666; }
+  .btn-print { display: block; margin: 0 auto 20pt; padding: 8pt 24pt; background: #2C001E; color: #fff; border: none; border-radius: 4px; font-size: 11pt; cursor: pointer; }
+  .btn-print:hover { background: #5E2750; }
+  @media print { body { padding: 0; } .no-print { display: none !important; } }
+</style>
+</head>
+<body>
+<button class="btn-print no-print" onclick="window.print()">🖨 Imprimir / Salvar PDF</button>
+
+<div class="header">
+  <img src="data:image/png;base64,__BRASAO_PLACEHOLDER__" alt="Brasão">
+  <h1>${blank(u.orgao)}</h1>
+  <h2>${blank(u.municipio)}</h2>
+</div>
+
+<div class="doc-title">
+  <h3>Termo de Adjudicação</h3>
+  <div class="num">Processo Administrativo nº ${blank(proc.num_proc || proc.num)} &nbsp;|&nbsp; Dispensa de Licitação nº ${blank(proc.num_dl || proc.num)}</div>
+</div>
+
+<div class="section">
+  <div class="section-title">I — Identificação do Processo</div>
+  <table class="field-table">
+    <tr><td class="lbl">Órgão / Entidade</td><td>${blank(u.orgao)}</td></tr>
+    <tr><td class="lbl">Processo Administrativo</td><td>${blank(proc.num_proc || proc.num)}</td></tr>
+    <tr><td class="lbl">Dispensa de Licitação</td><td>${blank(proc.num_dl || proc.num)}</td></tr>
+    <tr><td class="lbl">Objeto</td><td>${blank(proc.objeto)}</td></tr>
+    <tr><td class="lbl">Fundamentação Legal</td><td>${blank(proc.legal)}</td></tr>
+    <tr><td class="lbl">Valor Adjudicado</td><td>${blank(valorAdj ? fmtMoney(valorAdj) : '')}</td></tr>
+  </table>
+</div>
+
+<div class="section">
+  <div class="section-title">II — Fornecedor Adjudicatário</div>
+  <table class="field-table">
+    <tr><td class="lbl">Razão Social</td><td>${blank(fornNome)}</td></tr>
+    <tr><td class="lbl">CNPJ</td><td>${blank(fornCnpj)}</td></tr>
+  </table>
+</div>
+
+<div class="section">
+  <div class="section-title">III — Decisão</div>
+  <div class="despacho">
+    <p>Com fundamento no art. 18, §1º, da Lei Federal nº 14.133/2021${decRef}, e tendo em vista que a proposta apresentada pela empresa <strong>${blank(fornNome)}</strong>${fornCnpj ? `, CNPJ nº ${escHtml(fornCnpj)},` : ''} mostrou-se compatível com o valor estimado, consoante a pesquisa de preços realizada, e sendo o fornecedor devidamente habilitado nos termos da legislação vigente, <strong>ADJUDICO</strong> o objeto da presente dispensa de licitação à referida empresa, pelo valor de <strong>${blank(valorAdj ? fmtMoney(valorAdj) : '')}</strong>.</p>
+    <p>Encaminhe-se à autoridade competente para fins de homologação.</p>
+  </div>
+</div>
+
+<div class="city-date">${blank(u.municipio)}, ${dataAdj}.</div>
+
+<div class="signature-block">
+  <div class="signature-line">
+    <strong>${blank(u.nome)}</strong><br>
+    ${blank(u.cargo)}<br>
+    Agente de Contratação${u.matricula ? ' — Matrícula: ' + escHtml(u.matricula) : ''}
+  </div>
+</div>
+
+<div class="footer">Documento gerado pelo SGCD — Sistema de Gestão de Contratação Direta &nbsp;·&nbsp; v${SGCD_VERSION} &nbsp;·&nbsp; Lei Federal nº 14.133/2021 &nbsp;·&nbsp; Cód. ${_docAuthCode(proc)}</div>
+</body>
+</html>`;
+
+  const win = window.open('', '_blank', 'width=900,height=700');
+  _gerarDocumento(win, html, 'Termo de Adjudicação');
+}
+
+function gerarTermoHomologacao() {
+  const proc = currentProcess;
+  const u = getUser();
+  const stepAdj = proc.steps.findIndex(s => s.name === 'Adjudicação');
+  const stepHom = proc.steps.findIndex(s => s.name === 'Homologação');
+  const dataAdj = stepAdj >= 0 ? (proc.steps[stepAdj]?.fields?.data_conclusao || '') : '';
+  const dataAdjFmt = dataAdj ? new Date(dataAdj + 'T00:00:00').toLocaleDateString('pt-BR') : '_'.repeat(20);
+  const dataFields = stepHom >= 0 ? (proc.steps[stepHom]?.fields || {}) : {};
+  const autoridade = dataFields.autoridade || u.autoridade || '';
+  const forn = proc.fornecedor || null;
+  const fornNome = forn ? (forn.razao_social || forn.nome_fantasia || '') : '';
+  const fornCnpj = forn ? (forn.cnpj || '') : '';
+  const valorAdj = (stepAdj >= 0 ? proc.steps[stepAdj]?.fields?.valor_adjudicado : '') || proc.valor || '';
+  const hoje = new Date().toLocaleDateString('pt-BR', { day:'numeric', month:'long', year:'numeric' });
+  const dataHom = dataFields.data_conclusao ? new Date(dataFields.data_conclusao + 'T00:00:00').toLocaleDateString('pt-BR') : hoje;
+  const blank = t => t || '_'.repeat(40);
+  const dec = u.dec_municipal || '';
+  const decRef = dec ? `, nos termos do Decreto Municipal nº ${escHtml(dec)}` : '';
+
+  const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Termo de Homologação — ${escHtml(proc.num_dl || proc.num || 'DL')}</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; color: #000; background: #fff; padding: 2cm 2.5cm; }
+  .header { text-align: center; margin-bottom: 24pt; border-bottom: 2px solid #000; padding-bottom: 14pt; }
+  .header img { height: 90pt; width: auto; margin-bottom: 8pt; }
+  .header h1 { font-size: 13pt; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+  .header h2 { font-size: 11pt; font-weight: 400; margin-top: 2pt; }
+  .doc-title { text-align: center; margin: 20pt 0 18pt; }
+  .doc-title h3 { font-size: 14pt; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid #000; display: inline-block; padding-bottom: 4pt; }
+  .doc-title .num { font-size: 11pt; margin-top: 6pt; }
+  .section { margin-bottom: 16pt; }
+  .section-title { font-size: 11pt; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 8pt; border-bottom: 1px solid #ccc; padding-bottom: 4pt; }
+  .section p { line-height: 1.7; text-align: justify; margin-bottom: 8pt; }
+  .field-table { width: 100%; border-collapse: collapse; margin: 14pt 0; }
+  .field-table td { padding: 5pt 8pt; border: 1px solid #333; font-size: 11pt; vertical-align: top; }
+  .field-table td.lbl { font-weight: 700; text-transform: uppercase; font-size: 9pt; letter-spacing: .4px; width: 38%; background: #f5f5f5; }
+  .despacho { background: #f9f9f9; border-left: 3px solid #555; padding: 10pt 14pt; margin: 16pt 0; font-size: 11pt; line-height: 1.8; text-align: justify; }
+  .signature-block { margin-top: 48pt; display: flex; justify-content: center; }
+  .signature-line { border-top: 1px solid #000; width: 280pt; text-align: center; padding-top: 4pt; font-size: 10pt; }
+  .city-date { text-align: right; margin-top: 30pt; margin-bottom: 6pt; font-size: 11pt; }
+  .footer { margin-top: 40pt; border-top: 1px solid #ccc; padding-top: 6pt; text-align: center; font-size: 8pt; color: #666; }
+  .btn-print { display: block; margin: 0 auto 20pt; padding: 8pt 24pt; background: #2C001E; color: #fff; border: none; border-radius: 4px; font-size: 11pt; cursor: pointer; }
+  .btn-print:hover { background: #5E2750; }
+  @media print { body { padding: 0; } .no-print { display: none !important; } }
+</style>
+</head>
+<body>
+<button class="btn-print no-print" onclick="window.print()">🖨 Imprimir / Salvar PDF</button>
+
+<div class="header">
+  <img src="data:image/png;base64,__BRASAO_PLACEHOLDER__" alt="Brasão">
+  <h1>${blank(u.orgao)}</h1>
+  <h2>${blank(u.municipio)}</h2>
+</div>
+
+<div class="doc-title">
+  <h3>Termo de Homologação</h3>
+  <div class="num">Processo Administrativo nº ${blank(proc.num_proc || proc.num)} &nbsp;|&nbsp; Dispensa de Licitação nº ${blank(proc.num_dl || proc.num)}</div>
+</div>
+
+<div class="section">
+  <div class="section-title">I — Identificação do Processo</div>
+  <table class="field-table">
+    <tr><td class="lbl">Órgão / Entidade</td><td>${blank(u.orgao)}</td></tr>
+    <tr><td class="lbl">Processo Administrativo</td><td>${blank(proc.num_proc || proc.num)}</td></tr>
+    <tr><td class="lbl">Dispensa de Licitação</td><td>${blank(proc.num_dl || proc.num)}</td></tr>
+    <tr><td class="lbl">Objeto</td><td>${blank(proc.objeto)}</td></tr>
+    <tr><td class="lbl">Fundamentação Legal</td><td>${blank(proc.legal)}</td></tr>
+    <tr><td class="lbl">Fornecedor Adjudicatário</td><td>${blank(fornNome)}${fornCnpj ? ' — CNPJ: ' + escHtml(fornCnpj) : ''}</td></tr>
+    <tr><td class="lbl">Valor Homologado</td><td>${blank(valorAdj ? fmtMoney(valorAdj) : '')}</td></tr>
+    <tr><td class="lbl">Data da Adjudicação</td><td>${dataAdjFmt}</td></tr>
+  </table>
+</div>
+
+<div class="section">
+  <div class="section-title">II — Decisão de Homologação</div>
+  <div class="despacho">
+    <p>Examinados os autos do presente processo de Dispensa de Licitação, verifico que foram observadas as formalidades legais e os princípios que regem a Administração Pública, nos termos da Lei Federal nº 14.133/2021${decRef}.</p>
+    <p>Constata-se que o procedimento foi conduzido com regularidade, tendo sido realizada a pesquisa de preços, elaborado o enquadramento legal, divulgado o Aviso de Dispensa no PNCP, recebidas e analisadas as propostas, e procedida a habilitação e adjudicação do objeto à empresa <strong>${blank(fornNome)}</strong>${fornCnpj ? `, CNPJ nº ${escHtml(fornCnpj)},` : ''} pelo valor de <strong>${blank(valorAdj ? fmtMoney(valorAdj) : '')}</strong>.</p>
+    <p>Diante do exposto, <strong>HOMOLOGO</strong> o procedimento de Dispensa de Licitação e o resultado da adjudicação, determinando o prosseguimento do processo para a emissão da Nota de Empenho e celebração do respectivo instrumento contratual.</p>
+  </div>
+</div>
+
+<div class="city-date">${blank(u.municipio)}, ${dataHom}.</div>
+
+<div class="signature-block">
+  <div class="signature-line">
+    <strong>${blank(autoridade || u.autoridade)}</strong><br>
+    Autoridade Competente / Ordenador de Despesa
+  </div>
+</div>
+
+<div class="footer">Documento gerado pelo SGCD — Sistema de Gestão de Contratação Direta &nbsp;·&nbsp; v${SGCD_VERSION} &nbsp;·&nbsp; Lei Federal nº 14.133/2021 &nbsp;·&nbsp; Cód. ${_docAuthCode(proc)}</div>
+</body>
+</html>`;
+
+  const win = window.open('', '_blank', 'width=900,height=700');
+  _gerarDocumento(win, html, 'Termo de Homologação');
 }
 
 function gerarAvisoDispensa() {

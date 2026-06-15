@@ -1,6 +1,6 @@
 # SGCD — Sistema de Gestão de Contratação Direta
 
-![Versão](https://img.shields.io/badge/versão-v1.10.1-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-HTML5%20puro-orange) ![Licença](https://img.shields.io/badge/licença-uso%20interno-lightgrey)
+![Versão](https://img.shields.io/badge/versão-v1.10.2-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-HTML5%20puro-orange) ![Licença](https://img.shields.io/badge/licença-uso%20interno-lightgrey)
 
 ## Descrição
 
@@ -92,6 +92,8 @@ Essas informações serão usadas automaticamente em todos os documentos gerados
 | **Despacho de Recusa / Desclassificação** | Decisão fundamentada de recusa de proposta (Art. 59 Lei 14.133/2021) |
 | **Despacho de Habilitação** | Decisão formal de habilitação do fornecedor com lista das certidões verificadas (Art. 69 Lei 14.133/2021) |
 | **Despacho de Inabilitação** | Decisão fundamentada de inabilitação do fornecedor (Art. 69 e 72 Lei 14.133/2021) |
+| **Termo de Adjudicação** | Formalização da declaração do vencedor pelo agente de contratação (Art. 18, §1º Lei 14.133/2021) |
+| **Termo de Homologação** | Aprovação do procedimento pela autoridade competente / ordenador de despesa (Art. 71 Lei 14.133/2021) |
 | **Extrato de Contrato** | Extrato para publicação no Diário Oficial e PNCP com todos os dados contratuais (Art. 94 Lei 14.133/2021) |
 | **Relatório Geral** | Visão consolidada de todos os processos com filtros aplicados |
 | **Impressão do Processo** | Checklist completo com todos os campos preenchidos |
