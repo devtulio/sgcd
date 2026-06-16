@@ -5,6 +5,76 @@
 
 ---
 
+## [1.11.2] — 2026-06-15
+
+### Adicionado
+- **Critério de Seleção por processo (Art. 33, Lei 14.133/2021)** — novo campo no cadastro e na tela de detalhe do processo com as cinco opções previstas em lei: Menor preço (I), Maior desconto (II), Melhor técnica ou conteúdo artístico (III), Técnica e preço (IV) e Maior retorno econômico (VI). O critério selecionado é exibido automaticamente no Aviso de Dispensa (seção "Do Critério de Seleção") e na Ata de Sessão (coluna Situação da proposta vencedora). Processos existentes assumem "Menor preço" como padrão retroativo.
+
+### Corrigido
+- **Race condition na seleção de método de cotação (média/mediana)** — o `onchange` inline dos radio buttons disparava `saveProcess` e `_autoFillValorEstimado` (que também chama `saveProcess`) de forma concorrente, causando saves sobrepostos e re-renders embaralhados. Substituído por função dedicada `setCotacaoMetodo()` que executa a sequência de forma serializada (await)
+- **`renderChecklist` adiava re-render indevidamente para radio buttons** — a lógica de deferral (que protege texto em digitação) incluía `type="radio"` e `type="checkbox"`, fazendo o re-render aguardar o blur do radio selecionado e acumular renders duplicados. Deferral agora aplicado apenas a `text`, `textarea` e `select`
+- **Variável `hasFilters` declarada duas vezes no mesmo escopo** — `SyntaxError` impedindo a inicialização do sistema; declaração duplicada na linha 2696 removida (a declaração na linha 2662 já era suficiente)
+
+### Documentação
+- **README.md** — adicionadas funcionalidades: alertas de validade de certidões, auto-backup automático com proteção de quota, Factory Reset com 3 etapas de confirmação, detecção de primeiro uso, método de cotação por processo; Decreto nº 11.317/2022 incluído na Base Legal
+- **MANUAL.html** — atualizado de v1.9.0 para v1.11.1: nota de onboarding na seção 2.1; ciclo de 3 estados das etapas corrigido (Pendente → Concluída → Bloqueada) na seção 7.2; alertas visuais de validade de certidões documentados na seção 8B.1; Despacho de Habilitação, Termo de Adjudicação e Termo de Homologação adicionados à tabela de documentos; Factory Reset e auto-backup documentados na seção 12
+
+---
+
+## [1.11.1] — 2026-06-15
+
+### Corrigido
+- **[M2] Termo de Adjudicação usava fornecedor vinculado ao invés da proposta vencedora** — nome e CNPJ agora são lidos diretamente de `propVencedora.fornecedor` e `propVencedora.cnpj`, com fallback para `proc.fornecedor`
+- **[M6] Auto-backup sem tratamento de quota do localStorage** — verificação de tamanho antes de salvar (aviso ao usuário se >4 MB); captura `QuotaExceededError` com toast de orientação para backup manual
+- **[M10] Re-render do checklist destruía campo em edição** — `renderChecklist` agora detecta se há input/textarea/select com foco dentro do checklist e adia o render para o evento `blur`; preserva o conteúdo digitado
+- **[B1] Filtro "De" do dashboard com fuso horário incorreto** — `new Date(fDe)` tratava a data como UTC meia-noite, excluindo processos criados no dia selecionado antes das 21h (UTC-3); corrigido para `new Date(fDe + 'T00:00:00')` em todos os filtros de data do sistema
+- **[B5] Estado "bloqueada" inacessível pelo clique no círculo de status** — ciclo alterado de `pending ↔ done` para `pending → done → blocked → pending`; tooltip atualizado
+- **[B6] Campos críticos aceitos em branco nas configurações** — `saveSettings` agora exibe aviso específico quando Órgão, Município ou Nome da Autoridade Competente estão em branco ao salvar
+- **[B7] Upload de brasão falha silenciosamente para imagens grandes** — validação de tamanho (máx. 3 MB) antes da leitura; captura de `QuotaExceededError` do localStorage com mensagem orientando o usuário; handler `onerror` no FileReader
+- **[B8] Busca global limitada a 20 resultados sem indicação** — limite aumentado para 50; quando truncado, exibe rodapé "Exibindo 50 de X resultados — refine a busca"
+- **[B9] Tecla Escape não fechava modais de certidão e fornecedor** — handler global de `Escape` agora fecha em cascata: busca global → certidão → fornecedor → modal de criação
+- **[B12] Ata seção VII usava `v(9,'cnpj')` que nunca existe** — campo `cnpj` não faz parte de `STEPS[9].fields`; substituído por `vencedora.cnpj || proc.fornecedor?.cnpj`
+
+---
+
+## [1.11.0] — 2026-06-15
+
+### Corrigido
+- **[Alto] Textos dos fundamentos legais Art. 75, I e II com valores desatualizados** — limites anteriores (R$ 30.000 e R$ 50.000 da Lei 8.666) substituídos pelos valores vigentes do Decreto nº 11.317/2022 (R$ 130.984,20 para obras/engenharia; R$ 65.492,11 para bens e serviços); referência ao Decreto incluída no texto do fundamento que é inserido nos documentos
+- **[Alto] Despacho de Inabilitação listava certidões de engenharia não aplicáveis como pendentes** — certidões com flag `engenharia: true` eram incluídas no motivo de inabilitação mesmo quando o processo não era de engenharia; corrigido com verificação de `saved._engenharia` espelhando a lógica da UI
+- **[Alto] Valor adjudicado não propagado automaticamente ao Termo de Adjudicação** — ao marcar uma proposta como vencedora, o campo `valor_adjudicado` da etapa de Adjudicação agora é preenchido automaticamente com o valor da proposta (somente se ainda estiver vazio, preservando edições manuais)
+- **[Alto] Cards de estatísticas não refletiam filtros ativos do dashboard** — Total, Em andamento, Concluídos e Não iniciados eram calculados sobre todos os processos independentemente dos filtros; agora refletem a lista filtrada; o campo Total exibe tooltip com o total global quando há filtros ativos
+- **[Alto] Painel de fracionamento exibia "—" para todos os processos relacionados** — campo `q.num` inexistente no modelo de dados; substituído pela mesma lógica de exibição usada no restante do sistema (`DL {num_dl}` ou `PA {num_proc}`)
+- **[Alto] Certidões vencidas ou próximas do vencimento sem alerta visual** — certidões com `data_validade` já expirada agora exibem badge "⚠ Vencida" em vermelho e barra lateral vermelha; certidões vencendo em até 30 dias exibem badge "⚠ Vence em breve" em âmbar; campo de data de validade é destacado na mesma cor
+
+### Melhorado
+- **Método de cálculo de cotações (média/mediana) salvo por processo** — o método agora é persistido em `currentProcess.cotacao_metodo` além do `localStorage`; ao abrir um processo, o método selecionado anteriormente para aquele processo específico é restaurado automaticamente, sem afetar outros processos abertos no mesmo navegador
+- **Backup completo inclui configurações e brasão** — `exportBackup` passa a incluir `sgcd-user` e `sgcd-brasao-dataurl` do `localStorage` no arquivo exportado (formato v3); `importBackup` restaura ambos automaticamente ao importar backups v3+
+
+---
+
+## [1.10.9] — 2026-06-15
+
+### Corrigido
+- **[Crítico] Termos de Adjudicação e Homologação gerados em branco** — `gerarTermoAdjudicacao` e `gerarTermoHomologacao` buscavam a etapa por `s.name === 'Adjudicação'` em `proc.steps`, mas o nome vive em `STEPS[]` e não no objeto salvo; `findIndex` sempre retornava `-1` e todos os campos dos documentos saíam vazios. Corrigido para usar a flag booleana `STEPS.findIndex(s => s.adjudicacao)` e `STEPS.findIndex(s => s.homologacao)`
+- **[Crítico] Trilha de auditoria excluída do backup** — `exportBackup` e `importBackup` não incluíam o store `auditGlobal`; um ciclo de exportar/importar destruía permanentemente toda a rastreabilidade dos atos administrativos. Auditoria agora incluída no backup (versão do formato atualizada para `2`)
+- **[Crítico] Alterações de campos das etapas sem registro na trilha de auditoria** — `updateField` salvava valores (responsável, datas, observações, valor estimado, fundamentação) sem gerar nenhum evento de auditoria. Agora registra evento `CAMPO_ALTERADO` para todos os campos não-internos (exceto `_propostas`, `_cotacoes`)
+- **[Crítico] Alerta de processos parados ignorava data da última etapa concluída** — `completedAt` era salvo como string `"YYYY-MM-DD"` e passado para `Math.max`, retornando sempre `NaN`; o alerta usava apenas a data de criação do processo. `completedAt` agora é salvo como timestamp numérico (`Date.now()`); `fmtDate` e `renderStallAlerts` atualizados para suportar tanto o novo formato quanto o legado
+- **[Crítico] Onboarding ausente no primeiro uso** — ao abrir o sistema pela primeira vez com `localStorage` vazio, o usuário entrava direto no dashboard podendo gerar documentos com nome, órgão e autoridade em branco. Agora detecta ausência de `u.nome` e redireciona automaticamente para as Configurações com mensagem de boas-vindas
+
+---
+
+## [1.10.8] — 2026-06-15
+
+### Corrigido
+- **Modais do Factory Reset com fundo opaco** — os painéis das confirmações 2 e 3 usavam `var(--bg-card)` (variável CSS não definida no SGCD), o que resultava em fundo transparente; substituído por cores absolutas detectadas dinamicamente conforme o tema (`#2a2a2a` no modo escuro, `#ffffff` no modo claro)
+- **Botão Cancelar visível em todas as 3 etapas** — as confirmações 2 e 3 agora exibem botão "✕ Cancelar" com estilo distinto e claramente visível; a confirmação 1 (via `customConfirm`) já possuía cancel nativo
+- **Botão final da confirmação 3 desabilitado visualmente** — durante a contagem regressiva o botão exibe `opacity: 0.5` e cursor `not-allowed`, tornando claro que ele está aguardando; ao zerar o contador fica totalmente habilitado
+- **Botão confirmar da etapa 2 desabilitado visualmente** — `opacity: 0.5` e cursor `not-allowed` enquanto a frase digitada não coincide exatamente com "APAGAR TUDO"
+- **Indicadores de etapa** — os cabeçalhos das confirmações 2 e 3 indicam a etapa atual (ex.: "🔐 Confirmação de segurança (2/3)")
+
+---
+
 ## [1.10.7] — 2026-06-15
 
 ### Adicionado

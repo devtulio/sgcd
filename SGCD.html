@@ -1221,6 +1221,17 @@
         </select>
       </div>
       <div class="info-field">
+        <label>Critério de Seleção (Art. 33, Lei 14.133/2021)</label>
+        <select id="m-criterio">
+          <option value="">Selecionar…</option>
+          <option value="menor_preco" selected>Menor preço (Art. 33, I)</option>
+          <option value="maior_desconto">Maior desconto (Art. 33, II)</option>
+          <option value="melhor_tecnica">Melhor técnica ou conteúdo artístico (Art. 33, III)</option>
+          <option value="tecnica_preco">Técnica e preço (Art. 33, IV)</option>
+          <option value="maior_retorno">Maior retorno econômico (Art. 33, VI)</option>
+        </select>
+      </div>
+      <div class="info-field">
         <label>Valor Estimado (R$)</label>
         <input type="text" id="m-valor" placeholder="0,00" oninput="maskMoney(this)">
       </div>
@@ -1321,7 +1332,7 @@ const ICONS = {
 // DB — IndexedDB wrapper
 // ══════════════════════════════════════════════════════════════
 let db;
-const SGCD_VERSION = '1.10.7';
+const SGCD_VERSION = '1.11.2';
 document.title = `SGCD v${SGCD_VERSION}`;
 const DB_NAME = 'dispensaDB', DB_VER = 3;
 
@@ -1433,6 +1444,12 @@ function dbClearStore(store) {
 }
 
 async function factoryReset() {
+  const dark = document.body.classList.contains('dark');
+  const bg   = dark ? '#2a2a2a' : '#ffffff';
+  const txt  = dark ? '#f0ece8' : '#1a1a1a';
+  const sub  = dark ? '#9ca3af' : '#6b7280';
+  const inpBg = dark ? '#1a1a1a' : '#f9fafb';
+
   // — Confirmação 1: aviso geral —
   const c1 = await customConfirm(
     'Você está prestes a apagar TODOS os dados do SGCD:\n\n• Todos os processos e documentos\n• Todos os fornecedores cadastrados\n• Todos os arquivos anexados\n• Todas as configurações\n• Toda a trilha de auditoria\n\nEsta ação é IRREVERSÍVEL e não pode ser desfeita.',
@@ -1444,23 +1461,28 @@ async function factoryReset() {
   const frase = 'APAGAR TUDO';
   const digitado = await new Promise(resolve => {
     const overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center';
     overlay.innerHTML = `
-      <div style="background:var(--bg-card);border-radius:12px;padding:28px 32px;max-width:420px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.3);border:2px solid #dc2626">
-        <div style="font-size:1.1rem;font-weight:700;color:#dc2626;margin-bottom:12px">Confirmação de segurança</div>
-        <p style="font-size:.88rem;line-height:1.6;margin-bottom:16px;color:var(--text)">Para continuar, digite exatamente a frase abaixo no campo:</p>
-        <div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:6px;padding:8px 12px;font-family:monospace;font-size:.95rem;font-weight:700;color:#dc2626;text-align:center;letter-spacing:2px;margin-bottom:16px">${frase}</div>
-        <input id="_wipe-input" type="text" placeholder="Digite a frase aqui..." autocomplete="off"
-          style="width:100%;padding:9px 12px;border:1.5px solid var(--gray-300);border-radius:6px;font-size:.88rem;box-sizing:border-box;background:var(--bg);color:var(--text)">
-        <div style="display:flex;gap:10px;margin-top:18px;justify-content:flex-end">
-          <button id="_wipe-cancel" class="btn btn-ghost btn-sm">Cancelar</button>
-          <button id="_wipe-ok" class="btn btn-sm" style="background:#dc2626;color:#fff;border:none" disabled>Confirmar</button>
+      <div style="background:${bg};color:${txt};border-radius:12px;padding:28px 32px;max-width:420px;width:90%;box-shadow:0 8px 40px rgba(0,0,0,.5);border:2px solid #dc2626">
+        <div style="font-size:1.05rem;font-weight:700;color:#dc2626;margin-bottom:12px">🔐 Confirmação de segurança (2/3)</div>
+        <p style="font-size:.88rem;line-height:1.6;margin-bottom:16px;color:${txt}">Para continuar, digite exatamente a frase abaixo no campo:</p>
+        <div style="background:#fef2f2;border:1.5px solid #fca5a5;border-radius:6px;padding:8px 12px;font-family:monospace;font-size:.95rem;font-weight:700;color:#dc2626;text-align:center;letter-spacing:3px;margin-bottom:16px">${frase}</div>
+        <input id="_wipe-input" type="text" placeholder="Digite a frase aqui..." autocomplete="off" spellcheck="false"
+          style="width:100%;padding:9px 12px;border:1.5px solid #d1d5db;border-radius:6px;font-size:.88rem;box-sizing:border-box;background:${inpBg};color:${txt}">
+        <div style="display:flex;gap:10px;margin-top:20px;justify-content:flex-end">
+          <button id="_wipe-cancel" class="btn btn-outline btn-sm" style="color:${txt}">✕ Cancelar</button>
+          <button id="_wipe-ok" class="btn btn-sm" style="background:#dc2626;color:#fff;border:none;opacity:.5;cursor:not-allowed" disabled>Confirmar →</button>
         </div>
       </div>`;
     document.body.appendChild(overlay);
     const inp = overlay.querySelector('#_wipe-input');
     const ok  = overlay.querySelector('#_wipe-ok');
-    inp.addEventListener('input', () => { ok.disabled = inp.value !== frase; });
+    inp.addEventListener('input', () => {
+      const match = inp.value === frase;
+      ok.disabled = !match;
+      ok.style.opacity = match ? '1' : '.5';
+      ok.style.cursor  = match ? 'pointer' : 'not-allowed';
+    });
     inp.addEventListener('keydown', e => { if (e.key === 'Enter' && !ok.disabled) ok.click(); });
     overlay.querySelector('#_wipe-cancel').addEventListener('click', () => { document.body.removeChild(overlay); resolve(false); });
     ok.addEventListener('click', () => { document.body.removeChild(overlay); resolve(true); });
@@ -1474,22 +1496,23 @@ async function factoryReset() {
   ]);
   const c3 = await new Promise(resolve => {
     const overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center';
     overlay.innerHTML = `
-      <div style="background:var(--bg-card);border-radius:12px;padding:28px 32px;max-width:440px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.3);border:2px solid #dc2626;text-align:center">
-        <div style="font-size:2rem;margin-bottom:10px">☢️</div>
-        <div style="font-size:1rem;font-weight:700;color:#dc2626;margin-bottom:14px">Última confirmação — sem volta</div>
-        <p style="font-size:.85rem;line-height:1.6;color:var(--text);margin-bottom:14px">
+      <div style="background:${bg};color:${txt};border-radius:12px;padding:28px 32px;max-width:440px;width:90%;box-shadow:0 8px 40px rgba(0,0,0,.5);border:2px solid #dc2626;text-align:center">
+        <div style="font-size:2.2rem;margin-bottom:8px">☢️</div>
+        <div style="font-size:1rem;font-weight:700;color:#dc2626;margin-bottom:14px">Última confirmação (3/3) — sem volta</div>
+        <p style="font-size:.85rem;line-height:1.7;color:${txt};margin-bottom:14px">
           Serão apagados permanentemente:<br>
           <strong>${processes.length}</strong> processo(s) &nbsp;·&nbsp;
           <strong>${fornecedores.length}</strong> fornecedor(es) &nbsp;·&nbsp;
           <strong>${files.length}</strong> arquivo(s)
         </p>
-        <p style="font-size:.82rem;color:var(--gray-500);margin-bottom:20px">Um backup completo será salvo automaticamente antes do wipe.</p>
-        <button id="_wipe-final" class="btn btn-sm" style="background:#dc2626;color:#fff;border:none;min-width:160px" disabled>
-          Aguarde <span id="_wipe-count">5</span>s…
+        <p style="font-size:.8rem;color:${sub};margin-bottom:22px">Um backup completo será exportado automaticamente antes do wipe.</p>
+        <button id="_wipe-final" class="btn btn-sm" style="background:#dc2626;color:#fff;border:none;min-width:180px;opacity:.5;cursor:not-allowed" disabled>
+          ⏳ Aguarde <span id="_wipe-count">5</span>s…
         </button>
-        <br><button id="_wipe-abort" class="btn btn-ghost btn-sm" style="margin-top:10px">Cancelar</button>
+        <br>
+        <button id="_wipe-abort" class="btn btn-outline btn-sm" style="margin-top:14px;color:${txt}">✕ Cancelar</button>
       </div>`;
     document.body.appendChild(overlay);
     const btn   = overlay.querySelector('#_wipe-final');
@@ -1500,7 +1523,9 @@ async function factoryReset() {
       if (n <= 0) {
         clearInterval(t);
         btn.disabled = false;
-        btn.textContent = '🗑️ Executar Wipe Agora';
+        btn.style.opacity = '1';
+        btn.style.cursor  = 'pointer';
+        btn.innerHTML = '🗑️ Executar Wipe Agora';
       } else {
         count.textContent = n;
       }
@@ -1538,15 +1563,17 @@ async function factoryReset() {
 
 async function exportBackup() {
   try {
-    const [processes, fornecedores, rawFiles] = await Promise.all([
-      dbGetAll('processes'), dbGetAll('fornecedores'), dbGetAll('files')
+    const [processes, fornecedores, rawFiles, auditGlobal] = await Promise.all([
+      dbGetAll('processes'), dbGetAll('fornecedores'), dbGetAll('files'), dbGetAll('auditGlobal')
     ]);
     const files = rawFiles.map(f => ({
       ...f,
       data: f.data ? _bufToBase64(f.data) : null,
       _enc: 'base64'
     }));
-    const backup = { _sgcd: true, version: 1, exportedAt: new Date().toISOString(), processes, fornecedores, files };
+    const settings = localStorage.getItem('sgcd-user') || null;
+    const brasao   = localStorage.getItem('sgcd-brasao-dataurl') || null;
+    const backup = { _sgcd: true, version: 3, exportedAt: new Date().toISOString(), processes, fornecedores, files, auditGlobal, settings, brasao };
     const blob = new Blob([JSON.stringify(backup)], { type: 'application/json' });
     const url  = URL.createObjectURL(blob);
     const a    = Object.assign(document.createElement('a'), {
@@ -1555,7 +1582,7 @@ async function exportBackup() {
     });
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    toast(`Backup exportado — ${processes.length} processos, ${fornecedores.length} fornecedores, ${files.length} arquivos.`, 'success');
+    toast(`Backup exportado — ${processes.length} processos, ${fornecedores.length} fornecedores, ${files.length} arquivos, ${auditGlobal.length} registros de auditoria.`, 'success');
   } catch(e) { toast('Erro ao exportar: ' + e.message, 'error'); }
 }
 
@@ -1563,12 +1590,13 @@ async function importBackup(file) {
   try {
     const backup = JSON.parse(await file.text());
     if (!backup._sgcd) { toast('Arquivo inválido — não é um backup do SGCD.', 'error'); return; }
+    const hasAudit = (backup.auditGlobal?.length || 0) > 0;
     const ok = await customConfirm(
-      `Exportado em ${new Date(backup.exportedAt).toLocaleString('pt-BR')}.\n\nIsso substituirá TODOS os dados atuais por ${backup.processes?.length||0} processos, ${backup.fornecedores?.length||0} fornecedores e ${backup.files?.length||0} arquivos. Esta ação não pode ser desfeita.`,
+      `Exportado em ${new Date(backup.exportedAt).toLocaleString('pt-BR')}.\n\nIsso substituirá TODOS os dados atuais por ${backup.processes?.length||0} processos, ${backup.fornecedores?.length||0} fornecedores, ${backup.files?.length||0} arquivos e ${backup.auditGlobal?.length||0} registros de auditoria. Esta ação não pode ser desfeita.`,
       { title: 'Restaurar Backup', icon: '⚠️', okLabel: 'Restaurar', okClass: 'btn-danger' }
     );
     if (!ok) return;
-    await Promise.all(['processes','fornecedores','files'].map(s => dbClearStore(s)));
+    await Promise.all(['processes','fornecedores','files','auditGlobal'].map(s => dbClearStore(s)));
     for (const p of backup.processes   || []) await dbPut('processes',   p);
     for (const f of backup.fornecedores|| []) await dbPut('fornecedores', f);
     for (const f of backup.files       || []) {
@@ -1576,7 +1604,13 @@ async function importBackup(file) {
       if (rec._enc === 'base64' && rec.data) { rec.data = _base64ToBuf(rec.data); delete rec._enc; }
       await dbPut('files', rec);
     }
-    toast(`Backup restaurado! ${backup.processes?.length||0} processos importados.`, 'success');
+    for (const e of backup.auditGlobal || []) await dbPut('auditGlobal', e);
+    // Restaura configurações e brasão (versão 3+)
+    if (backup.settings) localStorage.setItem('sgcd-user', backup.settings);
+    if (backup.brasao)   localStorage.setItem('sgcd-brasao-dataurl', backup.brasao);
+    const auditMsg = hasAudit ? ` e ${backup.auditGlobal.length} registros de auditoria` : '';
+    const cfgMsg = backup.settings ? ' Configurações e brasão restaurados.' : '';
+    toast(`Backup restaurado! ${backup.processes?.length||0} processos${auditMsg} importados.${cfgMsg}`, 'success');
     showDash();
   } catch(e) { toast('Erro ao importar: ' + e.message, 'error'); }
 }
@@ -1708,8 +1742,8 @@ const MONEY_FIELDS = new Set(['valor_estimado','valor_adjudicado','valor_contrat
 
 const SELECT_FIELDS = {
   fundamento: [
-    { v: 'Art. 75, I — obras e serviços de engenharia e serviços de manutenção de veículos automotores até R$ 30.000,00', l: 'Art. 75, I — Obras/Eng. (até R$ 30.000)' },
-    { v: 'Art. 75, II — outros bens e serviços até R$ 50.000,00', l: 'Art. 75, II — Bens e Serviços (até R$ 50.000)' },
+    { v: 'Art. 75, I — obras e serviços de engenharia e serviços de manutenção de veículos automotores até R$ 130.984,20 (Decreto nº 11.317/2022)', l: 'Art. 75, I — Obras/Eng. (até R$ 130.984,20)' },
+    { v: 'Art. 75, II — outros bens e serviços até R$ 65.492,11 (Decreto nº 11.317/2022)', l: 'Art. 75, II — Bens e Serviços (até R$ 65.492,11)' },
     { v: 'Art. 75, III — situação de emergência ou calamidade pública', l: 'Art. 75, III — Emergência/Calamidade' },
     { v: 'Art. 75, IV — contratação com órgãos ou entidades da Administração Pública', l: 'Art. 75, IV — Contratação com Adm. Pública' },
     { v: 'Art. 75, V — compras de gêneros perecíveis e hortifrutigranjeiros', l: 'Art. 75, V — Gêneros Perecíveis' },
@@ -2025,7 +2059,8 @@ function fmt(dt) {
 }
 function fmtDate(dt) {
   if (!dt) return '';
-  const d = new Date(dt + 'T00:00:00');
+  // Suporta tanto timestamp numérico (novo) quanto string YYYY-MM-DD (legado)
+  const d = typeof dt === 'number' ? new Date(dt) : new Date(dt + 'T00:00:00');
   return d.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric' });
 }
 
@@ -2643,7 +2678,7 @@ function renderDash() {
     const st = processStatus(p);
     if (fSt && st !== fSt) return false;
     if (fUn && p.unidade !== fUn) return false;
-    if (fDe && p.createdAt < new Date(fDe).getTime()) return false;
+    if (fDe && p.createdAt < new Date(fDe + 'T00:00:00').getTime()) return false;
     if (fAte && p.createdAt > new Date(fAte + 'T23:59:59').getTime()) return false;
     if (fVmin !== null && parseValor(p.valor) < fVmin) return false;
     if (fVmax !== null && parseValor(p.valor) > fVmax) return false;
@@ -2668,15 +2703,18 @@ function renderDash() {
     }
   });
 
-  // stats — single pass
+  // stats — reflete a lista filtrada quando há filtros ativos
+  const statsBase  = filtered;
   let stProg = 0, stDone = 0, stPend = 0;
-  for (const p of processes) {
+  for (const p of statsBase) {
     const s = processStatus(p);
     if (s === 'progress') stProg++;
     else if (s === 'done') stDone++;
     else if (s === 'todo') stPend++;
   }
-  document.getElementById('st-total').textContent = processes.length;
+  const totalLabel = document.getElementById('st-total');
+  totalLabel.textContent = filtered.length;
+  totalLabel.title = hasFilters ? `${processes.length} processos no total (${filtered.length} com filtros ativos)` : '';
   document.getElementById('st-prog').textContent  = stProg;
   document.getElementById('st-done').textContent  = stDone;
   document.getElementById('st-pend').textContent  = stPend;
@@ -3253,7 +3291,11 @@ function renderStallAlerts() {
   const stalled = processes.filter(p => {
     if (processStatus(p) !== 'progress') return false;
     // Find timestamp of last completed step
-    const lastAction = p.steps.reduce((max, s) => Math.max(max, s.completedAt || 0), 0);
+    const lastAction = p.steps.reduce((max, s) => {
+      if (!s.completedAt) return max;
+      const t = typeof s.completedAt === 'number' ? s.completedAt : +new Date(s.completedAt + 'T00:00:00');
+      return Math.max(max, t || 0);
+    }, 0);
     const ref = lastAction || p.createdAt;
     return ref < cutoff;
   });
@@ -3266,7 +3308,11 @@ function renderStallAlerts() {
 
   const items = [];
   for (const p of stalled) {
-    const lastAction = p.steps.reduce((max, s) => Math.max(max, s.completedAt || 0), 0);
+    const lastAction = p.steps.reduce((max, s) => {
+      if (!s.completedAt) return max;
+      const t = typeof s.completedAt === 'number' ? s.completedAt : +new Date(s.completedAt + 'T00:00:00');
+      return Math.max(max, t || 0);
+    }, 0);
     const ref = lastAction || p.createdAt;
     const days = Math.floor((Date.now() - ref) / 86400000);
     const numLbl = p.num_dl ? `DL ${p.num_dl}` : p.num_proc ? `PA ${p.num_proc}` : p.num || 'Sem nº';
@@ -3558,6 +3604,7 @@ async function createProcess() {
     num_dl,
     objeto,
     legal: document.getElementById('m-legal').value,
+    criterio_selecao: document.getElementById('m-criterio').value || 'menor_preco',
     valor: document.getElementById('m-valor').value.trim(),
     unidade: document.getElementById('m-unidade').value.trim(),
     prazo: document.getElementById('m-prazo').value || null,
@@ -3669,7 +3716,7 @@ function renderFracPanel() {
       : '';
     return `<div class="frac-group-item" onclick="${isAtual ? '' : `openProcess('${q.id}')`}" style="${isAtual ? 'cursor:default;background:color-mix(in srgb,var(--brand) 10%,transparent);border-color:var(--brand)' : ''}">
       <div>
-        <div class="fgi-num">${escHtml(q.num || '—')}${isAtual ? ' <em style="color:var(--brand);font-style:normal;text-transform:none">(este processo)</em>' : ''}</div>
+        <div class="fgi-num">${escHtml(q.num_dl ? `DL ${q.num_dl}` : q.num_proc ? `PA ${q.num_proc}` : q.num || '—')}${isAtual ? ' <em style="color:var(--brand);font-style:normal;text-transform:none">(este processo)</em>' : ''}</div>
         <div class="fgi-obj">${escHtml(q.objeto)}</div>
         ${razaoTag}
       </div>
@@ -3732,6 +3779,18 @@ async function resetStepOrder() {
 async function renderChecklist() {
   const p = currentProcess;
   const container = document.getElementById('checklist');
+  // Não re-renderiza enquanto o usuário está editando um campo dentro do checklist
+  const active = document.activeElement;
+  const _isTyping = active.tagName === 'TEXTAREA' ||
+    active.tagName === 'SELECT' ||
+    (active.tagName === 'INPUT' && active.type !== 'radio' && active.type !== 'checkbox');
+  if (container?.contains(active) && _isTyping) {
+    if (!container._pendingRender) {
+      container._pendingRender = true;
+      active.addEventListener('blur', () => { container._pendingRender = false; renderChecklist(); }, { once: true });
+    }
+    return;
+  }
   const order = p.stepOrder || STEPS.map((_,i) => i);
   const hasCustomOrder = p.stepOrder && p.stepOrder.some((v,i) => v !== i);
   const resetBtn = document.getElementById('btn-reset-order');
@@ -3755,7 +3814,7 @@ async function renderChecklist() {
     html += `<div class="step-card ${isDone?'completed':''} ${isBlocked?'blocked':''} ${expanded?'expanded':''}" id="step-card-${i}" draggable="true" ondragstart="onStepDragStart(event,${i})" ondragover="onStepDragOver(event,${i})" ondragleave="onStepDragLeave(${i})" ondrop="onStepDrop(event,${i})">
       <div class="step-row" onclick="toggleStep(${i})">
         <div class="step-drag-handle" onclick="event.stopPropagation()" title="Arraste para reordenar">⠿</div>
-        <div class="step-check ${isDone?'checked':''} ${isBlocked?'blocked':''}" onclick="event.stopPropagation();cycleStatus(${i})" title="Clique para alternar status">
+        <div class="step-check ${isDone?'checked':''} ${isBlocked?'blocked':''}" onclick="event.stopPropagation();cycleStatus(${i})" title="Clique para alternar: Pendente → Concluída → Bloqueada → Pendente">
           ${isDone ? `<svg width="11" height="9" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1.5" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>` : ''}
           ${isBlocked ? `<svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 2l6 6M8 2l-6 6" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>` : ''}
         </div>
@@ -3925,10 +3984,20 @@ function renderCertidoesSection(stepIdx, data, certFileMap = {}) {
         </div>
       </div>`;
     }
-    return `<div class="cert-item ${st}" id="cert-${stepIdx}-${c.id}">
+    const dataValidade = (saved[c.id]||{}).data_validade || '';
+    const now = new Date();
+    const isExpired  = dataValidade && new Date(dataValidade + 'T23:59:59') < now;
+    const isExpiring = !isExpired && dataValidade && (new Date(dataValidade + 'T00:00:00') - now) < 30 * 86400000;
+    const validadeBadge = isExpired
+      ? `<span style="font-size:.65rem;font-weight:700;color:#dc2626;background:#fef2f2;border:1px solid #fca5a5;border-radius:4px;padding:1px 5px">⚠ Vencida</span>`
+      : isExpiring
+      ? `<span style="font-size:.65rem;font-weight:700;color:#92400e;background:#fffbeb;border:1px solid #fcd34d;border-radius:4px;padding:1px 5px">⚠ Vence em breve</span>`
+      : '';
+    const certBorderStyle = isExpired ? 'border-left:3px solid #dc2626' : isExpiring ? 'border-left:3px solid #f59e0b' : '';
+    return `<div class="cert-item ${st}" id="cert-${stepIdx}-${c.id}" style="${certBorderStyle}">
       <button class="cert-status-btn" onclick="cycleCertidao(${stepIdx},'${c.id}')" title="Alternar: Pendente → Obtida → N/A">${icon}</button>
       <div class="cert-info">
-        <div class="cert-nome">${escHtml(c.nome)}</div>
+        <div class="cert-nome">${escHtml(c.nome)} ${validadeBadge}</div>
         <div class="cert-desc">${escHtml(c.desc)}</div>
       </div>
       <div class="cert-actions">
@@ -3939,7 +4008,7 @@ function renderCertidoesSection(stepIdx, data, certFileMap = {}) {
           </div>
           <div style="display:flex;align-items:center;gap:4px;font-size:.7rem;color:var(--gray-500)">
             <span>Validade</span>
-            <input type="date" value="${(saved[c.id]||{}).data_validade||''}" onchange="updateCertidao(${stepIdx},'${c.id}','data_validade',this.value)" title="Data de validade" style="font-size:.75rem;padding:2px 4px">
+            <input type="date" value="${dataValidade}" onchange="updateCertidao(${stepIdx},'${c.id}','data_validade',this.value)" title="Data de validade" style="font-size:.75rem;padding:2px 4px${isExpired?' border-color:#dc2626':isExpiring?' border-color:#f59e0b':''}">
           </div>
           ${c.diasPadrao ? `<span style="font-size:.65rem;color:var(--success);opacity:.8" title="Sincroniza com cadastro do fornecedor">⇄ fornecedor</span>` : ''}
         </div>` : ''}
@@ -4228,9 +4297,14 @@ function _calcValorRef(lista, metodo) {
   return result.toLocaleString('pt-BR', { style:'currency', currency:'BRL' });
 }
 
+function _getCotacaoMetodo() {
+  // Método salvo no processo tem precedência — evita que mudança global afete outros processos
+  return currentProcess?.cotacao_metodo || localStorage.getItem('sgcd-cotacao-metodo') || 'media';
+}
+
 async function _autoFillValorEstimado(stepIdx) {
   const lista = getCotacoes(stepIdx);
-  const metodo = localStorage.getItem('sgcd-cotacao-metodo') || 'media';
+  const metodo = _getCotacaoMetodo();
   const val = _calcValorRef(lista, metodo);
   if (val === null) return;
   await updateField(stepIdx, 'valor_estimado', val);
@@ -4241,7 +4315,7 @@ async function _autoFillValorEstimado(stepIdx) {
 
 function renderCotacoesSection(stepIdx, data) {
   const lista = data.fields._cotacoes ? JSON.parse(data.fields._cotacoes) : [];
-  const metodo = localStorage.getItem('sgcd-cotacao-metodo') || 'media';
+  const metodo = _getCotacaoMetodo();
   const sitLabels = { valida: 'Válida', descartada: 'Descartada' };
   const validas = lista.filter(c => c.situacao === 'valida' || !c.situacao);
   const valorRef = _calcValorRef(lista, metodo);
@@ -4282,10 +4356,10 @@ function renderCotacoesSection(stepIdx, data) {
     <div style="display:flex;align-items:center;gap:16px;margin-top:14px;margin-bottom:6px;flex-wrap:wrap">
       <span style="font-size:.8rem;color:var(--gray-600)">Método de cálculo:</span>
       <label style="display:flex;align-items:center;gap:4px;font-size:.8rem;cursor:pointer">
-        <input type="radio" name="cotacao-metodo-${stepIdx}" value="media" ${metodo==='media'?'checked':''} onchange="localStorage.setItem('sgcd-cotacao-metodo','media');_autoFillValorEstimado(${stepIdx}).then(()=>renderChecklist())"> Média
+        <input type="radio" name="cotacao-metodo-${stepIdx}" value="media" ${metodo==='media'?'checked':''} onchange="setCotacaoMetodo(${stepIdx},'media')"> Média
       </label>
       <label style="display:flex;align-items:center;gap:4px;font-size:.8rem;cursor:pointer">
-        <input type="radio" name="cotacao-metodo-${stepIdx}" value="mediana" ${metodo==='mediana'?'checked':''} onchange="localStorage.setItem('sgcd-cotacao-metodo','mediana');_autoFillValorEstimado(${stepIdx}).then(()=>renderChecklist())"> Mediana
+        <input type="radio" name="cotacao-metodo-${stepIdx}" value="mediana" ${metodo==='mediana'?'checked':''} onchange="setCotacaoMetodo(${stepIdx},'mediana')"> Mediana
       </label>
       ${valorRef !== null ? `<span style="font-size:.8rem;color:var(--success);font-weight:600">Valor de referência calculado (${metodo}): ${escHtml(valorRef)}</span>` : ''}
     </div>
@@ -4295,6 +4369,13 @@ function renderCotacoesSection(stepIdx, data) {
     </label>
     ${cards || '<p style="color:var(--gray-500);font-size:.8rem;margin-top:8px">Nenhuma cotação cadastrada ainda.</p>'}
   </div>`;
+}
+
+async function setCotacaoMetodo(stepIdx, metodo) {
+  localStorage.setItem('sgcd-cotacao-metodo', metodo);
+  currentProcess.cotacao_metodo = metodo;
+  await _autoFillValorEstimado(stepIdx); // já chama saveProcess internamente
+  renderChecklist();
 }
 
 function getCotacoes(stepIdx) {
@@ -4357,8 +4438,9 @@ function renderInfoFields() {
     { key:'num_proc', label:'Processo Administrativo', type:'text' },
     { key:'num_dl',   label:'Dispensa de Licitação',   type:'text' },
     { key:'objeto',  label:'Objeto',              type:'text' },
-    { key:'legal',   label:'Fundamentação',       type:'select' },
-    { key:'valor',   label:'Valor estimado (R$)', type:'money' },
+    { key:'legal',            label:'Fundamentação',            type:'select' },
+    { key:'criterio_selecao', label:'Critério de Seleção',       type:'criterio' },
+    { key:'valor',            label:'Valor estimado (R$)',       type:'money' },
     { key:'unidade', label:'Unidade solicitante', type:'text' },
     { key:'prazo',   label:'Prazo para conclusão', type:'date' },
     { key:'obs',     label:'Observações',          type:'textarea' }
@@ -4405,6 +4487,19 @@ function renderInfoFields() {
         'Outro'
       ];
       const options = opts.map(o => `<option value="${o}" ${p[f.key]===o?'selected':''}>${o || 'Selecionar…'}</option>`).join('');
+      return `<div class="info-field"><label>${f.label}</label>
+        <select onchange="updateProcessField('${f.key}',this.value)">${options}</select></div>`;
+    }
+    if (f.type === 'criterio') {
+      const criterios = [
+        { v:'menor_preco',    l:'Menor preço (Art. 33, I)' },
+        { v:'maior_desconto', l:'Maior desconto (Art. 33, II)' },
+        { v:'melhor_tecnica', l:'Melhor técnica ou conteúdo artístico (Art. 33, III)' },
+        { v:'tecnica_preco',  l:'Técnica e preço (Art. 33, IV)' },
+        { v:'maior_retorno',  l:'Maior retorno econômico (Art. 33, VI)' },
+      ];
+      const cur = p[f.key] || 'menor_preco';
+      const options = criterios.map(c => `<option value="${c.v}" ${cur===c.v?'selected':''}>${c.l}</option>`).join('');
       return `<div class="info-field"><label>${f.label}</label>
         <select onchange="updateProcessField('${f.key}',this.value)">${options}</select></div>`;
     }
@@ -4483,7 +4578,8 @@ async function cycleStatus(i) {
   try {
     const p = currentProcess;
     const cur = p.steps[i].status;
-    const next = cur === 'done' ? 'pending' : cur === 'blocked' ? 'pending' : 'done';
+    // Ciclo: pending → done → blocked → pending
+    const next = cur === 'pending' ? 'done' : cur === 'done' ? 'blocked' : 'pending';
     await setStepStatus(i, next);
   } finally {
     _cycleStatusLock = false;
@@ -4498,7 +4594,7 @@ async function setStepStatus(i, status) {
   const p = currentProcess;
   const prev = p.steps[i].status;
   p.steps[i].status = status;
-  p.steps[i].completedAt = status === 'done' ? new Date().toISOString().slice(0,10) : null;
+  p.steps[i].completedAt = status === 'done' ? Date.now() : null;
 
   const labels = { done: 'Etapa concluída', blocked: 'Etapa bloqueada', pending: 'Etapa reaberta' };
   p.timeline.push({
@@ -4520,6 +4616,12 @@ async function updateField(i, field, value) {
   const p = currentProcess;
   p.steps[i].fields[field] = value;
   await saveProcess(p);
+  // Não loga campos internos como _propostas, _cotacoes
+  if (!field.startsWith('_')) {
+    await _auditEvento('CAMPO_ALTERADO',
+      `Etapa ${i + 1} — ${STEPS[i]?.name || ''}: campo "${field}" alterado`,
+      p.id);
+  }
 }
 
 function getPropostas(stepIdx) {
@@ -4560,6 +4662,17 @@ async function updateProposta(stepIdx, pi, field, value) {
     } else if (prop.fornecedor || prop.cnpj) {
       currentProcess.fornecedor = { razao_social: prop.fornecedor||prop.cnpj, cnpj: prop.cnpj||'', cnpj_digits: (prop.cnpj||'').replace(/\D/g,''), situacao:'' };
       await saveProcess(currentProcess);
+    }
+    // Propaga o valor da proposta vencedora para o campo valor_adjudicado da etapa de Adjudicação
+    if (prop.valor) {
+      const adjIdx = STEPS.findIndex(s => s.adjudicacao);
+      if (adjIdx >= 0 && currentProcess.steps[adjIdx]) {
+        if (!currentProcess.steps[adjIdx].fields) currentProcess.steps[adjIdx].fields = {};
+        if (!currentProcess.steps[adjIdx].fields.valor_adjudicado) {
+          currentProcess.steps[adjIdx].fields.valor_adjudicado = prop.valor;
+          await saveProcess(currentProcess);
+        }
+      }
     }
     toast('Fornecedor vencedor vinculado ao processo.', 'success');
   }
@@ -4780,7 +4893,7 @@ function gerarRelatorio() {
     const st = processStatus(p);
     if (fSt && st !== fSt) return false;
     if (fUn && p.unidade !== fUn) return false;
-    if (fDe && p.createdAt < new Date(fDe).getTime()) return false;
+    if (fDe && p.createdAt < new Date(fDe + 'T00:00:00').getTime()) return false;
     if (fAte && p.createdAt > new Date(fAte + 'T23:59:59').getTime()) return false;
     if (fVmin !== null && parseValor(p.valor) < fVmin) return false;
     if (fVmax !== null && parseValor(p.valor) > fVmax) return false;
@@ -5360,7 +5473,7 @@ function exportarCSV() {
     const st = processStatus(p);
     if (fSt && st !== fSt) return false;
     if (fUn && p.unidade !== fUn) return false;
-    if (fDe && p.createdAt < new Date(fDe).getTime()) return false;
+    if (fDe && p.createdAt < new Date(fDe + 'T00:00:00').getTime()) return false;
     if (fAte && p.createdAt > new Date(fAte+'T23:59:59').getTime()) return false;
     if (fVmin !== null && parseValor(p.valor) < fVmin) return false;
     if (fVmax !== null && parseValor(p.valor) > fVmax) return false;
@@ -5531,7 +5644,9 @@ function gerarDespachoInabilitacao(stepIdx) {
   const obs = data.fields?.observacoes || '';
 
   // Certidões pendentes para compor o motivo
+  const engenharia = !!saved._engenharia;
   const pendentes = CERTIDOES.filter(c => {
+    if (c.engenharia && !engenharia) return false; // não aplicável para contratos não-engenharia
     const st = (saved[c.id] || {}).status || 'pendente';
     return st === 'pendente';
   });
@@ -5779,14 +5894,15 @@ function gerarDespachoHabilitacao(stepIdx) {
 function gerarTermoAdjudicacao() {
   const proc = currentProcess;
   const u = getUser();
-  const stepIdx = proc.steps.findIndex(s => s.name === 'Adjudicação');
+  const stepIdx = STEPS.findIndex(s => s.adjudicacao);
   const propStepIdx = proc.steps.findIndex(s => s.propostas);
   const data = stepIdx >= 0 ? (proc.steps[stepIdx]?.fields || {}) : {};
   const propLista = propStepIdx >= 0 ? JSON.parse(proc.steps[propStepIdx]?.fields?._propostas || '[]') : [];
   const propVencedora = propLista.find(p => p.situacao === 'vencedora');
+  // Usa dados da proposta vencedora quando disponíveis; cai no fornecedor vinculado como fallback
   const forn = proc.fornecedor || null;
-  const fornNome = forn ? (forn.razao_social || forn.nome_fantasia || '') : '';
-  const fornCnpj = forn ? (forn.cnpj || '') : '';
+  const fornNome = propVencedora?.fornecedor || (forn ? (forn.razao_social || forn.nome_fantasia || '') : '');
+  const fornCnpj = propVencedora?.cnpj || (forn ? (forn.cnpj || '') : '');
   const hoje = new Date().toLocaleDateString('pt-BR', { day:'numeric', month:'long', year:'numeric' });
   const blank = t => t || '_'.repeat(40);
   const dataAdj = data.data_conclusao ? new Date(data.data_conclusao + 'T00:00:00').toLocaleDateString('pt-BR') : hoje;
@@ -5887,8 +6003,8 @@ function gerarTermoAdjudicacao() {
 function gerarTermoHomologacao() {
   const proc = currentProcess;
   const u = getUser();
-  const stepAdj = proc.steps.findIndex(s => s.name === 'Adjudicação');
-  const stepHom = proc.steps.findIndex(s => s.name === 'Homologação');
+  const stepAdj = STEPS.findIndex(s => s.adjudicacao);
+  const stepHom = STEPS.findIndex(s => s.homologacao);
   const dataAdj = stepAdj >= 0 ? (proc.steps[stepAdj]?.fields?.data_conclusao || '') : '';
   const dataAdjFmt = dataAdj ? new Date(dataAdj + 'T00:00:00').toLocaleDateString('pt-BR') : '_'.repeat(20);
   const dataFields = stepHom >= 0 ? (proc.steps[stepHom]?.fields || {}) : {};
@@ -5995,6 +6111,14 @@ function gerarAvisoDispensa() {
   const v = (i, f) => p(i)[f] || '';
   const hoje = new Date().toLocaleDateString('pt-BR', { day:'numeric', month:'long', year:'numeric' });
   const blank = txt => txt || '_'.repeat(40);
+  const _criterioLabel = {
+    menor_preco:    'menor preço',
+    maior_desconto: 'maior desconto',
+    melhor_tecnica: 'melhor técnica ou conteúdo artístico',
+    tecnica_preco:  'técnica e preço',
+    maior_retorno:  'maior retorno econômico',
+  };
+  const criterioLabel = _criterioLabel[proc.criterio_selecao] || 'menor preço';
 
   const html = `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -6072,7 +6196,7 @@ function gerarAvisoDispensa() {
 
 <div class="section">
   <div class="section-title">Do Critério de Seleção</div>
-  <p>A seleção da proposta mais vantajosa será realizada com base no critério de <strong>menor preço</strong>, em conformidade com o art. 75 da Lei Federal nº 14.133/2021, considerando o objeto e as condições estabelecidas no Termo de Referência.</p>
+  <p>A seleção da proposta mais vantajosa será realizada com base no critério de <strong>${criterioLabel}</strong>, em conformidade com o art. 33 da Lei Federal nº 14.133/2021, considerando o objeto e as condições estabelecidas no Termo de Referência.</p>
 </div>
 
 <div class="city-date">${blank(u.municipio)}, ${hoje}</div>
@@ -6381,7 +6505,7 @@ function gerarAta() {
           <td>${pr.fornecedor || '—'}</td>
           <td>${pr.cnpj || '—'}</td>
           <td>${pr.valor || '—'}</td>
-          <td>${{analise:'Em análise', aceita:'Aceita', vencedora:'Vencedora — Menor Preço', recusada:'Recusada'}[pr.situacao] || pr.situacao}</td>
+          <td>${{analise:'Em análise', aceita:'Aceita', vencedora:`Vencedora — ${({'menor_preco':'Menor Preço','maior_desconto':'Maior Desconto','melhor_tecnica':'Melhor Técnica','tecnica_preco':'Técnica e Preço','maior_retorno':'Maior Retorno Econômico'})[proc.criterio_selecao]||'Menor Preço'}`, recusada:'Recusada'}[pr.situacao] || pr.situacao}</td>
         </tr>`).join('')}
       </tbody>
     </table>` : '<p><em>Nenhuma proposta registrada.</em></p>';
@@ -6502,7 +6626,7 @@ function gerarAta() {
   <div class="secao-titulo">VII — Adjudicação</div>
   <p>Com base na análise das propostas e na verificação da habilitação, o(a) Agente de Contratação adjudica o objeto ao seguinte fornecedor:</p>
   <div class="dado"><strong>Fornecedor:</strong> ${blank(v(9,'fornecedor') || vencedora.fornecedor)}</div>
-  <div class="dado"><strong>CNPJ:</strong> ${blank(v(9,'cnpj') || vencedora.cnpj)}</div>
+  <div class="dado"><strong>CNPJ:</strong> ${blank(vencedora.cnpj || currentProcess?.fornecedor?.cnpj)}</div>
   <div class="dado"><strong>Valor Adjudicado:</strong> ${v(10,'valor_adjudicado') ? fmtMoney(v(10,'valor_adjudicado')) : '_'.repeat(20)}</div>
   <div class="dado"><strong>Data:</strong> ${d(v(10,'data_conclusao'))}</div>
   ${v(10,'observacoes') ? `<p><strong>Observações:</strong> ${v(10,'observacoes')}</p>` : ''}
@@ -6729,20 +6853,29 @@ function saveSettings() {
   if (!nome) { toast('Informe seu nome completo.', 'error'); return; }
   const u = {
     nome,
-    cargo:           document.getElementById('s-cargo').value.trim(),
-    matricula:       document.getElementById('s-matricula').value.trim(),
-    orgao:           document.getElementById('s-orgao').value.trim(),
-    municipio:       document.getElementById('s-municipio').value.trim(),
-    aut_nome:        document.getElementById('s-aut-nome').value.trim(),
-    aut_cargo:       document.getElementById('s-aut-cargo').value.trim(),
-    frac_janela:     document.getElementById('s-frac-janela').value,
+    cargo:            document.getElementById('s-cargo').value.trim(),
+    matricula:        document.getElementById('s-matricula').value.trim(),
+    orgao:            document.getElementById('s-orgao').value.trim(),
+    municipio:        document.getElementById('s-municipio').value.trim(),
+    aut_nome:         document.getElementById('s-aut-nome').value.trim(),
+    aut_cargo:        document.getElementById('s-aut-cargo').value.trim(),
+    frac_janela:      document.getElementById('s-frac-janela').value,
     auto_backup_exit: document.getElementById('s-auto-backup-exit').checked,
   };
+  // Avisa sobre campos essenciais para geração de documentos
+  const faltando = [];
+  if (!u.orgao)    faltando.push('Órgão/Entidade');
+  if (!u.municipio) faltando.push('Município');
+  if (!u.aut_nome) faltando.push('Nome da Autoridade Competente');
+  if (faltando.length) {
+    toast(`⚠ Configurações salvas, mas campos importantes estão em branco: ${faltando.join(', ')}. Os documentos gerados ficarão incompletos.`, 'error');
+  } else {
+    toast('Configurações salvas!', 'success');
+    playSuccess();
+  }
   localStorage.setItem('sgcd-user', JSON.stringify(u));
   updateHeaderUser();
   showDash();
-  playSuccess();
-  toast('Configurações salvas!', 'success');
 }
 
 function toggleTheme() {
@@ -6852,14 +6985,19 @@ function fecharGlobalSearch() {
   document.getElementById('global-search-overlay').classList.add('hidden');
 }
 function renderGlobalSearch(q) {
+  const LIMIT = 50;
   const term = q.trim().toLowerCase();
-  const results = processes.filter(p => {
+  const matched = processes.filter(p => {
     if (!term) return true;
     const fn = typeof p.fornecedor === 'object' ? (p.fornecedor?.razao_social || '') : (p.fornecedor || '');
     return [p.num_proc, p.num_dl, p.objeto, p.unidade, fn, p.num].some(v => (v || '').toLowerCase().includes(term));
-  }).slice(0, 20);
+  });
+  const results = matched.slice(0, LIMIT);
   const el = document.getElementById('global-search-results');
   if (!results.length) { el.innerHTML = `<p class="gsearch-empty">Nenhum processo encontrado.</p>`; return; }
+  const countNote = matched.length > LIMIT
+    ? `<p style="font-size:.72rem;color:var(--gray-400);text-align:center;padding:4px 0 0">Exibindo ${LIMIT} de ${matched.length} resultados — refine a busca para ver mais.</p>`
+    : '';
   el.innerHTML = results.map(p => {
     const fn = typeof p.fornecedor === 'object' ? (p.fornecedor?.razao_social || '') : (p.fornecedor || '');
     const nums = [p.num_proc && 'PA ' + p.num_proc, p.num_dl && 'DL ' + p.num_dl].filter(Boolean).join(' · ');
@@ -6873,7 +7011,7 @@ function renderGlobalSearch(q) {
       <div style="font-weight:500;font-size:.875rem;margin:2px 0">${escHtml(p.objeto)}</div>
       <div style="font-size:.72rem;color:var(--gray-500)">${[p.unidade && escHtml(p.unidade), fn && escHtml(fn), p.valor && fmtMoney(p.valor)].filter(Boolean).join(' · ')}</div>
     </div>`;
-  }).join('');
+  }).join('') + countNote;
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -6882,15 +7020,27 @@ function renderGlobalSearch(q) {
 function previewBrasao(input) {
   const file = input.files[0];
   if (!file) return;
+  // Base64 expande ~33%; 3 MB de arquivo → ~4 MB de Data URL → seguro para localStorage
+  if (file.size > 3 * 1024 * 1024) {
+    toast('Imagem muito grande (máx. 3 MB). Reduza o tamanho ou a resolução do brasão e tente novamente.', 'error');
+    input.value = '';
+    return;
+  }
   const reader = new FileReader();
   reader.onload = ev => {
-    localStorage.setItem('sgcd-brasao-dataurl', ev.target.result);
-    window._BRASAO_CACHE = null;
-    const img = document.getElementById('s-brasao-preview');
-    img.src = ev.target.result; img.style.display = '';
-    document.getElementById('btn-remove-brasao').style.display = '';
-    toast('Brasão atualizado!', 'success');
+    try {
+      localStorage.setItem('sgcd-brasao-dataurl', ev.target.result);
+      window._BRASAO_CACHE = null;
+      const img = document.getElementById('s-brasao-preview');
+      img.src = ev.target.result; img.style.display = '';
+      document.getElementById('btn-remove-brasao').style.display = '';
+      toast('Brasão atualizado!', 'success');
+    } catch(e) {
+      toast('Não foi possível salvar o brasão: espaço insuficiente no navegador. Tente uma imagem menor.', 'error');
+      input.value = '';
+    }
   };
+  reader.onerror = () => { toast('Erro ao ler a imagem. Tente novamente.', 'error'); };
   reader.readAsDataURL(file);
 }
 function removerBrasao() {
@@ -6920,9 +7070,20 @@ async function _autoBackupSnapshot() {
   try {
     const [procs, forns] = await Promise.all([dbGetAll('processes'), dbGetAll('fornecedores')]);
     const snap = { _sgcd: true, _auto: true, version: 1, exportedAt: new Date().toISOString(), processes: procs, fornecedores: forns };
-    localStorage.setItem('sgcd-auto-backup', JSON.stringify(snap));
+    const json = JSON.stringify(snap);
+    // Verifica tamanho antes de salvar (~5 MB é o limite típico do localStorage)
+    if (json.length > 4 * 1024 * 1024) {
+      toast('⚠ Auto-backup: base de dados muito grande para snapshot local. Faça um backup manual em Configurações.', 'error');
+      return;
+    }
+    localStorage.setItem('sgcd-auto-backup', json);
     localStorage.setItem('sgcd-auto-backup-at', Date.now().toString());
-  } catch(e) { console.warn('Auto-backup falhou:', e); }
+  } catch(e) {
+    console.warn('Auto-backup falhou:', e);
+    if (e.name === 'QuotaExceededError') {
+      toast('⚠ Auto-backup falhou: espaço insuficiente no navegador. Faça um backup manual em Configurações.', 'error');
+    }
+  }
 }
 async function checkAutoBackupRestore() {
   const snap = localStorage.getItem('sgcd-auto-backup');
@@ -6964,13 +7125,30 @@ document.getElementById('hdr-date').textContent = new Date().toLocaleDateString(
 // Atalho global Ctrl+K
 document.addEventListener('keydown', e => {
   if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); abrirGlobalSearch(); }
-  if (e.key === 'Escape') { fecharGlobalSearch(); }
+  if (e.key === 'Escape') {
+    // Fecha o primeiro modal aberto encontrado, em ordem de prioridade
+    if (!document.getElementById('global-search-overlay').classList.contains('hidden')) { fecharGlobalSearch(); return; }
+    if (!document.getElementById('cert-edit-overlay').classList.contains('hidden')) { closeCertEdit(); return; }
+    if (!document.getElementById('forn-modal-overlay').classList.contains('hidden')) { closeFornModal(); return; }
+    if (!document.getElementById('modal-overlay').classList.contains('hidden')) { closeModal(); return; }
+  }
 });
 
 initDB()
   .then(() => _migrarCertidoesFornecedores().catch(console.error))
   .then(() => loadProcesses())
-  .then(() => { renderDash(); checkAutoBackupRestore(); document.getElementById('footer-version').textContent = `v${SGCD_VERSION}`; })
+  .then(() => {
+    document.getElementById('footer-version').textContent = `v${SGCD_VERSION}`;
+    checkAutoBackupRestore();
+    const u = getUser();
+    if (!u.nome) {
+      // Primeiro uso — redireciona para configurações com banner de boas-vindas
+      showSettings();
+      setTimeout(() => toast('👋 Bem-vindo ao SGCD! Configure seus dados antes de começar.', 'success'), 400);
+    } else {
+      renderDash();
+    }
+  })
   .catch(err => { console.error('Erro ao inicializar SGCD:', err); alert('Erro ao inicializar o sistema. Recarregue a página.'); });
 </script>
 <footer style="text-align:center;padding:18px 16px 14px;font-size:.72rem;color:var(--gray-400);border-top:1px solid var(--gray-100);margin-top:32px">

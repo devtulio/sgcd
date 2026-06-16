@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Manual Operacional — SGCD v1.9.0</title>
+<title>Manual Operacional — SGCD v1.11.1</title>
 <style>
   /* Reset e base */
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -89,7 +89,7 @@
       margin: 20mm 20mm 25mm;
       size: A4;
       @top-center {
-        content: "SGCD v1.9.0 — Manual Operacional";
+        content: "SGCD v1.11.1 — Manual Operacional";
         font-family: 'Times New Roman', serif;
         font-size: 9pt;
         color: #666;
@@ -118,7 +118,7 @@
     <div class="cover-title">Manual Operacional</div>
     <div class="cover-subtitle">SGCD — Sistema de Gestão de Contratação Direta</div>
     <div class="cover-system">Gestão de Processos de Dispensa de Licitação</div>
-    <div class="cover-version">Versão v1.9.0</div>
+    <div class="cover-version">Versão v1.11.1</div>
     <br>
     <div style="font-size:11pt; color:#555; line-height:1.8;">
       Aplicação web single-file para agentes de contratação pública<br>
@@ -251,6 +251,9 @@
   <li>Clique no ícone de <strong>engrenagem (⚙)</strong>, geralmente posicionado na parte inferior da barra lateral</li>
   <li>O painel de Configurações será aberto com as abas disponíveis</li>
 </ol>
+<div class="dica">
+  <strong>Primeiro acesso:</strong> Ao abrir o SGCD pela primeira vez (sem perfil configurado), o sistema detecta automaticamente o primeiro uso e abre as Configurações com uma mensagem de boas-vindas, orientando o preenchimento dos dados antes de criar processos.
+</div>
 
 <h3 id="sec2-2">2.2 Campos do perfil</h3>
 <p>Preencha os seguintes campos na aba <strong>Perfil do Agente</strong>:</p>
@@ -686,11 +689,10 @@
 <p>Cada etapa pode ter um dos seguintes status:</p>
 <ul>
   <li><strong>Pendente:</strong> etapa ainda não iniciada (status inicial)</li>
-  <li><strong>Em andamento:</strong> etapa iniciada mas não concluída</li>
   <li><strong>Concluída:</strong> etapa finalizada com sucesso</li>
   <li><strong>Bloqueada:</strong> etapa que não pode ser avançada por alguma razão (ex.: pendência em etapa anterior, prazo de publicação aguardando)</li>
 </ul>
-<p>Para alterar o status, clique no seletor de status dentro de cada etapa e escolha a opção correspondente. A barra de progresso do processo é atualizada automaticamente.</p>
+<p>Para alterar o status, clique no <strong>ícone de verificação (✔)</strong> no cabeçalho da etapa. Cada clique avança pelo ciclo: <strong>Pendente → Concluída → Bloqueada → Pendente</strong>. A barra de progresso do processo é atualizada automaticamente.</p>
 
 <h3 id="sec7-3">7.3 Anexar documentos</h3>
 <p>Cada etapa possui uma área para anexo de documentos. Para anexar:</p>
@@ -821,6 +823,12 @@
   <li><strong>Arquivo anexado</strong> (PDF ou imagem da certidão)</li>
 </ul>
 <p>O botão <strong>"↗ Acessar"</strong> abre diretamente o portal oficial da certidão no navegador.</p>
+<p>O sistema exibe <strong>alertas visuais de validade</strong> diretamente na lista de certidões:</p>
+<ul>
+  <li><strong>Borda vermelha + badge "⚠ Vencida"</strong> — a data de validade já passou</li>
+  <li><strong>Borda amarela + badge "⚠ Vence em breve"</strong> — a certidão vence nos próximos 30 dias</li>
+</ul>
+<p>Esses alertas ajudam a identificar certidões que precisam ser renovadas antes da formalização do contrato.</p>
 
 <h3 id="sec8b-2">8B.2 Sincronização com o cadastro de fornecedores</h3>
 <p>As datas de emissão e validade preenchidas na Etapa 10 são <strong>automaticamente sincronizadas</strong> com o cadastro do fornecedor vinculado ao processo. Certidões sincronizáveis são identificadas pelo indicador <strong>"⇄ fornecedor"</strong> ao lado dos campos de data.</p>
@@ -886,9 +894,24 @@
     <td>Botão "📄 Despacho de Recusa" no card da proposta recusada (Etapa 9)</td>
   </tr>
   <tr>
+    <td><strong>Despacho de Habilitação</strong></td>
+    <td>Decisão formal de habilitação do fornecedor com lista das certidões verificadas (Art. 69 Lei 14.133/2021)</td>
+    <td>Botão "📄 Despacho de Habilitação" na Etapa 10</td>
+  </tr>
+  <tr>
     <td><strong>Despacho de Inabilitação</strong></td>
     <td>Decisão fundamentada de inabilitação do fornecedor (Art. 69 e 72 Lei 14.133/2021), com lista de certidões pendentes</td>
     <td>Botão "📄 Despacho de Inabilitação" na Etapa 10</td>
+  </tr>
+  <tr>
+    <td><strong>Termo de Adjudicação</strong></td>
+    <td>Formalização da declaração do vencedor pelo agente de contratação (Art. 18, §1º Lei 14.133/2021)</td>
+    <td>Botão "📄 Termo de Adjudicação" na etapa de Adjudicação</td>
+  </tr>
+  <tr>
+    <td><strong>Termo de Homologação</strong></td>
+    <td>Aprovação do procedimento pela autoridade competente / ordenador de despesa (Art. 71 Lei 14.133/2021)</td>
+    <td>Botão "📄 Termo de Homologação" na etapa de Homologação</td>
   </tr>
   <tr>
     <td><strong>Relatório Geral</strong></td>
@@ -1007,8 +1030,19 @@
   <strong>Atenção:</strong> A restauração substitui completamente todos os dados atuais (processos, fornecedores e configurações) pelos dados do arquivo de backup. Essa operação não pode ser desfeita. Faça um backup do estado atual antes de restaurar, se necessário.
 </div>
 
-<h3>Snapshot automático</h3>
-<p>O sistema oferece a opção de <strong>snapshot automático</strong>: uma cópia dos dados é salva automaticamente no próprio navegador (localStorage) ao fechar a aba. Esse recurso serve como proteção adicional, mas não substitui o backup em arquivo. Para ativar, veja a opção correspondente em Configurações.</p>
+<h3>Auto-backup automático</h3>
+<p>O sistema realiza um <strong>auto-backup automático</strong> no localStorage sempre que um processo é salvo. Essa cópia serve como proteção emergencial contra perda acidental de dados, mas não substitui o backup em arquivo JSON. O auto-backup respeita limites de tamanho: se a base de dados ultrapassar 4 MB, o sistema exibe um aviso e não tenta salvar, evitando erros de quota do navegador.</p>
+
+<h3>Factory Reset — Limpeza total de dados</h3>
+<p>A função <strong>Factory Reset</strong> apaga permanentemente <em>todos</em> os dados do sistema: processos, fornecedores, certidões, configurações e brasão. Para evitar exclusões acidentais, o processo exige <strong>três confirmações sucessivas</strong>:</p>
+<ol>
+  <li>Aviso inicial com descrição do que será apagado</li>
+  <li>Confirmação de segurança digitando o nome do órgão configurado</li>
+  <li>Confirmação final irrevogável</li>
+</ol>
+<div class="aviso">
+  <strong>Atenção:</strong> O Factory Reset não pode ser desfeito. Faça um backup completo antes de executar esta operação. A função está disponível em <strong>Configurações → Backup de Dados → Limpar todos os dados</strong>.
+</div>
 
 <hr class="section-divider">
 
@@ -1138,7 +1172,7 @@
 
 <hr class="section-divider">
 <p style="text-align:center; font-size:9pt; color:#888; margin-top:20pt;">
-  SGCD v1.9.0 — Manual Operacional<br>
+  SGCD v1.11.1 — Manual Operacional<br>
   Sistema de Gestão de Contratação Direta<br>
   Lei Federal nº 14.133/2021
 </p>

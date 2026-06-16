@@ -1,6 +1,6 @@
 # SGCD — Sistema de Gestão de Contratação Direta
 
-![Versão](https://img.shields.io/badge/versão-v1.10.7-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-HTML5%20puro-orange) ![Licença](https://img.shields.io/badge/licença-uso%20interno-lightgrey)
+![Versão](https://img.shields.io/badge/versão-v1.11.2-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-HTML5%20puro-orange) ![Licença](https://img.shields.io/badge/licença-uso%20interno-lightgrey)
 
 ## Descrição
 
@@ -37,7 +37,12 @@ Não requer instalação, servidor ou conexão à internet. Todos os dados ficam
 - **Visualização em cards ou tabela** com ordenação por coluna
 - **Tema claro/escuro** configurável
 - **Alertas visuais** para processos parados há mais de 15 dias e prazos vencidos
+- **Alertas de validade de certidões** — badges visuais indicando certidões vencidas (borda vermelha) ou próximas do vencimento em 30 dias (borda amarela) diretamente na lista de certidões
 - **Brasão personalizado** exibido nos documentos gerados
+- **Auto-backup automático** no localStorage ao salvar processos, com proteção contra quota excedida e base de dados muito grande
+- **Factory Reset / Limpeza total** — apaga todos os dados do sistema com confirmação em 3 etapas de segurança (acessível em Configurações)
+- **Detecção de primeiro uso** — ao abrir o sistema sem perfil configurado, direciona automaticamente para as Configurações com mensagem de boas-vindas
+- **Método de cotação por processo** — cada processo pode ter seu próprio método de cálculo (média ou mediana) independente da configuração global
 - **Código de autenticidade** único no rodapé de cada documento gerado
 - **Reordenação de etapas** por arrastar e soltar
 - **Barra de progresso** por processo
@@ -113,6 +118,7 @@ Todos os documentos abrem em janela separada com botão "🖨 Imprimir / Salvar 
   - Art. 75 — hipóteses de dispensa de licitação (incisos I a XVI)
   - Art. 94 — publicação do contrato no PNCP
   - Art. 95 — instrumento contratual
+- **Decreto nº 11.317/2022** — atualização dos limites de valor para dispensa (Art. 75, I e II)
 - **IN SEGES nº 65/2021** — pesquisa de preços para aquisições de bens e contratação de serviços
 - **PNCP** — Portal Nacional de Contratações Públicas (prazo mínimo de 3 dias úteis)
 
