@@ -159,7 +159,7 @@
   .process-card .pc-body { padding: 14px 16px; }
   .process-card .pc-right { padding: 14px 16px 14px 0; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 8px; }
   .process-card .num { font-size: .72rem; font-weight: 600; color: var(--brand); text-transform: uppercase; letter-spacing: .3px; }
-  .process-card .title { font-weight: 600; font-size: .95rem; margin: 2px 0 4px; display: flex; align-items: baseline; gap: 6px; }
+  .process-card .title { font-weight: 600; font-size: .95rem; margin: 2px 0 4px; display: flex; align-items: baseline; gap: 6px; text-align: justify; }
   .process-card .title-text[contenteditable="true"] { outline: 2px solid var(--brand); border-radius: 2px; padding: 0 2px; cursor: text; }
   .title-edit-btn { opacity: 0; border: none; background: none; cursor: pointer; color: var(--gray-400); padding: 0; font-size: .8rem; flex-shrink: 0; line-height: 1; transition: opacity .15s, color .15s; }
   .process-card:hover .title-edit-btn { opacity: 1; }
@@ -227,7 +227,7 @@
     cursor: pointer; margin-bottom: 10px; background: none; border: none; padding: 0;
   }
   .detail-header .back:hover { text-decoration: underline; }
-  .detail-title { font-size: 1.1rem; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; }
+  .detail-title { font-size: 1.1rem; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; text-align: justify; }
   .detail-num   { font-size: .8rem; color: var(--brand); font-weight: 600; margin-bottom: 4px; }
   .detail-meta  { font-size: .8rem; color: var(--gray-500); margin-top: 4px; display: flex; gap: 16px; flex-wrap: wrap; }
 
@@ -1332,7 +1332,7 @@ const ICONS = {
 // DB — IndexedDB wrapper
 // ══════════════════════════════════════════════════════════════
 let db;
-const SGCD_VERSION = '1.11.2';
+const SGCD_VERSION = '1.11.3';
 document.title = `SGCD v${SGCD_VERSION}`;
 const DB_NAME = 'dispensaDB', DB_VER = 3;
 
@@ -1646,6 +1646,11 @@ const STEPS = [
     fields: ['responsavel','data_conclusao','fundamento','observacoes']
   },
   {
+    name: 'Parecer Jurídico da Procuradoria-Geral',
+    sub: 'Análise jurídica da legalidade e adequação da contratação — Art. 53, Lei 14.133/2021',
+    fields: ['responsavel','data_conclusao','num_parecer','observacoes']
+  },
+  {
     name: 'Autorização da Autoridade Competente',
     sub: 'Despacho de autorização do ordenador de despesa',
     fields: ['responsavel','data_conclusao','autoridade','observacoes'],
@@ -1711,6 +1716,7 @@ const FIELD_LABELS = {
   num_cotacoes: 'Nº de cotações obtidas',
   valor_estimado: 'Valor estimado (R$)',
   fundamento: 'Fundamento legal específico',
+  num_parecer: 'Nº do Parecer Jurídico',
   autoridade: 'Autoridade responsável',
   data_publicacao: 'Data de publicação',
   data_encerramento: 'Data de encerramento',
@@ -4147,6 +4153,17 @@ async function _syncCertToForn(certId, certData) {
 }
 
 // Migra IDs antigos do CERT_TIPOS para os IDs unificados do CERTIDOES
+async function _migrarStepsParecer() {
+  // Insere a etapa "Parecer Jurídico" (índice 5) em processos criados antes da v1.11.3
+  const procs = await dbGetAll('processes');
+  for (const p of procs) {
+    if (!p.steps || p.steps.length >= STEPS.length) continue;
+    const emptyStep = { status: 'pending', fields: {}, completedAt: null };
+    p.steps.splice(5, 0, emptyStep);
+    await dbPut('processes', p);
+  }
+}
+
 async function _migrarCertidoesFornecedores() {
   const forns = await dbGetAll('fornecedores');
   for (const forn of forns) {
@@ -6174,8 +6191,8 @@ function gerarAvisoDispensa() {
   <tr><td class="lbl">Fundamentação Legal</td><td>${blank(v(4,'fundamento'))}</td></tr>
   <tr><td class="lbl">Valor Estimado</td><td>${blank(v(3,'valor_estimado'))}</td></tr>
   <tr><td class="lbl">Unidade Requisitante</td><td>${blank(proc.unidade)}</td></tr>
-  <tr><td class="lbl">Prazo para Propostas</td><td>${blank(v(6,'prazo_propostas') ? new Date(v(6,'prazo_propostas')+'T00:00:00').toLocaleDateString('pt-BR') : '')}</td></tr>
-  <tr><td class="lbl">Endereço / E-mail para Envio</td><td>${blank(v(6,'endereco_envio'))}</td></tr>
+  <tr><td class="lbl">Prazo para Propostas</td><td>${blank(v(7,'prazo_propostas') ? new Date(v(7,'prazo_propostas')+'T00:00:00').toLocaleDateString('pt-BR') : '')}</td></tr>
+  <tr><td class="lbl">Endereço / E-mail para Envio</td><td>${blank(v(7,'endereco_envio'))}</td></tr>
 </table>
 
 <div class="section">
@@ -6219,7 +6236,7 @@ function gerarAvisoDispensa() {
 function gerarExtratoContrato() {
   const proc = currentProcess;
   const u = getUser();
-  const data = proc.steps[13]?.fields || {};
+  const data = proc.steps[14]?.fields || {};
   const hoje = new Date().toLocaleDateString('pt-BR', { day:'numeric', month:'long', year:'numeric' });
   const blank = txt => txt || '_'.repeat(40);
   const forn = proc.fornecedor;
@@ -6466,15 +6483,15 @@ function gerarAta() {
   })();
   const cotacoesValidas = cotacoes.filter(c => c.situacao === 'valida' || !c.situacao);
 
-  // Propostas (step 9, idx 8)
+  // Propostas (step 10, idx 9)
   const propostas = (() => {
-    try { return JSON.parse(f(8)._propostas || '[]'); } catch { return []; }
+    try { return JSON.parse(f(9)._propostas || '[]'); } catch { return []; }
   })();
   const vencedora = propostas.find(x => x.situacao === 'vencedora') || propostas.find(x => x.situacao === 'aceita') || {};
 
-  // Certidões (step 10, idx 9)
+  // Certidões (step 11, idx 10)
   const certSaved = (() => {
-    try { return JSON.parse(f(9)._certidoes || '{}'); } catch { return {}; }
+    try { return JSON.parse(f(10)._certidoes || '{}'); } catch { return {}; }
   })();
   const engenharia = !!certSaved._engenharia;
   const certAplicaveis = CERTIDOES.filter(c => !c.engenharia || engenharia);
@@ -6579,7 +6596,7 @@ function gerarAta() {
 
 <div class="secao">
   <div class="secao-titulo">II — Abertura da Sessão</div>
-  <p>Aos ${hoje}, o(a) ${u.cargo || 'Agente de Contratação'} ${u.nome || blank(v(5,'responsavel'))}${u.matricula ? ', matrícula nº ' + u.matricula + ',' : ''} designado(a) para conduzir o procedimento de Dispensa de Licitação nº ${blank(p.num)}, declara aberta a sessão pública, dando continuidade à análise do processo administrativo referente à contratação de <strong>${blank(p.objeto)}</strong>, com fundamento no art. 75 da Lei nº 14.133, de 1º de abril de 2021${p.legal ? ' — ' + p.legal : ''}.</p>
+  <p>Aos ${hoje}, o(a) ${u.cargo || 'Agente de Contratação'} ${u.nome || blank(v(6,'responsavel'))}${u.matricula ? ', matrícula nº ' + u.matricula + ',' : ''} designado(a) para conduzir o procedimento de Dispensa de Licitação nº ${blank(p.num)}, declara aberta a sessão pública, dando continuidade à análise do processo administrativo referente à contratação de <strong>${blank(p.objeto)}</strong>, com fundamento no art. 75 da Lei nº 14.133, de 1º de abril de 2021${p.legal ? ' — ' + p.legal : ''}.</p>
 </div>
 
 <div class="secao">
@@ -6589,9 +6606,10 @@ function gerarAta() {
   <div class="dado"><strong>Termo de Referência (TR):</strong> concluído em ${d(v(2,'data_conclusao'))} — ${blank(v(2,'responsavel'))}</div>
   <div class="dado"><strong>Pesquisa de Preços / Estimativa do Valor:</strong> ${cotacoesValidas.length} cotação(ões) válida(s) — concluída em ${d(v(3,'data_conclusao'))} — valor de referência: ${v(3,'valor_estimado') ? fmtMoney(v(3,'valor_estimado')) : '_'.repeat(20)}</div>
   <div class="dado"><strong>Enquadramento Legal:</strong> ${blank(v(4,'fundamento'))} — concluído em ${d(v(4,'data_conclusao'))}</div>
-  <div class="dado"><strong>Autorização da Autoridade Competente:</strong> ${blank(v(5,'autoridade'))} em ${d(v(5,'data_conclusao'))}</div>
-  <div class="dado"><strong>Aviso de Dispensa elaborado em:</strong> ${d(v(6,'data_conclusao'))}</div>
-  <div class="dado"><strong>Publicação no PNCP:</strong> de ${d(v(7,'data_publicacao'))} a ${d(v(7,'data_encerramento'))}${v(7,'link_pncp') ? ' — ' + v(7,'link_pncp') : ''}</div>
+  <div class="dado"><strong>Parecer Jurídico:</strong> ${blank(v(5,'num_parecer'))} — concluído em ${d(v(5,'data_conclusao'))}</div>
+  <div class="dado"><strong>Autorização da Autoridade Competente:</strong> ${blank(v(6,'autoridade'))} em ${d(v(6,'data_conclusao'))}</div>
+  <div class="dado"><strong>Aviso de Dispensa elaborado em:</strong> ${d(v(7,'data_conclusao'))}</div>
+  <div class="dado"><strong>Publicação no PNCP:</strong> de ${d(v(8,'data_publicacao'))} a ${d(v(8,'data_encerramento'))}${v(8,'link_pncp') ? ' — ' + v(8,'link_pncp') : ''}</div>
 </div>
 
 <div class="secao">
@@ -6605,39 +6623,39 @@ function gerarAta() {
   <div class="secao-titulo">V — Propostas Recebidas</div>
   <p>Encerrado o prazo de recebimento, foram analisadas as seguintes propostas:</p>
   ${propostasHtml}
-  ${v(8,'observacoes') ? `<p><strong>Observações:</strong> ${v(8,'observacoes')}</p>` : ''}
+  ${v(9,'observacoes') ? `<p><strong>Observações:</strong> ${v(9,'observacoes')}</p>` : ''}
 </div>
 
 <div class="secao">
   <div class="secao-titulo">VI — Habilitação do Fornecedor</div>
   <p>O(A) Agente de Contratação procedeu à verificação da regularidade fiscal, trabalhista e jurídica do fornecedor com menor preço:</p>
-  <div class="dado"><strong>Fornecedor:</strong> ${blank(v(9,'fornecedor'))}</div>
-  <div class="dado"><strong>CNPJ:</strong> ${blank(currentProcess?.fornecedor?.cnpj || v(9,'cnpj'))}</div>
+  <div class="dado"><strong>Fornecedor:</strong> ${blank(v(10,'fornecedor'))}</div>
+  <div class="dado"><strong>CNPJ:</strong> ${blank(currentProcess?.fornecedor?.cnpj || v(10,'cnpj'))}</div>
   <br>
   <table>
     <thead><tr><th>Certidão</th><th>Descrição</th><th>Situação</th></tr></thead>
     <tbody>${certHtml}</tbody>
   </table>
-  ${v(9,'observacoes') ? `<p style="margin-top:8pt"><strong>Observações:</strong> ${v(9,'observacoes')}</p>` : ''}
+  ${v(10,'observacoes') ? `<p style="margin-top:8pt"><strong>Observações:</strong> ${v(10,'observacoes')}</p>` : ''}
   <div class="resultado-hab ${todasObtidas ? 'habilitado' : 'pendente'}">${resultadoHab}</div>
 </div>
 
 <div class="secao">
   <div class="secao-titulo">VII — Adjudicação</div>
   <p>Com base na análise das propostas e na verificação da habilitação, o(a) Agente de Contratação adjudica o objeto ao seguinte fornecedor:</p>
-  <div class="dado"><strong>Fornecedor:</strong> ${blank(v(9,'fornecedor') || vencedora.fornecedor)}</div>
+  <div class="dado"><strong>Fornecedor:</strong> ${blank(v(10,'fornecedor') || vencedora.fornecedor)}</div>
   <div class="dado"><strong>CNPJ:</strong> ${blank(vencedora.cnpj || currentProcess?.fornecedor?.cnpj)}</div>
-  <div class="dado"><strong>Valor Adjudicado:</strong> ${v(10,'valor_adjudicado') ? fmtMoney(v(10,'valor_adjudicado')) : '_'.repeat(20)}</div>
-  <div class="dado"><strong>Data:</strong> ${d(v(10,'data_conclusao'))}</div>
-  ${v(10,'observacoes') ? `<p><strong>Observações:</strong> ${v(10,'observacoes')}</p>` : ''}
+  <div class="dado"><strong>Valor Adjudicado:</strong> ${v(11,'valor_adjudicado') ? fmtMoney(v(11,'valor_adjudicado')) : '_'.repeat(20)}</div>
+  <div class="dado"><strong>Data:</strong> ${d(v(11,'data_conclusao'))}</div>
+  ${v(11,'observacoes') ? `<p><strong>Observações:</strong> ${v(11,'observacoes')}</p>` : ''}
 </div>
 
 <div class="secao">
   <div class="secao-titulo">VIII — Homologação</div>
   <p>A autoridade competente homologa o procedimento de Dispensa de Licitação nº ${blank(p.num)}, declarando válidos todos os atos praticados.</p>
-  <div class="dado"><strong>Autoridade:</strong> ${blank(v(11,'autoridade'))}</div>
-  <div class="dado"><strong>Data:</strong> ${d(v(11,'data_conclusao'))}</div>
-  ${v(11,'observacoes') ? `<p><strong>Observações:</strong> ${v(11,'observacoes')}</p>` : ''}
+  <div class="dado"><strong>Autoridade:</strong> ${blank(v(12,'autoridade'))}</div>
+  <div class="dado"><strong>Data:</strong> ${d(v(12,'data_conclusao'))}</div>
+  ${v(12,'observacoes') ? `<p><strong>Observações:</strong> ${v(12,'observacoes')}</p>` : ''}
 </div>
 
 <div class="secao">
@@ -6648,13 +6666,13 @@ function gerarAta() {
 
 <div class="assinaturas">
   <div class="assinatura">
-    <div class="linha"><strong>${u.nome || v(5,'responsavel') || ''}</strong><br>${u.cargo || 'Agente de Contratação'}${u.matricula ? '<br>Matrícula: ' + u.matricula : ''}</div>
+    <div class="linha"><strong>${u.nome || v(6,'responsavel') || ''}</strong><br>${u.cargo || 'Agente de Contratação'}${u.matricula ? '<br>Matrícula: ' + u.matricula : ''}</div>
   </div>
   <div class="assinatura">
-    <div class="linha"><strong>${u.aut_nome || v(11,'autoridade') || v(5,'autoridade') || ''}</strong><br>${u.aut_cargo || 'Autoridade Competente'}</div>
+    <div class="linha"><strong>${u.aut_nome || v(12,'autoridade') || v(6,'autoridade') || ''}</strong><br>${u.aut_cargo || 'Autoridade Competente'}</div>
   </div>
   <div class="assinatura">
-    <div class="linha"><strong>${v(9,'fornecedor') || ''}</strong><br>Representante do Fornecedor</div>
+    <div class="linha"><strong>${v(10,'fornecedor') || ''}</strong><br>Representante do Fornecedor</div>
   </div>
 </div>
 
@@ -7135,6 +7153,7 @@ document.addEventListener('keydown', e => {
 });
 
 initDB()
+  .then(() => _migrarStepsParecer().catch(console.error))
   .then(() => _migrarCertidoesFornecedores().catch(console.error))
   .then(() => loadProcesses())
   .then(() => {
