@@ -5,6 +5,16 @@
 
 ---
 
+## [1.11.3] — 2026-06-17
+
+### Adicionado
+- **Etapa 6 — Parecer Jurídico da Procuradoria-Geral** — nova etapa inserida entre Enquadramento Legal e Autorização da Autoridade Competente, conforme Art. 53 da Lei 14.133/2021. Campo "Nº do Parecer Jurídico" disponível. Todos os índices de etapas subsequentes foram atualizados nos geradores de documentos (Aviso de Dispensa, Ata de Sessão, Extrato de Contrato). Migração automática insere a etapa vazia em processos existentes sem necessidade de ação manual.
+
+### Melhorado
+- **Texto do objeto justificado nos cards do dashboard e na tela de detalhe do processo**
+
+---
+
 ## [1.11.2] — 2026-06-15
 
 ### Adicionado
