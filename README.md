@@ -1,6 +1,6 @@
 # SGCD — Sistema de Gestão de Contratação Direta
 
-![Versão](https://img.shields.io/badge/versão-v1.11.3-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-HTML5%20puro-orange) ![Licença](https://img.shields.io/badge/licença-uso%20interno-lightgrey)
+![Versão](https://img.shields.io/badge/versão-v1.11.8-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-HTML5%20puro-orange) ![Licença](https://img.shields.io/badge/licença-uso%20interno-lightgrey)
 
 ## Descrição
 
@@ -12,7 +12,7 @@ Não requer instalação, servidor ou conexão à internet. Todos os dados ficam
 
 ## Funcionalidades Principais
 
-- **Checklist estruturado com 15 etapas** do processo de Dispensa de Licitação, cada uma com fundamento legal e orientação de preenchimento
+- **Checklist estruturado com 16 etapas** do processo de Dispensa de Licitação, cada uma com fundamento legal e orientação de preenchimento
 - **Geração de documentos** prontos para assinatura e publicação: Autorização de Abertura, Aviso de Dispensa, Extrato para Diário Oficial, Ata de Sessão, Mapa de Preços e Extrato de Contrato
 - **Relatório geral** de processos com filtros por status, unidade, período e faixa de valor
 - **Cadastro de fornecedores** com consulta automática de CNPJ via BrasilAPI e controle de certidões
@@ -93,6 +93,7 @@ Essas informações serão usadas automaticamente em todos os documentos gerados
 | **Extrato de Publicação** | Texto formatado para publicação no Diário Oficial (Art. 54 §1º) |
 | **Ata de Sessão** | Documento completo do processo com propostas, certidões e espaço para assinaturas |
 | **Mapa de Preços** | Tabela comparativa de propostas recebidas (Etapa 10) |
+| **Justificativa de Enquadramento Legal** | Declaração formal do enquadramento na hipótese de dispensa, com referência ao inciso do Art. 75 aplicável (Art. 72, III Lei 14.133/2021) |
 | **Aviso de Dispensa** | Aviso formatado para publicação no PNCP com objeto, valor, condições e critério de seleção (Art. 75, §3º) |
 | **Despacho de Recusa / Desclassificação** | Decisão fundamentada de recusa de proposta (Art. 59 Lei 14.133/2021) |
 | **Despacho de Habilitação** | Decisão formal de habilitação do fornecedor com lista das certidões verificadas (Art. 69 Lei 14.133/2021) |

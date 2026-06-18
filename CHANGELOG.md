@@ -5,6 +5,54 @@
 
 ---
 
+## [1.11.8] — 2026-06-17
+
+### Melhorado
+- **Etapa 9 renomeada para "Publicação no PNCP / Diário Oficial"** — subtítulo atualizado com referência ao Art. 54, §1º além do Art. 75, §3º
+- **Extrato para Diário Oficial movido para a Etapa 9** — o botão "Gerar Extrato para Diário Oficial" saiu do cabeçalho do processo e passou a aparecer dentro da etapa de publicação, que é o momento correto de sua geração (publicação simultânea PNCP + Diário Oficial)
+
+---
+
+## [1.11.7] — 2026-06-17
+
+### Melhorado
+- **Aviso de Dispensa — ajustes de texto e campos configuráveis:**
+  - Parágrafo de abertura inclui agora "e no Termo de Referência" ao final
+  - "Das Condições de Participação" — participação condicionada ao Aviso **e ao Termo de Referência**
+  - Desclassificação (iii) ampliada para "neste Aviso e no Termo de Referência"
+  - Referência ao TR disponível agora inclui o site oficial do município (quando configurado)
+  - Divulgação do resultado agora inclui URLs do site oficial e do Diário Oficial Eletrônico (quando configurados)
+- **Configurações — novos campos de publicidade digital:**
+  - **Site Oficial** (`site_oficial`) — URL do portal da transparência/prefeitura
+  - **URL do Diário Oficial Eletrônico** (`diario_url`) — usados automaticamente no Aviso de Dispensa
+
+---
+
+## [1.11.6] — 2026-06-17
+
+### Melhorado
+- **Aviso de Dispensa de Licitação — conteúdo jurídico aprimorado** com base no modelo em uso pelo Município de Orindiúva e na Lei 14.133/2021:
+  - **Parágrafo de abertura** ("torna público") com referência explícita ao §3º do Art. 75 e à solicitação de "propostas adicionais"
+  - **"Da Participação"** — adicionada cláusula de que não haverá sessão pública presencial nem eletrônica; canal de esclarecimentos e acesso ao TR
+  - **"Do Critério de Julgamento e da Proposta Mais Vantajosa"** (nova seção, substituindo "Do Critério de Seleção") — texto juridicamente robusto declarando que o menor preço por si só não é suficiente; propostas que não atendam às especificações do TR são desclassificadas (Art. 59); inciso do Art. 33 referenciado conforme critério selecionado; texto da "proposta mais vantajosa" adaptado dinamicamente para cada critério (menor preço, maior desconto, melhor técnica, técnica e preço, maior retorno econômico)
+  - **"Do Resultado e Da Habilitação"** (nova seção) — convocação da proposta mais vantajosa em 2 dias úteis (Art. 62) e divulgação do resultado nos meios oficiais
+
+---
+
+## [1.11.5] — 2026-06-17
+
+### Adicionado
+- **Documento: Justificativa de Enquadramento Legal (Etapa 5)** — novo documento gerado na etapa de Enquadramento Legal, conforme exigência do Art. 72, III da Lei 14.133/2021 ("justificativa para a contratação direta"). O documento inclui tabela de identificação do processo, corpo jurídico declarando o enquadramento no inciso do Art. 75 aplicável, campo de observações complementares, referência expressa à base legal (Art. 72, III) e bloco de assinatura do Agente de Contratação. O texto é gerado automaticamente com os dados do processo, fundamento legal selecionado e responsável preenchido na etapa.
+
+---
+
+## [1.11.4] — 2026-06-17
+
+### Melhorado
+- **Texto do objeto justificado em todos os contextos** — `text-align: justify` aplicado em todas as ocorrências do objeto: impressão do processo (PDF), Relatório Geral, Mapa de Preços, tabela de processos (visão lista), Ata de Sessão e todos os documentos gerados com tabelas de campos
+
+---
+
 ## [1.11.3] — 2026-06-17
 
 ### Adicionado

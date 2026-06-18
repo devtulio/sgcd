@@ -597,7 +597,7 @@
     margin-bottom: 4px; cursor: pointer; }
   .frac-group-item:hover { border-color: var(--brand); }
   .frac-group-item .fgi-num { font-size: .68rem; color: var(--brand); font-weight: 600; }
-  .frac-group-item .fgi-obj { font-size: .75rem; font-weight: 500; }
+  .frac-group-item .fgi-obj { font-size: .75rem; font-weight: 500; text-align: justify; }
   .frac-group-item .fgi-val { font-size: .72rem; color: var(--gray-500); white-space: nowrap; }
   .frac-total { display: flex; justify-content: space-between; padding: 6px 8px; border-top: 1px solid var(--gray-200);
     margin-top: 4px; font-weight: 700; font-size: .8rem; }
@@ -975,7 +975,6 @@
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn btn-outline btn-sm" onclick="printProcess()">&#128438; Imprimir</button>
-<button class="btn btn-outline btn-sm" onclick="gerarExtrato()" style="border-color:var(--aubergine-mid);color:var(--aubergine-mid)">&#128240; Extrato</button>
         <button class="btn btn-outline btn-sm" onclick="gerarAta()" style="border-color:var(--aubergine-mid);color:var(--aubergine-mid)">&#128196; Gerar Ata</button>
         <button class="btn btn-outline btn-sm" onclick="verificarConformidade()" style="border-color:#7c3aed;color:#7c3aed">✔ Conformidade</button>
         <button class="btn btn-outline btn-sm" onclick="duplicarProcess()" title="Criar cópia deste processo">⎘ Duplicar</button>
@@ -1109,6 +1108,10 @@
           <input type="text" id="s-orgao" placeholder="Ex: Prefeitura Municipal de Orindiúva"></div>
         <div class="info-field"><label>Município / UF</label>
           <input type="text" id="s-municipio" placeholder="Ex: Orindiúva/SP"></div>
+        <div class="info-field"><label>Site Oficial</label>
+          <input type="url" id="s-site-oficial" placeholder="Ex: https://orindiuva.sp.gov.br/"></div>
+        <div class="info-field"><label>URL do Diário Oficial Eletrônico</label>
+          <input type="url" id="s-diario-url" placeholder="Ex: https://imprensaoficialmunicipal.com.br/orindiuva"></div>
       </fieldset>
 
       <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
@@ -1332,7 +1335,7 @@ const ICONS = {
 // DB — IndexedDB wrapper
 // ══════════════════════════════════════════════════════════════
 let db;
-const SGCD_VERSION = '1.11.3';
+const SGCD_VERSION = '1.11.8';
 document.title = `SGCD v${SGCD_VERSION}`;
 const DB_NAME = 'dispensaDB', DB_VER = 3;
 
@@ -1643,7 +1646,8 @@ const STEPS = [
   {
     name: 'Enquadramento Legal',
     sub: 'Justificativa da hipótese de dispensa — Art. 75',
-    fields: ['responsavel','data_conclusao','fundamento','observacoes']
+    fields: ['responsavel','data_conclusao','fundamento','observacoes'],
+    enquadramentoLegal: true
   },
   {
     name: 'Parecer Jurídico da Procuradoria-Geral',
@@ -1663,9 +1667,10 @@ const STEPS = [
     avisoDispensa: true
   },
   {
-    name: 'Publicação no PNCP',
-    sub: 'Prazo mínimo de 3 dias úteis — Art. 75, §3º',
-    fields: ['responsavel','data_publicacao','data_encerramento','link_pncp','observacoes']
+    name: 'Publicação no PNCP / Diário Oficial',
+    sub: 'Prazo mínimo de 3 dias úteis — Art. 75, §3º e Art. 54, §1º',
+    fields: ['responsavel','data_publicacao','data_encerramento','link_pncp','observacoes'],
+    extrato: true
   },
   {
     name: 'Recebimento e Análise de Propostas',
@@ -2610,8 +2615,8 @@ async function gerarRelatorioAuditoria() {
   .doc-title .sub { font-size: 10pt; color: #444; margin-top: 4pt; }
   .meta { font-size: 9pt; color: #555; margin-bottom: 10pt; text-align: center; }
   table { width: 100%; border-collapse: collapse; margin-top: 8pt; font-size: 9pt; }
-  th { background: #1a1a2e; color: #fff; padding: 5pt 7pt; text-align: left; font-weight: 600; }
-  td { padding: 4pt 7pt; vertical-align: top; border-bottom: 1px solid #e0e0e0; }
+  th { background: #1a1a2e; color: #fff; padding: 5pt 7pt; text-align: center; vertical-align: middle; font-weight: 700; }
+  td { padding: 4pt 7pt; vertical-align: middle; font-size: 8.5pt; border-bottom: 1px solid #e0e0e0; }
   tr:nth-child(even) td { background: #f7f7f7; }
   tr:hover td { background: #fafafa; }
   .footer-line { margin-top: 30pt; border-top: 1px solid #ccc; padding-top: 5pt; text-align: center; font-size: 8pt; color: #666; }
@@ -3908,6 +3913,12 @@ function renderStepFields(i, step, data, certFileMap = {}) {
   if (step.cotacoes) {
     html += renderCotacoesSection(i, data);
   }
+  if (step.enquadramentoLegal) {
+    html += `<div style="margin-top:12px"><button class="btn btn-outline btn-sm" onclick="gerarEnquadramentoLegal()">📄 Gerar Justificativa de Enquadramento Legal</button></div>`;
+  }
+  if (step.extrato) {
+    html += `<div style="margin-top:12px"><button class="btn btn-outline btn-sm" onclick="gerarExtrato()">📄 Gerar Extrato para Diário Oficial</button></div>`;
+  }
   if (step.autorizacao) {
     html += `<div style="margin-top:12px"><button class="btn btn-outline btn-sm" onclick="gerarAutorizacao()">📄 Gerar Autorização</button></div>`;
   }
@@ -4868,7 +4879,7 @@ function printProcess() {
 </style></head><body>
 <h1>${escHtml(u.orgao || '')}</h1>
 <div class="num">${escHtml(numLine)}</div>
-<div style="font-size:13pt;font-weight:700;margin-bottom:10px">${escHtml(p.objeto)}</div>
+<div style="font-size:13pt;font-weight:700;margin-bottom:10px;text-align:justify">${escHtml(p.objeto)}</div>
 <div class="info-grid">
   ${p.legal   ? `<div class="row"><span class="lbl">Fundamentação:</span> ${escHtml(p.legal)}</div>` : ''}
   ${p.valor   ? `<div class="row"><span class="lbl">Valor estimado:</span> ${fmtMoney(p.valor)}</div>` : ''}
@@ -4944,7 +4955,7 @@ function gerarRelatorio() {
         <td>${p.num_proc || p.num_dl
           ? [p.num_proc && `PA ${escHtml(p.num_proc)}`, p.num_dl && `DL ${escHtml(p.num_dl)}`].filter(Boolean).join('<br>')
           : escHtml(p.num || '—')}</td>
-        <td>${escHtml(p.objeto)}</td>
+        <td style="text-align:justify">${escHtml(p.objeto)}</td>
         <td>${escHtml(p.unidade || '—')}</td>
         <td>${escHtml(fn)}</td>
         <td style="text-align:right">${p.valor ? fmtMoney(p.valor) : '—'}</td>
@@ -4979,8 +4990,8 @@ function gerarRelatorio() {
   .doc-title .sub { font-size: 10pt; color: #444; margin-top: 4pt; }
   .meta { font-size: 9pt; color: #555; margin-bottom: 10pt; text-align: center; }
   table { width: 100%; border-collapse: collapse; margin-top: 8pt; font-size: 9.5pt; }
-  th { background: #1a1a2e; color: #fff; padding: 5pt 7pt; text-align: left; font-weight: 600; }
-  td { padding: 4pt 7pt; vertical-align: top; border-bottom: 1px solid #e0e0e0; }
+  th { background: #1a1a2e; color: #fff; padding: 5pt 7pt; text-align: center; vertical-align: middle; font-weight: 700; }
+  td { padding: 4pt 7pt; vertical-align: middle; font-size: 9pt; border-bottom: 1px solid #e0e0e0; }
   tr.group-header td { background: #e8eaf0; font-weight: 700; font-size: 9.5pt; padding: 5pt 7pt; border-bottom: none; border-top: 1px solid #aaa; }
   tr.subtotal td { background: #f0f4ff; font-weight: 600; }
   tr:hover td { background: #fafafa; }
@@ -5098,8 +5109,8 @@ async function gerarRelatorioFornecedores() {
   .doc-title .sub { font-size: 10pt; color: #444; margin-top: 4pt; }
   .meta { font-size: 9pt; color: #555; margin-bottom: 10pt; text-align: center; }
   table { width: 100%; border-collapse: collapse; margin-top: 8pt; font-size: 10pt; }
-  th { background: #1a1a2e; color: #fff; padding: 5pt 7pt; text-align: left; font-weight: 600; font-size: 9.5pt; }
-  td { padding: 4pt 7pt; vertical-align: top; border-bottom: 1px solid #e8e8e8; }
+  th { background: #1a1a2e; color: #fff; padding: 5pt 7pt; text-align: center; vertical-align: middle; font-weight: 700; font-size: 9.5pt; }
+  td { padding: 4pt 7pt; vertical-align: middle; font-size: 9pt; border-bottom: 1px solid #e8e8e8; }
   .forn-row td { border-bottom: none; }
   .total-row { margin-top: 12pt; text-align: right; font-weight: 700; font-size: 11pt; border-top: 2px solid #000; padding-top: 6pt; }
   .footer-line { margin-top: 30pt; border-top: 1px solid #ccc; padding-top: 5pt; text-align: center; font-size: 8pt; color: #666; }
@@ -5242,8 +5253,8 @@ function gerarMapaPrecos(stepIdx) {
   .doc-title h3{font-size:13pt;font-weight:700;text-transform:uppercase}
   .doc-title .sub{font-size:10pt;color:#333;margin-top:3pt}
   table{width:100%;border-collapse:collapse;margin:10pt 0;font-size:10pt}
-  th{background:#1a1a2e;color:#fff;padding:6pt 8pt;text-align:left;font-weight:600}
-  td{padding:5pt 8pt;border:1px solid #ccc;vertical-align:top}
+  th{background:#1a1a2e;color:#fff;padding:6pt 8pt;text-align:center;vertical-align:middle;font-weight:700}
+  td{padding:5pt 8pt;border:1px solid #ccc;vertical-align:middle;font-size:9pt}
   .ref-box{background:#f0fdf4;border:1.5px solid #16a34a;border-radius:4pt;padding:8pt 12pt;margin:10pt 0;font-size:11pt}
   .ref-box .venc{font-weight:700;color:#16a34a;font-size:12pt}
   .city-date{text-align:right;margin-top:20pt;font-size:11pt}
@@ -5262,7 +5273,7 @@ function gerarMapaPrecos(stepIdx) {
 </div>
 <div class="doc-title">
   <h3>Mapa de Preços — Pesquisa de Mercado</h3>
-  <div class="sub">${escHtml(numLine)} — ${escHtml(p.objeto)}</div>
+  <div class="sub" style="text-align:justify">${escHtml(numLine)} — ${escHtml(p.objeto)}</div>
 </div>
 <table>
   <thead><tr><th style="width:30pt">#</th><th>Fornecedor / CNPJ</th><th style="width:90pt;text-align:right">Valor Proposto</th><th style="width:65pt;text-align:center">Data</th><th style="width:65pt;text-align:center">Validade</th><th style="width:120pt">Situação</th></tr></thead>
@@ -5449,7 +5460,7 @@ function renderDashTable(lista) {
     const prazoHtml = p.prazo ? `<span style="color:${new Date(p.prazo)<new Date()?'var(--danger)':''}">${new Date(p.prazo).toLocaleDateString('pt-BR')}</span>` : '—';
     return `<tr onclick="openProcess('${p.id}')">
       <td style="font-size:.72rem;font-weight:600;color:var(--brand);line-height:1.5">${numHtml}</td>
-      <td>${escHtml(p.objeto)}</td>
+      <td style="text-align:justify">${escHtml(p.objeto)}</td>
       <td>${escHtml(p.unidade||'—')}</td>
       <td>${escHtml(fn||'—')}</td>
       <td style="text-align:right">${p.valor?fmtMoney(p.valor):'—'}</td>
@@ -5564,7 +5575,7 @@ function gerarDespachoRecusa(stepIdx, pi) {
   .section ul li { text-align: justify; margin-bottom: 4pt; }
   .field-table { width: 100%; border-collapse: collapse; margin: 14pt 0; }
   .field-table td { padding: 5pt 8pt; border: 1px solid #333; font-size: 11pt; vertical-align: top; }
-  .field-table td.lbl { font-weight: 700; text-transform: uppercase; font-size: 9pt; letter-spacing: .4px; width: 38%; background: #f5f5f5; }
+  .field-table td.lbl { font-weight: 700; text-transform: uppercase; font-size: 9pt; letter-spacing: .4px; width: 38%; background: #f5f5f5; text-align: center; vertical-align: middle; }
   .despacho { background: #f9f9f9; border-left: 3px solid #555; padding: 10pt 14pt; margin: 16pt 0; font-size: 11pt; line-height: 1.8; text-align: justify; }
   .motivo-box { border: 1px solid #999; border-radius: 2px; padding: 10pt 14pt; margin: 8pt 0 14pt; font-size: 11pt; line-height: 1.7; min-height: 60pt; }
   .signature-block { margin-top: 40pt; }
@@ -5701,7 +5712,7 @@ function gerarDespachoInabilitacao(stepIdx) {
   .section ul li { text-align: justify; margin-bottom: 4pt; }
   .field-table { width: 100%; border-collapse: collapse; margin: 14pt 0; }
   .field-table td { padding: 5pt 8pt; border: 1px solid #333; font-size: 11pt; vertical-align: top; }
-  .field-table td.lbl { font-weight: 700; text-transform: uppercase; font-size: 9pt; letter-spacing: .4px; width: 38%; background: #f5f5f5; }
+  .field-table td.lbl { font-weight: 700; text-transform: uppercase; font-size: 9pt; letter-spacing: .4px; width: 38%; background: #f5f5f5; text-align: center; vertical-align: middle; }
   .despacho { background: #f9f9f9; border-left: 3px solid #555; padding: 10pt 14pt; margin: 16pt 0; font-size: 11pt; line-height: 1.8; text-align: justify; }
   .motivo-box { border: 1px solid #999; border-radius: 2px; padding: 10pt 14pt; margin: 8pt 0 14pt; font-size: 11pt; line-height: 1.7; min-height: 60pt; }
   .motivo-box ul { padding-left: 16pt; margin-top: 6pt; }
@@ -5840,7 +5851,7 @@ function gerarDespachoHabilitacao(stepIdx) {
   .section ul li { text-align: justify; margin-bottom: 4pt; }
   .field-table { width: 100%; border-collapse: collapse; margin: 14pt 0; }
   .field-table td { padding: 5pt 8pt; border: 1px solid #333; font-size: 11pt; vertical-align: top; }
-  .field-table td.lbl { font-weight: 700; text-transform: uppercase; font-size: 9pt; letter-spacing: .4px; width: 38%; background: #f5f5f5; }
+  .field-table td.lbl { font-weight: 700; text-transform: uppercase; font-size: 9pt; letter-spacing: .4px; width: 38%; background: #f5f5f5; text-align: center; vertical-align: middle; }
   .despacho { background: #f9f9f9; border-left: 3px solid #555; padding: 10pt 14pt; margin: 16pt 0; font-size: 11pt; line-height: 1.8; text-align: justify; }
   .signature-block { margin-top: 40pt; }
   .signature-line { border-top: 1px solid #000; width: 280pt; margin: 0 auto; text-align: center; padding-top: 4pt; font-size: 10pt; }
@@ -5947,7 +5958,7 @@ function gerarTermoAdjudicacao() {
   .section p { line-height: 1.7; text-align: justify; margin-bottom: 8pt; }
   .field-table { width: 100%; border-collapse: collapse; margin: 14pt 0; }
   .field-table td { padding: 5pt 8pt; border: 1px solid #333; font-size: 11pt; vertical-align: top; }
-  .field-table td.lbl { font-weight: 700; text-transform: uppercase; font-size: 9pt; letter-spacing: .4px; width: 38%; background: #f5f5f5; }
+  .field-table td.lbl { font-weight: 700; text-transform: uppercase; font-size: 9pt; letter-spacing: .4px; width: 38%; background: #f5f5f5; text-align: center; vertical-align: middle; }
   .despacho { background: #f9f9f9; border-left: 3px solid #555; padding: 10pt 14pt; margin: 16pt 0; font-size: 11pt; line-height: 1.8; text-align: justify; }
   .signature-block { margin-top: 48pt; display: flex; justify-content: center; }
   .signature-line { border-top: 1px solid #000; width: 280pt; text-align: center; padding-top: 4pt; font-size: 10pt; }
@@ -6056,7 +6067,7 @@ function gerarTermoHomologacao() {
   .section p { line-height: 1.7; text-align: justify; margin-bottom: 8pt; }
   .field-table { width: 100%; border-collapse: collapse; margin: 14pt 0; }
   .field-table td { padding: 5pt 8pt; border: 1px solid #333; font-size: 11pt; vertical-align: top; }
-  .field-table td.lbl { font-weight: 700; text-transform: uppercase; font-size: 9pt; letter-spacing: .4px; width: 38%; background: #f5f5f5; }
+  .field-table td.lbl { font-weight: 700; text-transform: uppercase; font-size: 9pt; letter-spacing: .4px; width: 38%; background: #f5f5f5; text-align: center; vertical-align: middle; }
   .despacho { background: #f9f9f9; border-left: 3px solid #555; padding: 10pt 14pt; margin: 16pt 0; font-size: 11pt; line-height: 1.8; text-align: justify; }
   .signature-block { margin-top: 48pt; display: flex; justify-content: center; }
   .signature-line { border-top: 1px solid #000; width: 280pt; text-align: center; padding-top: 4pt; font-size: 10pt; }
@@ -6128,6 +6139,8 @@ function gerarAvisoDispensa() {
   const v = (i, f) => p(i)[f] || '';
   const hoje = new Date().toLocaleDateString('pt-BR', { day:'numeric', month:'long', year:'numeric' });
   const blank = txt => txt || '_'.repeat(40);
+  const fmtVal = val => val ? fmtMoney(val) : '_'.repeat(20);
+
   const _criterioLabel = {
     menor_preco:    'menor preço',
     maior_desconto: 'maior desconto',
@@ -6135,7 +6148,29 @@ function gerarAvisoDispensa() {
     tecnica_preco:  'técnica e preço',
     maior_retorno:  'maior retorno econômico',
   };
-  const criterioLabel = _criterioLabel[proc.criterio_selecao] || 'menor preço';
+  const _criterioInciso = {
+    menor_preco:    'I',
+    maior_desconto: 'II',
+    melhor_tecnica: 'III',
+    tecnica_preco:  'IV',
+    maior_retorno:  'VI',
+  };
+  const _criterioVantajosa = {
+    menor_preco:    'o <strong>menor preço</strong> que atenda integralmente às especificações técnicas, aos padrões de qualidade e às demais condições estabelecidas no Termo de Referência e em seus anexos',
+    maior_desconto: 'o <strong>maior desconto</strong> sobre a tabela de referência que atenda integralmente às especificações técnicas e demais condições do Termo de Referência',
+    melhor_tecnica: 'a <strong>melhor técnica ou conteúdo artístico</strong> que atenda às condições estabelecidas no Termo de Referência',
+    tecnica_preco:  'a melhor relação entre <strong>técnica e preço</strong>, observadas as pontuações mínimas e demais condições do Termo de Referência',
+    maior_retorno:  'o <strong>maior retorno econômico</strong> para a Administração, observadas as condições estabelecidas no Termo de Referência',
+  };
+  const criterioLabel    = _criterioLabel[proc.criterio_selecao]    || 'menor preço';
+  const criterioInciso   = _criterioInciso[proc.criterio_selecao]   || 'I';
+  const criterioVantajosa = _criterioVantajosa[proc.criterio_selecao] || _criterioVantajosa.menor_preco;
+
+  const prazoFormatado = v(7,'prazo_propostas') ? new Date(v(7,'prazo_propostas')+'T00:00:00').toLocaleDateString('pt-BR', {day:'2-digit',month:'2-digit',year:'numeric'}) : '_____/_____/________';
+  const enderecoEnvio  = v(7,'endereco_envio') || '_'.repeat(50);
+  const valorEstimado  = v(3,'valor_estimado');
+  const fundamentoLegal = v(4,'fundamento') || proc.legal || 'Art. 75 da Lei Federal nº 14.133/2021';
+  const incisoLegal    = proc.legal ? proc.legal.split(' — ')[0] : 'Art. 75';
 
   const html = `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -6157,9 +6192,11 @@ function gerarAvisoDispensa() {
   .section p { line-height: 1.7; text-align: justify; margin-bottom: 8pt; }
   .section ul { padding-left: 20pt; line-height: 1.7; }
   .section ul li { text-align: justify; margin-bottom: 4pt; }
+  .aviso-box { background: #f9f9f9; border-left: 3px solid #333; padding: 10pt 14pt; margin-bottom: 18pt; font-size: 11pt; line-height: 1.8; text-align: justify; }
   .field-table { width: 100%; border-collapse: collapse; margin: 14pt 0; }
-  .field-table td { padding: 5pt 8pt; border: 1px solid #333; font-size: 11pt; vertical-align: top; }
-  .field-table td.lbl { font-weight: 700; text-transform: uppercase; font-size: 9pt; letter-spacing: .4px; width: 38%; background: #f5f5f5; }
+  .field-table td { padding: 5pt 8pt; border: 1px solid #333; font-size: 11pt; vertical-align: top; text-align: justify; }
+  .field-table td.lbl { font-weight: 700; text-transform: uppercase; font-size: 9pt; letter-spacing: .4px; width: 38%; background: #f5f5f5; text-align: center; vertical-align: middle; }
+  .alerta-juridico { background: #fffbeb; border: 1px solid #d97706; border-radius: 3pt; padding: 8pt 12pt; margin-top: 8pt; font-size: 10.5pt; line-height: 1.7; text-align: justify; }
   .signature-block { margin-top: 40pt; }
   .signature-line { border-top: 1px solid #000; width: 280pt; margin: 0 auto; text-align: center; padding-top: 4pt; font-size: 10pt; }
   .city-date { text-align: right; margin-top: 30pt; margin-bottom: 6pt; font-size: 11pt; }
@@ -6181,39 +6218,54 @@ function gerarAvisoDispensa() {
 <div class="doc-title">
   <h3>Aviso de Dispensa de Licitação</h3>
   <div class="num">Processo Administrativo nº ${blank(proc.num_proc || proc.num)} &nbsp;|&nbsp; Dispensa de Licitação nº ${blank(proc.num_dl || proc.num)}</div>
-  <div class="num" style="margin-top:4pt;font-size:10pt">Fundamento: Art. 75, §3º da Lei Federal nº 14.133/2021</div>
+  <div class="num" style="margin-top:4pt;font-size:10pt">Fundamento: ${incisoLegal} c/c Art. 75, §3º da Lei Federal nº 14.133/2021</div>
+</div>
+
+<div class="aviso-box">
+  A <strong>${blank(u.orgao).toUpperCase()}</strong> torna público, para conhecimento dos interessados, que se encontra em andamento processo de contratação direta, por dispensa de licitação. Em observância ao disposto no ${incisoLegal} e no §3º do art. 75 da Lei Federal nº 14.133/2021, a Administração manifesta interesse em receber <strong>propostas adicionais</strong> de eventuais interessados, nos termos e condições estabelecidos neste Aviso e no Termo de Referência.
 </div>
 
 <table class="field-table">
   <tr><td class="lbl">Processo Administrativo</td><td>${blank(proc.num_proc || proc.num)}</td></tr>
   <tr><td class="lbl">Dispensa de Licitação nº</td><td>${blank(proc.num_dl || proc.num)}</td></tr>
   <tr><td class="lbl">Objeto</td><td>${blank(proc.objeto)}</td></tr>
-  <tr><td class="lbl">Fundamentação Legal</td><td>${blank(v(4,'fundamento'))}</td></tr>
-  <tr><td class="lbl">Valor Estimado</td><td>${blank(v(3,'valor_estimado'))}</td></tr>
+  <tr><td class="lbl">Fundamentação Legal</td><td>${blank(fundamentoLegal)}</td></tr>
+  <tr><td class="lbl">Valor Estimado</td><td>${valorEstimado ? fmtVal(valorEstimado) : '_'.repeat(20)}</td></tr>
   <tr><td class="lbl">Unidade Requisitante</td><td>${blank(proc.unidade)}</td></tr>
-  <tr><td class="lbl">Prazo para Propostas</td><td>${blank(v(7,'prazo_propostas') ? new Date(v(7,'prazo_propostas')+'T00:00:00').toLocaleDateString('pt-BR') : '')}</td></tr>
-  <tr><td class="lbl">Endereço / E-mail para Envio</td><td>${blank(v(7,'endereco_envio'))}</td></tr>
+  <tr><td class="lbl">Prazo para Envio de Propostas</td><td>Até ${prazoFormatado}, observado o horário de Brasília/DF</td></tr>
+  <tr><td class="lbl">Endereço / E-mail para Envio</td><td>${blank(enderecoEnvio)}</td></tr>
 </table>
 
 <div class="section">
   <div class="section-title">Da Participação</div>
-  <p>Os interessados deverão encaminhar suas propostas comerciais para o endereço/e-mail indicado acima até a data e hora do prazo fixado, observando os requisitos estabelecidos neste Aviso.</p>
+  <p>Os interessados deverão encaminhar suas propostas comerciais <strong>exclusivamente</strong> para o endereço/e-mail indicado acima, até a data e hora fixadas, observadas as condições estabelecidas neste Aviso e no Termo de Referência. Não serão consideradas propostas encaminhadas após o prazo fixado.</p>
+  <p>Não haverá sessão pública presencial nem sessão eletrônica em plataforma para esta contratação direta. O procedimento será conduzido mediante recebimento de propostas, análise interna pela Administração e posterior divulgação do resultado nos meios oficiais de publicidade do Município.</p>
 </div>
 
 <div class="section">
   <div class="section-title">Das Condições de Participação</div>
-  <p>Poderão participar do presente procedimento quaisquer fornecedores do ramo pertinente ao objeto, desde que atendam às condições exigidas neste Aviso. A proposta deverá conter:</p>
+  <p>Poderão participar do presente procedimento quaisquer fornecedores do ramo pertinente ao objeto, desde que atendam às condições exigidas neste Aviso e no Termo de Referência. A proposta deverá conter:</p>
   <ul>
     <li>Identificação completa do fornecedor (razão social e CNPJ);</li>
-    <li>Descrição do objeto ofertado, com especificações técnicas que atendam ao Termo de Referência;</li>
+    <li>Descrição detalhada do objeto ofertado, com especificações técnicas que atendam ao Termo de Referência;</li>
     <li>Valor global ou unitário, conforme o caso, em moeda corrente nacional;</li>
     <li>Prazo de validade mínima da proposta de 60 (sessenta) dias, contados da data de apresentação.</li>
   </ul>
+  <p>O Termo de Referência e os demais documentos pertinentes à presente contratação estão disponíveis para consulta junto ao Departamento de Licitações${u.orgao ? ' da ' + u.orgao : ''}${u.site_oficial ? ' e no site oficial (<a href="' + u.site_oficial + '">' + u.site_oficial + '</a>)' : ''}. Pedidos de esclarecimento deverão ser encaminhados para o mesmo endereço/e-mail indicado para envio de propostas, até o término do prazo para recebimento.</p>
 </div>
 
 <div class="section">
-  <div class="section-title">Do Critério de Seleção</div>
-  <p>A seleção da proposta mais vantajosa será realizada com base no critério de <strong>${criterioLabel}</strong>, em conformidade com o art. 33 da Lei Federal nº 14.133/2021, considerando o objeto e as condições estabelecidas no Termo de Referência.</p>
+  <div class="section-title">Do Critério de Julgamento e da Proposta Mais Vantajosa</div>
+  <p>O julgamento das propostas obedecerá ao critério de <strong>${criterioLabel}</strong>, nos termos do art. 33, inciso ${criterioInciso}, da Lei Federal nº 14.133/2021.</p>
+  <p>Para fins de julgamento, considera-se proposta mais vantajosa para a Administração aquela que apresentar ${criterioVantajosa}.</p>
+  <p>O menor preço, por si só, não é critério suficiente para a classificação da proposta. Serão desclassificadas as propostas que: (i) não atendam às especificações técnicas mínimas ou aos padrões de qualidade previstos no Termo de Referência; (ii) apresentem preços inexequíveis ou manifestamente superiores aos praticados no mercado; ou (iii) descumpram quaisquer das condições estabelecidas neste Aviso e no Termo de Referência — nos termos do art. 59 da Lei Federal nº 14.133/2021, que assegura à Administração o direito de recusar propostas em desconformidade com os requisitos do instrumento convocatório.</p>
+</div>
+
+<div class="section">
+  <div class="section-title">Do Resultado e Da Habilitação</div>
+  <p>Encerrado o prazo para envio de propostas, a Administração realizará a análise das propostas recebidas e identificará a proposta mais vantajosa, nos termos acima estabelecidos.</p>
+  <p>A proponente classificada com a proposta mais vantajosa será convocada para, no prazo de <strong>2 (dois) dias úteis</strong>, encaminhar a documentação necessária à comprovação de que reúne as condições de habilitação exigidas para contratar com a Administração Pública, nos termos do art. 62 da Lei Federal nº 14.133/2021.</p>
+  <p>O resultado do procedimento será divulgado nos meios oficiais de publicidade do Município de ${blank(u.municipio || u.orgao)}${(u.site_oficial || u.diario_url) ? ' (' + [u.site_oficial, u.diario_url].filter(Boolean).map(url => `<a href="${url}">${url}</a>`).join(' e ') + ')' : ''}.</p>
 </div>
 
 <div class="city-date">${blank(u.municipio)}, ${hoje}</div>
@@ -6268,7 +6320,7 @@ function gerarExtratoContrato() {
   .section p { line-height: 1.7; text-align: justify; margin-bottom: 8pt; }
   .field-table { width: 100%; border-collapse: collapse; margin: 14pt 0; }
   .field-table td { padding: 5pt 8pt; border: 1px solid #333; font-size: 11pt; vertical-align: top; }
-  .field-table td.lbl { font-weight: 700; text-transform: uppercase; font-size: 9pt; letter-spacing: .4px; width: 38%; background: #f5f5f5; }
+  .field-table td.lbl { font-weight: 700; text-transform: uppercase; font-size: 9pt; letter-spacing: .4px; width: 38%; background: #f5f5f5; text-align: center; vertical-align: middle; }
   .signature-block { margin-top: 40pt; display: flex; justify-content: space-around; }
   .signature-line { border-top: 1px solid #000; width: 240pt; text-align: center; padding-top: 4pt; font-size: 10pt; }
   .city-date { text-align: right; margin-top: 30pt; margin-bottom: 6pt; font-size: 11pt; }
@@ -6340,6 +6392,113 @@ function gerarExtratoContrato() {
   _gerarDocumento(win, html, 'Extrato de Contrato');
 }
 
+function gerarEnquadramentoLegal() {
+  const p = currentProcess;
+  const u = getUser();
+  const hoje = new Date().toLocaleDateString('pt-BR', { day:'numeric', month:'long', year:'numeric' });
+  const blank = txt => txt || '_'.repeat(40);
+  const fmtVal = v => v ? fmtMoney(v) : '_______________';
+  const d = dt => dt ? new Date(dt).toLocaleDateString('pt-BR') : '_____/_____/_______';
+
+  const stepData = p.steps?.[4]?.fields || {};
+  const responsavel   = stepData.responsavel   || u.nome || '';
+  const dataConclusao = stepData.data_conclusao ? d(stepData.data_conclusao) : hoje;
+  const fundamento    = stepData.fundamento || p.legal || '';
+  const observacoes   = stepData.observacoes || '';
+
+  // Monta texto do inciso para o corpo do documento
+  const incisoLabel = p.legal ? p.legal.split(' — ')[0] : 'Art. 75';
+  const incisoFull  = p.legal || 'Art. 75 da Lei Federal nº 14.133/2021';
+
+  const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Justificativa de Enquadramento Legal — ${p.num_dl || p.num || 'DL'}</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; color: #000; background: #fff; padding: 2cm 2.5cm; }
+  .header { text-align: center; margin-bottom: 24pt; border-bottom: 2px solid #000; padding-bottom: 14pt; }
+  .header img { height: 90pt; width: auto; margin-bottom: 8pt; }
+  .header h1 { font-size: 13pt; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+  .header h2 { font-size: 11pt; font-weight: 400; margin-top: 2pt; }
+  .doc-title { text-align: center; margin: 20pt 0 18pt; }
+  .doc-title h3 { font-size: 13pt; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid #000; display: inline-block; padding-bottom: 4pt; }
+  .doc-title .num { font-size: 11pt; margin-top: 6pt; }
+  .section { margin-bottom: 14pt; }
+  .section p { line-height: 1.8; text-align: justify; margin-bottom: 8pt; }
+  .field-table { width: 100%; border-collapse: collapse; margin: 14pt 0; }
+  .field-table td { padding: 5pt 8pt; border: 1px solid #333; font-size: 11pt; vertical-align: top; text-align: justify; }
+  .field-table td.lbl { font-weight: 700; text-transform: uppercase; font-size: 9pt; letter-spacing: .4px; width: 38%; background: #f5f5f5; text-align: center; vertical-align: middle; }
+  .obs-box { background: #f9f9f9; border-left: 3px solid #555; padding: 10pt 14pt; margin: 14pt 0; font-size: 11pt; line-height: 1.8; text-align: justify; }
+  .base-legal { font-size: 9.5pt; color: #444; border-top: 1px solid #ccc; padding-top: 8pt; margin-top: 16pt; line-height: 1.6; }
+  .city-date { text-align: right; margin-top: 30pt; margin-bottom: 6pt; font-size: 11pt; }
+  .signature-block { margin-top: 40pt; }
+  .signature-line { border-top: 1px solid #000; width: 280pt; margin: 0 auto; text-align: center; padding-top: 4pt; font-size: 10pt; }
+  .footer { margin-top: 40pt; border-top: 1px solid #ccc; padding-top: 6pt; text-align: center; font-size: 8pt; color: #666; }
+  .btn-print { display: block; margin: 0 auto 20pt; padding: 8pt 24pt; background: #2C001E; color: #fff; border: none; border-radius: 4px; font-size: 11pt; cursor: pointer; letter-spacing: .5px; }
+  .btn-print:hover { background: #5E2750; }
+  @media print { body { padding: 0; } .no-print { display: none !important; } }
+</style>
+</head>
+<body>
+<button class="btn-print no-print" onclick="window.print()">🖨 Imprimir / Salvar PDF</button>
+
+<div class="header">
+  <img src="data:image/png;base64,__BRASAO_PLACEHOLDER__" alt="Brasão">
+  <h1>${blank(u.orgao)}</h1>
+  <h2>${blank(u.municipio)}</h2>
+</div>
+
+<div class="doc-title">
+  <h3>Justificativa de Enquadramento Legal</h3>
+  <div class="num">Dispensa de Licitação nº ${blank(p.num_dl || p.num)}</div>
+</div>
+
+<table class="field-table">
+  <tr><td class="lbl">Processo Administrativo</td><td>${blank(p.num_proc || p.num)}</td></tr>
+  <tr><td class="lbl">Dispensa de Licitação nº</td><td>${blank(p.num_dl || p.num)}</td></tr>
+  <tr><td class="lbl">Objeto</td><td>${blank(p.objeto)}</td></tr>
+  <tr><td class="lbl">Valor Estimado</td><td>${fmtVal(p.valor)}</td></tr>
+  <tr><td class="lbl">Unidade Requisitante</td><td>${blank(p.unidade)}</td></tr>
+  <tr><td class="lbl">Fundamento Legal</td><td>${blank(incisoFull)}</td></tr>
+  ${fundamento && fundamento !== p.legal ? `<tr><td class="lbl">Fundamento Específico</td><td>${fundamento}</td></tr>` : ''}
+</table>
+
+<div class="section">
+  <p>O <strong>Agente de Contratação</strong> do <strong>${blank(u.orgao)}</strong>, no exercício de suas atribuições legais, vem por meio desta justificativa declarar o enquadramento da contratação acima identificada na hipótese de <strong>Dispensa de Licitação</strong> prevista no <strong>${incisoLabel} da Lei Federal nº 14.133/2021</strong> (Nova Lei de Licitações e Contratos Administrativos), nos seguintes termos:</p>
+
+  <p>A contratação tem por objeto <strong>${blank(p.objeto)}</strong>, com valor estimado de <strong>${fmtVal(p.valor)}</strong>, em favor de ${blank(p.unidade)}. O valor apurado por meio de pesquisa de mercado está dentro dos limites estabelecidos pelo ${incisoLabel} da Lei nº 14.133/2021${p.legal && p.legal.includes('65.492') ? ', conforme atualização fixada pelo Decreto Federal nº 11.317/2022' : ''}, razão pela qual a licitação é dispensável.</p>
+
+  <p>A presente contratação atende ao interesse público, está em conformidade com os princípios da legalidade, impessoalidade, moralidade, publicidade e eficiência (Art. 5º da Lei nº 14.133/2021), e a escolha do objeto foi precedida de pesquisa de preços nos termos do Art. 23 da referida Lei, garantindo a compatibilidade do valor com os praticados no mercado.</p>
+
+  <p>Diante do exposto, declaro o devido enquadramento na hipótese de dispensa de licitação prevista no <strong>${incisoLabel} da Lei Federal nº 14.133/2021</strong>, ficando o processo apto ao prosseguimento de seus trâmites legais.</p>
+</div>
+
+${observacoes ? `<div class="obs-box"><strong>Observações complementares:</strong><br>${observacoes.replace(/\n/g,'<br>')}</div>` : ''}
+
+<div class="base-legal">
+  <strong>Base legal:</strong> Art. 72, III c/c ${incisoLabel}, todos da Lei Federal nº 14.133/2021 — Justificativa para a contratação direta.
+</div>
+
+<div class="city-date">${blank(u.municipio)}, ${dataConclusao}</div>
+
+<div class="signature-block">
+  <div class="signature-line">
+    <div><strong>${blank(responsavel)}</strong></div>
+    <div style="font-size:9pt;margin-top:2pt">Agente de Contratação${u.matricula ? ' — Matrícula: ' + u.matricula : ''}</div>
+    <div style="font-size:9pt;margin-top:1pt">${blank(u.orgao)}</div>
+  </div>
+</div>
+
+<div class="footer">Documento gerado pelo SGCD — Sistema de Gestão de Contratação Direta &nbsp;·&nbsp; v${SGCD_VERSION} &nbsp;·&nbsp; Lei Federal nº 14.133/2021 &nbsp;·&nbsp; Cód. ${_docAuthCode(p)}</div>
+</body>
+</html>`;
+
+  const win = window.open('', '_blank', 'width=900,height=700');
+  _gerarDocumento(win, html, 'Justificativa de Enquadramento Legal');
+}
+
 function gerarAutorizacao() {
   const p = currentProcess;
   const u = getUser();
@@ -6349,6 +6508,9 @@ function gerarAutorizacao() {
 
   const fornNome = typeof p.fornecedor === 'object' ? (p.fornecedor?.razao_social || '') : (p.fornecedor || '');
   const fornCnpj = typeof p.fornecedor === 'object' ? (p.fornecedor?.cnpj || '') : '';
+
+  const numParecer = p.steps[5]?.fields?.num_parecer || '';
+  const parecerRef = numParecer ? `, com amparo no Parecer Jurídico nº ${numParecer} da Procuradoria-Geral,` : '';
 
   const html = `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -6369,11 +6531,13 @@ function gerarAutorizacao() {
   .section p { line-height: 1.7; text-align: justify; }
   .field-table { width: 100%; border-collapse: collapse; margin: 14pt 0; }
   .field-table td { padding: 5pt 8pt; border: 1px solid #333; font-size: 11pt; vertical-align: top; }
-  .field-table td.lbl { font-weight: 700; text-transform: uppercase; font-size: 9pt; letter-spacing: .4px; width: 38%; background: #f5f5f5; }
+  .field-table td.lbl { font-weight: 700; text-transform: uppercase; font-size: 9pt; letter-spacing: .4px; width: 38%; background: #f5f5f5; text-align: center; vertical-align: middle; }
   .signature-block { margin-top: 40pt; }
   .signature-line { border-top: 1px solid #000; width: 280pt; margin: 0 auto; text-align: center; padding-top: 4pt; font-size: 10pt; }
   .city-date { text-align: right; margin-top: 30pt; margin-bottom: 6pt; font-size: 11pt; }
   .despacho { background: #f9f9f9; border-left: 3px solid #555; padding: 10pt 14pt; margin: 16pt 0; font-size: 11pt; line-height: 1.8; text-align: justify; }
+  .field-table td { padding: 5pt 8pt; border: 1px solid #333; font-size: 11pt; vertical-align: top; text-align: justify; }
+  .field-table td.lbl { font-weight: 700; text-transform: uppercase; font-size: 9pt; letter-spacing: .4px; width: 38%; background: #f5f5f5; text-align: center; vertical-align: middle; }
   .footer { margin-top: 40pt; border-top: 1px solid #ccc; padding-top: 6pt; text-align: center; font-size: 8pt; color: #666; }
   .btn-print { display: block; margin: 0 auto 20pt; padding: 8pt 24pt; background: #2C001E; color: #fff; border: none; border-radius: 4px; font-size: 11pt; cursor: pointer; letter-spacing: .5px; }
   .btn-print:hover { background: #5E2750; }
@@ -6396,7 +6560,7 @@ function gerarAutorizacao() {
 
 <div class="section">
   <div class="despacho">
-    <strong>DESPACHO:</strong> Nos termos do ${p.legal ? p.legal.split(' — ')[0] + ' da Lei Federal nº 14.133/2021' : 'Art. 75 da Lei Federal nº 14.133/2021'}, e considerando a justificativa da necessidade apresentada pela unidade requisitante, <strong><u>AUTORIZO</u></strong> a abertura do processo administrativo de Dispensa de Licitação visando à aquisição/contratação descrita abaixo, determinando ao Departamento de Licitações e Contratos que adote as providências necessárias à instrução do processo.
+    <strong>DESPACHO:</strong> Nos termos do ${p.legal ? p.legal.split(' — ')[0] + ' da Lei Federal nº 14.133/2021' : 'Art. 75 da Lei Federal nº 14.133/2021'}${parecerRef} e considerando a justificativa da necessidade apresentada pela unidade requisitante, <strong><u>AUTORIZO</u></strong> a abertura do processo administrativo de Dispensa de Licitação visando à aquisição/contratação descrita abaixo, determinando ao Departamento de Licitações e Contratos que adote as providências necessárias à instrução do processo.
   </div>
 </div>
 
@@ -6502,26 +6666,26 @@ function gerarAta() {
 
   const cotacoesHtml = cotacoes.length ? `
     <table>
-      <thead><tr><th>Fornecedor</th><th>CNPJ</th><th>Valor Cotado</th><th>Data</th><th>Situação</th></tr></thead>
+      <thead><tr><th>Fornecedor</th><th style="width:110pt;white-space:nowrap">CNPJ</th><th style="width:80pt;white-space:nowrap">Valor Cotado</th><th style="width:60pt;white-space:nowrap">Data</th><th style="width:60pt;white-space:nowrap">Situação</th></tr></thead>
       <tbody>${cotacoes.map(c => `
         <tr>
           <td>${c.fornecedor || '—'}</td>
-          <td>${c.cnpj || '—'}</td>
-          <td>${c.valor || '—'}</td>
-          <td>${c.data ? new Date(c.data+'T00:00:00').toLocaleDateString('pt-BR') : '—'}</td>
-          <td>${{valida:'Válida', descartada:'Descartada'}[c.situacao] || 'Válida'}</td>
+          <td style="white-space:nowrap">${c.cnpj || '—'}</td>
+          <td style="white-space:nowrap">${c.valor || '—'}</td>
+          <td style="white-space:nowrap">${c.data ? new Date(c.data+'T00:00:00').toLocaleDateString('pt-BR') : '—'}</td>
+          <td style="white-space:nowrap">${{valida:'Válida', descartada:'Descartada'}[c.situacao] || 'Válida'}</td>
         </tr>`).join('')}
       </tbody>
     </table>` : '<p><em>Nenhuma cotação registrada.</em></p>';
 
   const propostasHtml = propostas.length ? `
     <table>
-      <thead><tr><th>Fornecedor</th><th>CNPJ</th><th>Valor Proposto</th><th>Situação</th></tr></thead>
+      <thead><tr><th>Fornecedor</th><th style="width:110pt;white-space:nowrap">CNPJ</th><th style="width:80pt;white-space:nowrap">Valor Proposto</th><th style="width:80pt;white-space:nowrap">Situação</th></tr></thead>
       <tbody>${propostas.map(pr => `
         <tr>
           <td>${pr.fornecedor || '—'}</td>
-          <td>${pr.cnpj || '—'}</td>
-          <td>${pr.valor || '—'}</td>
+          <td style="white-space:nowrap">${pr.cnpj || '—'}</td>
+          <td style="white-space:nowrap">${pr.valor || '—'}</td>
           <td>${{analise:'Em análise', aceita:'Aceita', vencedora:`Vencedora — ${({'menor_preco':'Menor Preço','maior_desconto':'Maior Desconto','melhor_tecnica':'Melhor Técnica','tecnica_preco':'Técnica e Preço','maior_retorno':'Maior Retorno Econômico'})[proc.criterio_selecao]||'Menor Preço'}`, recusada:'Recusada'}[pr.situacao] || pr.situacao}</td>
         </tr>`).join('')}
       </tbody>
@@ -6556,8 +6720,8 @@ function gerarAta() {
   .dado { margin-bottom: 6pt; }
   .dado strong { display: inline-block; min-width: 220px; }
   table { width: 100%; border-collapse: collapse; margin: 8pt 0; font-size: 10.5pt; }
-  th { background: #eee; border: 1px solid #999; padding: 5pt 6pt; text-align: left; font-weight: bold; }
-  td { border: 1px solid #999; padding: 4pt 6pt; vertical-align: top; }
+  th { background: #eee; border: 1px solid #999; padding: 5pt 6pt; text-align: center; vertical-align: middle; font-weight: 700; }
+  td { border: 1px solid #999; padding: 4pt 6pt; vertical-align: middle; font-size: 9.5pt; }
   .cert-obtida td:last-child { color: #0a5c0a; }
   .cert-pendente td:last-child { color: #b00; }
   .city-date { text-align: right; margin-top: 30pt; margin-bottom: 6pt; font-size: 11pt; }
@@ -6587,7 +6751,7 @@ function gerarAta() {
   <div class="secao-titulo">I — Identificação do Processo</div>
   <div class="dado"><strong>Processo Administrativo nº:</strong> ${blank(p.num_proc || p.num)}</div>
   <div class="dado"><strong>Dispensa de Licitação nº:</strong> ${blank(p.num_dl || p.num)}</div>
-  <div class="dado"><strong>Objeto:</strong> ${blank(p.objeto)}</div>
+  <div class="dado" style="text-align:justify"><strong>Objeto:</strong> ${blank(p.objeto)}</div>
   <div class="dado"><strong>Fundamentação Legal:</strong> ${blank(p.legal)}</div>
   <div class="dado"><strong>Valor Estimado:</strong> ${p.valor ? fmtMoney(p.valor) : '_'.repeat(20)}</div>
   <div class="dado"><strong>Unidade Solicitante:</strong> ${blank(p.unidade)}</div>
@@ -6843,9 +7007,11 @@ function showSettings() {
   document.getElementById('s-matricula').value   = u.matricula   || '';
   document.getElementById('s-orgao').value       = u.orgao       || '';
   document.getElementById('s-municipio').value   = u.municipio   || '';
-  document.getElementById('s-aut-nome').value    = u.aut_nome    || '';
-  document.getElementById('s-aut-cargo').value   = u.aut_cargo   || '';
-  document.getElementById('s-frac-janela').value = u.frac_janela || 'exercicio';
+  document.getElementById('s-aut-nome').value      = u.aut_nome      || '';
+  document.getElementById('s-aut-cargo').value     = u.aut_cargo     || '';
+  document.getElementById('s-site-oficial').value  = u.site_oficial  || '';
+  document.getElementById('s-diario-url').value    = u.diario_url    || '';
+  document.getElementById('s-frac-janela').value   = u.frac_janela   || 'exercicio';
   document.getElementById('s-auto-backup-exit').checked = !!u.auto_backup_exit;
 
   // Brasão
@@ -6877,6 +7043,8 @@ function saveSettings() {
     municipio:        document.getElementById('s-municipio').value.trim(),
     aut_nome:         document.getElementById('s-aut-nome').value.trim(),
     aut_cargo:        document.getElementById('s-aut-cargo').value.trim(),
+    site_oficial:     document.getElementById('s-site-oficial').value.trim(),
+    diario_url:       document.getElementById('s-diario-url').value.trim(),
     frac_janela:      document.getElementById('s-frac-janela').value,
     auto_backup_exit: document.getElementById('s-auto-backup-exit').checked,
   };

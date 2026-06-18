@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Manual Operacional — SGCD v1.11.1</title>
+<title>Manual Operacional — SGCD v1.11.8</title>
 <style>
   /* Reset e base */
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -89,7 +89,7 @@
       margin: 20mm 20mm 25mm;
       size: A4;
       @top-center {
-        content: "SGCD v1.11.1 — Manual Operacional";
+        content: "SGCD v1.11.8 — Manual Operacional";
         font-family: 'Times New Roman', serif;
         font-size: 9pt;
         color: #666;
@@ -172,7 +172,7 @@
     <div class="toc-item h3"><a href="#sec7-5">7.5 Reordenar etapas</a></div>
     <div class="toc-item h3"><a href="#sec7-6">7.6 Histórico e log de auditoria</a></div>
 
-    <div class="toc-item h2"><a href="#sec8">8. Gerenciamento de Propostas (Etapa 9)</a></div>
+    <div class="toc-item h2"><a href="#sec8">8. Gerenciamento de Propostas (Etapa 10)</a></div>
     <div class="toc-item h3"><a href="#sec8-1">8.1 Situações de proposta</a></div>
     <div class="toc-item h3"><a href="#sec8-2">8.2 Despacho de Recusa / Desclassificação</a></div>
 
@@ -209,7 +209,7 @@
 <h3 id="sec1-1">1.1 O que é o SGCD</h3>
 <p>O <strong>SGCD — Sistema de Gestão de Contratação Direta</strong> é uma aplicação web desenvolvida para organizar, acompanhar e documentar processos de <strong>Dispensa de Licitação</strong> conforme a Lei Federal nº 14.133/2021 (Nova Lei de Licitações e Contratos Administrativos).</p>
 <p>O sistema funciona como um único arquivo HTML que pode ser aberto diretamente no navegador, sem necessidade de instalação, servidor web ou acesso à internet (exceto para consulta de CNPJ). Todos os dados são armazenados localmente no próprio computador do usuário.</p>
-<p>O SGCD guia o agente de contratação por meio de um <strong>checklist com 15 etapas</strong>, cada uma com fundamento legal, orientações de preenchimento e possibilidade de anexar documentos. Ao final de cada etapa — ou a qualquer momento —, o sistema gera automaticamente os documentos necessários para o processo.</p>
+<p>O SGCD guia o agente de contratação por meio de um <strong>checklist com 16 etapas</strong>, cada uma com fundamento legal, orientações de preenchimento e possibilidade de anexar documentos. Ao final de cada etapa — ou a qualquer momento —, o sistema gera automaticamente os documentos necessários para o processo.</p>
 
 <h3 id="sec1-2">1.2 Para quem é destinado</h3>
 <p>O SGCD é destinado a <strong>agentes de contratação pública</strong>, pregoeiros, comissões de contratação e servidores responsáveis pela condução de processos de Dispensa de Licitação em órgãos e entidades da Administração Pública Federal, Estadual ou Municipal que adotam a Lei nº 14.133/2021.</p>
@@ -298,6 +298,16 @@
     <td><strong>Cargo da Autoridade</strong></td>
     <td>Cargo da autoridade competente (ex.: Secretário Municipal, Diretor-Geral)</td>
     <td>Identificação da autoridade nos documentos</td>
+  </tr>
+  <tr>
+    <td><strong>Site Oficial</strong></td>
+    <td>URL do portal oficial do município (ex.: https://orindiuva.sp.gov.br/)</td>
+    <td>Aviso de Dispensa — seção de esclarecimentos e acesso ao TR</td>
+  </tr>
+  <tr>
+    <td><strong>URL do Diário Oficial Eletrônico</strong></td>
+    <td>URL do Diário Oficial Eletrônico onde os resultados são publicados</td>
+    <td>Aviso de Dispensa — seção de divulgação do resultado</td>
   </tr>
 </table>
 
@@ -462,8 +472,8 @@
 <hr class="section-divider">
 
 <!-- ─────────────────────────────────────────────── SEÇÃO 6 -->
-<h2 id="sec6">6. Checklist das 15 Etapas</h2>
-<p>O coração do SGCD é o checklist estruturado com as 15 etapas do processo de Dispensa de Licitação. Cada etapa apresenta o fundamento legal, uma orientação sobre o que deve ser feito e campos para registro. A seguir, a descrição completa de cada etapa:</p>
+<h2 id="sec6">6. Checklist das 16 Etapas</h2>
+<p>O coração do SGCD é o checklist estruturado com as 16 etapas do processo de Dispensa de Licitação. Cada etapa apresenta o fundamento legal, uma orientação sobre o que deve ser feito e campos para registro. A seguir, a descrição completa de cada etapa:</p>
 
 <div class="step-box">
   <div class="step-num">Etapa 1</div>
@@ -523,26 +533,41 @@
 <div class="step-box">
   <div class="step-num">Etapa 5</div>
   <div class="step-name">Enquadramento Legal</div>
-  <div class="step-legal">Fundamento: Art. 75 da Lei 14.133/2021</div>
-  <p><strong>O que fazer:</strong> Fundamentar o enquadramento do processo na hipótese de Dispensa de Licitação cabível, com base nos incisos do Art. 75 da Lei 14.133/2021. A justificativa deve ser explícita e objetiva, demonstrando por que o caso se encaixa na hipótese invocada.</p>
+  <div class="step-legal">Fundamento: Art. 75 c/c Art. 72, III da Lei 14.133/2021</div>
+  <p><strong>O que fazer:</strong> Fundamentar o enquadramento do processo na hipótese de Dispensa de Licitação cabível, com base nos incisos do Art. 75 da Lei 14.133/2021. A justificativa deve ser explícita e objetiva, demonstrando por que o caso se encaixa na hipótese invocada. Selecione também o <strong>Critério de Seleção</strong> que será usado no julgamento das propostas (menor preço, maior desconto, melhor técnica etc.), conforme o Art. 33 da Lei 14.133/2021.</p>
   <p>As hipóteses mais comuns são:</p>
   <ul>
     <li><strong>Art. 75, I:</strong> obras e serviços de engenharia ou serviços de manutenção de veículos automotores até R$ 30.000,00</li>
-    <li><strong>Art. 75, II:</strong> outros bens e serviços até R$ 50.000,00 (nos termos da lei e limites vigentes)</li>
+    <li><strong>Art. 75, II:</strong> outros bens e serviços até R$ 65.492,11 (conforme Decreto nº 11.317/2022)</li>
     <li><strong>Art. 75, III:</strong> hipóteses de emergência ou calamidade pública</li>
     <li><strong>Art. 75, IV:</strong> contratação com órgãos ou entidades da Administração Pública</li>
     <li>Incisos V a XVI: outras hipóteses específicas</li>
   </ul>
-  <div class="nota" style="margin-top:8pt;"><strong>Nota:</strong> Consulte sempre a redação atualizada do Art. 75 da Lei 14.133/2021, pois os valores-limite podem ser atualizados por decreto. Os valores mencionados acima são exemplificativos.</div>
+  <p>Use o botão <strong>"Gerar Justificativa de Enquadramento Legal"</strong> para gerar automaticamente o documento exigido pelo Art. 72, III da Lei 14.133/2021, com o corpo jurídico declarando o enquadramento e a referência ao inciso aplicável.</p>
+  <div class="nota" style="margin-top:8pt;"><strong>Nota:</strong> Os valores-limite do Art. 75, I e II são atualizáveis por decreto. Consulte sempre a redação vigente. O critério de seleção padrão é "menor preço" — altere apenas se o TR exigir outro critério.</div>
 </div>
 
 <div class="step-box">
   <div class="step-num">Etapa 6</div>
+  <div class="step-name">Parecer Jurídico da Procuradoria-Geral</div>
+  <div class="step-legal">Fundamento: Art. 53 da Lei 14.133/2021</div>
+  <p><strong>O que fazer:</strong> Encaminhar o processo à Procuradoria-Geral (ou assessoria jurídica competente) para emissão de Parecer Jurídico sobre a legalidade e adequação da contratação. O parecer analisa o enquadramento legal, a regularidade do processo e pode apontar ressalvas ou condicionantes.</p>
+  <ul>
+    <li>Encaminhe o processo instruído até esta etapa à assessoria jurídica</li>
+    <li>Aguarde a emissão do parecer e registre seu número no campo <strong>"Nº do Parecer Jurídico"</strong></li>
+    <li>O número do parecer será referenciado automaticamente no despacho da Autorização de Abertura (Etapa 7)</li>
+    <li>Digitalize e anexe o parecer assinado ao processo nesta etapa</li>
+  </ul>
+  <div class="nota" style="margin-top:8pt;"><strong>Nota:</strong> O número do Parecer Jurídico registrado nesta etapa é usado automaticamente no texto da Autorização de Abertura gerada na Etapa 7, garantindo a rastreabilidade documental do processo.</div>
+</div>
+
+<div class="step-box">
+  <div class="step-num">Etapa 7</div>
   <div class="step-name">Autorização da Autoridade Competente</div>
   <div class="step-legal">Fundamento: Art. 72 da Lei 14.133/2021</div>
-  <p><strong>O que fazer:</strong> Submeter o processo à autoridade competente (ordenador de despesa) para autorização formal do início do processo de Dispensa de Licitação. Use o botão <strong>"Gerar Autorização"</strong> no sistema para gerar o documento de despacho preenchido com os dados do processo.</p>
+  <p><strong>O que fazer:</strong> Submeter o processo à autoridade competente (ordenador de despesa) para autorização formal do início do processo de Dispensa de Licitação. Use o botão <strong>"Gerar Autorização"</strong> para gerar o despacho preenchido com os dados do processo — incluindo, automaticamente, a referência ao Parecer Jurídico registrado na Etapa 6.</p>
   <ul>
-    <li>Clique em <strong>"Gerar Autorização"</strong> no painel do processo</li>
+    <li>Clique em <strong>"Gerar Autorização"</strong> no painel da etapa</li>
     <li>Imprima o documento ou salve como PDF</li>
     <li>Submeta à assinatura da autoridade competente</li>
     <li>Digitalize e anexe o documento assinado ao processo nesta etapa</li>
@@ -550,35 +575,38 @@
 </div>
 
 <div class="step-box">
-  <div class="step-num">Etapa 7</div>
+  <div class="step-num">Etapa 8</div>
   <div class="step-name">Elaboração do Aviso de Dispensa</div>
   <div class="step-legal">Fundamento: Art. 75, §3º da Lei 14.133/2021</div>
-  <p><strong>O que fazer:</strong> Elaborar a minuta do Aviso de Dispensa de Licitação, que será publicado no PNCP. O aviso deve conter: objeto da contratação, valor estimado, prazo de entrega, condições de participação, critérios de julgamento e data limite para envio de propostas.</p>
+  <p><strong>O que fazer:</strong> Elaborar o Aviso de Dispensa de Licitação, que será publicado no PNCP. Use o botão <strong>"Gerar Aviso de Dispensa"</strong> no sistema para gerar o documento completo, preenchido automaticamente com os dados do processo, incluindo o <strong>Critério de Seleção</strong> definido na Etapa 5. O aviso contém: identificação do órgão, objeto, valor estimado, critério de julgamento, condições de participação (habilitação e proposta), seção sobre a proposta mais vantajosa (Art. 59), data limite e canais oficiais de divulgação do resultado.</p>
   <ul>
-    <li>Elabore o aviso com todos os dados do processo</li>
-    <li>Defina o prazo para recebimento de propostas (mínimo de 3 dias úteis após a publicação)</li>
-    <li>Submeta a minuta para revisão e aprovação, se exigido pelo órgão</li>
-    <li>Anexe a minuta aprovada ao processo</li>
+    <li>Verifique e confirme o Critério de Seleção escolhido na Etapa 5</li>
+    <li>Preencha: prazo de encerramento, local de entrega e informações de contato</li>
+    <li>Clique em <strong>"Gerar Aviso de Dispensa"</strong> para gerar o documento</li>
+    <li>Revise, imprima ou salve como PDF e assine</li>
+    <li>Anexe o aviso assinado ao processo</li>
   </ul>
+  <div class="nota" style="margin-top:8pt;"><strong>Nota:</strong> O Aviso incluirá automaticamente os URLs do Site Oficial e Diário Oficial configurados nas Configurações, para divulgação do resultado. Configure esses campos em ⚙ Configurações antes de gerar o documento.</div>
 </div>
 
 <div class="step-box">
-  <div class="step-num">Etapa 8</div>
-  <div class="step-name">Publicação no PNCP</div>
-  <div class="step-legal">Fundamento: Art. 75, §3º da Lei 14.133/2021 — prazo mínimo 3 dias úteis</div>
-  <p><strong>O que fazer:</strong> Publicar o Aviso de Dispensa de Licitação no <strong>Portal Nacional de Contratações Públicas (PNCP)</strong>, conforme exigência do Art. 75, §3º. Após a publicação, é obrigatório aguardar o prazo mínimo de <strong>3 dias úteis</strong> antes de abrir as propostas.</p>
+  <div class="step-num">Etapa 9</div>
+  <div class="step-name">Publicação no PNCP / Diário Oficial</div>
+  <div class="step-legal">Fundamento: Art. 75, §3º e Art. 54, §1º da Lei 14.133/2021 — prazo mínimo 3 dias úteis</div>
+  <p><strong>O que fazer:</strong> Publicar o Aviso de Dispensa no <strong>Portal Nacional de Contratações Públicas (PNCP)</strong> e, simultaneamente, o Extrato para publicação no <strong>Diário Oficial</strong>, conforme Art. 75, §3º e Art. 54, §1º. Após a publicação no PNCP, é obrigatório aguardar o prazo mínimo de <strong>3 dias úteis</strong> antes de abrir as propostas.</p>
   <ul>
     <li>Acesse o PNCP em <em>www.pncp.gov.br</em> com certificado digital ou conta gov.br</li>
-    <li>Registre o aviso com os dados da contratação</li>
-    <li>Anote o número de publicação e a data de divulgação</li>
-    <li>Registre no sistema a data de publicação e a data prevista de abertura de propostas</li>
+    <li>Registre o aviso com os dados da contratação e anote o número de publicação</li>
+    <li>Use o botão <strong>"Gerar Extrato para Diário Oficial"</strong> para gerar o texto do extrato formatado</li>
+    <li>Encaminhe o extrato para publicação no Diário Oficial (eletrônico ou impresso)</li>
+    <li>Registre no sistema a data de publicação e a data prevista de encerramento das propostas</li>
     <li>Aguarde o prazo de 3 dias úteis antes de prosseguir</li>
   </ul>
   <div class="aviso" style="margin-top:8pt;"><strong>Atenção:</strong> A ausência de publicação ou o não cumprimento do prazo de 3 dias úteis é irregularidade grave que pode nulificar o processo.</div>
 </div>
 
 <div class="step-box">
-  <div class="step-num">Etapa 9</div>
+  <div class="step-num">Etapa 10</div>
   <div class="step-name">Recebimento e Análise de Propostas</div>
   <div class="step-legal">Fundamento: Art. 75, §3º da Lei 14.133/2021</div>
   <p><strong>O que fazer:</strong> Registrar as propostas recebidas dos fornecedores e realizar a análise comparativa. O SGCD possui uma seção específica para gerenciamento de propostas nesta etapa.</p>
@@ -592,7 +620,7 @@
 </div>
 
 <div class="step-box">
-  <div class="step-num">Etapa 9</div>
+  <div class="step-num">Etapa 11</div>
   <div class="step-name">Habilitação do Fornecedor</div>
   <div class="step-legal">Fundamento: Art. 62 a 70 da Lei 14.133/2021</div>
   <p><strong>O que fazer:</strong> Verificar a regularidade fiscal, trabalhista, previdenciária e jurídica do fornecedor vencedor. A habilitação é etapa obrigatória antes da adjudicação.</p>
@@ -606,7 +634,7 @@
 </div>
 
 <div class="step-box">
-  <div class="step-num">Etapa 10</div>
+  <div class="step-num">Etapa 12</div>
   <div class="step-name">Adjudicação</div>
   <div class="step-legal">Fundamento: Art. 71 da Lei 14.133/2021</div>
   <p><strong>O que fazer:</strong> Declarar formalmente o vencedor do processo. A adjudicação é o ato pelo qual o agente de contratação (ou comissão) declara o vencedor e o objeto da contratação a ele atribuído, após a habilitação.</p>
@@ -619,7 +647,7 @@
 </div>
 
 <div class="step-box">
-  <div class="step-num">Etapa 12</div>
+  <div class="step-num">Etapa 13</div>
   <div class="step-name">Homologação</div>
   <div class="step-legal">Fundamento: Art. 71 da Lei 14.133/2021</div>
   <p><strong>O que fazer:</strong> Submeter o processo à autoridade competente para homologação. A homologação é o ato da autoridade superior que ratifica o processo, conferindo-lhe validade. Após a homologação, o processo está apto para a emissão da Nota de Empenho e celebração do instrumento contratual.</p>
@@ -632,7 +660,7 @@
 </div>
 
 <div class="step-box">
-  <div class="step-num">Etapa 13</div>
+  <div class="step-num">Etapa 14</div>
   <div class="step-name">Nota de Empenho</div>
   <div class="step-legal">Fundamento: Art. 58 da Lei 4.320/1964</div>
   <p><strong>O que fazer:</strong> Após a homologação, acionar o setor financeiro/orçamentário para emissão da <strong>Nota de Empenho (NE)</strong>, que reserva o crédito orçamentário para a despesa. A NE é emitida no sistema de execução orçamentária do órgão (ex.: SIAFEM, SIAFEWEB, sistema municipal).</p>
@@ -645,7 +673,7 @@
 </div>
 
 <div class="step-box">
-  <div class="step-num">Etapa 14</div>
+  <div class="step-num">Etapa 15</div>
   <div class="step-name">Instrumento Contratual</div>
   <div class="step-legal">Fundamento: Art. 95 da Lei 14.133/2021</div>
   <p><strong>O que fazer:</strong> Formalizar o instrumento contratual com o fornecedor vencedor. A lei permite diferentes instrumentos conforme o valor e a natureza:</p>
@@ -663,7 +691,7 @@
 </div>
 
 <div class="step-box">
-  <div class="step-num">Etapa 15</div>
+  <div class="step-num">Etapa 16</div>
   <div class="step-name">Publicação do Contrato no PNCP</div>
   <div class="step-legal">Fundamento: Art. 94 da Lei 14.133/2021 — obrigatória em até 20 dias úteis</div>
   <p><strong>O que fazer:</strong> Publicar o instrumento contratual (contrato, ARP ou NE) no PNCP. O Art. 94 da Lei 14.133/2021 exige a publicação em até <strong>20 dias úteis</strong> a partir da assinatura do instrumento.</p>
@@ -711,7 +739,7 @@
 <p>Para editar as informações gerais do processo (objeto, valor, fundamentação, unidade etc.), localize o <strong>painel lateral direito</strong> quando o processo está aberto, ou clique no botão <strong>"Editar"</strong> no cabeçalho do processo. Altere os campos desejados e clique em <strong>"Salvar"</strong>.</p>
 
 <h3 id="sec7-5">7.5 Reordenar etapas</h3>
-<p>Embora as 15 etapas sigam uma ordem lógica sugerida, é possível reordená-las conforme as necessidades específicas do processo. Para reordenar:</p>
+<p>Embora as 16 etapas sigam uma ordem lógica sugerida, é possível reordená-las conforme as necessidades específicas do processo. Para reordenar:</p>
 <ol>
   <li>Localize a alça de arrastar <strong>⠿</strong> no lado esquerdo do cabeçalho da etapa</li>
   <li>Clique e mantenha pressionado sobre a alça</li>
@@ -743,14 +771,14 @@
 <hr class="section-divider">
 
 <!-- ─────────────────────────────────────────────── SEÇÃO 8 -->
-<h2 id="sec8">8. Gerenciamento de Propostas (Etapa 9)</h2>
-<p>A Etapa 9 conta com uma seção dedicada ao gerenciamento de propostas recebidas, que permite registrar, comparar e selecionar a proposta vencedora de forma organizada e com documentação automática.</p>
+<h2 id="sec8">8. Gerenciamento de Propostas (Etapa 10)</h2>
+<p>A Etapa 10 conta com uma seção dedicada ao gerenciamento de propostas recebidas, que permite registrar, comparar e selecionar a proposta vencedora de forma organizada e com documentação automática.</p>
 
 <h3 id="sec8-1">8.1 Situações de proposta</h3>
 
 <h3>Como adicionar uma proposta</h3>
 <ol>
-  <li>Expanda a Etapa 9 no checklist do processo</li>
+  <li>Expanda a Etapa 10 no checklist do processo</li>
   <li>Clique em <strong>"+ Adicionar Proposta"</strong></li>
   <li>Preencha os campos:</li>
 </ol>
@@ -869,14 +897,24 @@
     <th>Como gerar</th>
   </tr>
   <tr>
+    <td><strong>Justificativa de Enquadramento Legal</strong></td>
+    <td>Declaração formal do enquadramento na hipótese de dispensa, com referência ao inciso do Art. 75 aplicável (Art. 72, III Lei 14.133/2021)</td>
+    <td>Botão "Gerar Justificativa de Enquadramento Legal" na Etapa 5</td>
+  </tr>
+  <tr>
     <td><strong>Autorização de Abertura</strong></td>
-    <td>Despacho formal da autoridade competente autorizando o início do processo (Etapa 7)</td>
-    <td>Botão "Gerar Autorização" no cabeçalho do processo ou na Etapa 7</td>
+    <td>Despacho formal da autoridade competente autorizando o início do processo, com referência ao Parecer Jurídico (Etapa 7)</td>
+    <td>Botão "Gerar Autorização" na Etapa 7</td>
+  </tr>
+  <tr>
+    <td><strong>Aviso de Dispensa</strong></td>
+    <td>Aviso formatado para publicação no PNCP com objeto, valor, critério de seleção, condições de participação e seção sobre proposta mais vantajosa (Art. 75, §3º e Art. 59)</td>
+    <td>Botão "Gerar Aviso de Dispensa" na Etapa 8</td>
   </tr>
   <tr>
     <td><strong>Extrato de Publicação</strong></td>
     <td>Texto formatado para publicação no Diário Oficial (Art. 54, §1º). Contém: número, objeto, valor, fundamento e dados do órgão</td>
-    <td>Botão "Extrato" no cabeçalho do processo</td>
+    <td>Botão "Gerar Extrato para Diário Oficial" na Etapa 9</td>
   </tr>
   <tr>
     <td><strong>Ata de Sessão</strong></td>
@@ -886,22 +924,22 @@
   <tr>
     <td><strong>Mapa de Preços</strong></td>
     <td>Tabela comparativa de todas as propostas recebidas, com identificação do vencedor</td>
-    <td>Botão "Mapa de Preços" na Etapa 9</td>
+    <td>Botão "Mapa de Preços" na Etapa 10</td>
   </tr>
   <tr>
     <td><strong>Despacho de Recusa / Desclassificação</strong></td>
     <td>Decisão fundamentada de recusa de proposta (Art. 59 Lei 14.133/2021), com direito de manifestação</td>
-    <td>Botão "📄 Despacho de Recusa" no card da proposta recusada (Etapa 9)</td>
+    <td>Botão "📄 Despacho de Recusa" no card da proposta recusada (Etapa 10)</td>
   </tr>
   <tr>
     <td><strong>Despacho de Habilitação</strong></td>
     <td>Decisão formal de habilitação do fornecedor com lista das certidões verificadas (Art. 69 Lei 14.133/2021)</td>
-    <td>Botão "📄 Despacho de Habilitação" na Etapa 10</td>
+    <td>Botão "📄 Despacho de Habilitação" na Etapa 11</td>
   </tr>
   <tr>
     <td><strong>Despacho de Inabilitação</strong></td>
     <td>Decisão fundamentada de inabilitação do fornecedor (Art. 69 e 72 Lei 14.133/2021), com lista de certidões pendentes</td>
-    <td>Botão "📄 Despacho de Inabilitação" na Etapa 10</td>
+    <td>Botão "📄 Despacho de Inabilitação" na Etapa 11</td>
   </tr>
   <tr>
     <td><strong>Termo de Adjudicação</strong></td>
@@ -1172,7 +1210,7 @@
 
 <hr class="section-divider">
 <p style="text-align:center; font-size:9pt; color:#888; margin-top:20pt;">
-  SGCD v1.11.1 — Manual Operacional<br>
+  SGCD v1.11.8 — Manual Operacional<br>
   Sistema de Gestão de Contratação Direta<br>
   Lei Federal nº 14.133/2021
 </p>
