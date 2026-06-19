@@ -2238,7 +2238,7 @@ async function buscarCnpj(stepIdx) {
     toast('Fornecedor encontrado e salvo!', 'success');
     playSuccess();
     expandedSteps.add(stepIdx);
-    renderChecklist();
+    renderSingleStep(stepIdx);
   } catch (e) {
     toast(e.message || 'Erro ao consultar CNPJ.', 'error');
     playError();
@@ -2791,6 +2791,12 @@ function renderDash() {
 function escHtml(s) {
   if (!s) return '';
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+// Garante que URLs inseridas em href sejam apenas http/https
+function safeUrl(url) {
+  if (!url) return '#';
+  try { const u = new URL(url); return /^https?:$/.test(u.protocol) ? escHtml(url) : '#'; }
+  catch { return '#'; }
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -3650,17 +3656,40 @@ async function openProcess(id) {
   currentProcess = await dbGet('processes', id);
   expandedSteps.clear();
 
-  // Pré-preenche "Responsável" com o Agente de Contratação configurado em todas as
-  // etapas que ainda não têm o campo preenchido (cobre processos criados antes da configuração)
+  // Pré-preenche campos automáticos em todas as etapas (responsável, autoridade,
+  // contratante/contratado do instrumento contratual) e migra steps ausentes em
+  // processos criados com versões anteriores do sistema.
   const u = getUser();
-  if (u.nome) {
+  {
     let changed = false;
+    const forn = currentProcess.fornecedor;
+    const fornRazao = typeof forn === 'object' ? (forn?.razao_social || forn?.nome_fantasia || '') : (forn || '');
+    const fornCnpj  = typeof forn === 'object' ? (forn?.cnpj || '') : '';
+
+    // Migra steps ausentes (processo criado com versão anterior com menos etapas)
+    while (currentProcess.steps.length < STEPS.length) {
+      const si = currentProcess.steps.length;
+      const sd = STEPS[si];
+      const fields = {};
+      if (u.nome    && sd.fields.includes('responsavel')) fields.responsavel = u.nome;
+      if (u.aut_nome && sd.fields.includes('autoridade')) fields.autoridade  = u.aut_nome;
+      currentProcess.steps.push({ status: 'pending', fields, completedAt: null });
+      changed = true;
+    }
+
     (currentProcess.steps || []).forEach((step, i) => {
       const stepDef = STEPS[i];
-      if (stepDef?.fields?.includes('responsavel') && !step.fields?.responsavel) {
-        if (!step.fields) step.fields = {};
+      if (!step.fields) step.fields = {};
+      // Responsável
+      if (stepDef?.fields?.includes('responsavel') && !step.fields.responsavel && u.nome) {
         step.fields.responsavel = u.nome;
         changed = true;
+      }
+      // Campos do Instrumento Contratual (antes eram só display, agora persistidos)
+      if (stepDef?.extratoContrato) {
+        if (!step.fields.contratante && u.orgao)    { step.fields.contratante    = u.orgao;    changed = true; }
+        if (!step.fields.contratado  && fornRazao)  { step.fields.contratado     = fornRazao;  changed = true; }
+        if (!step.fields.cnpj_contratado && fornCnpj){ step.fields.cnpj_contratado = fornCnpj; changed = true; }
       }
     });
     if (changed) await saveProcess(currentProcess);
@@ -3787,42 +3816,18 @@ async function resetStepOrder() {
   renderChecklist();
 }
 
-async function renderChecklist() {
-  const p = currentProcess;
-  const container = document.getElementById('checklist');
-  // Não re-renderiza enquanto o usuário está editando um campo dentro do checklist
-  const active = document.activeElement;
-  const _isTyping = active.tagName === 'TEXTAREA' ||
-    active.tagName === 'SELECT' ||
-    (active.tagName === 'INPUT' && active.type !== 'radio' && active.type !== 'checkbox');
-  if (container?.contains(active) && _isTyping) {
-    if (!container._pendingRender) {
-      container._pendingRender = true;
-      active.addEventListener('blur', () => { container._pendingRender = false; renderChecklist(); }, { once: true });
-    }
-    return;
-  }
-  const order = p.stepOrder || STEPS.map((_,i) => i);
-  const hasCustomOrder = p.stepOrder && p.stepOrder.some((v,i) => v !== i);
-  const resetBtn = document.getElementById('btn-reset-order');
-  if (resetBtn) resetBtn.style.display = hasCustomOrder ? '' : 'none';
-
-  let html = '';
-  for (let pos = 0; pos < order.length; pos++) {
-    const i = order[pos];
-    const step = STEPS[i];
-    const data = p.steps[i];
-    const status = data.status;
-    const expanded = expandedSteps.has(i);
-    const isDone    = status === 'done';
-    const isBlocked = status === 'blocked';
-
-    // file count
-    const files = await dbGetByIndex('files', 'processId', p.id + '_' + i);
-    const certFileMap = step.certidoes ? await getCertFilesMap(p.id, i) : {};
-    const fileCount = files.length;
-
-    html += `<div class="step-card ${isDone?'completed':''} ${isBlocked?'blocked':''} ${expanded?'expanded':''}" id="step-card-${i}" draggable="true" ondragstart="onStepDragStart(event,${i})" ondragover="onStepDragOver(event,${i})" ondragleave="onStepDragLeave(${i})" ondrop="onStepDrop(event,${i})">
+// Gera o HTML de um único card de etapa (usado tanto no render completo quanto no parcial)
+async function _buildStepCardHtml(i, p) {
+  const step = STEPS[i];
+  const data = p.steps[i] || { status: 'pending', fields: {}, completedAt: null };
+  const status   = data.status;
+  const expanded = expandedSteps.has(i);
+  const isDone    = status === 'done';
+  const isBlocked = status === 'blocked';
+  const files = await dbGetByIndex('files', 'processId', p.id + '_' + i);
+  const certFileMap = step.certidoes ? await getCertFilesMap(p.id, i) : {};
+  const fileCount = files.length;
+  return `<div class="step-card ${isDone?'completed':''} ${isBlocked?'blocked':''} ${expanded?'expanded':''}" id="step-card-${i}" draggable="true" ondragstart="onStepDragStart(event,${i})" ondragover="onStepDragOver(event,${i})" ondragleave="onStepDragLeave(${i})" ondrop="onStepDrop(event,${i})">
       <div class="step-row" onclick="toggleStep(${i})">
         <div class="step-drag-handle" onclick="event.stopPropagation()" title="Arraste para reordenar">⠿</div>
         <div class="step-check ${isDone?'checked':''} ${isBlocked?'blocked':''}" onclick="event.stopPropagation();cycleStatus(${i})" title="Clique para alternar: Pendente → Concluída → Bloqueada → Pendente">
@@ -3855,8 +3860,43 @@ async function renderChecklist() {
         </div>
       </div>
     </div>`;
-  }
+}
 
+// Re-renderiza apenas o card de uma etapa específica sem tocar nas demais
+async function renderSingleStep(i) {
+  const p = currentProcess;
+  const existing = document.getElementById(`step-card-${i}`);
+  if (!existing) { renderChecklist(); return; }
+  const html = await _buildStepCardHtml(i, p);
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  existing.replaceWith(tmp.firstElementChild);
+}
+
+async function renderChecklist() {
+  const p = currentProcess;
+  const container = document.getElementById('checklist');
+  // Não re-renderiza enquanto o usuário está editando um campo dentro do checklist
+  const active = document.activeElement;
+  const _isTyping = active.tagName === 'TEXTAREA' ||
+    active.tagName === 'SELECT' ||
+    (active.tagName === 'INPUT' && active.type !== 'radio' && active.type !== 'checkbox');
+  if (container?.contains(active) && _isTyping) {
+    if (!container._pendingRender) {
+      container._pendingRender = true;
+      active.addEventListener('blur', () => { container._pendingRender = false; renderChecklist(); }, { once: true });
+    }
+    return;
+  }
+  const order = p.stepOrder || STEPS.map((_,i) => i);
+  const hasCustomOrder = p.stepOrder && p.stepOrder.some((v,i) => v !== i);
+  const resetBtn = document.getElementById('btn-reset-order');
+  if (resetBtn) resetBtn.style.display = hasCustomOrder ? '' : 'none';
+
+  let html = '';
+  for (let pos = 0; pos < order.length; pos++) {
+    html += await _buildStepCardHtml(order[pos], p);
+  }
   container.innerHTML = html;
 }
 
@@ -4091,7 +4131,7 @@ async function cycleCertidao(stepIdx, id) {
     await _syncCertToForn(id, { data_emissao: '', data_validade: '' });
   }
   expandedSteps.add(stepIdx);
-  renderChecklist();
+  renderSingleStep(stepIdx);
   playClick();
 }
 async function updateCertidao(stepIdx, id, field, value) {
@@ -4216,14 +4256,14 @@ async function processCertFileList(stepIdx, certId, fileList) {
   }
   toast(`${fileList.length} arquivo(s) anexado(s).`, 'success');
   expandedSteps.add(stepIdx);
-  renderChecklist();
+  renderSingleStep(stepIdx);
 }
 async function deleteCertFile(fileId, stepIdx) {
   if (!await customConfirm('Remover este arquivo?', { title: 'Remover Arquivo', icon: '🗑️', okLabel: 'Remover' })) return;
   await dbDelete('files', fileId);
   toast('Arquivo removido.', '');
   expandedSteps.add(stepIdx);
-  renderChecklist();
+  renderSingleStep(stepIdx);
 }
 
 async function toggleEngenharia(stepIdx, checked) {
@@ -4231,7 +4271,7 @@ async function toggleEngenharia(stepIdx, checked) {
   obj._engenharia = checked;
   await saveCertidoes(stepIdx, obj);
   expandedSteps.add(stepIdx);
-  renderChecklist();
+  renderSingleStep(stepIdx);
   playClick();
 }
 
@@ -4403,7 +4443,7 @@ async function setCotacaoMetodo(stepIdx, metodo) {
   localStorage.setItem('sgcd-cotacao-metodo', metodo);
   currentProcess.cotacao_metodo = metodo;
   await _autoFillValorEstimado(stepIdx); // já chama saveProcess internamente
-  renderChecklist();
+  renderSingleStep(stepIdx);
 }
 
 function getCotacoes(stepIdx) {
@@ -4420,7 +4460,7 @@ async function addCotacao(stepIdx) {
   await saveCotacoes(stepIdx, lista);
   await _autoFillValorEstimado(stepIdx);
   expandedSteps.add(stepIdx);
-  renderChecklist();
+  renderSingleStep(stepIdx);
 }
 async function removeCotacao(stepIdx, ci) {
   if (!await customConfirm('Remover esta cotação?', { title: 'Remover Cotação', icon: '🗑️', okLabel: 'Remover' })) return;
@@ -4429,16 +4469,25 @@ async function removeCotacao(stepIdx, ci) {
   await saveCotacoes(stepIdx, lista);
   await _autoFillValorEstimado(stepIdx);
   expandedSteps.add(stepIdx);
-  renderChecklist();
+  renderSingleStep(stepIdx);
 }
+let _saveCotTimer = null;
 async function updateCotacao(stepIdx, ci, field, value) {
   const lista = getCotacoes(stepIdx);
   lista[ci][field] = value;
-  await saveCotacoes(stepIdx, lista);
-  await _autoFillValorEstimado(stepIdx);
+  // Persiste imediatamente mudanças de situação; demais campos usam debounce de 500ms
   if (field === 'situacao') {
+    await saveCotacoes(stepIdx, lista);
+    await _autoFillValorEstimado(stepIdx);
     expandedSteps.add(stepIdx);
-    renderChecklist();
+    renderSingleStep(stepIdx);
+  } else {
+    currentProcess.steps[stepIdx].fields._cotacoes = JSON.stringify(lista);
+    clearTimeout(_saveCotTimer);
+    _saveCotTimer = setTimeout(async () => {
+      await saveProcess(currentProcess);
+      await _autoFillValorEstimado(stepIdx);
+    }, 500);
   }
 }
 
@@ -4595,7 +4644,7 @@ function renderAuditLog() {
 function toggleStep(i) {
   if (expandedSteps.has(i)) expandedSteps.delete(i);
   else expandedSteps.add(i);
-  renderChecklist();
+  renderSingleStep(i);
 }
 
 let _cycleStatusLock = false;
@@ -4666,7 +4715,7 @@ async function addProposta(stepIdx) {
   lista.push({ fornecedor:'', cnpj:'', valor:'', data_proposta:'', validade:'', situacao:'analise', obs:'' });
   await savePropostas(stepIdx, lista);
   expandedSteps.add(stepIdx);
-  renderChecklist();
+  renderSingleStep(stepIdx);
 }
 
 async function removeProposta(stepIdx, pi) {
@@ -4675,37 +4724,48 @@ async function removeProposta(stepIdx, pi) {
   lista.splice(pi, 1);
   await savePropostas(stepIdx, lista);
   expandedSteps.add(stepIdx);
-  renderChecklist();
+  renderSingleStep(stepIdx);
 }
 
+let _savePropTimer = null;
 async function updateProposta(stepIdx, pi, field, value) {
   const lista = getPropostas(stepIdx);
   lista[pi][field] = value;
-  if (field === 'situacao' && value === 'vencedora') {
-    lista.forEach((p, i) => { if (i !== pi && p.situacao === 'vencedora') p.situacao = 'aceita'; });
-    const prop = lista[pi];
-    if (prop.fornId) {
-      const forn = await dbGet('fornecedores', prop.fornId);
-      if (forn) { currentProcess.fornecedor = forn; await saveProcess(currentProcess); }
-    } else if (prop.fornecedor || prop.cnpj) {
-      currentProcess.fornecedor = { razao_social: prop.fornecedor||prop.cnpj, cnpj: prop.cnpj||'', cnpj_digits: (prop.cnpj||'').replace(/\D/g,''), situacao:'' };
-      await saveProcess(currentProcess);
-    }
-    // Propaga o valor da proposta vencedora para o campo valor_adjudicado da etapa de Adjudicação
-    if (prop.valor) {
-      const adjIdx = STEPS.findIndex(s => s.adjudicacao);
-      if (adjIdx >= 0 && currentProcess.steps[adjIdx]) {
-        if (!currentProcess.steps[adjIdx].fields) currentProcess.steps[adjIdx].fields = {};
-        if (!currentProcess.steps[adjIdx].fields.valor_adjudicado) {
-          currentProcess.steps[adjIdx].fields.valor_adjudicado = prop.valor;
-          await saveProcess(currentProcess);
+  if (field === 'situacao') {
+    // Mudança de situação: processa imediatamente (pode vincular vencedor)
+    if (value === 'vencedora') {
+      lista.forEach((p, i) => { if (i !== pi && p.situacao === 'vencedora') p.situacao = 'aceita'; });
+      const prop = lista[pi];
+      if (prop.fornId) {
+        const forn = await dbGet('fornecedores', prop.fornId);
+        if (forn) { currentProcess.fornecedor = forn; await saveProcess(currentProcess); }
+      } else if (prop.fornecedor || prop.cnpj) {
+        currentProcess.fornecedor = { razao_social: prop.fornecedor||prop.cnpj, cnpj: prop.cnpj||'', cnpj_digits: (prop.cnpj||'').replace(/\D/g,''), situacao:'' };
+        await saveProcess(currentProcess);
+      }
+      // Propaga o valor da proposta vencedora para o campo valor_adjudicado da etapa de Adjudicação
+      if (prop.valor) {
+        const adjIdx = STEPS.findIndex(s => s.adjudicacao);
+        if (adjIdx >= 0 && currentProcess.steps[adjIdx]) {
+          if (!currentProcess.steps[adjIdx].fields) currentProcess.steps[adjIdx].fields = {};
+          if (!currentProcess.steps[adjIdx].fields.valor_adjudicado) {
+            currentProcess.steps[adjIdx].fields.valor_adjudicado = prop.valor;
+            await saveProcess(currentProcess);
+          }
         }
       }
+      toast('Fornecedor vencedor vinculado ao processo.', 'success');
     }
-    toast('Fornecedor vencedor vinculado ao processo.', 'success');
+    await savePropostas(stepIdx, lista);
+    expandedSteps.add(stepIdx);
+    renderSingleStep(stepIdx);
+    renderDetail();
+  } else {
+    // Edição de texto/data: debounce de 500ms para evitar writes excessivos no IndexedDB
+    currentProcess.steps[stepIdx].fields._propostas = JSON.stringify(lista);
+    clearTimeout(_savePropTimer);
+    _savePropTimer = setTimeout(() => saveProcess(currentProcess), 500);
   }
-  await savePropostas(stepIdx, lista);
-  if (field === 'situacao') { expandedSteps.add(stepIdx); renderChecklist(); renderDetail(); }
 }
 
 const FIELD_LABELS_PT = { num_proc:'Processo Administrativo', num_dl:'Dispensa de Licitação', objeto:'Objeto', legal:'Fundamentação', valor:'Valor estimado', unidade:'Unidade solicitante', prazo:'Prazo para conclusão', obs:'Observações' };
@@ -4769,7 +4829,7 @@ async function processFileList(stepIdx, fileList) {
   await saveProcess(p);
   toast(`${fileList.length} arquivo(s) anexado(s).`, 'success');
   expandedSteps.add(stepIdx);
-  renderChecklist();
+  renderSingleStep(stepIdx);
   renderTimeline();
 }
 
@@ -4804,7 +4864,7 @@ async function deleteFile(fileId, stepIdx) {
   }
   toast('Arquivo removido.', '');
   expandedSteps.add(stepIdx);
-  renderChecklist();
+  renderSingleStep(stepIdx);
   renderTimeline();
 }
 
@@ -5333,7 +5393,7 @@ async function pickFornForProposta(fornId) {
   await savePropostas(stepIdx, lista);
   fecharPickForn();
   expandedSteps.add(stepIdx);
-  renderChecklist();
+  renderSingleStep(stepIdx);
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -6251,7 +6311,7 @@ function gerarAvisoDispensa() {
     <li>Valor global ou unitário, conforme o caso, em moeda corrente nacional;</li>
     <li>Prazo de validade mínima da proposta de 60 (sessenta) dias, contados da data de apresentação.</li>
   </ul>
-  <p>O Termo de Referência e os demais documentos pertinentes à presente contratação estão disponíveis para consulta junto ao Departamento de Licitações${u.orgao ? ' da ' + u.orgao : ''}${u.site_oficial ? ' e no site oficial (<a href="' + u.site_oficial + '">' + u.site_oficial + '</a>)' : ''}. Pedidos de esclarecimento deverão ser encaminhados para o mesmo endereço/e-mail indicado para envio de propostas, até o término do prazo para recebimento.</p>
+  <p>O Termo de Referência e os demais documentos pertinentes à presente contratação estão disponíveis para consulta junto ao Departamento de Licitações${u.orgao ? ' da ' + u.orgao : ''}${u.site_oficial ? ' e no site oficial (<a href="' + safeUrl(u.site_oficial) + '">' + escHtml(u.site_oficial) + '</a>)' : ''}. Pedidos de esclarecimento deverão ser encaminhados para o mesmo endereço/e-mail indicado para envio de propostas, até o término do prazo para recebimento.</p>
 </div>
 
 <div class="section">
@@ -6265,7 +6325,7 @@ function gerarAvisoDispensa() {
   <div class="section-title">Do Resultado e Da Habilitação</div>
   <p>Encerrado o prazo para envio de propostas, a Administração realizará a análise das propostas recebidas e identificará a proposta mais vantajosa, nos termos acima estabelecidos.</p>
   <p>A proponente classificada com a proposta mais vantajosa será convocada para, no prazo de <strong>2 (dois) dias úteis</strong>, encaminhar a documentação necessária à comprovação de que reúne as condições de habilitação exigidas para contratar com a Administração Pública, nos termos do art. 62 da Lei Federal nº 14.133/2021.</p>
-  <p>O resultado do procedimento será divulgado nos meios oficiais de publicidade do Município de ${blank(u.municipio || u.orgao)}${(u.site_oficial || u.diario_url) ? ' (' + [u.site_oficial, u.diario_url].filter(Boolean).map(url => `<a href="${url}">${url}</a>`).join(' e ') + ')' : ''}.</p>
+  <p>O resultado do procedimento será divulgado nos meios oficiais de publicidade do Município de ${blank(u.municipio || u.orgao)}${(u.site_oficial || u.diario_url) ? ' (' + [u.site_oficial, u.diario_url].filter(Boolean).map(url => `<a href="${safeUrl(url)}">${escHtml(url)}</a>`).join(' e ') + ')' : ''}.</p>
 </div>
 
 <div class="city-date">${blank(u.municipio)}, ${hoje}</div>
@@ -6766,7 +6826,7 @@ function gerarAta() {
 <div class="secao">
   <div class="secao-titulo">III — Instrumento Convocatório e Instrução do Processo</div>
   <div class="dado"><strong>Documento de Formalização da Demanda (DFD):</strong> concluído em ${d(v(0,'data_conclusao'))} — ${blank(v(0,'responsavel'))}</div>
-  <div class="dado"><strong>Estudo Técnico Preliminar (ETP):</strong> ${p.steps[1].status === 'done' ? `concluído em ${d(v(1,'data_conclusao'))}` : 'dispensado / não aplicável'}</div>
+  <div class="dado"><strong>Estudo Técnico Preliminar (ETP):</strong> ${p.steps[1]?.status === 'done' ? `concluído em ${d(v(1,'data_conclusao'))}` : 'dispensado / não aplicável'}</div>
   <div class="dado"><strong>Termo de Referência (TR):</strong> concluído em ${d(v(2,'data_conclusao'))} — ${blank(v(2,'responsavel'))}</div>
   <div class="dado"><strong>Pesquisa de Preços / Estimativa do Valor:</strong> ${cotacoesValidas.length} cotação(ões) válida(s) — concluída em ${d(v(3,'data_conclusao'))} — valor de referência: ${v(3,'valor_estimado') ? fmtMoney(v(3,'valor_estimado')) : '_'.repeat(20)}</div>
   <div class="dado"><strong>Enquadramento Legal:</strong> ${blank(v(4,'fundamento'))} — concluído em ${d(v(4,'data_conclusao'))}</div>
