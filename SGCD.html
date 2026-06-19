@@ -580,6 +580,7 @@
 
   /* ── Fracionamento ──────────────────────────────────── */
   .frac-badge { font-size: .65rem; font-weight: 700; padding: 2px 7px; border-radius: 3px; white-space: nowrap; letter-spacing: .3px; }
+  .step-atual { display: inline-flex; align-items: center; gap: 5px; font-size: .72rem; color: var(--warning); font-weight: 600; background: var(--warning-light); border-radius: 4px; padding: 2px 8px; margin-bottom: 6px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .frac-badge.atencao { background: #fff3cd; color: #7a5800; border: 1px solid #f99b11; }
   .frac-badge.alerta  { background: #fde8eb; color: #c7162b; border: 1px solid #c7162b; }
 
@@ -2088,6 +2089,16 @@ function statusLabel(s) {
   return { todo:'Não iniciado', progress:'Em andamento', done:'Concluído', blocked:'Bloqueado' }[s] || s;
 }
 
+// Retorna a primeira etapa não-concluída de um processo (para exibir no card do dashboard)
+function nextPendingStep(p) {
+  const order = p.stepOrder || STEPS.map((_,i) => i);
+  for (const i of order) {
+    const s = p.steps[i];
+    if (!s || s.status !== 'done') return { idx: i, step: STEPS[i] };
+  }
+  return null;
+}
+
 function pct(p) {
   const done = p.steps.filter(s => s.status === 'done').length;
   return Math.round(done / p.steps.length * 100);
@@ -2771,6 +2782,7 @@ function renderDash() {
           <span class="title-text" id="card-title-${p.id}">${escHtml(p.objeto)}</span>
           <button class="title-edit-btn" onclick="event.stopPropagation();editarTituloCard(event,'${p.id}')" title="Editar objeto">✎</button>
         </div>
+        ${(()=>{ if (st !== 'progress') return ''; const nx = nextPendingStep(p); return nx ? `<div><span class="step-atual"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>${nx.idx+1}. ${escHtml(nx.step.name)}</span></div>` : ''; })()}
         <div class="meta">
           ${p.valor ? `<span>${ICONS.coin()} ${fmtMoney(p.valor)}</span>` : ''}
           ${p.unidade ? `<span>${ICONS.building()} ${escHtml(p.unidade)}</span>` : ''}
