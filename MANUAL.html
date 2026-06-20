@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Manual Operacional — SGCD v1.12.1</title>
+<title>Manual Operacional — SGCD v1.12.2</title>
 <style>
   /* Reset e base */
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -89,7 +89,7 @@
       margin: 20mm 20mm 25mm;
       size: A4;
       @top-center {
-        content: "SGCD v1.12.1 — Manual Operacional";
+        content: "SGCD v1.12.2 — Manual Operacional";
         font-family: 'Times New Roman', serif;
         font-size: 9pt;
         color: #666;
@@ -118,7 +118,7 @@
     <div class="cover-title">Manual Operacional</div>
     <div class="cover-subtitle">SGCD — Sistema de Gestão de Contratação Direta</div>
     <div class="cover-system">Gestão de Processos de Dispensa de Licitação</div>
-    <div class="cover-version">Versão v1.12.1</div>
+    <div class="cover-version">Versão v1.12.2</div>
     <br>
     <div style="font-size:11pt; color:#555; line-height:1.8;">
       Aplicação web single-file para agentes de contratação pública<br>
@@ -227,7 +227,7 @@
   <li><strong>Navegador moderno:</strong> Google Chrome (versão 90 ou superior) ou Microsoft Edge (versão 90 ou superior) — o sistema detecta e abre automaticamente o navegador disponível</li>
   <li><strong>Python 3.7 ou superior:</strong> necessário para executar o servidor local (<code>server.py</code>). Instale em <em>python.org</em> e marque "Add Python to PATH" durante a instalação</li>
   <li><strong>JavaScript habilitado:</strong> necessário para o funcionamento da aplicação (habilitado por padrão em todos os navegadores modernos)</li>
-  <li><strong>Conexão à internet:</strong> necessária apenas para consulta automática de CNPJ via BrasilAPI e para envio de e-mails via SMTP</li>
+  <li><strong>Conexão à internet:</strong> necessária apenas para consulta automática de CNPJ via ReceitaWS/BrasilAPI e para envio de e-mails via SMTP</li>
 </ul>
 <div class="aviso">
   <strong>Importante — Como abrir o sistema:</strong> O SGCD deve ser aberto <strong>exclusivamente</strong> pelo arquivo <code>Iniciar SGCD.bat</code>. Abrir o arquivo <code>SGCD.html</code> diretamente pelo navegador (clique duplo) cria uma <strong>base de dados separada e isolada</strong>, os dados não serão os mesmos, e o envio de e-mails ficará indisponível. Sempre use o <strong>Iniciar SGCD.bat</strong>.
@@ -378,30 +378,32 @@
 
 <h3 id="sec4-1">4.1 Consultando e cadastrando</h3>
 <p>Para acessar o cadastro de fornecedores, clique no <strong>ícone de prédio</strong> na barra lateral. A tela exibirá a lista de fornecedores cadastrados e um botão para adicionar novo.</p>
+<p>Os fornecedores são exibidos como cards na lista. <strong>Clique em qualquer card</strong> para expandi-lo e visualizar todos os dados do fornecedor sem sair da tela. Clique novamente (ou em "Fechar") para recolher. Apenas um card pode estar aberto por vez.</p>
 <p>Para cadastrar um novo fornecedor:</p>
 <ol>
   <li>Clique em <strong>"+ Novo Fornecedor"</strong></li>
   <li>Digite o <strong>CNPJ</strong> do fornecedor no campo indicado</li>
-  <li>Clique em <strong>"Consultar CNPJ"</strong> — o sistema buscará automaticamente os dados na <strong>BrasilAPI</strong> (requer conexão à internet)</li>
-  <li>Os campos serão preenchidos automaticamente: razão social, nome fantasia, endereço, atividade econômica (CNAE) e situação cadastral</li>
+  <li>Clique em <strong>"Consultar CNPJ"</strong> — o sistema buscará automaticamente os dados na <strong>ReceitaWS</strong> (fonte primária) ou <strong>BrasilAPI</strong> (fallback); requer conexão à internet</li>
+  <li>Os campos serão preenchidos automaticamente: razão social, nome fantasia, endereço, atividade econômica (CNAE), situação cadastral, QSA e contato</li>
   <li>Verifique e complete os dados se necessário</li>
   <li>Clique em <strong>"Salvar"</strong></li>
 </ol>
+<p>Para <strong>editar</strong> um fornecedor já cadastrado, clique no botão <strong>"✏ Editar"</strong> no canto do card (sem precisar abrir modal). O formulário abre diretamente abaixo do card na lista. É possível também re-consultar o CNPJ na Receita Federal durante a edição para atualizar os dados.</p>
 <div class="dica">
-  <strong>Dica:</strong> Ao vincular fornecedores do cadastro às propostas (em vez de digitá-los manualmente), o histórico de participações do fornecedor em processos anteriores fica disponível automaticamente.
+  <strong>Dica:</strong> Ao vincular fornecedores do cadastro às propostas (em vez de digitá-los manualmente), o histórico de participações do fornecedor em processos anteriores fica disponível automaticamente no card, na aba "Dados".
 </div>
 
 <h3 id="sec4-2">4.2 Certidões e regularidade fiscal</h3>
-<p>Para cada fornecedor, é possível registrar as certidões de regularidade fiscal, trabalhista e previdenciária. No cadastro do fornecedor, localize a seção <strong>"Certidões"</strong> e informe:</p>
+<p>Para cada fornecedor, é possível registrar as certidões de regularidade fiscal, trabalhista e previdenciária. Com o card do fornecedor expandido, clique na aba <strong>"Certidões"</strong> e informe:</p>
 <ul>
   <li><strong>Tipo da certidão</strong> (ex.: FGTS, Receita Federal, INSS, Trabalhista, Municipal, Estadual)</li>
   <li><strong>Situação:</strong> Regular, Irregular ou Vencida</li>
   <li><strong>Data de emissão</strong> e <strong>data de vencimento</strong></li>
 </ul>
-<p>O sistema exibe alertas quando certidões estão próximas do vencimento ou já vencidas, auxiliando na etapa de habilitação (Etapa 10).</p>
+<p>O formulário de certidão abre diretamente dentro do card, sem modal separado. Ao salvar ou cancelar, o sistema volta para a lista de certidões do fornecedor. O sistema exibe alertas quando certidões estão próximas do vencimento ou já vencidas, auxiliando na etapa de habilitação (Etapa 10).</p>
 
 <h3 id="sec4-3">4.3 Verificação de impedimento</h3>
-<p>No cadastro do fornecedor, há links diretos para consulta nos portais de transparência:</p>
+<p>No card do fornecedor (aba "Dados"), há links diretos para consulta nos portais de transparência:</p>
 <ul>
   <li><strong>CEIS</strong> — Cadastro de Empresas Inidôneas e Suspensas</li>
   <li><strong>CNEP</strong> — Cadastro Nacional de Empresas Punidas</li>
@@ -1212,7 +1214,7 @@
 
 <hr class="section-divider">
 <p style="text-align:center; font-size:9pt; color:#888; margin-top:20pt;">
-  SGCD v1.12.1 — Manual Operacional<br>
+  SGCD v1.12.2 — Manual Operacional<br>
   Sistema de Gestão de Contratação Direta<br>
   Lei Federal nº 14.133/2021
 </p>
