@@ -5683,9 +5683,9 @@ async function gerarRelatorioFornecedores() {
   .doc-title h3 { font-size: 13pt; font-weight: 700; text-transform: uppercase; }
   .doc-title .sub { font-size: 10pt; color: #444; margin-top: 4pt; }
   .meta { font-size: 9pt; color: #555; margin-bottom: 10pt; text-align: center; }
-  table { width: 100%; border-collapse: collapse; margin-top: 8pt; font-size: 10pt; }
-  th { background: #1a1a2e; color: #fff; padding: 5pt 7pt; text-align: center; vertical-align: middle; font-weight: 700; font-size: 9.5pt; }
-  td { padding: 4pt 7pt; vertical-align: middle; font-size: 9pt; border-bottom: 1px solid #e8e8e8; }
+  table { width: 100%; border-collapse: collapse; margin-top: 8pt; font-size: 10pt; table-layout: fixed; }
+  th { background: #1a1a2e; color: #fff; padding: 5pt 7pt; text-align: left; vertical-align: middle; font-weight: 700; font-size: 9.5pt; }
+  td { padding: 4pt 7pt; vertical-align: middle; font-size: 9pt; border-bottom: 1px solid #e8e8e8; word-wrap: break-word; overflow-wrap: break-word; }
   .forn-row td { border-bottom: none; }
   .total-row { margin-top: 12pt; text-align: right; font-weight: 700; font-size: 11pt; border-top: 2px solid #000; padding-top: 6pt; }
   .footer-line { margin-top: 30pt; border-top: 1px solid #ccc; padding-top: 5pt; text-align: center; font-size: 8pt; color: #666; }
@@ -5707,11 +5707,17 @@ async function gerarRelatorioFornecedores() {
   ${q ? `Filtro: "${escHtml(q)}" &nbsp;·&nbsp; ` : ''}Gerado em: ${dtGer} &nbsp;·&nbsp; Total: ${lista.length} fornecedor${lista.length !== 1 ? 'es' : ''}
 </div>
 <table>
+  <colgroup>
+    <col style="width:35%">
+    <col style="width:20%">
+    <col style="width:20%">
+    <col style="width:25%">
+  </colgroup>
   <thead><tr>
-    <th style="width:30%">Razão Social / Nome</th>
-    <th style="width:22%">Situação</th>
-    <th style="width:18%">Porte</th>
-    <th style="width:30%">Município</th>
+    <th>Razão Social / Nome</th>
+    <th>Situação</th>
+    <th>Porte</th>
+    <th>Município</th>
   </tr></thead>
   <tbody>${tbody}</tbody>
 </table>
