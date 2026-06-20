@@ -12,8 +12,8 @@ Não requer instalação, servidor ou conexão à internet. Todos os dados ficam
 
 ## Funcionalidades Principais
 
-- **Checklist estruturado com 16 etapas** do processo de Dispensa de Licitação, cada uma com fundamento legal e orientação de preenchimento
-- **Geração de documentos** prontos para assinatura e publicação: Autorização de Abertura, Aviso de Dispensa, Extrato para Diário Oficial, Ata de Sessão, Mapa de Preços e Extrato de Contrato
+- **Checklist estruturado com 15 etapas** do processo de Dispensa de Licitação, cada uma com fundamento legal e orientação de preenchimento
+- **Geração de documentos** prontos para assinatura e publicação: Autorização de Abertura, Aviso de Dispensa, Ata de Sessão, Mapa de Preços e Extrato de Contrato
 - **Relatório geral** de processos com filtros por status, unidade, período e faixa de valor
 - **Cadastro de fornecedores** com consulta automática de CNPJ via BrasilAPI e controle de certidões
 - **Gestão de propostas** com mapa de preços comparativo e vínculo automático do fornecedor vencedor
@@ -63,8 +63,9 @@ Não requer instalação, servidor ou conexão à internet. Todos os dados ficam
 
 - **Navegador moderno** com suporte a IndexedDB e JavaScript ES6+
 - **Recomendado:** Google Chrome (versão 90+) ou Microsoft Edge (versão 90+)
-- Não requer instalação, servidor web, banco de dados externo ou conexão à internet
-- **Envio de e-mail e abertura via BAT:** Python 3.7+ para executar `server.py` (usa apenas stdlib, sem dependências externas); configure as credenciais SMTP em Configurações
+- **Python 3.7+** para executar o servidor local (`server.py`); usa apenas stdlib, sem dependências externas
+- Não requer instalação adicional, banco de dados externo ou conexão à internet (exceto para consulta de CNPJ)
+- Configure as credenciais SMTP em Configurações para habilitar o envio de e-mails
 
 > ⚠️ **Importante:** o sistema deve ser aberto exclusivamente pelo `Iniciar SGCD.bat`. Abrir o `SGCD.html` diretamente pelo navegador cria uma base de dados separada e impede o envio de e-mails.
 
@@ -93,7 +94,7 @@ Essas informações serão usadas automaticamente em todos os documentos gerados
 4. Selecione a fundamentação legal (inciso do Art. 75)
 5. Informe o valor estimado, unidade solicitante e prazo
 6. Clique em **"Criar"**
-7. Siga o checklist das 16 etapas na ordem indicada
+7. Siga o checklist das 15 etapas na ordem indicada
 
 ---
 
