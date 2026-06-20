@@ -643,7 +643,15 @@
   .cnpj-strip strong { color: #fff; font-size: .8rem; letter-spacing: .5px; }
 
   /* ── Fornecedores view ── */
-  .forn-list-item { background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 10px; }
+  .forn-list-item { background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 10px; cursor: pointer; transition: border-color .15s; }
+  .forn-list-item.expanded { border-color: var(--gray-400); cursor: default; }
+  .forn-list-item.editing  { border-color: var(--brand); cursor: default; }
+  .forn-inline-body { border-top: 1px solid var(--gray-200); padding: 14px; margin: 8px -14px -12px; }
+  .forn-inline-edit-header { background: var(--gray-100); border-radius: var(--radius) var(--radius) 0 0; padding: 8px 14px; margin: 8px -14px 0; border-top: 1px solid var(--gray-200); }
+  body.dark .forn-list-item.expanded { border-color: #666; }
+  body.dark .forn-list-item.editing  { border-color: var(--brand); }
+  body.dark .forn-inline-body { border-color: #444; }
+  body.dark .forn-inline-edit-header { background: #333; border-color: #444; }
   .forn-list-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 8px; }
   .forn-proc-list { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
   .forn-proc-link { font-size: .7rem; background: var(--brand); color: #fff; padding: 2px 8px; border-radius: 12px; cursor: pointer; }
@@ -950,18 +958,6 @@
         <button class="btn btn-outline" onclick="closeFornModal()">Cancelar</button>
         <button class="btn btn-primary" id="forn-modal-save-btn" disabled onclick="saveFornModal()">Salvar Fornecedor</button>
       </div>
-    </div>
-  </div>
-
-  <!-- ── Fornecedor Detail/Edit Modal ── -->
-  <div class="overlay hidden" id="forn-detail-overlay" onclick="if(event.target===this)closeFornDetail()">
-    <div class="modal" style="max-width:560px">
-      <div class="modal-header">
-        <h2 id="forn-detail-title">Cadastro do Fornecedor</h2>
-        <button class="btn btn-ghost btn-icon" onclick="closeFornDetail()">✕</button>
-      </div>
-      <div class="modal-body" id="forn-detail-body"></div>
-      <div class="modal-footer" id="forn-detail-footer"></div>
     </div>
   </div>
 
@@ -2565,7 +2561,7 @@ async function renderFornecedores() {
       return p ? `<span class="forn-proc-link" onclick="openProcess('${escHtml(pid)}')">${escHtml(p.num_dl ? `DL ${p.num_dl}` : p.num_proc ? `PA ${p.num_proc}` : p.num || p.objeto.slice(0, 25))}</span>` : '';
     }).filter(Boolean).join('');
     const qsaNames = (f.qsa || []).map(s => escHtml(s.nome)).join(', ');
-    return `<div class="forn-list-item" style="cursor:pointer" onclick="openFornDetail('${f.id}')">
+    return `<div class="forn-list-item" data-forn-id="${f.id}" onclick="toggleFornCard('${f.id}')">
       <div class="forn-list-header">
         <div>
           <div class="forn-razao">${escHtml(f.razao_social)}</div>
@@ -2578,7 +2574,7 @@ async function renderFornecedores() {
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
           <span class="forn-sit ${sitCls}">${escHtml(f.situacao || '—')}</span>
           ${f.porte ? `<span style="font-size:.65rem;color:var(--gray-500)">${escHtml(f.porte)}</span>` : ''}
-          <button class="btn btn-outline btn-sm" style="font-size:.68rem;padding:2px 10px" onclick="event.stopPropagation();openFornDetail('${f.id}',true)">✏ Editar</button>
+          <button class="btn btn-outline btn-sm" style="font-size:.68rem;padding:2px 10px" onclick="event.stopPropagation();toggleFornCard('${f.id}',true)">✏ Editar</button>
         </div>
       </div>
       ${f.endereco ? `<div class="forn-detail-row">📍 ${escHtml(f.endereco)}</div>` : ''}
@@ -3179,8 +3175,9 @@ function populateModalNatureza() {
   }
 }
 
-let _fornModalData = null;
-let _currentForn   = null;
+let _fornModalData  = null;
+let _currentForn    = null;
+let _expandedFornId = null;
 
 function _fornViewHtml(f) {
   const sitCls = cnpjSitClass(f.situacao);
@@ -3219,7 +3216,7 @@ function _fornViewHtml(f) {
 
   const procLinks = (f.processos || []).map(pid => {
     const p = processes.find(x => x.id === pid);
-    return p ? `<span class="forn-proc-link" onclick="closeFornDetail();openProcess('${escHtml(pid)}')">${escHtml(p.num_proc ? `PA ${p.num_proc}` : p.num || p.objeto.slice(0,25))}</span>` : '';
+    return p ? `<span class="forn-proc-link" onclick="_collapseFornCard(_expandedFornId);openProcess('${escHtml(pid)}')">${escHtml(p.num_proc ? `PA ${p.num_proc}` : p.num || p.objeto.slice(0,25))}</span>` : '';
   }).filter(Boolean).join('');
 
   return `<div style="padding:0">
@@ -3299,26 +3296,106 @@ function _fornViewHtml(f) {
   </div>`;
 }
 
-async function openFornDetail(id, editMode = false, tab = 'dados') {
+async function toggleFornCard(id, editMode = false, tab = 'dados') {
+  if (_expandedFornId && _expandedFornId !== id) _collapseFornCard(_expandedFornId);
+  if (_expandedFornId === id && !editMode) { _collapseFornCard(id); return; }
   _currentForn = await dbGet('fornecedores', id);
   if (!_currentForn) return;
+  _expandedFornId = id;
   _fornTab = tab;
-  document.getElementById('forn-detail-overlay').classList.remove('hidden');
   playClick();
-  if (editMode) _renderFornEdit();
-  else if (tab === 'certs') _renderFornCerts();
-  else _renderFornView();
+  if (editMode) _renderFornCardEdit();
+  else if (tab === 'certs') _renderFornCardCerts();
+  else _renderFornCardView();
+}
+async function openFornDetail(id, editMode = false, tab = 'dados') {
+  await toggleFornCard(id, editMode, tab);
 }
 function closeFornDetail() {
-  document.getElementById('forn-detail-overlay').classList.add('hidden');
-  _currentForn = null;
+  if (_expandedFornId) _collapseFornCard(_expandedFornId);
 }
-function _renderFornView() {
-  document.getElementById('forn-detail-title').textContent = 'Cadastro do Fornecedor';
-  document.getElementById('forn-detail-body').innerHTML = _fornTabsHtml('dados') + _fornViewHtml(_currentForn);
-  document.getElementById('forn-detail-footer').innerHTML = `
-    <button class="btn btn-outline" onclick="closeFornDetail()">Fechar</button>
-    <button class="btn btn-primary" onclick="_renderFornEdit()">✏ Editar</button>`;
+function _collapseFornCard(id) {
+  const el = document.querySelector(`.forn-list-item[data-forn-id="${id}"]`);
+  if (el) {
+    el.classList.remove('expanded', 'editing');
+    el.querySelector('.forn-inline-body')?.remove();
+    el.querySelector('.forn-inline-edit-header')?.remove();
+  }
+  if (_expandedFornId === id) { _expandedFornId = null; _currentForn = null; }
+}
+function _getFornCardEl() {
+  return document.querySelector(`.forn-list-item[data-forn-id="${_expandedFornId}"]`);
+}
+function _setFornCardBody(html, mode = 'view') {
+  const el = _getFornCardEl();
+  if (!el) return;
+  el.classList.remove('expanded', 'editing');
+  el.classList.add(mode === 'edit' ? 'editing' : 'expanded');
+  el.querySelector('.forn-inline-body')?.remove();
+  el.querySelector('.forn-inline-edit-header')?.remove();
+  el.insertAdjacentHTML('beforeend', html);
+  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+function _renderFornCardView() {
+  const f = _currentForn;
+  _setFornCardBody(`<div class="forn-inline-body">
+    ${_fornTabsHtml('dados')}
+    ${_fornViewHtml(f)}
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid var(--gray-200)">
+      <button class="btn btn-outline" onclick="_collapseFornCard('${f.id}')">Fechar</button>
+      <button class="btn btn-primary" onclick="_renderFornCardEdit()">✏ Editar</button>
+    </div>
+  </div>`, 'view');
+}
+function _renderFornView() { _renderFornCardView(); }
+function _renderFornCardCerts() {
+  _fornTab = 'certs';
+  const f = _currentForn;
+  const certs = f.certidoes || [];
+  const itemsHtml = certs.length ? certs.map((c, i) => {
+    const st = certStatus(c);
+    return `<div class="forn-cert-item ${st}">
+      <div style="flex:1;min-width:0">
+        <div class="forn-cert-tipo">${escHtml(certTipoLabel(c))}</div>
+        <div class="forn-cert-dates">Emissão: ${fmtDateBR(c.emissao)} · Validade: ${fmtDateBR(c.validade)}
+          ${c.obs ? `<br><span style="font-style:italic">${escHtml(c.obs)}</span>` : ''}</div>
+        <span class="forn-cert-badge ${st}">${certStatusLabel(st, certDaysLeft(c))}</span>
+      </div>
+      <div class="forn-cert-actions">
+        <button class="btn btn-outline btn-sm" style="padding:2px 8px;font-size:.65rem" onclick="openCertEdit('${f.id}',${i})">✏</button>
+        <button class="btn btn-danger btn-sm" style="padding:2px 8px;font-size:.65rem" onclick="deleteCert('${f.id}',${i})">✕</button>
+      </div>
+    </div>`;
+  }).join('') : '<p style="color:var(--gray-500);font-size:.8rem;text-align:center;padding:20px 0">Nenhuma certidão cadastrada.</p>';
+  _setFornCardBody(`<div class="forn-inline-body">
+    ${_fornTabsHtml('certs')}
+    <div class="forn-cert-list">${itemsHtml}</div>
+    <button class="btn btn-outline" style="width:100%;margin-top:8px" onclick="openCertEdit('${f.id}', -1)">+ Adicionar Certidão</button>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid var(--gray-200)">
+      <button class="btn btn-outline" onclick="_collapseFornCard('${f.id}')">Fechar</button>
+      <button class="btn btn-primary" onclick="_renderFornCardEdit()">✏ Editar</button>
+    </div>
+  </div>`, 'view');
+}
+function _renderFornCardEdit() {
+  const f = _currentForn;
+  _setFornCardBody(`<div class="forn-inline-edit-header">
+    <div style="font-size:.78rem;font-weight:600;color:var(--gray-700)">Editando: ${escHtml(f.razao_social)}</div>
+    <div class="forn-lookup" style="margin-top:8px;margin-bottom:0">
+      <label style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-500);display:block;margin-bottom:6px">Reconsultar CNPJ (atualiza dados da Receita Federal)</label>
+      <div class="forn-input-row">
+        <input type="text" id="forn-edit-cnpj" value="${escHtml(f.cnpj)}" oninput="maskCnpj(this)" maxlength="18">
+        <button class="btn btn-outline btn-sm" onclick="_reconsultarForn()">🔄 Atualizar</button>
+      </div>
+    </div>
+  </div>
+  <div class="forn-inline-body" style="border-top:none">
+    ${_buildFornEditHtml(f)}
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid var(--gray-200)">
+      <button class="btn btn-outline" onclick="_renderFornCardView()">Cancelar</button>
+      <button class="btn btn-primary" onclick="_saveFornEdit()">Salvar alterações</button>
+    </div>
+  </div>`, 'edit');
 }
 function _qsaRowHtml(i, s = {}) {
   return `<div class="fe-qsa-row" style="display:grid;grid-template-columns:1fr 1fr 110px 28px;gap:6px;align-items:end;margin-bottom:6px">
@@ -3336,17 +3413,8 @@ function _addQsaRow() {
   if (list) list.insertAdjacentHTML('beforeend', _qsaRowHtml(list.children.length));
 }
 
-function _renderFornEdit() {
-  const f = _currentForn;
-  document.getElementById('forn-detail-title').textContent = 'Editar Fornecedor';
-  document.getElementById('forn-detail-body').innerHTML = `
-    <div class="forn-lookup" style="margin-top:0;margin-bottom:14px">
-      <label style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-500);display:block;margin-bottom:6px">Reconsultar CNPJ (atualiza dados da Receita Federal)</label>
-      <div class="forn-input-row">
-        <input type="text" id="forn-edit-cnpj" value="${escHtml(f.cnpj)}" oninput="maskCnpj(this)" maxlength="18">
-        <button class="btn btn-outline btn-sm" onclick="_reconsultarForn()">🔄 Atualizar</button>
-      </div>
-    </div>
+function _buildFornEditHtml(f) {
+  return `
     <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-400);margin:10px 0 6px">Identificação</div>
     <div class="info-field"><label>Razão Social</label>
       <input type="text" id="fe-razao" value="${escHtml(f.razao_social || '')}"></div>
@@ -3471,10 +3539,8 @@ function _renderFornEdit() {
     <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-400);margin:10px 0 6px">Observações</div>
     <div class="info-field"><label>Observações internas</label>
       <textarea id="fe-obs" rows="2">${escHtml(f.obs || '')}</textarea></div>`;
-  document.getElementById('forn-detail-footer').innerHTML = `
-    <button class="btn btn-outline" onclick="_renderFornView()">Cancelar</button>
-    <button class="btn btn-primary" onclick="_saveFornEdit()">Salvar alterações</button>`;
 }
+function _renderFornEdit() { _renderFornCardEdit(); }
 async function _reconsultarForn() {
   const digits = cleanCnpj(document.getElementById('forn-edit-cnpj').value);
   if (digits.length !== 14) { toast('CNPJ inválido.', 'error'); return; }
@@ -3482,7 +3548,7 @@ async function _reconsultarForn() {
   try {
     const { data: d, fonte } = await fetchCnpjData(digits);
     _currentForn = { ..._currentForn, ...d, consultadoEm: Date.now() };
-    _renderFornEdit();
+    _renderFornCardEdit();
     toast(`Dados atualizados via ${fonte}!`, 'success');
     playSuccess();
   } catch(e) { toast(e.message || 'Erro na consulta.', 'error'); playError(); }
@@ -3543,8 +3609,8 @@ async function _saveFornEdit() {
   }
   toast('Fornecedor atualizado!', 'success');
   playSuccess();
-  _renderFornView();
-  renderFornecedores();
+  await renderFornecedores();
+  _renderFornCardView();
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -3687,41 +3753,10 @@ function _fornTabsHtml(active) {
 
 function _switchFornTab(tab) {
   _fornTab = tab;
-  if (tab === 'dados') _renderFornView();
-  else _renderFornCerts();
+  if (tab === 'dados') _renderFornCardView();
+  else _renderFornCardCerts();
 }
-
-
-function _renderFornCerts() {
-  _fornTab = 'certs';
-  const f = _currentForn;
-  document.getElementById('forn-detail-title').textContent = 'Cadastro do Fornecedor';
-  const certs = f.certidoes || [];
-  const itemsHtml = certs.length ? certs.map((c, i) => {
-    const st = certStatus(c);
-    return `<div class="forn-cert-item ${st}">
-      <div style="flex:1;min-width:0">
-        <div class="forn-cert-tipo">${escHtml(certTipoLabel(c))}</div>
-        <div class="forn-cert-dates">
-          Emissão: ${fmtDateBR(c.emissao)} · Validade: ${fmtDateBR(c.validade)}
-          ${c.obs ? `<br><span style="font-style:italic">${escHtml(c.obs)}</span>` : ''}
-        </div>
-        <span class="forn-cert-badge ${st}">${certStatusLabel(st, certDaysLeft(c))}</span>
-      </div>
-      <div class="forn-cert-actions">
-        <button class="btn btn-outline btn-sm" style="padding:2px 8px;font-size:.65rem" onclick="openCertEdit('${f.id}',${i})">✏</button>
-        <button class="btn btn-danger btn-sm" style="padding:2px 8px;font-size:.65rem" onclick="deleteCert('${f.id}',${i})">✕</button>
-      </div>
-    </div>`;
-  }).join('') : '<p style="color:var(--gray-500);font-size:.8rem;text-align:center;padding:20px 0">Nenhuma certidão cadastrada.</p>';
-
-  document.getElementById('forn-detail-body').innerHTML = `
-    ${_fornTabsHtml('certs')}
-    <div class="forn-cert-list">${itemsHtml}</div>
-    <button class="btn btn-outline" style="width:100%" onclick="openCertEdit('${f.id}', -1)">+ Adicionar Certidão</button>`;
-  document.getElementById('forn-detail-footer').innerHTML = `
-    <button class="btn btn-outline" onclick="closeFornDetail()">Fechar</button>`;
-}
+function _renderFornCerts() { _renderFornCardCerts(); }
 
 // ── Cert Edit Modal ────────────────────────────────────────
 let _certEditFornId = null;
@@ -3799,9 +3834,9 @@ async function saveCertEdit() {
   closeCertEdit();
   toast('Certidão salva!', 'success');
   playSuccess();
+  if (document.getElementById('view-fornecedores').classList.contains('active')) await renderFornecedores();
   _renderFornCerts();
   renderCertAlerts();
-  if (document.getElementById('view-fornecedores').classList.contains('active')) renderFornecedores();
 }
 
 async function deleteCert(fornId, idx) {
@@ -3814,9 +3849,9 @@ async function deleteCert(fornId, idx) {
   await dbPut('fornecedores', forn);
   _currentForn = forn;
   toast('Certidão removida.', 'success');
+  if (document.getElementById('view-fornecedores').classList.contains('active')) await renderFornecedores();
   _renderFornCerts();
   renderCertAlerts();
-  if (document.getElementById('view-fornecedores').classList.contains('active')) renderFornecedores();
 }
 
 function openFornModal() {
