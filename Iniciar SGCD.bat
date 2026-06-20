@@ -1,9 +1,5 @@
 @echo off
 
-rem Se ja foi relancado minimizado, vai direto para o servidor
-if "%1"=="--min" goto :run
-
-rem Verifica Python antes de minimizar
 python --version >nul 2>&1
 if errorlevel 1 (
     echo.
@@ -15,10 +11,4 @@ if errorlevel 1 (
     exit /b 1
 )
 
-rem Relanca esta janela minimizada e sai da janela atual
-start /min "SGCD — Servidor local" "%~f0" --min
-exit /b
-
-:run
-title SGCD — Servidor local
-python "%~dp0server.py"
+start /min "SGCD — Servidor local" python "%~dp0server.py"
