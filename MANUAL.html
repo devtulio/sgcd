@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Manual Operacional — SGCD v1.11.8</title>
+<title>Manual Operacional — SGCD v1.12.1</title>
 <style>
   /* Reset e base */
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -89,7 +89,7 @@
       margin: 20mm 20mm 25mm;
       size: A4;
       @top-center {
-        content: "SGCD v1.11.8 — Manual Operacional";
+        content: "SGCD v1.12.1 — Manual Operacional";
         font-family: 'Times New Roman', serif;
         font-size: 9pt;
         color: #666;
@@ -118,7 +118,7 @@
     <div class="cover-title">Manual Operacional</div>
     <div class="cover-subtitle">SGCD — Sistema de Gestão de Contratação Direta</div>
     <div class="cover-system">Gestão de Processos de Dispensa de Licitação</div>
-    <div class="cover-version">Versão v1.11.1</div>
+    <div class="cover-version">Versão v1.12.1</div>
     <br>
     <div style="font-size:11pt; color:#555; line-height:1.8;">
       Aplicação web single-file para agentes de contratação pública<br>
@@ -162,7 +162,7 @@
     <div class="toc-item h3"><a href="#sec5-1">5.1 Campos do processo</a></div>
     <div class="toc-item h3"><a href="#sec5-2">5.2 Natureza, categoria e subcategoria</a></div>
 
-    <div class="toc-item h2"><a href="#sec6">6. Checklist das 16 Etapas</a></div>
+    <div class="toc-item h2"><a href="#sec6">6. Checklist das 15 Etapas</a></div>
 
     <div class="toc-item h2"><a href="#sec7">7. Trabalhando com o Processo</a></div>
     <div class="toc-item h3"><a href="#sec7-1">7.1 Expandir e recolher etapas</a></div>
@@ -172,7 +172,7 @@
     <div class="toc-item h3"><a href="#sec7-5">7.5 Reordenar etapas</a></div>
     <div class="toc-item h3"><a href="#sec7-6">7.6 Histórico e log de auditoria</a></div>
 
-    <div class="toc-item h2"><a href="#sec8">8. Gerenciamento de Propostas (Etapa 10)</a></div>
+    <div class="toc-item h2"><a href="#sec8">8. Gerenciamento de Propostas (Etapa 9)</a></div>
     <div class="toc-item h3"><a href="#sec8-1">8.1 Situações de proposta</a></div>
     <div class="toc-item h3"><a href="#sec8-2">8.2 Despacho de Recusa / Desclassificação</a></div>
 
@@ -208,8 +208,8 @@
 
 <h3 id="sec1-1">1.1 O que é o SGCD</h3>
 <p>O <strong>SGCD — Sistema de Gestão de Contratação Direta</strong> é uma aplicação web desenvolvida para organizar, acompanhar e documentar processos de <strong>Dispensa de Licitação</strong> conforme a Lei Federal nº 14.133/2021 (Nova Lei de Licitações e Contratos Administrativos).</p>
-<p>O sistema funciona como um único arquivo HTML que pode ser aberto diretamente no navegador, sem necessidade de instalação, servidor web ou acesso à internet (exceto para consulta de CNPJ). Todos os dados são armazenados localmente no próprio computador do usuário.</p>
-<p>O SGCD guia o agente de contratação por meio de um <strong>checklist com 16 etapas</strong>, cada uma com fundamento legal, orientações de preenchimento e possibilidade de anexar documentos. Ao final de cada etapa — ou a qualquer momento —, o sistema gera automaticamente os documentos necessários para o processo.</p>
+<p>O sistema funciona como uma aplicação local iniciada pelo arquivo <strong>Iniciar SGCD.bat</strong>, sem necessidade de instalação adicional. Todos os dados são armazenados localmente no próprio computador do usuário.</p>
+<p>O SGCD guia o agente de contratação por meio de um <strong>checklist com 15 etapas</strong>, cada uma com fundamento legal, orientações de preenchimento e possibilidade de anexar documentos. Ao final de cada etapa — ou a qualquer momento —, o sistema gera automaticamente os documentos necessários para o processo.</p>
 
 <h3 id="sec1-2">1.2 Para quem é destinado</h3>
 <p>O SGCD é destinado a <strong>agentes de contratação pública</strong>, pregoeiros, comissões de contratação e servidores responsáveis pela condução de processos de Dispensa de Licitação em órgãos e entidades da Administração Pública Federal, Estadual ou Municipal que adotam a Lei nº 14.133/2021.</p>
@@ -224,17 +224,22 @@
 <h3 id="sec1-3">1.3 Requisitos mínimos</h3>
 <p>O SGCD não exige instalação de software adicional. Os únicos requisitos são:</p>
 <ul>
-  <li><strong>Navegador moderno:</strong> Google Chrome (versão 90 ou superior) ou Microsoft Edge (versão 90 ou superior) — recomendados para melhor compatibilidade</li>
+  <li><strong>Navegador moderno:</strong> Google Chrome (versão 90 ou superior) ou Microsoft Edge (versão 90 ou superior) — o sistema detecta e abre automaticamente o navegador disponível</li>
+  <li><strong>Python 3.7 ou superior:</strong> necessário para executar o servidor local (<code>server.py</code>). Instale em <em>python.org</em> e marque "Add Python to PATH" durante a instalação</li>
   <li><strong>JavaScript habilitado:</strong> necessário para o funcionamento da aplicação (habilitado por padrão em todos os navegadores modernos)</li>
-  <li><strong>Conexão à internet:</strong> necessária apenas para consulta automática de CNPJ via BrasilAPI</li>
+  <li><strong>Conexão à internet:</strong> necessária apenas para consulta automática de CNPJ via BrasilAPI e para envio de e-mails via SMTP</li>
 </ul>
+<div class="aviso">
+  <strong>Importante — Como abrir o sistema:</strong> O SGCD deve ser aberto <strong>exclusivamente</strong> pelo arquivo <code>Iniciar SGCD.bat</code>. Abrir o arquivo <code>SGCD.html</code> diretamente pelo navegador (clique duplo) cria uma <strong>base de dados separada e isolada</strong>, os dados não serão os mesmos, e o envio de e-mails ficará indisponível. Sempre use o <strong>Iniciar SGCD.bat</strong>.
+</div>
 <div class="nota">
-  <strong>Nota:</strong> O sistema também funciona nos navegadores Firefox e Safari, porém o Chrome e o Edge oferecem melhor desempenho e compatibilidade com o recurso de impressão e geração de PDF.
+  <strong>Nota:</strong> Ao abrir o SGCD diretamente pelo arquivo HTML, o sistema exibe automaticamente uma tela de bloqueio informando o procedimento correto, evitando o uso acidental da base errada.
 </div>
 
 <h3 id="sec1-4">1.4 Aviso sobre armazenamento de dados</h3>
 <div class="aviso">
   <strong>Importante:</strong> Todos os dados do SGCD (processos, fornecedores, configurações e anexos) ficam armazenados exclusivamente no <strong>navegador local</strong> do computador, utilizando a tecnologia IndexedDB. Os dados <strong>não são enviados para nenhum servidor</strong> e não ficam disponíveis em outros computadores ou outros navegadores.<br><br>
+  O sistema opera em <code>http://localhost:3000</code> (iniciado pelo <strong>Iniciar SGCD.bat</strong>). Os dados armazenados nessa origem são <strong>diferentes</strong> dos dados armazenados ao abrir o arquivo HTML diretamente (<code>file://</code>). Nunca misture as duas formas de abertura.<br><br>
   <strong>Atenção:</strong> Se você limpar os dados de navegação ou o cache do navegador, os dados do SGCD serão perdidos permanentemente. Faça <strong>backups regulares</strong> em Configurações → Backup de Dados.
 </div>
 
@@ -344,6 +349,7 @@
 <ul>
   <li><strong>Ícone de pasta / lista:</strong> retorna ao dashboard de processos</li>
   <li><strong>Ícone de prédio / empresa:</strong> acessa o cadastro de fornecedores</li>
+  <li><strong>Ícone de calendário:</strong> abre a Agenda de Vencimentos — lista de encerramentos de propostas, vencimentos de contratos, prazos e processos parados, agrupados por proximidade temporal</li>
   <li><strong>Ícone de trilha (histórico):</strong> abre a Trilha de Auditoria Global — registro de todas as ações realizadas no sistema</li>
   <li><strong>Ícone de engrenagem (⚙):</strong> abre as configurações do sistema</li>
   <li><strong>Ícone de lua / sol:</strong> alterna entre o tema claro e o tema escuro</li>
@@ -354,7 +360,8 @@
 <ul>
   <li><strong>Stat cards:</strong> cartões com resumo numérico — total de processos, em andamento, concluídos e não iniciados</li>
   <li><strong>Barra de filtros:</strong> permite filtrar a lista de processos por texto, status, unidade, período e faixa de valor</li>
-  <li><strong>Lista de processos:</strong> exibe os processos cadastrados em formato de cards ou tabela</li>
+  <li><strong>Lista de processos:</strong> exibe os processos cadastrados em formato de cards, tabela ou Kanban</li>
+  <li><strong>Visualização Kanban:</strong> botão de alternância agrupa os processos em colunas por fase processual (Instrução, Publicado, Análise, Adjudicação, Contratação, Concluído). Os filtros ativos do dashboard são aplicados ao Kanban</li>
   <li><strong>Botão "+ Novo Processo":</strong> inicia o cadastro de um novo processo</li>
   <li><strong>Botão de Relatório:</strong> gera o relatório geral imprimível</li>
   <li><strong>Botão CSV:</strong> exporta os processos visíveis para arquivo CSV</li>
@@ -472,8 +479,8 @@
 <hr class="section-divider">
 
 <!-- ─────────────────────────────────────────────── SEÇÃO 6 -->
-<h2 id="sec6">6. Checklist das 16 Etapas</h2>
-<p>O coração do SGCD é o checklist estruturado com as 16 etapas do processo de Dispensa de Licitação. Cada etapa apresenta o fundamento legal, uma orientação sobre o que deve ser feito e campos para registro. A seguir, a descrição completa de cada etapa:</p>
+<h2 id="sec6">6. Checklist das 15 Etapas</h2>
+<p>O coração do SGCD é o checklist estruturado com as 15 etapas do processo de Dispensa de Licitação. Cada etapa apresenta o fundamento legal, uma orientação sobre o que deve ser feito e campos para registro. A seguir, a descrição completa de cada etapa:</p>
 
 <div class="step-box">
   <div class="step-num">Etapa 1</div>
@@ -576,37 +583,23 @@
 
 <div class="step-box">
   <div class="step-num">Etapa 8</div>
-  <div class="step-name">Elaboração do Aviso de Dispensa</div>
-  <div class="step-legal">Fundamento: Art. 75, §3º da Lei 14.133/2021</div>
-  <p><strong>O que fazer:</strong> Elaborar o Aviso de Dispensa de Licitação, que será publicado no PNCP. Use o botão <strong>"Gerar Aviso de Dispensa"</strong> no sistema para gerar o documento completo, preenchido automaticamente com os dados do processo, incluindo o <strong>Critério de Seleção</strong> definido na Etapa 5. O aviso contém: identificação do órgão, objeto, valor estimado, critério de julgamento, condições de participação (habilitação e proposta), seção sobre a proposta mais vantajosa (Art. 59), data limite e canais oficiais de divulgação do resultado.</p>
+  <div class="step-name">Elaboração e Publicação do Aviso de Dispensa</div>
+  <div class="step-legal">Fundamento: Art. 75, §3º e Art. 54, §1º da Lei 14.133/2021 — prazo mínimo 3 dias úteis</div>
+  <p><strong>O que fazer:</strong> Elaborar o Aviso de Dispensa e publicá-lo no PNCP e no Diário Oficial. Use o botão <strong>"Gerar Aviso de Dispensa"</strong> para gerar o documento completo, preenchido com os dados do processo e o Critério de Seleção definido na Etapa 5. O aviso contém: identificação do órgão, objeto, valor estimado, critério de julgamento, condições de participação, seção sobre a proposta mais vantajosa (Art. 59), data limite e canais de divulgação do resultado.</p>
   <ul>
-    <li>Verifique e confirme o Critério de Seleção escolhido na Etapa 5</li>
-    <li>Preencha: prazo de encerramento, local de entrega e informações de contato</li>
-    <li>Clique em <strong>"Gerar Aviso de Dispensa"</strong> para gerar o documento</li>
-    <li>Revise, imprima ou salve como PDF e assine</li>
-    <li>Anexe o aviso assinado ao processo</li>
+    <li>Clique em <strong>"Gerar Aviso de Dispensa"</strong>, revise, imprima ou salve como PDF e assine</li>
+    <li>Acesse o PNCP (<em>www.pncp.gov.br</em>) e publique o aviso completo</li>
+    <li>Publique também o aviso no Diário Oficial do Município (eletrônico ou impresso)</li>
+    <li>Registre no sistema: data de publicação, data de encerramento das propostas, link do PNCP e link do Diário Oficial</li>
+    <li>O sistema calcula automaticamente a data mínima de encerramento (3 dias úteis) e alerta se a data informada for inferior ao mínimo legal</li>
+    <li>Aguarde o prazo de 3 dias úteis antes de prosseguir</li>
   </ul>
-  <div class="nota" style="margin-top:8pt;"><strong>Nota:</strong> O Aviso incluirá automaticamente os URLs do Site Oficial e Diário Oficial configurados nas Configurações, para divulgação do resultado. Configure esses campos em ⚙ Configurações antes de gerar o documento.</div>
+  <div class="aviso" style="margin-top:8pt;"><strong>Atenção:</strong> A ausência de publicação ou o não cumprimento do prazo de 3 dias úteis é irregularidade grave que pode nulificar o processo.</div>
+  <div class="nota" style="margin-top:8pt;"><strong>Nota:</strong> O Aviso incluirá automaticamente os URLs do Site Oficial e Diário Oficial configurados nas Configurações. Configure esses campos em ⚙ Configurações antes de gerar o documento.</div>
 </div>
 
 <div class="step-box">
   <div class="step-num">Etapa 9</div>
-  <div class="step-name">Publicação no PNCP / Diário Oficial</div>
-  <div class="step-legal">Fundamento: Art. 75, §3º e Art. 54, §1º da Lei 14.133/2021 — prazo mínimo 3 dias úteis</div>
-  <p><strong>O que fazer:</strong> Publicar o Aviso de Dispensa no <strong>Portal Nacional de Contratações Públicas (PNCP)</strong> e, simultaneamente, o Extrato para publicação no <strong>Diário Oficial</strong>, conforme Art. 75, §3º e Art. 54, §1º. Após a publicação no PNCP, é obrigatório aguardar o prazo mínimo de <strong>3 dias úteis</strong> antes de abrir as propostas.</p>
-  <ul>
-    <li>Acesse o PNCP em <em>www.pncp.gov.br</em> com certificado digital ou conta gov.br</li>
-    <li>Registre o aviso com os dados da contratação e anote o número de publicação</li>
-    <li>Use o botão <strong>"Gerar Extrato para Diário Oficial"</strong> para gerar o texto do extrato formatado</li>
-    <li>Encaminhe o extrato para publicação no Diário Oficial (eletrônico ou impresso)</li>
-    <li>Registre no sistema a data de publicação e a data prevista de encerramento das propostas</li>
-    <li>Aguarde o prazo de 3 dias úteis antes de prosseguir</li>
-  </ul>
-  <div class="aviso" style="margin-top:8pt;"><strong>Atenção:</strong> A ausência de publicação ou o não cumprimento do prazo de 3 dias úteis é irregularidade grave que pode nulificar o processo.</div>
-</div>
-
-<div class="step-box">
-  <div class="step-num">Etapa 10</div>
   <div class="step-name">Recebimento e Análise de Propostas</div>
   <div class="step-legal">Fundamento: Art. 75, §3º da Lei 14.133/2021</div>
   <p><strong>O que fazer:</strong> Registrar as propostas recebidas dos fornecedores e realizar a análise comparativa. O SGCD possui uma seção específica para gerenciamento de propostas nesta etapa.</p>
@@ -620,7 +613,7 @@
 </div>
 
 <div class="step-box">
-  <div class="step-num">Etapa 11</div>
+  <div class="step-num">Etapa 10</div>
   <div class="step-name">Habilitação do Fornecedor</div>
   <div class="step-legal">Fundamento: Art. 62 a 70 da Lei 14.133/2021</div>
   <p><strong>O que fazer:</strong> Verificar a regularidade fiscal, trabalhista, previdenciária e jurídica do fornecedor vencedor. A habilitação é etapa obrigatória antes da adjudicação.</p>
@@ -634,10 +627,10 @@
 </div>
 
 <div class="step-box">
-  <div class="step-num">Etapa 12</div>
+  <div class="step-num">Etapa 11</div>
   <div class="step-name">Adjudicação</div>
   <div class="step-legal">Fundamento: Art. 71 da Lei 14.133/2021</div>
-  <p><strong>O que fazer:</strong> Declarar formalmente o vencedor do processo. A adjudicação é o ato pelo qual o agente de contratação (ou comissão) declara o vencedor e o objeto da contratação a ele atribuído, após a habilitação.</p>
+  <p><strong>O que fazer:</strong> Declarar formalmente o vencedor do processo. A adjudicação é o ato pelo qual o agente de contratação declara o vencedor e o objeto da contratação a ele atribuído, após a habilitação.</p>
   <ul>
     <li>Elabore o termo ou despacho de adjudicação com o nome do fornecedor vencedor, CNPJ e valor</li>
     <li>Assine o documento como agente de contratação</li>
@@ -647,7 +640,7 @@
 </div>
 
 <div class="step-box">
-  <div class="step-num">Etapa 13</div>
+  <div class="step-num">Etapa 12</div>
   <div class="step-name">Homologação</div>
   <div class="step-legal">Fundamento: Art. 71 da Lei 14.133/2021</div>
   <p><strong>O que fazer:</strong> Submeter o processo à autoridade competente para homologação. A homologação é o ato da autoridade superior que ratifica o processo, conferindo-lhe validade. Após a homologação, o processo está apto para a emissão da Nota de Empenho e celebração do instrumento contratual.</p>
@@ -660,7 +653,7 @@
 </div>
 
 <div class="step-box">
-  <div class="step-num">Etapa 14</div>
+  <div class="step-num">Etapa 13</div>
   <div class="step-name">Nota de Empenho</div>
   <div class="step-legal">Fundamento: Art. 58 da Lei 4.320/1964</div>
   <p><strong>O que fazer:</strong> Após a homologação, acionar o setor financeiro/orçamentário para emissão da <strong>Nota de Empenho (NE)</strong>, que reserva o crédito orçamentário para a despesa. A NE é emitida no sistema de execução orçamentária do órgão (ex.: SIAFEM, SIAFEWEB, sistema municipal).</p>
@@ -673,7 +666,7 @@
 </div>
 
 <div class="step-box">
-  <div class="step-num">Etapa 15</div>
+  <div class="step-num">Etapa 14</div>
   <div class="step-name">Instrumento Contratual</div>
   <div class="step-legal">Fundamento: Art. 95 da Lei 14.133/2021</div>
   <p><strong>O que fazer:</strong> Formalizar o instrumento contratual com o fornecedor vencedor. A lei permite diferentes instrumentos conforme o valor e a natureza:</p>
@@ -691,7 +684,7 @@
 </div>
 
 <div class="step-box">
-  <div class="step-num">Etapa 16</div>
+  <div class="step-num">Etapa 15</div>
   <div class="step-name">Publicação do Contrato no PNCP</div>
   <div class="step-legal">Fundamento: Art. 94 da Lei 14.133/2021 — obrigatória em até 20 dias úteis</div>
   <p><strong>O que fazer:</strong> Publicar o instrumento contratual (contrato, ARP ou NE) no PNCP. O Art. 94 da Lei 14.133/2021 exige a publicação em até <strong>20 dias úteis</strong> a partir da assinatura do instrumento.</p>
@@ -739,7 +732,7 @@
 <p>Para editar as informações gerais do processo (objeto, valor, fundamentação, unidade etc.), localize o <strong>painel lateral direito</strong> quando o processo está aberto, ou clique no botão <strong>"Editar"</strong> no cabeçalho do processo. Altere os campos desejados e clique em <strong>"Salvar"</strong>.</p>
 
 <h3 id="sec7-5">7.5 Reordenar etapas</h3>
-<p>Embora as 16 etapas sigam uma ordem lógica sugerida, é possível reordená-las conforme as necessidades específicas do processo. Para reordenar:</p>
+<p>Embora as 15 etapas sigam uma ordem lógica sugerida, é possível reordená-las conforme as necessidades específicas do processo. Para reordenar:</p>
 <ol>
   <li>Localize a alça de arrastar <strong>⠿</strong> no lado esquerdo do cabeçalho da etapa</li>
   <li>Clique e mantenha pressionado sobre a alça</li>
@@ -771,14 +764,14 @@
 <hr class="section-divider">
 
 <!-- ─────────────────────────────────────────────── SEÇÃO 8 -->
-<h2 id="sec8">8. Gerenciamento de Propostas (Etapa 10)</h2>
-<p>A Etapa 10 conta com uma seção dedicada ao gerenciamento de propostas recebidas, que permite registrar, comparar e selecionar a proposta vencedora de forma organizada e com documentação automática.</p>
+<h2 id="sec8">8. Gerenciamento de Propostas (Etapa 9)</h2>
+<p>A Etapa 9 conta com uma seção dedicada ao gerenciamento de propostas recebidas, que permite registrar, comparar e selecionar a proposta vencedora de forma organizada e com documentação automática.</p>
 
 <h3 id="sec8-1">8.1 Situações de proposta</h3>
 
 <h3>Como adicionar uma proposta</h3>
 <ol>
-  <li>Expanda a Etapa 10 no checklist do processo</li>
+  <li>Expanda a Etapa 9 no checklist do processo</li>
   <li>Clique em <strong>"+ Adicionar Proposta"</strong></li>
   <li>Preencha os campos:</li>
 </ol>
@@ -912,11 +905,6 @@
     <td>Botão "Gerar Aviso de Dispensa" na Etapa 8</td>
   </tr>
   <tr>
-    <td><strong>Extrato de Publicação</strong></td>
-    <td>Texto formatado para publicação no Diário Oficial (Art. 54, §1º). Contém: número, objeto, valor, fundamento e dados do órgão</td>
-    <td>Botão "Gerar Extrato para Diário Oficial" na Etapa 9</td>
-  </tr>
-  <tr>
     <td><strong>Ata de Sessão</strong></td>
     <td>Documento completo do processo com: dados da contratação, propostas recebidas, habilitação, resultado e espaços para assinatura</td>
     <td>Botão "Ata de Sessão" no cabeçalho do processo</td>
@@ -924,32 +912,42 @@
   <tr>
     <td><strong>Mapa de Preços</strong></td>
     <td>Tabela comparativa de todas as propostas recebidas, com identificação do vencedor</td>
-    <td>Botão "Mapa de Preços" na Etapa 10</td>
+    <td>Botão "Mapa de Preços" na Etapa 9</td>
   </tr>
   <tr>
     <td><strong>Despacho de Recusa / Desclassificação</strong></td>
     <td>Decisão fundamentada de recusa de proposta (Art. 59 Lei 14.133/2021), com direito de manifestação</td>
-    <td>Botão "📄 Despacho de Recusa" no card da proposta recusada (Etapa 10)</td>
+    <td>Botão "📄 Despacho de Recusa" no card da proposta recusada (Etapa 9)</td>
   </tr>
   <tr>
     <td><strong>Despacho de Habilitação</strong></td>
     <td>Decisão formal de habilitação do fornecedor com lista das certidões verificadas (Art. 69 Lei 14.133/2021)</td>
-    <td>Botão "📄 Despacho de Habilitação" na Etapa 11</td>
+    <td>Botão "📄 Despacho de Habilitação" na Etapa 10</td>
   </tr>
   <tr>
     <td><strong>Despacho de Inabilitação</strong></td>
     <td>Decisão fundamentada de inabilitação do fornecedor (Art. 69 e 72 Lei 14.133/2021), com lista de certidões pendentes</td>
-    <td>Botão "📄 Despacho de Inabilitação" na Etapa 11</td>
+    <td>Botão "📄 Despacho de Inabilitação" na Etapa 10</td>
   </tr>
   <tr>
     <td><strong>Termo de Adjudicação</strong></td>
     <td>Formalização da declaração do vencedor pelo agente de contratação (Art. 18, §1º Lei 14.133/2021)</td>
-    <td>Botão "📄 Termo de Adjudicação" na etapa de Adjudicação</td>
+    <td>Botão "📄 Termo de Adjudicação" na Etapa 11</td>
   </tr>
   <tr>
     <td><strong>Termo de Homologação</strong></td>
     <td>Aprovação do procedimento pela autoridade competente / ordenador de despesa (Art. 71 Lei 14.133/2021)</td>
-    <td>Botão "📄 Termo de Homologação" na etapa de Homologação</td>
+    <td>Botão "📄 Termo de Homologação" na Etapa 12</td>
+  </tr>
+  <tr>
+    <td><strong>Extrato de Contrato</strong></td>
+    <td>Extrato para publicação no Diário Oficial e PNCP com todos os dados contratuais (Art. 94 Lei 14.133/2021)</td>
+    <td>Botão "📄 Extrato de Contrato" na Etapa 14</td>
+  </tr>
+  <tr>
+    <td><strong>Processo Completo (PDF único)</strong></td>
+    <td>Documento consolidado com todas as seções do processo — dados, etapas, propostas e certidões — em um único PDF</td>
+    <td>Botão "📦 Processo Completo" no cabeçalho do processo aberto</td>
   </tr>
   <tr>
     <td><strong>Relatório Geral</strong></td>
@@ -1113,6 +1111,10 @@
 <p>As orientações abaixo ajudam a usar o SGCD de forma eficiente e segura:</p>
 
 <div class="dica">
+  <strong>Abra sempre pelo Iniciar SGCD.bat:</strong> nunca abra o arquivo <code>SGCD.html</code> diretamente pelo Windows Explorer ou pelo navegador. O BAT inicia o servidor local que permite o envio de e-mails e garante que você esteja trabalhando na base de dados correta. Abrir diretamente cria uma base de dados isolada e invisível ao sistema.
+</div>
+
+<div class="dica">
   <strong>Backup antes de limpar o cache:</strong> os dados do SGCD ficam no navegador. Antes de limpar o histórico ou cache, sempre exporte um backup em Configurações → Backup de Dados.
 </div>
 
@@ -1210,7 +1212,7 @@
 
 <hr class="section-divider">
 <p style="text-align:center; font-size:9pt; color:#888; margin-top:20pt;">
-  SGCD v1.11.8 — Manual Operacional<br>
+  SGCD v1.12.1 — Manual Operacional<br>
   Sistema de Gestão de Contratação Direta<br>
   Lei Federal nº 14.133/2021
 </p>
