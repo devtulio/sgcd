@@ -8,6 +8,8 @@ import threading
 import time
 import subprocess
 import sys
+import urllib.request
+import urllib.error
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
@@ -45,8 +47,37 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         if self.path in ('/health', '/heartbeat'):
             _last_heartbeat = time.time()
             self._json({"ok": True})
+        elif self.path.startswith('/cnpj/'):
+            digits = self.path[6:].strip('/')
+            self._proxy_cnpj(digits)
         else:
             super().do_GET()
+
+    def _proxy_cnpj(self, digits):
+        if not digits.isdigit() or len(digits) != 14:
+            self._json({"status": "ERROR", "message": "CNPJ inválido"}, status=400)
+            return
+        url = f"https://receitaws.com.br/v1/cnpj/{digits}"
+        req = urllib.request.Request(url, headers={"User-Agent": "SGCD/1.0"})
+        try:
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                data = resp.read()
+                self.send_response(resp.status)
+                self._cors_headers()
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(data)))
+                self.end_headers()
+                self.wfile.write(data)
+        except urllib.error.HTTPError as e:
+            body = e.read()
+            self.send_response(e.code)
+            self._cors_headers()
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+        except Exception as e:
+            self._json({"status": "ERROR", "message": str(e)}, status=502)
 
     def do_POST(self):
         if self.path == '/shutdown':
