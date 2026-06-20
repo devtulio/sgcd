@@ -96,7 +96,7 @@
   header span { font-size: .75rem; opacity: .65; font-weight: 300; }
 
   /* ── Layout ──────────────────────────────────────── */
-  #app { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
+  #app { padding: 24px 32px 24px calc(48px + 24px); }
   @media (max-width: 760px) { #sidebar { display: none; } }
 
   /* ── Views ───────────────────────────────────────── */
@@ -288,6 +288,19 @@
   }
   .step-body textarea:focus, .step-body input:focus { border-color: var(--brand); }
   .step-body textarea { min-height: 70px; }
+  .kanban-board { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 16px; align-items: flex-start; }
+  .kanban-col { min-width: 260px; max-width: 300px; flex-shrink: 0; background: var(--gray-50); border-radius: 10px; padding: 10px; }
+  .kanban-col-title { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--gray-500); margin-bottom: 8px; }
+  .kanban-card { background: var(--bg-card); border: 1px solid var(--gray-200); border-radius: 8px; padding: 10px; margin-bottom: 8px; cursor: pointer; font-size: .8rem; }
+  .kanban-card:hover { border-color: var(--brand); }
+  .kanban-card .kc-num { font-size: .7rem; color: var(--gray-400); margin-bottom: 2px; }
+  .kanban-card .kc-obj { font-weight: 500; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word; white-space: normal; }
+  .kanban-card .kc-val { font-size: .72rem; color: var(--gray-500); }
+  body.dark .kanban-col { background: #232323; }
+  .nota-interna-wrap { background: #fffbe6; border: 1px solid #ffe58f; border-radius: 6px; padding: 8px 10px; margin-top: 16px; }
+  body.dark .nota-interna-wrap { background: #2a2600; border-color: #5a4d00; }
+  .nota-interna-wrap label { color: #7a5800 !important; }
+  body.dark .nota-interna-wrap label { color: #c9a800 !important; }
 
   .step-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
 
@@ -357,7 +370,7 @@
     border-bottom: 3px solid var(--brand); position: sticky; top: 0;
     background: var(--aubergine); z-index: 1; border-radius: 12px 12px 0 0;
   }
-  .modal-header h2 { font-size: .9rem; font-weight: 500; color: #fff; letter-spacing: .8px; }
+  .modal-header h2, .modal-header h3 { font-size: .9rem; font-weight: 500; color: #fff; letter-spacing: .8px; }
   .modal-header .btn-ghost { color: rgba(255,255,255,.7); }
   .modal-header .btn-ghost:hover { background: rgba(255,255,255,.1); color: #fff; }
   .modal-body { padding: 20px 24px; }
@@ -727,6 +740,23 @@
 </head>
 <body>
 
+<!-- Bloqueio de acesso direto via file:// -->
+<div id="origin-block" style="display:none;position:fixed;inset:0;z-index:99999;background:#1a1a2e;align-items:center;justify-content:center;font-family:system-ui,sans-serif">
+  <div style="max-width:480px;text-align:center;padding:40px 32px;background:#fff;border-radius:12px;box-shadow:0 8px 40px rgba(0,0,0,.4)">
+    <div style="font-size:2.5rem;margin-bottom:16px">⚠️</div>
+    <h2 style="font-size:1.1rem;font-weight:700;color:#1a1a2e;margin-bottom:12px">Abra pelo iniciador correto</h2>
+    <p style="font-size:.9rem;color:#555;line-height:1.6;margin-bottom:20px">
+      Você abriu o SGCD diretamente pelo arquivo HTML.<br>
+      Isso cria uma <strong>base de dados separada</strong> e impede o envio de e-mails.
+    </p>
+    <div style="background:#f4f4f8;border-radius:8px;padding:14px 18px;font-size:.85rem;color:#333;text-align:left;margin-bottom:24px">
+      ✅ Use sempre o arquivo <strong>Iniciar SGCD.bat</strong><br>
+      <span style="color:#888;font-size:.78rem">localizado na mesma pasta deste arquivo</span>
+    </div>
+    <p style="font-size:.75rem;color:#aaa">Esta tela impede a criação acidental de dados duplicados.</p>
+  </div>
+</div>
+
 <a href="#app" class="skip-link">Ir para o conteúdo principal</a>
 
 <header>
@@ -752,6 +782,10 @@
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 0-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></svg>
     <span class="nav-tooltip">Fornecedores</span>
   </button>
+  <button class="nav-btn" id="nav-agenda" onclick="showAgenda()" aria-label="Agenda de Vencimentos">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    <span class="nav-tooltip">Agenda</span>
+  </button>
   <button class="nav-btn" id="nav-audit" onclick="showAudit()" aria-label="Auditoria">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
     <span class="nav-tooltip">Auditoria</span>
@@ -774,7 +808,13 @@
     <div class="dash-top">
       <h2>Processos</h2>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn btn-outline btn-sm" id="btn-toggle-view" onclick="toggleDashView()" title="Alternar visualização">⊞</button>
+        <button class="btn btn-outline btn-sm" id="btn-toggle-view" onclick="toggleDashView()" title="Alternar entre cards e tabela">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        </button>
+        <button class="btn btn-outline btn-sm" id="btn-kanban-view" onclick="toggleKanbanView()" title="Visualização Kanban" style="display:flex;align-items:center;gap:5px">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="5" height="18" rx="1"/><rect x="10" y="3" width="5" height="12" rx="1"/><rect x="17" y="3" width="5" height="15" rx="1"/></svg>
+          Kanban
+        </button>
         <button class="btn btn-outline" onclick="exportarCSV()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Exportar CSV
@@ -979,6 +1019,8 @@
         <button class="btn btn-outline btn-sm" onclick="gerarAta()" style="border-color:var(--aubergine-mid);color:var(--aubergine-mid)">&#128196; Gerar Ata</button>
         <button class="btn btn-outline btn-sm" onclick="verificarConformidade()" style="border-color:#7c3aed;color:#7c3aed">✔ Conformidade</button>
         <button class="btn btn-outline btn-sm" onclick="duplicarProcess()" title="Criar cópia deste processo">⎘ Duplicar</button>
+        <button class="btn btn-outline btn-sm" onclick="abrirEmailModal()" title="Enviar notificação por e-mail">✉ Notificar</button>
+        <button class="btn btn-outline btn-sm" onclick="gerarProcessoCompleto()" title="Gerar documento consolidado com todos os documentos do processo" style="border-color:var(--brand);color:var(--brand)">📦 Processo Completo</button>
         <button class="btn btn-danger  btn-sm" onclick="deleteProcess()">Excluir</button>
       </div>
     </div>
@@ -1010,6 +1052,11 @@
           <h4 id="frac-card-title">⚠ Análise de Fracionamento</h4>
           <div class="body" id="frac-panel"></div>
         </div>
+        <!-- Limite Anual Art. 75 -->
+        <div class="sidebar-card" id="limite-card" style="display:none">
+          <h4 id="limite-card-title">📊 Limite Anual Art. 75</h4>
+          <div class="body" id="limite-panel"></div>
+        </div>
         <!-- Timeline -->
         <div class="sidebar-card">
           <h4>Histórico</h4>
@@ -1027,6 +1074,14 @@
         </div>
       </div>
     </div>
+  </div>
+
+  <!-- ── Agenda View ── -->
+  <div id="view-agenda" class="view">
+    <div class="dash-top">
+      <h2>Agenda de Vencimentos</h2>
+    </div>
+    <div id="agenda-body" style="max-width:720px;margin:0 auto;padding:0 16px 32px"></div>
   </div>
 
   <!-- ── Audit View ── -->
@@ -1179,6 +1234,25 @@
         </div>
       </fieldset>
 
+      <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px;margin-top:24px">
+        <legend style="font-size:.72rem;font-weight:700;color:var(--aubergine-mid);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Configurações de E-mail (SMTP)</legend>
+        <p style="font-size:.75rem;color:var(--gray-500);margin-bottom:12px;line-height:1.5">Configure o servidor SMTP para envio de notificações. O servidor local (<strong>server.py</strong>) deve estar em execução. As credenciais ficam salvas apenas neste navegador.</p>
+        <div class="info-field"><label>Servidor SMTP (host)</label><input type="text" id="s-smtp-host" placeholder="ex: smtp.gmail.com"></div>
+        <div class="info-field"><label>Porta</label><input type="number" id="s-smtp-port" placeholder="587" style="max-width:120px"></div>
+        <div style="display:flex;gap:20px;margin:8px 0">
+          <label style="display:flex;align-items:center;gap:6px;font-size:.82rem;cursor:pointer"><input type="checkbox" id="s-smtp-tls" style="width:15px;height:15px"> Usar STARTTLS (porta 587)</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:.82rem;cursor:pointer"><input type="checkbox" id="s-smtp-ssl" style="width:15px;height:15px"> Usar SSL direto (porta 465)</label>
+        </div>
+        <div class="info-field"><label>Usuário (e-mail de envio)</label><input type="email" id="s-smtp-user" placeholder="ex: licitacao@municipio.sp.gov.br"></div>
+        <div class="info-field"><label>Senha</label><input type="password" id="s-smtp-pass" autocomplete="new-password"></div>
+        <div class="info-field"><label>Nome do remetente</label><input type="text" id="s-smtp-from-name" placeholder="SGCD — Contratações Diretas"></div>
+        <div class="info-field"><label>E-mail interno (destinatário padrão)</label><input type="email" id="s-smtp-to" placeholder="ex: chefia@municipio.sp.gov.br"></div>
+        <div style="margin-top:8px;display:flex;align-items:center;gap:10px">
+          <button class="btn btn-outline btn-sm" onclick="testSmtp()">🔌 Testar conexão com servidor</button>
+          <span id="smtp-test-result" style="font-size:.8rem"></span>
+        </div>
+      </fieldset>
+
       <fieldset style="border:1.5px solid #dc2626;border-radius:8px;padding:14px 16px;margin-top:18px">
         <legend style="font-size:.72rem;font-weight:700;color:#dc2626;padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Zona de Perigo</legend>
         <p style="font-size:.72rem;color:var(--gray-500);margin-bottom:12px;line-height:1.5">Esta operação apaga <strong>permanentemente</strong> todos os processos, fornecedores, arquivos e configurações do sistema. A ação é irreversível. Um backup completo será exportado automaticamente antes do wipe.</p>
@@ -1294,6 +1368,69 @@
   </div>
 </div>
 
+<!-- ── E-mail Modal ── -->
+<div class="overlay hidden" id="email-modal" onclick="if(event.target===this)fecharEmailModal()">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">
+      <h3>✉ Enviar Notificação</h3>
+      <button class="btn btn-ghost btn-sm" onclick="fecharEmailModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="email-server-status" style="margin-bottom:12px;font-size:.8rem"></div>
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <button class="btn btn-outline btn-sm" id="email-tab-forn" onclick="setEmailTab('forn')" style="font-weight:700">Fornecedor</button>
+        <button class="btn btn-ghost btn-sm" id="email-tab-int" onclick="setEmailTab('int')">Interno</button>
+      </div>
+      <div id="email-tab-forn-body">
+        <div class="info-field">
+          <label style="display:flex;justify-content:space-between">
+            Destinatários
+            <span style="font-weight:400;color:var(--gray-500);font-size:.72rem">
+              <a href="#" onclick="emailFornSelecionarTodos(true);return false">Todos</a> ·
+              <a href="#" onclick="emailFornSelecionarTodos(false);return false">Nenhum</a>
+            </span>
+          </label>
+          <div id="email-forn-list" style="max-height:160px;overflow-y:auto;border:1px solid var(--gray-200);border-radius:6px;padding:6px;background:var(--bg-card)"></div>
+        </div>
+        <div class="info-field"><label>Assunto</label><input type="text" id="email-subj-forn"></div>
+        <div class="info-field"><label>Mensagem</label><textarea rows="7" id="email-body-forn" style="resize:vertical;min-height:120px"></textarea></div>
+      </div>
+      <div id="email-tab-int-body" style="display:none">
+        <div class="info-field"><label>Para</label><input type="email" id="email-to-int"></div>
+        <div class="info-field"><label>Assunto</label><input type="text" id="email-subj-int"></div>
+        <div class="info-field"><label>Mensagem</label><textarea rows="7" id="email-body-int" style="resize:vertical;min-height:120px"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="fecharEmailModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="enviarNotificacao()" id="btn-enviar-email">✉ Enviar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Vincular Processo Modal ── -->
+<div class="overlay hidden" id="vinculo-modal" onclick="if(event.target===this)fecharVinculoModal()">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <h3>Vincular Processo</h3>
+      <button class="btn btn-ghost btn-sm" onclick="fecharVinculoModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <label style="display:block;font-size:.75rem;font-weight:700;color:var(--gray-500);text-transform:uppercase;margin-bottom:4px">Tipo de vínculo</label>
+      <select id="vinculo-tipo" style="width:100%;margin-bottom:12px;padding:7px 10px;border:1px solid var(--gray-200);border-radius:6px;background:var(--bg-card);color:var(--gray-900)">
+        <option value="renovacao">Renovação de</option>
+        <option value="aditivo">Aditivo de</option>
+        <option value="continuidade">Continuidade de</option>
+        <option value="anterior">Processo anterior</option>
+      </select>
+      <label style="display:block;font-size:.75rem;font-weight:700;color:var(--gray-500);text-transform:uppercase;margin-bottom:4px">Buscar processo</label>
+      <input type="text" id="vinculo-search" placeholder="Digite objeto, PA ou DL..." oninput="renderVinculoSearch(this.value)"
+        style="width:100%;padding:7px 10px;border:1px solid var(--gray-200);border-radius:6px;margin-bottom:8px;background:var(--bg-card);color:var(--gray-900)">
+      <div id="vinculo-results" style="max-height:220px;overflow-y:auto;border:1px solid var(--gray-200);border-radius:6px"></div>
+    </div>
+  </div>
+</div>
+
 <!-- ── Confirm Modal ── -->
 <div class="overlay hidden" id="confirm-overlay">
   <div class="modal" style="max-width:420px">
@@ -1336,7 +1473,7 @@ const ICONS = {
 // DB — IndexedDB wrapper
 // ══════════════════════════════════════════════════════════════
 let db;
-const SGCD_VERSION = '1.11.8';
+const SGCD_VERSION = '1.12.1';
 document.title = `SGCD v${SGCD_VERSION}`;
 const DB_NAME = 'dispensaDB', DB_VER = 3;
 
@@ -1577,7 +1714,8 @@ async function exportBackup() {
     }));
     const settings = localStorage.getItem('sgcd-user') || null;
     const brasao   = localStorage.getItem('sgcd-brasao-dataurl') || null;
-    const backup = { _sgcd: true, version: 3, exportedAt: new Date().toISOString(), processes, fornecedores, files, auditGlobal, settings, brasao };
+    const smtp     = localStorage.getItem('sgcd-smtp') || null;
+    const backup = { _sgcd: true, version: 3, exportedAt: new Date().toISOString(), processes, fornecedores, files, auditGlobal, settings, brasao, smtp };
     const blob = new Blob([JSON.stringify(backup)], { type: 'application/json' });
     const url  = URL.createObjectURL(blob);
     const a    = Object.assign(document.createElement('a'), {
@@ -1612,6 +1750,7 @@ async function importBackup(file) {
     // Restaura configurações e brasão (versão 3+)
     if (backup.settings) localStorage.setItem('sgcd-user', backup.settings);
     if (backup.brasao)   localStorage.setItem('sgcd-brasao-dataurl', backup.brasao);
+    if (backup.smtp)     localStorage.setItem('sgcd-smtp', backup.smtp);
     const auditMsg = hasAudit ? ` e ${backup.auditGlobal.length} registros de auditoria` : '';
     const cfgMsg = backup.settings ? ' Configurações e brasão restaurados.' : '';
     toast(`Backup restaurado! ${backup.processes?.length||0} processos${auditMsg} importados.${cfgMsg}`, 'success');
@@ -1662,16 +1801,10 @@ const STEPS = [
     autorizacao: true
   },
   {
-    name: 'Elaboração do Aviso de Dispensa',
-    sub: 'Minuta do aviso com objeto, valor e condições',
-    fields: ['responsavel','data_conclusao','prazo_propostas','endereco_envio','observacoes'],
+    name: 'Elaboração e Publicação do Aviso de Dispensa',
+    sub: 'Minuta, publicação no PNCP e Diário Oficial — Art. 75, §3º e Art. 54, §1º',
+    fields: ['responsavel','data_conclusao','prazo_propostas','endereco_envio','data_publicacao','data_encerramento','link_pncp','link_diario','link_site','observacoes'],
     avisoDispensa: true
-  },
-  {
-    name: 'Publicação no PNCP / Diário Oficial',
-    sub: 'Prazo mínimo de 3 dias úteis — Art. 75, §3º e Art. 54, §1º',
-    fields: ['responsavel','data_publicacao','data_encerramento','link_pncp','observacoes'],
-    extrato: true
   },
   {
     name: 'Recebimento e Análise de Propostas',
@@ -1727,6 +1860,8 @@ const FIELD_LABELS = {
   data_publicacao: 'Data de publicação',
   data_encerramento: 'Data de encerramento',
   link_pncp: 'Link no PNCP',
+  link_diario: 'Link no Diário Oficial do Município',
+  link_site: 'Link no Site Oficial do Município',
   num_propostas: 'Nº de propostas recebidas',
   fornecedor_vencedor: 'Fornecedor vencedor',
   fornecedor: 'Fornecedor',
@@ -2386,10 +2521,73 @@ function setNavActive(id) {
   if (el) el.classList.add('active');
 }
 
-const _ALL_VIEWS = ['view-dash','view-detail','view-fornecedores','view-audit','view-settings'];
+const _ALL_VIEWS = ['view-dash','view-detail','view-fornecedores','view-audit','view-settings','view-agenda'];
 function _hideAllViews() { _ALL_VIEWS.forEach(id => document.getElementById(id)?.classList.remove('active')); }
 
 let _auditPage = 0;
+// ══════════════════════════════════════════════════════════════
+// AGENDA DE VENCIMENTOS (feature 4)
+// ══════════════════════════════════════════════════════════════
+function showAgenda() {
+  _hideAllViews();
+  document.getElementById('view-agenda').classList.add('active');
+  setNavActive('nav-agenda');
+  renderAgenda();
+}
+
+function renderAgenda() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const in7   = new Date(today); in7.setDate(in7.getDate()+7);
+  const in30  = new Date(today); in30.setDate(in30.getDate()+30);
+
+  const events = [];
+  processes.forEach(p => {
+    function addEvent(dateStr, label) {
+      if (!dateStr) return;
+      const d = new Date(dateStr.length === 10 ? dateStr + 'T00:00:00' : dateStr);
+      if (isNaN(d)) return;
+      events.push({ date: d, label, pid: p.id, urgente: d < today });
+    }
+    addEvent(p.steps?.[7]?.fields?.data_encerramento, `Encerramento de propostas — ${p.objeto}`);
+    addEvent(p.steps?.[13]?.fields?.vigencia_final,   `Vencimento de contrato — ${p.objeto}`);
+    addEvent(p.prazo, `Prazo do processo — ${p.objeto}`);
+    const lastUp = p.updatedAt || p.createdAt;
+    if (lastUp && processStatus(p) === 'progress') {
+      const diasParado = Math.floor((today - new Date(lastUp)) / 86400000);
+      if (diasParado > 15) {
+        events.push({ date: new Date(lastUp), label: `Processo parado há ${diasParado} dias — ${p.objeto}`, pid: p.id, parado: true, urgente: true });
+      }
+    }
+  });
+
+  events.sort((a,b) => a.date - b.date);
+
+  function grupo(title, evs) {
+    if (!evs.length) return '';
+    return `<div style="margin-bottom:24px">
+      <h3 style="font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--gray-500);margin-bottom:10px">${title}</h3>
+      ${evs.map(e => `
+        <div onclick="openProcess('${e.pid}')" style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid ${e.urgente?'var(--danger)':'var(--gray-200)'};border-radius:8px;margin-bottom:8px;cursor:pointer;background:${e.urgente?'#fff1f0':'var(--bg-card)'}">
+          <div style="font-size:1.1rem;flex-shrink:0">${e.parado?'🛑':e.urgente?'⚠':'📅'}</div>
+          <div>
+            <div style="font-size:.85rem;font-weight:500;color:${e.urgente?'var(--danger)':'var(--gray-900)'}">${escHtml(e.label)}</div>
+            <div style="font-size:.72rem;color:var(--gray-500);margin-top:2px">${e.parado?'Última atualização: ':''} ${e.date.toLocaleDateString('pt-BR')}</div>
+          </div>
+        </div>`).join('')}
+    </div>`;
+  }
+
+  const el = document.getElementById('agenda-body');
+  const venc  = events.filter(e => !e.parado && e.date < today);
+  const prox7 = events.filter(e => e.date >= today && e.date <= in7);
+  const prox30= events.filter(e => e.date > in7 && e.date <= in30);
+  const mais  = events.filter(e => e.date > in30);
+  const parados = events.filter(e => e.parado);
+
+  if (!events.length) { el.innerHTML = `<p style="color:var(--gray-400);padding:32px 0;text-align:center">Nenhum vencimento registrado.</p>`; return; }
+  el.innerHTML = grupo('Vencidos', venc) + grupo('Parados há mais de 15 dias', parados) + grupo('Próximos 7 dias', prox7) + grupo('Este mês', prox30) + grupo('Mais adiante', mais);
+}
+
 let _auditLastDay = null;
 const _AUDIT_PAGE_SIZE = 50;
 
@@ -2760,6 +2958,12 @@ function renderDash() {
     list.innerHTML = renderDashTable(filtered);
     return;
   }
+  if (_dashView === 'kanban') {
+    _setKanbanActive(true);
+    renderKanban(filtered);
+    return;
+  }
+  _setKanbanActive(false);
 
   list.innerHTML = filtered.map(p => {
     const st   = processStatus(p);
@@ -2809,6 +3013,50 @@ function safeUrl(url) {
   if (!url) return '#';
   try { const u = new URL(url); return /^https?:$/.test(u.protocol) ? escHtml(url) : '#'; }
   catch { return '#'; }
+}
+
+// Calcula data útil N dias após dataBase, descontando fins de semana e feriados nacionais brasileiros
+function calcDiasUteis(dataBase, dias) {
+  function feriados(ano) {
+    const a = ano % 19, b = Math.floor(ano/100), c = ano % 100;
+    const d = Math.floor(b/4), e = b % 4;
+    const f = Math.floor((b+8)/25), g = Math.floor((b-f+1)/3);
+    const h = (19*a + b - d - g + 15) % 30;
+    const ii = Math.floor(c/4), k = c % 4;
+    const l = (32 + 2*e + 2*ii - h - k) % 7;
+    const m = Math.floor((a + 11*h + 22*l) / 451);
+    const mes = Math.floor((h + l - 7*m + 114) / 31);
+    const dia = ((h + l - 7*m + 114) % 31) + 1;
+    const pascoa = new Date(ano, mes-1, dia);
+    const off = n => { const x = new Date(pascoa); x.setDate(x.getDate()+n); return x.toISOString().slice(0,10); };
+    return new Set([
+      `${ano}-01-01`, `${ano}-04-21`, `${ano}-05-01`, `${ano}-09-07`,
+      `${ano}-10-12`, `${ano}-11-02`, `${ano}-11-15`, `${ano}-12-25`,
+      off(-48), off(-47), off(-2), off(60),
+    ]);
+  }
+  let dt = new Date(dataBase);
+  let added = 0;
+  while (added < dias) {
+    dt.setDate(dt.getDate() + 1);
+    const dow = dt.getDay();
+    if (dow === 0 || dow === 6) continue;
+    if (feriados(dt.getFullYear()).has(dt.toISOString().slice(0,10))) continue;
+    added++;
+  }
+  return dt;
+}
+
+function onPublicacaoChange(i, val) {
+  updateField(i, 'data_publicacao', val);
+  if (!val) return;
+  const enc = currentProcess.steps[i]?.fields?.data_encerramento;
+  if (enc) return;
+  const minDate = calcDiasUteis(new Date(val + 'T00:00:00'), 3);
+  const minStr = minDate.toISOString().slice(0,10);
+  updateField(i, 'data_encerramento', minStr);
+  const inp = document.querySelector(`#step-body-${i} input[onchange*="data_encerramento"]`);
+  if (inp) inp.value = minStr;
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -3741,6 +3989,7 @@ function renderDetail() {
   renderInfoFields();
   renderTimeline();
   renderFracPanel();
+  renderLimiteAnualPanel();
 }
 
 function renderFracPanel() {
@@ -3930,6 +4179,10 @@ function renderStepFields(i, step, data, certFileMap = {}) {
         <textarea rows="2" onchange="updateField(${i},'${f}',this.value)">${val}</textarea>`;
     }
     if (DATE_FIELDS.has(f)) {
+      if (i === 7 && f === 'data_publicacao') {
+        return `<label>${label}</label>
+          <input type="date" value="${data.fields[f]||''}" onchange="onPublicacaoChange(${i},this.value)">`;
+      }
       return `<label>${label}</label>
         <input type="date" value="${data.fields[f]||''}" onchange="updateField(${i},'${f}',this.value)">`;
     }
@@ -3969,7 +4222,17 @@ function renderStepFields(i, step, data, certFileMap = {}) {
     html += `<div style="margin-top:12px"><button class="btn btn-outline btn-sm" onclick="gerarEnquadramentoLegal()">📄 Gerar Justificativa de Enquadramento Legal</button></div>`;
   }
   if (step.extrato) {
-    html += `<div style="margin-top:12px"><button class="btn btn-outline btn-sm" onclick="gerarExtrato()">📄 Gerar Extrato para Diário Oficial</button></div>`;
+    const pub = data.fields['data_publicacao'];
+    const enc = data.fields['data_encerramento'];
+    if (pub && enc) {
+      const minDate = calcDiasUteis(new Date(pub + 'T00:00:00'), 3);
+      const minStr = minDate.toISOString().slice(0,10);
+      if (enc < minStr) {
+        html += `<div style="background:#fff1f0;border:1px solid #ffa39e;border-radius:6px;padding:8px 10px;margin-top:8px;font-size:.8rem;color:#cf1322">
+          ⚠ Data de encerramento (${new Date(enc+'T00:00:00').toLocaleDateString('pt-BR')}) é inferior ao prazo mínimo legal de 3 dias úteis. Mínimo: ${new Date(minStr+'T00:00:00').toLocaleDateString('pt-BR')}.
+        </div>`;
+      }
+    }
   }
   if (step.autorizacao) {
     html += `<div style="margin-top:12px"><button class="btn btn-outline btn-sm" onclick="gerarAutorizacao()">📄 Gerar Autorização</button></div>`;
@@ -3986,6 +4249,11 @@ function renderStepFields(i, step, data, certFileMap = {}) {
   if (step.extratoContrato) {
     html += `<div style="margin-top:12px"><button class="btn btn-outline btn-sm" onclick="gerarExtratoContrato()">📄 Gerar Extrato de Contrato</button></div>`;
   }
+  const notaVal = escHtml(data.fields['_notas_internas'] || '');
+  html += `<div class="nota-interna-wrap">
+    <label>🔒 Nota interna (não aparece nos documentos)</label>
+    <textarea rows="2" onchange="updateField(${i},'_notas_internas',this.value)">${notaVal}</textarea>
+  </div>`;
   return html;
 }
 
@@ -4223,6 +4491,27 @@ async function _migrarStepsParecer() {
     if (!p.steps || p.steps.length >= STEPS.length) continue;
     const emptyStep = { status: 'pending', fields: {}, completedAt: null };
     p.steps.splice(5, 0, emptyStep);
+    await dbPut('processes', p);
+  }
+}
+
+async function _migrarFusaoAvisoPublicacao() {
+  // Funde as antigas etapas 8 (Aviso) e 9 (Publicação) em uma só (v1.12.1+)
+  // Processos com 16 steps precisam ter o step[8] fundido no step[7] e removido
+  const procs = await dbGetAll('processes');
+  for (const p of procs) {
+    if (!p.steps || p.steps.length < 16) continue;
+    const avisoStep  = p.steps[7] || {};
+    const publStep   = p.steps[8] || {};
+    // Copia os campos de publicação para o step do aviso
+    avisoStep.fields = Object.assign({}, publStep.fields || {}, avisoStep.fields || {});
+    // Herda status: se publicação estava done, mantém; senão usa o do aviso
+    if (publStep.status === 'done' && avisoStep.status !== 'done') {
+      avisoStep.status = publStep.status;
+      avisoStep.completedAt = publStep.completedAt;
+    }
+    p.steps[7] = avisoStep;
+    p.steps.splice(8, 1); // remove a antiga etapa de publicação
     await dbPut('processes', p);
   }
 }
@@ -4556,6 +4845,35 @@ function renderInfoFields() {
     <div class="info-field"><label>Subcategoria</label>
       <select ${!p.categoria?'disabled':''} onchange="updateProcessField('subcategoria',this.value)">${subOpts}</select></div>`;
 
+  const dotacaoHtml = `
+    <div style="border-top:1px solid var(--gray-200);margin:10px 0 8px;padding-top:8px">
+      <p style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-500);margin-bottom:6px">Dotação orçamentária</p>
+    </div>
+    <div class="info-field"><label>Programa/Ação</label>
+      <input type="text" value="${escHtml(p.dotacao_programa||'')}" onchange="updateProcessField('dotacao_programa',this.value)"></div>
+    <div class="info-field"><label>Elemento de Despesa</label>
+      <input type="text" value="${escHtml(p.dotacao_elemento||'')}" onchange="updateProcessField('dotacao_elemento',this.value)"></div>
+    <div class="info-field"><label>Fonte de Recursos</label>
+      <input type="text" value="${escHtml(p.dotacao_fonte||'')}" onchange="updateProcessField('dotacao_fonte',this.value)"></div>
+    <div class="info-field"><label>Dotação completa</label>
+      <input type="text" value="${escHtml(p.dotacao_completa||'')}" onchange="updateProcessField('dotacao_completa',this.value)" placeholder="ex: 02.004.10.301.0012.2.001.33903900.01"></div>`;
+
+  const TIPO_LABEL = { renovacao:'Renovação de', aditivo:'Aditivo de', continuidade:'Continuidade de', anterior:'Processo anterior' };
+  const vincs = p.processos_relacionados || [];
+  const vinculosHtml = `
+    <div style="border-top:1px solid var(--gray-200);margin:10px 0 8px;padding-top:8px">
+      <p style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-500);margin-bottom:6px">Processos relacionados</p>
+    </div>
+    ${vincs.map(r => `
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;background:var(--gray-50);border-radius:6px;padding:6px 8px">
+        <div>
+          <div style="font-size:.7rem;color:var(--gray-400)">${escHtml(TIPO_LABEL[r.tipo]||r.tipo)}</div>
+          <a href="#" onclick="event.preventDefault();openProcess('${r.id}')" style="font-size:.8rem;font-weight:500">${escHtml(r.num||r.objeto)}</a>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="removerVinculo('${r.id}')" title="Remover vínculo" style="font-size:.7rem;padding:2px 6px;color:var(--danger)">✕</button>
+      </div>`).join('')}
+    <button class="btn btn-outline btn-sm" onclick="abrirVinculoModal()" style="width:100%;margin-top:4px;font-size:.75rem">+ Vincular processo</button>`;
+
   document.getElementById('info-fields').innerHTML = fields.map(f => {
     const val = escHtml(p[f.key] || '');
     if (f.type === 'textarea') {
@@ -4598,7 +4916,7 @@ function renderInfoFields() {
     }
     return `<div class="info-field"><label>${f.label}</label>
       <input type="text" value="${val}" onchange="updateProcessField('${f.key}',this.value)"></div>`;
-  }).join('') + classHtml;
+  }).join('') + dotacaoHtml + vinculosHtml + classHtml;
 }
 
 function infoNaturezaChange(val) {
@@ -4613,6 +4931,45 @@ function infoCategoriaChange(val) {
   currentProcess.subcategoria = '';
   saveProcess(currentProcess);
   renderInfoFields();
+}
+
+function renderLimiteAnualPanel() {
+  const p = currentProcess;
+  const card  = document.getElementById('limite-card');
+  const panel = document.getElementById('limite-panel');
+  const title = document.getElementById('limite-card-title');
+  if (!card) return;
+
+  let inciso = null, limite = 0;
+  if ((p.legal || '').includes('Art. 75, I —'))  { inciso = 'I';  limite = 130984.20; }
+  else if ((p.legal || '').includes('Art. 75, II —')) { inciso = 'II'; limite = 65492.11; }
+
+  if (!inciso) { card.style.display = 'none'; return; }
+
+  const ano = new Date().getFullYear();
+  const acumulado = processes
+    .filter(pr => (pr.legal || '').includes(`Art. 75, ${inciso} —`) && new Date(pr.createdAt).getFullYear() === ano)
+    .reduce((sum, pr) => {
+      const v = parseFloat((pr.valor || '0').toString().replace(/\./g,'').replace(',','.'));
+      return sum + (isNaN(v) ? 0 : v);
+    }, 0);
+
+  const pct = Math.min(100, (acumulado / limite) * 100);
+  const cor = pct >= 100 ? 'var(--danger)' : pct >= 80 ? 'var(--warning)' : 'var(--success)';
+  const ultrapassou = acumulado > limite;
+
+  card.style.display = '';
+  title.textContent = `📊 Limite Anual — Art. 75, ${inciso} (${ano})`;
+  panel.innerHTML = `
+    <p style="font-size:.8rem;margin-bottom:6px">Acumulado no exercício:</p>
+    <p style="font-size:1.05rem;font-weight:700;color:${cor}">${fmtMoney(acumulado.toFixed(2).replace('.',','))}</p>
+    <p style="font-size:.75rem;color:var(--gray-500);margin-bottom:8px">de ${fmtMoney(limite.toFixed(2).replace('.',','))} permitidos</p>
+    <div style="background:var(--gray-100);border-radius:4px;height:8px;overflow:hidden;margin-bottom:6px">
+      <div style="background:${cor};height:8px;width:${pct.toFixed(1)}%;transition:width .3s"></div>
+    </div>
+    <p style="font-size:.72rem;color:${cor};font-weight:600">${pct.toFixed(1)}% utilizado</p>
+    ${ultrapassou ? `<p style="font-size:.75rem;color:var(--danger);margin-top:6px;font-weight:600">⚠ Limite legal ultrapassado! A dispensa com este inciso não é cabível para novos contratos neste exercício.</p>` : ''}
+  `;
 }
 
 function renderTimeline() {
@@ -5218,70 +5575,6 @@ async function gerarRelatorioFornecedores() {
   _gerarDocumento(window.open('', '_blank', 'width=900,height=700'), html, 'Relatório de Fornecedores');
 }
 
-// EXTRATO PARA PUBLICAÇÃO — Art. 54, §1º Lei 14.133/2021
-// ══════════════════════════════════════════════════════════════
-function gerarExtrato() {
-  const p = currentProcess;
-  const u = getUser();
-  const hoje = new Date().toLocaleDateString('pt-BR', { day:'numeric', month:'long', year:'numeric' });
-  const blank = v => v || '_'.repeat(30);
-  const fn  = typeof p.fornecedor==='object'?(p.fornecedor?.razao_social||''):(p.fornecedor||'');
-  const fnCnpj = typeof p.fornecedor==='object'?(p.fornecedor?.cnpj||''):'';
-  const numLine = [p.num_proc && `Processo Administrativo nº ${p.num_proc}`, p.num_dl && `Dispensa de Licitação nº ${p.num_dl}`].filter(Boolean).join(' / ') || `Processo nº ${p.num||''}`;
-
-  const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
-<title>Extrato de Publicação — ${escHtml(p.num_dl||p.num||'DL')}</title>
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; color: #000; background: #fff; padding: 2cm 2.5cm; }
-  .header { text-align: center; margin-bottom: 20pt; border-bottom: 2px solid #000; padding-bottom: 12pt; }
-  .header img { height: 90pt; width: auto; margin-bottom: 6pt; }
-  .header h1 { font-size: 13pt; font-weight: 700; text-transform: uppercase; }
-  .header h2 { font-size: 11pt; font-weight: 400; margin-top: 2pt; }
-  .doc-title { text-align: center; margin: 16pt 0 14pt; }
-  .doc-title h3 { font-size: 13pt; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
-  .doc-title .sub { font-size: 10pt; color: #333; margin-top: 4pt; }
-  .body-text { font-size: 11pt; line-height: 1.9; text-align: justify; margin-bottom: 14pt; }
-  .body-text strong { font-weight: 700; }
-  .footer-line { border-top: 1px solid #aaa; margin-top: 30pt; padding-top: 6pt; font-size: 9pt; color: #555; text-align: center; }
-  .city-date { text-align: right; margin-top: 20pt; font-size: 11pt; }
-  .sign { margin-top: 36pt; text-align: center; }
-  .sign-line { border-top: 1px solid #000; width: 260pt; margin: 0 auto; padding-top: 4pt; font-size: 10pt; }
-  .btn-print { display: block; margin: 0 auto 20pt; padding: 8pt 24pt; background: #2C001E; color: #fff; border: none; border-radius: 4px; font-size: 11pt; cursor: pointer; letter-spacing: .5px; }
-  .btn-print:hover { background: #5E2750; }
-  @media print { body { padding: 0; } .no-print { display: none !important; } }
-</style></head><body>
-<button class="btn-print no-print" onclick="window.print()">🖨 Imprimir / Salvar PDF</button>
-<div class="header">
-  <img src="data:image/png;base64,__BRASAO_PLACEHOLDER__" alt="Brasão">
-  <h1>${escHtml(blank(u.orgao))}</h1>
-  <h2>${escHtml(blank(u.municipio))}</h2>
-</div>
-<div class="doc-title">
-  <h3>Extrato de Dispensa de Licitação</h3>
-  <div class="sub">Publicação em cumprimento ao Art. 54, §1º da Lei Federal nº 14.133/2021</div>
-</div>
-<div class="body-text">
-  <strong>PROCESSO:</strong> ${escHtml(numLine)}<br>
-  <strong>OBJETO:</strong> ${escHtml(blank(p.objeto))}<br>
-  <strong>FUNDAMENTO LEGAL:</strong> ${escHtml(p.legal ? p.legal.split(' — ')[0] + ' da Lei Federal nº 14.133/2021' : 'Art. 75 da Lei Federal nº 14.133/2021')}<br>
-  <strong>VALOR ESTIMADO:</strong> ${p.valor ? fmtMoney(p.valor) : '_'.repeat(20)}<br>
-  ${fn ? `<strong>CONTRATADO(A):</strong> ${escHtml(fn)}${fnCnpj ? `, CNPJ: ${escHtml(fnCnpj)}` : ''}<br>` : ''}
-  <strong>UNIDADE REQUISITANTE:</strong> ${escHtml(blank(p.unidade))}<br>
-  <strong>AGENTE DE CONTRATAÇÃO:</strong> ${escHtml(blank(u.nome))}${u.matricula ? `, Matrícula nº ${u.matricula}` : ''}<br>
-  <strong>AUTORIDADE COMPETENTE:</strong> ${escHtml(blank(u.aut_nome))}${u.aut_cargo ? `, ${escHtml(u.aut_cargo)}` : ''}
-</div>
-<div class="city-date">${escHtml(blank(u.municipio))}, ${hoje}</div>
-<div class="sign">
-  <div class="sign-line">
-    <div><strong>${escHtml(blank(u.aut_nome))}</strong></div>
-    <div style="font-size:9.5pt;margin-top:2pt">${escHtml(blank(u.aut_cargo))}</div>
-  </div>
-</div>
-<div class="footer-line">Documento gerado pelo SGCD — Sistema de Gestão de Contratação Direta &nbsp;·&nbsp; v${SGCD_VERSION} &nbsp;·&nbsp; Lei Federal nº 14.133/2021 &nbsp;·&nbsp; Cód. ${_docAuthCode(p)}</div>
-</body></html>`;
-  _gerarDocumento(window.open('', '_blank', 'width=900,height=700'), html, 'Extrato de Publicação (Diário Oficial)');
-}
 
 // ══════════════════════════════════════════════════════════════
 // MAPA DE PREÇOS
@@ -5479,12 +5772,71 @@ async function verificarConformidade() {
 // ══════════════════════════════════════════════════════════════
 let _dashView = localStorage.getItem('sgcd-dash-view') || 'cards';
 
+function _setKanbanActive(on) {
+  document.getElementById('app')?.classList.toggle('kanban-active', on);
+}
+
 function toggleDashView() {
   _dashView = _dashView === 'cards' ? 'table' : 'cards';
   localStorage.setItem('sgcd-dash-view', _dashView);
   const btn = document.getElementById('btn-toggle-view');
   if (btn) btn.textContent = _dashView === 'cards' ? '⊞' : '▤';
+  const btnK = document.getElementById('btn-kanban-view');
+  if (btnK) btnK.style.fontWeight = '';
+  _setKanbanActive(false);
   renderDash();
+}
+
+function toggleKanbanView() {
+  _dashView = _dashView === 'kanban' ? 'cards' : 'kanban';
+  localStorage.setItem('sgcd-dash-view', _dashView);
+  const btn  = document.getElementById('btn-toggle-view');
+  const btnK = document.getElementById('btn-kanban-view');
+  if (btn)  btn.textContent   = _dashView === 'table' ? '▤' : '⊞';
+  if (btnK) btnK.style.fontWeight = _dashView === 'kanban' ? '700' : '';
+  _setKanbanActive(_dashView === 'kanban');
+  renderDash();
+}
+
+function processoFase(p) {
+  const st = processStatus(p);
+  if (st === 'done') return 'Concluído';
+  const ns = nextPendingStep(p);
+  if (!ns) return 'Concluído';
+  const i = ns.idx;
+  if (i <= 7)  return 'Instrução';
+  if (i === 8) return 'Publicado';
+  if (i <= 10) return 'Análise';
+  if (i <= 12) return 'Adjudicação';
+  return 'Contratação';
+}
+
+function renderKanban(procs) {
+  const phases = ['Instrução','Publicado','Análise','Adjudicação','Contratação','Concluído'];
+  const byPhase = {};
+  phases.forEach(ph => byPhase[ph] = []);
+  procs.forEach(p => { const ph = processoFase(p); if (byPhase[ph]) byPhase[ph].push(p); });
+
+  const list = document.getElementById('process-list');
+  list.innerHTML = `<div class="kanban-board">${phases.map(ph => `
+    <div class="kanban-col">
+      <div class="kanban-col-title">${ph} <span style="background:var(--gray-200);color:var(--gray-600);border-radius:10px;padding:1px 7px;font-size:.7rem;margin-left:4px">${byPhase[ph].length}</span></div>
+      ${byPhase[ph].map(p => {
+        const nums = [p.num_proc && 'PA '+p.num_proc, p.num_dl && 'DL '+p.num_dl].filter(Boolean).join(' · ');
+        const hasFrac = ['alerta','atencao'].includes(fracResultado.get(p.id)?.nivel);
+        const st = processStatus(p);
+        const stl = { todo:'badge-todo', progress:'badge-progress', done:'badge-done', blocked:'badge-blocked' }[st];
+        return `<div class="kanban-card" onclick="openProcess('${p.id}')">
+          <div class="kc-num">${escHtml(nums)}</div>
+          <div class="kc-obj">${escHtml(p.objeto)}${hasFrac?' <span title="Alerta de fracionamento" style="color:var(--warning)">⚠</span>':''}</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
+            ${p.valor ? `<div class="kc-val">${fmtMoney(p.valor)}</div>` : '<div></div>'}
+            <span class="badge ${stl}" style="font-size:.6rem">${statusLabel(st)}</span>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`).join('')}
+  </div>`;
 }
 
 let _tblSort = { key: null, dir: 'asc' };
@@ -5532,7 +5884,7 @@ function renderDashTable(lista) {
     const prazoHtml = p.prazo ? `<span style="color:${new Date(p.prazo)<new Date()?'var(--danger)':''}">${new Date(p.prazo).toLocaleDateString('pt-BR')}</span>` : '—';
     return `<tr onclick="openProcess('${p.id}')">
       <td style="font-size:.72rem;font-weight:600;color:var(--brand);line-height:1.5">${numHtml}</td>
-      <td style="text-align:justify">${escHtml(p.objeto)}</td>
+      <td style="word-break:break-word;white-space:normal;line-height:1.4">${escHtml(p.objeto)}</td>
       <td>${escHtml(p.unidade||'—')}</td>
       <td>${escHtml(fn||'—')}</td>
       <td style="text-align:right">${p.valor?fmtMoney(p.valor):'—'}</td>
@@ -6360,7 +6712,7 @@ function gerarAvisoDispensa() {
 function gerarExtratoContrato() {
   const proc = currentProcess;
   const u = getUser();
-  const data = proc.steps[14]?.fields || {};
+  const data = proc.steps[13]?.fields || {};
   const hoje = new Date().toLocaleDateString('pt-BR', { day:'numeric', month:'long', year:'numeric' });
   const blank = txt => txt || '_'.repeat(40);
   const forn = proc.fornecedor;
@@ -6430,11 +6782,12 @@ function gerarExtratoContrato() {
   <tr><td class="lbl">Fundamentação</td><td>PA nº ${blank(proc.num_proc || proc.num)} · DL nº ${blank(proc.num_dl || proc.num)}${fundamento ? ' · ' + escHtml(fundamento) : ''}</td></tr>
   <tr><td class="lbl">Gestor do Contrato</td><td>${blank(data.gestor_contrato)}</td></tr>
   <tr><td class="lbl">Fiscal do Contrato</td><td>${blank(data.fiscal_contrato)}</td></tr>
+  ${(proc.dotacao_completa || proc.dotacao_programa) ? `<tr><td class="lbl">Dotação Orçamentária</td><td>${proc.dotacao_completa ? escHtml(proc.dotacao_completa) : [proc.dotacao_programa, proc.dotacao_elemento, proc.dotacao_fonte].filter(Boolean).map(escHtml).join(' / ')}</td></tr>` : ''}
 </table>
 
 <div class="section">
   <div class="section-title">Objeto</div>
-  <p>O presente instrumento tem por objeto a contratação de <strong>${blank(proc.objeto)}</strong>, em atendimento às necessidades da unidade requisitante <strong>${blank(proc.unidade)}</strong>, nos termos do Termo de Referência integrante do processo administrativo acima referenciado e da proposta vencedora da Dispensa de Licitação nº ${blank(proc.num_dl || proc.num)}.</p>
+  <p>O presente instrumento tem por objeto: <strong>${blank(proc.objeto)}</strong>, em atendimento às necessidades da unidade requisitante <strong>${blank(proc.unidade)}</strong>, nos termos do Termo de Referência integrante do processo administrativo acima referenciado e da proposta vencedora da Dispensa de Licitação nº ${blank(proc.num_dl || proc.num)}.</p>
 </div>
 
 <div class="section">
@@ -6643,6 +6996,7 @@ function gerarAutorizacao() {
   <tr><td class="lbl">Valor Estimado</td><td>${fmtVal(p.valor)}</td></tr>
   <tr><td class="lbl">Unidade Requisitante</td><td>${blank(p.unidade)}</td></tr>
   <tr><td class="lbl">Fundamento Legal</td><td>${p.legal || 'Art. 75 — Lei Federal nº 14.133/2021'}</td></tr>
+  ${(p.dotacao_completa || p.dotacao_programa) ? `<tr><td class="lbl">Dotação Orçamentária</td><td>${p.dotacao_completa ? escHtml(p.dotacao_completa) : [p.dotacao_programa, p.dotacao_elemento, p.dotacao_fonte].filter(Boolean).map(escHtml).join(' / ')}</td></tr>` : ''}
   ${fornNome ? `<tr><td class="lbl">Fornecedor Indicado</td><td>${fornNome}${fornCnpj ? ' — CNPJ: ' + fornCnpj : ''}</td></tr>` : ''}
   <tr><td class="lbl">Agente de Contratação</td><td>${blank(u.nome)}${u.matricula ? ' — Matrícula: ' + u.matricula : ''}</td></tr>
 </table>
@@ -6703,6 +7057,137 @@ function _gerarDocumento(win, html, docNome) {
 }
 
 // ══════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════
+// DOCUMENTO CONSOLIDADO DO PROCESSO (feature 7)
+// ══════════════════════════════════════════════════════════════
+function gerarProcessoCompleto() {
+  const p = currentProcess;
+  const u = getUser();
+  const blank = v => v || '_'.repeat(30);
+  const fmtV  = v => v ? fmtMoney(v) : '_______________';
+  const hoje = new Date().toLocaleDateString('pt-BR', { day:'numeric', month:'long', year:'numeric' });
+  const nums = [p.num_proc && `PA ${p.num_proc}`, p.num_dl && `DL ${p.num_dl}`].filter(Boolean).join(' · ') || p.num || '';
+  const forn = p.fornecedor;
+  const fornNome = typeof forn==='object'?(forn?.razao_social||''):(forn||'');
+  const fornCnpj = typeof forn==='object'?(forn?.cnpj||''):(forn?'':'');
+  const numParecer = p.steps[5]?.fields?.num_parecer || '';
+  const parecerRef = numParecer ? `, com amparo no Parecer Jurídico nº ${numParecer} da Procuradoria-Geral,` : '';
+  const s = i => p.steps?.[i]?.fields || {};
+  const vigencia = (s(13).vigencia_inicial && s(13).vigencia_final)
+    ? `${s(13).vigencia_inicial} a ${s(13).vigencia_final}` : (s(13).vigencia_inicial || s(13).vigencia_final || '');
+  const dotacao = p.dotacao_completa || [p.dotacao_programa, p.dotacao_elemento, p.dotacao_fonte].filter(Boolean).join(' / ');
+  const fundamento = s(4).fundamento || '';
+
+  function section(title, rows, body) {
+    const rowsHtml = rows ? rows.filter(r=>r).map(([l,v]) => `<tr><td class="lbl">${l}</td><td>${blank(v)}</td></tr>`).join('') : '';
+    return `<div class="doc-section">
+      <h2>${title}</h2>
+      ${body ? `<p class="body-text">${body}</p>` : ''}
+      ${rowsHtml ? `<table class="ft">${rowsHtml}</table>` : ''}
+    </div>`;
+  }
+
+  const sections = [];
+
+  // 1. Autorização
+  sections.push(section('1. Autorização de Abertura', [
+    ['Processo Administrativo', p.num_proc || p.num],
+    ['Dispensa de Licitação nº', p.num_dl || p.num],
+    ['Objeto', p.objeto],
+    ['Valor Estimado', fmtV(p.valor)],
+    ['Unidade Requisitante', p.unidade],
+    ['Fundamento Legal', p.legal],
+    dotacao ? ['Dotação Orçamentária', dotacao] : null,
+    fornNome ? ['Fornecedor Indicado', fornNome + (fornCnpj ? ` — CNPJ: ${fornCnpj}` : '')] : null,
+    ['Agente de Contratação', u.nome + (u.matricula ? ` — Matrícula: ${u.matricula}` : '')],
+  ], `Nos termos do ${p.legal ? p.legal.split(' — ')[0] + ' da Lei Federal nº 14.133/2021' : 'Art. 75 da Lei Federal nº 14.133/2021'}${parecerRef}, AUTORIZO a abertura do processo de Dispensa de Licitação.`));
+
+  // 2. Publicação
+  if (s(7).data_publicacao) sections.push(section('2. Publicação (PNCP / Diário Oficial)', [
+    ['Data de publicação', s(7).data_publicacao],
+    ['Data de encerramento', s(7).data_encerramento],
+    s(7).link_pncp ? ['Link PNCP', s(7).link_pncp] : null,
+    s(7).link_diario ? ['Link Diário Oficial', s(7).link_diario] : null,
+    s(7).link_site ? ['Link Site Oficial', s(7).link_site] : null,
+  ]));
+
+  // 3. Proposta vencedora
+  if (s(10).valor_adjudicado || fornNome) sections.push(section('3. Adjudicação', [
+    ['Fornecedor adjudicado', fornNome + (fornCnpj ? ` — CNPJ: ${fornCnpj}` : '')],
+    ['Valor adjudicado', fmtV(s(10).valor_adjudicado)],
+    ['Data de adjudicação', s(10).data_conclusao],
+    ['Responsável', s(10).responsavel],
+  ]));
+
+  // 4. Homologação
+  if (s(11).data_conclusao) sections.push(section('4. Homologação', [
+    ['Autoridade', s(11).autoridade || u.aut_nome],
+    ['Data de homologação', s(11).data_conclusao],
+    ['Responsável', s(11).responsavel],
+  ]));
+
+  // 5. Nota de Empenho
+  if (s(12).num_empenho || s(12).dotacao) sections.push(section('5. Nota de Empenho', [
+    ['Nº do empenho', s(12).num_empenho],
+    ['Dotação', s(12).dotacao],
+    ['Data', s(12).data_conclusao],
+  ]));
+
+  // 6. Instrumento Contratual
+  if (s(13).num_contrato || s(13).valor_contrato) sections.push(section('6. Instrumento Contratual', [
+    ['Nº do instrumento', s(13).num_contrato],
+    ['Data de assinatura', s(13).data_assinatura],
+    ['Vigência', vigencia],
+    ['Valor do contrato', fmtV(s(13).valor_contrato)],
+    ['Contratante', s(13).contratante || u.orgao],
+    ['Contratado', s(13).contratado || fornNome],
+    ['CNPJ contratado', s(13).cnpj_contratado || fornCnpj],
+    ['Gestor do contrato', s(13).gestor_contrato],
+    ['Fiscal do contrato', s(13).fiscal_contrato],
+    dotacao ? ['Dotação Orçamentária', dotacao] : null,
+    fundamento ? ['Fundamento', fundamento] : null,
+  ]));
+
+  const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+<title>Processo Completo — ${escHtml(p.objeto)}</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; color: #000; background: #fff; padding: 2cm 2.5cm; }
+  .header { text-align: center; margin-bottom: 20pt; border-bottom: 2px solid #000; padding-bottom: 12pt; }
+  .header img { height: 70pt; width: auto; margin-bottom: 6pt; display: block; margin: 0 auto 6pt; }
+  .header h1 { font-size: 13pt; font-weight: 700; text-transform: uppercase; }
+  .header h2 { font-size: 11pt; font-weight: 400; margin-top: 2pt; }
+  .doc-title { text-align: center; margin: 16pt 0 10pt; }
+  .doc-title h3 { font-size: 12pt; font-weight: 700; text-transform: uppercase; }
+  .doc-section { margin-bottom: 10pt; padding-bottom: 10pt; border-bottom: 1px solid #ccc; }
+  .doc-section:last-child { border-bottom: none; }
+  @media print { .doc-section { page-break-inside: avoid; } }
+  h2 { font-size: 11pt; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 6pt; padding-bottom: 4pt; border-bottom: 1px solid #000; }
+  .body-text { font-size: 11pt; line-height: 1.7; text-align: justify; margin-bottom: 8pt; }
+  .ft { width: 100%; border-collapse: collapse; margin: 6pt 0; }
+  .ft td { padding: 4pt 7pt; border: 1px solid #333; font-size: 11pt; vertical-align: top; }
+  .ft td.lbl { font-weight: 700; text-transform: uppercase; font-size: 9pt; letter-spacing: .3px; width: 38%; background: #f5f5f5; text-align: center; vertical-align: middle; }
+  .footer { margin-top: 30pt; border-top: 1px solid #ccc; padding-top: 6pt; text-align: center; font-size: 8pt; color: #666; }
+  .btn-print { display: block; margin: 0 auto 20pt; padding: 8pt 24pt; background: #2C001E; color: #fff; border: none; border-radius: 4px; font-size: 11pt; cursor: pointer; }
+  @media print { .no-print { display: none !important; } body { padding: 1cm 1.5cm; } }
+</style></head><body>
+<button class="btn-print no-print" onclick="window.print()">🖨 Imprimir / Salvar PDF</button>
+<div class="header">
+  <img src="data:image/png;base64,__BRASAO_PLACEHOLDER__" alt="Brasão">
+  <h1>${escHtml(blank(u.orgao))}</h1>
+  <h2>${escHtml(blank(u.municipio))}</h2>
+</div>
+<div class="doc-title">
+  <h3>Processo Completo de Dispensa de Licitação</h3>
+  <p style="font-size:11pt;margin-top:4pt">${escHtml(nums)} — ${escHtml(p.objeto)}</p>
+</div>
+${sections.join('\n')}
+<div class="footer">Documento gerado pelo SGCD — Sistema de Gestão de Contratação Direta &nbsp;·&nbsp; v${SGCD_VERSION} &nbsp;·&nbsp; ${hoje}</div>
+</body></html>`;
+
+  _gerarDocumento(window.open('', '_blank', 'width=900,height=700'), html, 'Processo Completo');
+}
+
 // ATA DE SESSÃO — Lei 14.133/2021
 // ══════════════════════════════════════════════════════════════
 function gerarAta() {
@@ -6832,7 +7317,7 @@ function gerarAta() {
 
 <div class="secao">
   <div class="secao-titulo">II — Abertura da Sessão</div>
-  <p>Aos ${hoje}, o(a) ${u.cargo || 'Agente de Contratação'} ${u.nome || blank(v(6,'responsavel'))}${u.matricula ? ', matrícula nº ' + u.matricula + ',' : ''} designado(a) para conduzir o procedimento de Dispensa de Licitação nº ${blank(p.num)}, declara aberta a sessão pública, dando continuidade à análise do processo administrativo referente à contratação de <strong>${blank(p.objeto)}</strong>, com fundamento no art. 75 da Lei nº 14.133, de 1º de abril de 2021${p.legal ? ' — ' + p.legal : ''}.</p>
+  <p>Aos ${hoje}, o(a) ${u.cargo || 'Agente de Contratação'} ${u.nome || blank(v(6,'responsavel'))}${u.matricula ? ', matrícula nº ' + u.matricula + ',' : ''} designado(a) para conduzir o procedimento de Dispensa de Licitação nº ${blank(p.num_dl || p.num)}, declara aberta a sessão pública, dando continuidade à análise do processo administrativo referente à contratação de <strong>${blank(p.objeto)}</strong>, com fundamento no art. 75 da Lei nº 14.133, de 1º de abril de 2021${p.legal ? ' — ' + p.legal : ''}.</p>
 </div>
 
 <div class="secao">
@@ -6845,7 +7330,7 @@ function gerarAta() {
   <div class="dado"><strong>Parecer Jurídico:</strong> ${blank(v(5,'num_parecer'))} — concluído em ${d(v(5,'data_conclusao'))}</div>
   <div class="dado"><strong>Autorização da Autoridade Competente:</strong> ${blank(v(6,'autoridade'))} em ${d(v(6,'data_conclusao'))}</div>
   <div class="dado"><strong>Aviso de Dispensa elaborado em:</strong> ${d(v(7,'data_conclusao'))}</div>
-  <div class="dado"><strong>Publicação no PNCP:</strong> de ${d(v(8,'data_publicacao'))} a ${d(v(8,'data_encerramento'))}${v(8,'link_pncp') ? ' — ' + v(8,'link_pncp') : ''}</div>
+  <div class="dado"><strong>Publicação no PNCP:</strong> de ${d(v(7,'data_publicacao'))} a ${d(v(7,'data_encerramento'))}${v(7,'link_pncp') ? ' — ' + v(7,'link_pncp') : ''}</div>
 </div>
 
 <div class="secao">
@@ -6859,39 +7344,39 @@ function gerarAta() {
   <div class="secao-titulo">V — Propostas Recebidas</div>
   <p>Encerrado o prazo de recebimento, foram analisadas as seguintes propostas:</p>
   ${propostasHtml}
-  ${v(9,'observacoes') ? `<p><strong>Observações:</strong> ${v(9,'observacoes')}</p>` : ''}
+  ${v(8,'observacoes') ? `<p><strong>Observações:</strong> ${v(8,'observacoes')}</p>` : ''}
 </div>
 
 <div class="secao">
   <div class="secao-titulo">VI — Habilitação do Fornecedor</div>
   <p>O(A) Agente de Contratação procedeu à verificação da regularidade fiscal, trabalhista e jurídica do fornecedor com menor preço:</p>
-  <div class="dado"><strong>Fornecedor:</strong> ${blank(v(10,'fornecedor'))}</div>
-  <div class="dado"><strong>CNPJ:</strong> ${blank(currentProcess?.fornecedor?.cnpj || v(10,'cnpj'))}</div>
+  <div class="dado"><strong>Fornecedor:</strong> ${blank(v(9,'fornecedor'))}</div>
+  <div class="dado"><strong>CNPJ:</strong> ${blank(currentProcess?.fornecedor?.cnpj || v(9,'cnpj'))}</div>
   <br>
   <table>
     <thead><tr><th>Certidão</th><th>Descrição</th><th>Situação</th></tr></thead>
     <tbody>${certHtml}</tbody>
   </table>
-  ${v(10,'observacoes') ? `<p style="margin-top:8pt"><strong>Observações:</strong> ${v(10,'observacoes')}</p>` : ''}
+  ${v(9,'observacoes') ? `<p style="margin-top:8pt"><strong>Observações:</strong> ${v(9,'observacoes')}</p>` : ''}
   <div class="resultado-hab ${todasObtidas ? 'habilitado' : 'pendente'}">${resultadoHab}</div>
 </div>
 
 <div class="secao">
   <div class="secao-titulo">VII — Adjudicação</div>
   <p>Com base na análise das propostas e na verificação da habilitação, o(a) Agente de Contratação adjudica o objeto ao seguinte fornecedor:</p>
-  <div class="dado"><strong>Fornecedor:</strong> ${blank(v(10,'fornecedor') || vencedora.fornecedor)}</div>
+  <div class="dado"><strong>Fornecedor:</strong> ${blank(v(9,'fornecedor') || vencedora.fornecedor)}</div>
   <div class="dado"><strong>CNPJ:</strong> ${blank(vencedora.cnpj || currentProcess?.fornecedor?.cnpj)}</div>
-  <div class="dado"><strong>Valor Adjudicado:</strong> ${v(11,'valor_adjudicado') ? fmtMoney(v(11,'valor_adjudicado')) : '_'.repeat(20)}</div>
-  <div class="dado"><strong>Data:</strong> ${d(v(11,'data_conclusao'))}</div>
-  ${v(11,'observacoes') ? `<p><strong>Observações:</strong> ${v(11,'observacoes')}</p>` : ''}
+  <div class="dado"><strong>Valor Adjudicado:</strong> ${v(10,'valor_adjudicado') ? fmtMoney(v(10,'valor_adjudicado')) : '_'.repeat(20)}</div>
+  <div class="dado"><strong>Data:</strong> ${d(v(10,'data_conclusao'))}</div>
+  ${v(10,'observacoes') ? `<p><strong>Observações:</strong> ${v(10,'observacoes')}</p>` : ''}
 </div>
 
 <div class="secao">
   <div class="secao-titulo">VIII — Homologação</div>
   <p>A autoridade competente homologa o procedimento de Dispensa de Licitação nº ${blank(p.num)}, declarando válidos todos os atos praticados.</p>
-  <div class="dado"><strong>Autoridade:</strong> ${blank(v(12,'autoridade'))}</div>
-  <div class="dado"><strong>Data:</strong> ${d(v(12,'data_conclusao'))}</div>
-  ${v(12,'observacoes') ? `<p><strong>Observações:</strong> ${v(12,'observacoes')}</p>` : ''}
+  <div class="dado"><strong>Autoridade:</strong> ${blank(v(11,'autoridade'))}</div>
+  <div class="dado"><strong>Data:</strong> ${d(v(11,'data_conclusao'))}</div>
+  ${v(11,'observacoes') ? `<p><strong>Observações:</strong> ${v(11,'observacoes')}</p>` : ''}
 </div>
 
 <div class="secao">
@@ -6905,10 +7390,10 @@ function gerarAta() {
     <div class="linha"><strong>${u.nome || v(6,'responsavel') || ''}</strong><br>${u.cargo || 'Agente de Contratação'}${u.matricula ? '<br>Matrícula: ' + u.matricula : ''}</div>
   </div>
   <div class="assinatura">
-    <div class="linha"><strong>${u.aut_nome || v(12,'autoridade') || v(6,'autoridade') || ''}</strong><br>${u.aut_cargo || 'Autoridade Competente'}</div>
+    <div class="linha"><strong>${u.aut_nome || v(11,'autoridade') || v(6,'autoridade') || ''}</strong><br>${u.aut_cargo || 'Autoridade Competente'}</div>
   </div>
   <div class="assinatura">
-    <div class="linha"><strong>${v(10,'fornecedor') || ''}</strong><br>Representante do Fornecedor</div>
+    <div class="linha"><strong>${v(9,'fornecedor') || ''}</strong><br>Representante do Fornecedor</div>
   </div>
 </div>
 
@@ -7047,6 +7532,12 @@ function applyTheme(dark) {
 function getUser() {
   try { return JSON.parse(localStorage.getItem('sgcd-user') || '{}'); } catch { return {}; }
 }
+function getSmtp() {
+  try { return JSON.parse(localStorage.getItem('sgcd-smtp') || '{}'); } catch { return {}; }
+}
+function saveSmtp(cfg) {
+  localStorage.setItem('sgcd-smtp', JSON.stringify(cfg));
+}
 
 function _getAuditor() {
   const u = getUser();
@@ -7085,6 +7576,17 @@ function showSettings() {
   document.getElementById('s-diario-url').value    = u.diario_url    || '';
   document.getElementById('s-frac-janela').value   = u.frac_janela   || 'exercicio';
   document.getElementById('s-auto-backup-exit').checked = !!u.auto_backup_exit;
+
+  // SMTP
+  const smtp = getSmtp();
+  document.getElementById('s-smtp-host').value      = smtp.host        || '';
+  document.getElementById('s-smtp-port').value      = smtp.port        || '587';
+  document.getElementById('s-smtp-tls').checked     = smtp.requireTLS !== false;
+  document.getElementById('s-smtp-ssl').checked     = !!smtp.secure;
+  document.getElementById('s-smtp-user').value      = smtp.auth?.user  || '';
+  document.getElementById('s-smtp-pass').value      = smtp.auth?.pass  || '';
+  document.getElementById('s-smtp-from-name').value = smtp.from?.name  || '';
+  document.getElementById('s-smtp-to').value        = smtp.to?.email   || '';
 
   // Brasão
   const custom = localStorage.getItem('sgcd-brasao-dataurl');
@@ -7132,6 +7634,19 @@ function saveSettings() {
     playSuccess();
   }
   localStorage.setItem('sgcd-user', JSON.stringify(u));
+
+  // Save SMTP config
+  const smtpUser = document.getElementById('s-smtp-user').value.trim();
+  saveSmtp({
+    host:       document.getElementById('s-smtp-host').value.trim(),
+    port:       parseInt(document.getElementById('s-smtp-port').value) || 587,
+    secure:     document.getElementById('s-smtp-ssl').checked,
+    requireTLS: document.getElementById('s-smtp-tls').checked,
+    auth: { user: smtpUser, pass: document.getElementById('s-smtp-pass').value },
+    from: { name: document.getElementById('s-smtp-from-name').value.trim() || 'SGCD', email: smtpUser },
+    to:   { email: document.getElementById('s-smtp-to').value.trim() },
+  });
+
   updateHeaderUser();
   showDash();
 }
@@ -7141,6 +7656,217 @@ function toggleTheme() {
   localStorage.setItem('sgcd-theme', isDark ? 'dark' : 'light');
   applyTheme(isDark);
   playClick();
+}
+
+// ══════════════════════════════════════════════════════════════
+// E-MAIL VIA SMTP (feature 9)
+// ══════════════════════════════════════════════════════════════
+async function testSmtp() {
+  const el = document.getElementById('smtp-test-result');
+  el.style.color = '';
+  el.textContent = '⏳ Verificando servidor...';
+
+  // 1. Verifica se o servidor local está ativo
+  try {
+    const r = await fetch('http://localhost:3000/health', { signal: AbortSignal.timeout(3000) });
+    const j = await r.json();
+    if (!j.ok) throw new Error('Servidor retornou erro');
+  } catch {
+    el.textContent = '❌ Servidor local não encontrado. Abra o Iniciar SGCD.bat.';
+    el.style.color = 'var(--danger)';
+    return;
+  }
+
+  // 2. Lê configuração da tela (pode estar editada mas não salva ainda)
+  const smtpUser = document.getElementById('s-smtp-user').value.trim();
+  const to = document.getElementById('s-smtp-to').value.trim();
+  if (!smtpUser || !to) {
+    el.textContent = '⚠ Preencha usuário e destinatário antes de testar.';
+    el.style.color = 'var(--warning, #b45309)';
+    return;
+  }
+
+  el.textContent = '⏳ Enviando e-mail de teste...';
+  const smtp = {
+    host:       document.getElementById('s-smtp-host').value.trim(),
+    port:       parseInt(document.getElementById('s-smtp-port').value) || 587,
+    secure:     document.getElementById('s-smtp-ssl').checked,
+    requireTLS: document.getElementById('s-smtp-tls').checked,
+    auth: { user: smtpUser, pass: document.getElementById('s-smtp-pass').value },
+    from: { name: document.getElementById('s-smtp-from-name').value.trim() || 'SGCD', email: smtpUser },
+  };
+
+  try {
+    const res = await fetch('http://localhost:3000/send-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        smtp,
+        from: smtp.from,
+        to,
+        subject: 'SGCD — Teste de configuração SMTP',
+        html: '<p>Este é um e-mail de teste enviado pelo <strong>SGCD</strong>.<br>Se você recebeu esta mensagem, as configurações SMTP estão corretas.</p>',
+        text: 'Este é um e-mail de teste enviado pelo SGCD. Se você recebeu esta mensagem, as configurações SMTP estão corretas.',
+      }),
+      signal: AbortSignal.timeout(15000),
+    });
+    const j = await res.json();
+    if (!j.ok) throw new Error(j.error || 'Erro desconhecido');
+    el.textContent = `✅ E-mail de teste enviado para ${to}`;
+    el.style.color = 'var(--success)';
+  } catch(e) {
+    el.textContent = '❌ Falha ao enviar: ' + e.message;
+    el.style.color = 'var(--danger)';
+  }
+}
+
+async function smtpSend({ to, subject, html, text }) {
+  const smtp = getSmtp();
+  if (!smtp.host || !smtp.auth?.user) throw new Error('SMTP não configurado em Configurações.');
+  const res = await fetch('http://localhost:3000/send-email', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ smtp, from: smtp.from, to, subject, html, text }),
+    signal: AbortSignal.timeout(15000),
+  });
+  const j = await res.json();
+  if (!j.ok) throw new Error(j.error || 'Erro desconhecido no servidor');
+}
+
+let _emailTab = 'forn';
+async function abrirEmailModal() {
+  const p = currentProcess;
+  const smtp = getSmtp();
+  const modal = document.getElementById('email-modal');
+  modal.classList.remove('hidden');
+
+  // Status do servidor
+  const statusEl = document.getElementById('email-server-status');
+  try {
+    const r = await fetch('http://localhost:3000/health', { signal: AbortSignal.timeout(2000) });
+    const j = await r.json();
+    statusEl.innerHTML = j.ok
+      ? '<span style="color:var(--success)">✅ Servidor local ativo — e-mail será enviado via SMTP</span>'
+      : '<span style="color:var(--danger)">❌ Servidor não responde. Abra o arquivo <strong>Iniciar SGCD.bat</strong> para iniciá-lo.</span>';
+  } catch {
+    statusEl.innerHTML = `<span style="color:var(--danger)">❌ Servidor local não encontrado.</span>
+      <div style="margin-top:6px;font-size:.8rem;line-height:1.5;color:var(--gray-600)">
+        Para enviar e-mails, dê um clique duplo no arquivo <strong>Iniciar SGCD.bat</strong>
+        na pasta do SGCD. Ele inicia o servidor e abre o sistema automaticamente.
+      </div>`;
+  }
+
+  const nums = [p.num_proc && 'PA '+p.num_proc, p.num_dl && 'DL '+p.num_dl].filter(Boolean).join(' · ');
+  const u = getUser();
+
+  // ── Aba Fornecedores: lista de fornecedores cadastrados com checkbox ──
+  const fornList = document.getElementById('email-forn-list');
+  const todosForns = await dbGetAll('fornecedores');
+  const fornsComEmail = todosForns.filter(f => f.email);
+  const fornVinculadoId = typeof p.fornecedor === 'object' ? p.fornecedor?.id : null;
+
+  if (fornsComEmail.length === 0) {
+    fornList.innerHTML = '<div style="padding:8px;font-size:.8rem;color:var(--gray-500)">Nenhum fornecedor cadastrado com e-mail.</div>';
+  } else {
+    fornList.innerHTML = fornsComEmail.map(f => {
+      const nome = f.razao_social || f.nome || '';
+      return `<label style="display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:6px;cursor:pointer;border-bottom:1px solid var(--gray-100)">
+        <input type="checkbox" data-email="${escHtml(f.email)}" data-nome="${escHtml(nome)}"
+          ${f.id === fornVinculadoId ? 'checked' : ''} style="flex-shrink:0;width:15px;height:15px;accent-color:var(--brand)">
+        <span style="flex:1;min-width:0;overflow:hidden">
+          <div style="font-weight:600;font-size:.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(nome)}</div>
+          <div style="font-size:.72rem;color:var(--gray-500);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(f.email)}</div>
+        </span>
+      </label>`;
+    }).join('');
+  }
+
+  const stepPubl = p.steps?.[7]?.fields || {};
+  const dtEnc = stepPubl.data_encerramento
+    ? new Date(stepPubl.data_encerramento + 'T00:00:00').toLocaleDateString('pt-BR') : null;
+  const encLine = dtEnc
+    ? `Envie sua proposta até a data de encerramento: ${dtEnc}.`
+    : `Envie sua proposta até a data de encerramento publicada.`;
+  const linkPncp   = stepPubl.link_pncp   ? `PNCP: ${stepPubl.link_pncp}` : null;
+  const linkDiario = stepPubl.link_diario ? `Diário Oficial do Município: ${stepPubl.link_diario}` : null;
+  const linkSite   = stepPubl.link_site   ? `Site Oficial do Município: ${stepPubl.link_site}` : null;
+  const linksBlock = [encLine, linkPncp, linkDiario, linkSite].filter(Boolean).join('\n');
+
+  document.getElementById('email-subj-forn').value = `Aviso de Dispensa — ${nums}`;
+  document.getElementById('email-body-forn').value =
+    `Prezado(a) fornecedor(a),\n\nInformamos que está aberto o prazo para envio de propostas para a seguinte Dispensa de Licitação:\n\nÓrgão: ${u.orgao||''}\nObjeto: ${p.objeto}\nValor estimado: ${p.valor ? fmtMoney(p.valor) : 'a definir'}\n\n${linksBlock}\n\nAtenciosamente,\n${u.nome||''}\n${u.cargo||'Agente de Contratação'}\n${u.orgao||''}`;
+
+  // ── Aba Interno: lista etapas pendentes ──
+  const pendentes = (p.steps || [])
+    .map((s, i) => (s.status !== 'done' && STEPS[i]) ? `• ${i+1}. ${STEPS[i].name}` : null)
+    .filter(Boolean);
+  const pendentesText = pendentes.length
+    ? `Etapas pendentes:\n${pendentes.join('\n')}`
+    : 'Todas as etapas estão concluídas.';
+
+  document.getElementById('email-to-int').value = smtp.to?.email || '';
+  document.getElementById('email-subj-int').value = `Pendência — ${nums}`;
+  document.getElementById('email-body-int').value =
+    `Processo: ${nums}\nObjeto: ${p.objeto}\n\n${pendentesText}\n\nAtenciosamente,\n${u.nome||''}\n${u.cargo||'Agente de Contratação'}\n${u.orgao||''}`;
+
+  setEmailTab('forn');
+}
+
+function emailFornSelecionarTodos(sel) {
+  document.querySelectorAll('#email-forn-list input[type=checkbox]').forEach(cb => cb.checked = sel);
+}
+
+function fecharEmailModal() {
+  document.getElementById('email-modal').classList.add('hidden');
+}
+
+function setEmailTab(tab) {
+  _emailTab = tab;
+  document.getElementById('email-tab-forn-body').style.display = tab === 'forn' ? '' : 'none';
+  document.getElementById('email-tab-int-body').style.display  = tab === 'int'  ? '' : 'none';
+  document.getElementById('email-tab-forn').style.fontWeight = tab === 'forn' ? '700' : '';
+  document.getElementById('email-tab-int').style.fontWeight  = tab === 'int'  ? '700' : '';
+}
+
+async function enviarNotificacao() {
+  const btn = document.getElementById('btn-enviar-email');
+  btn.disabled = true; btn.textContent = '⏳ Enviando...';
+  try {
+    const subject = document.getElementById(`email-subj-${_emailTab}`).value.trim();
+    const text    = document.getElementById(`email-body-${_emailTab}`).value.trim();
+    if (!subject) { toast('Preencha o assunto.', 'error'); return; }
+    const html = `<pre style="font-family:inherit;white-space:pre-wrap;font-size:14px">${escHtml(text)}</pre>`;
+
+    if (_emailTab === 'forn') {
+      const selecionados = [...document.querySelectorAll('#email-forn-list input[type=checkbox]:checked')];
+      if (!selecionados.length) { toast('Selecione ao menos um fornecedor.', 'error'); return; }
+      let enviados = 0, erros = [];
+      for (const cb of selecionados) {
+        try {
+          await smtpSend({ to: cb.dataset.email, subject, html, text });
+          enviados++;
+        } catch(e) {
+          erros.push(`${cb.dataset.nome}: ${e.message}`);
+        }
+      }
+      if (erros.length) {
+        toast(`${enviados} enviado(s). Erro(s): ${erros.join('; ')}`, 'error');
+      } else {
+        toast(`E-mail enviado para ${enviados} fornecedor(es)!`, 'success');
+        fecharEmailModal();
+      }
+    } else {
+      const to = document.getElementById('email-to-int').value.trim();
+      if (!to) { toast('Preencha o destinatário.', 'error'); return; }
+      await smtpSend({ to, subject, html, text });
+      toast('E-mail interno enviado com sucesso!', 'success');
+      fecharEmailModal();
+    }
+  } catch(e) {
+    toast('Erro ao enviar: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = '✉ Enviar';
+  }
 }
 
 // Aplica tema salvo ou prefere escuro do sistema
@@ -7214,6 +7940,8 @@ async function duplicarProcess() {
     objeto: p.objeto + ' (cópia)',
     legal: p.legal, valor: p.valor, unidade: p.unidade,
     prazo: null, natureza: p.natureza, categoria: p.categoria, subcategoria: p.subcategoria, obs: p.obs,
+    dotacao_programa: p.dotacao_programa || '', dotacao_elemento: p.dotacao_elemento || '',
+    dotacao_fonte: p.dotacao_fonte || '', dotacao_completa: p.dotacao_completa || '',
     createdAt: Date.now(),
     steps: STEPS.map(s => {
       const fields = {};
@@ -7227,6 +7955,63 @@ async function duplicarProcess() {
   await loadProcesses();
   toast('Processo duplicado! Atualize os números PA/DL.', 'success');
   openProcess(novo.id);
+}
+
+// ══════════════════════════════════════════════════════════════
+// VINCULAÇÃO ENTRE PROCESSOS (feature 6)
+// ══════════════════════════════════════════════════════════════
+function abrirVinculoModal() {
+  document.getElementById('vinculo-modal').classList.remove('hidden');
+  document.getElementById('vinculo-search').value = '';
+  renderVinculoSearch('');
+  document.getElementById('vinculo-search').focus();
+}
+function fecharVinculoModal() {
+  document.getElementById('vinculo-modal').classList.add('hidden');
+}
+function renderVinculoSearch(q) {
+  const term = q.trim().toLowerCase();
+  const results = processes
+    .filter(pr => pr.id !== currentProcess.id &&
+      [pr.num_proc, pr.num_dl, pr.objeto].some(v => (v||'').toLowerCase().includes(term)))
+    .slice(0, 20);
+  const el = document.getElementById('vinculo-results');
+  if (!results.length) { el.innerHTML = `<p style="padding:10px;font-size:.8rem;color:var(--gray-500)">Nenhum processo encontrado.</p>`; return; }
+  el.innerHTML = results.map(pr => {
+    const nums = [pr.num_proc && 'PA '+pr.num_proc, pr.num_dl && 'DL '+pr.num_dl].filter(Boolean).join(' · ');
+    return `<div onclick="selecionarVinculo('${pr.id}')" style="padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--gray-100)" onmouseover="this.style.background='var(--gray-50)'" onmouseout="this.style.background=''">
+      <div style="font-size:.72rem;color:var(--gray-500)">${escHtml(nums)}</div>
+      <div style="font-size:.85rem;font-weight:500">${escHtml(pr.objeto)}</div>
+    </div>`;
+  }).join('');
+}
+async function selecionarVinculo(targetId) {
+  const tipo = document.getElementById('vinculo-tipo').value;
+  const target = processes.find(pr => pr.id === targetId);
+  if (!target) return;
+  const p = currentProcess;
+  if (!p.processos_relacionados) p.processos_relacionados = [];
+  if (!p.processos_relacionados.find(r => r.id === targetId)) {
+    const nums = [target.num_proc && 'PA '+target.num_proc, target.num_dl && 'DL '+target.num_dl].filter(Boolean).join(' · ');
+    p.processos_relacionados.push({ id: targetId, num: nums, objeto: target.objeto, tipo });
+    await saveProcess(p);
+  }
+  const reverso = { renovacao:'anterior', aditivo:'anterior', continuidade:'anterior', anterior:'renovacao' };
+  if (!target.processos_relacionados) target.processos_relacionados = [];
+  const curNums = [p.num_proc && 'PA '+p.num_proc, p.num_dl && 'DL '+p.num_dl].filter(Boolean).join(' · ');
+  if (!target.processos_relacionados.find(r => r.id === p.id)) {
+    target.processos_relacionados.push({ id: p.id, num: curNums, objeto: p.objeto, tipo: reverso[tipo] || 'anterior' });
+    await saveProcess(target);
+  }
+  fecharVinculoModal();
+  renderInfoFields();
+  toast('Processo vinculado!', 'success');
+}
+async function removerVinculo(targetId) {
+  const p = currentProcess;
+  p.processos_relacionados = (p.processos_relacionados || []).filter(r => r.id !== targetId);
+  await saveProcess(p);
+  renderInfoFields();
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -7392,8 +8177,15 @@ document.addEventListener('keydown', e => {
   }
 });
 
+if (location.protocol === 'file:') {
+  document.getElementById('origin-block').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  throw new Error('Acesso direto via file:// bloqueado.');
+}
+
 initDB()
   .then(() => _migrarStepsParecer().catch(console.error))
+  .then(() => _migrarFusaoAvisoPublicacao().catch(console.error))
   .then(() => _migrarCertidoesFornecedores().catch(console.error))
   .then(() => loadProcesses())
   .then(() => {
@@ -7409,6 +8201,23 @@ initDB()
     }
   })
   .catch(err => { console.error('Erro ao inicializar SGCD:', err); alert('Erro ao inicializar o sistema. Recarregue a página.'); });
+
+// Encerra o servidor ao fechar o app.
+// pagehide é mais confiável que beforeunload em janelas de app (Edge/Chrome --app mode).
+function _notifyShutdown() {
+  try { navigator.sendBeacon('http://localhost:3000/shutdown'); } catch {}
+}
+window.addEventListener('pagehide',     _notifyShutdown);
+window.addEventListener('beforeunload', _notifyShutdown);
+
+// Heartbeat — fallback caso o beacon não chegue (ex: crash do navegador).
+(function _startHeartbeat() {
+  async function beat() {
+    try { await fetch('http://localhost:3000/heartbeat', { signal: AbortSignal.timeout(2000) }); } catch {}
+  }
+  beat();
+  setInterval(beat, 2000);
+})();
 </script>
 <footer style="text-align:center;padding:18px 16px 14px;font-size:.72rem;color:var(--gray-400);border-top:1px solid var(--gray-100);margin-top:32px">
   SGCD — Sistema de Gestão de Contratação Direta &nbsp;·&nbsp; <strong id="footer-version"></strong> &nbsp;·&nbsp; Lei Federal nº 14.133/2021

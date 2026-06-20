@@ -1,6 +1,6 @@
 # SGCD — Sistema de Gestão de Contratação Direta
 
-![Versão](https://img.shields.io/badge/versão-v1.11.8-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-HTML5%20puro-orange) ![Licença](https://img.shields.io/badge/licença-uso%20interno-lightgrey)
+![Versão](https://img.shields.io/badge/versão-v1.12.1-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-HTML5%20puro-orange) ![Licença](https://img.shields.io/badge/licença-uso%20interno-lightgrey)
 
 ## Descrição
 
@@ -34,6 +34,15 @@ Não requer instalação, servidor ou conexão à internet. Todos os dados ficam
 - **Histórico e log de auditoria** com registro de data/hora de cada alteração
 - **Anexo de documentos** por etapa (PDF, DOCX, imagens)
 - **Backup e restauração** de dados em arquivo JSON
+- **Notas internas por etapa** — campo de texto para anotações internas que não aparecem em nenhum documento gerado
+- **Dotação orçamentária** — campos de Programa/Ação, Elemento de Despesa, Fonte e Dotação Completa por processo, preenchidos automaticamente nos documentos gerados
+- **Cálculo automático de prazos (Art. 75 §3°)** — ao informar a data de publicação no PNCP, o sistema calcula automaticamente a data mínima de encerramento (3 dias úteis); alerta visual caso a data seja inferior ao mínimo legal
+- **Controle de limite anual Art. 75, I e II** — painel lateral com acumulado do exercício e alerta quando o limite legal for atingido
+- **Agenda de Vencimentos** — tela com encerramentos, vencimentos de contratos e prazos críticos agrupados por proximidade temporal
+- **Vinculação entre processos** — vínculos relacionais entre processos (renovação, aditivo, continuidade); bidirecionais e clicáveis
+- **Documento consolidado (PDF único)** — botão "📦 Processo Completo" gera um documento com todas as seções do processo
+- **Visualização Kanban** — agrupa processos em colunas por fase (Instrução / Publicado / Análise / Adjudicação / Contratação / Concluído)
+- **Notificações por e-mail via SMTP** — botão "✉ Notificar" com templates para fornecedor e interno; requer `server.py` local em execução
 - **Visualização em cards ou tabela** com ordenação por coluna
 - **Tema claro/escuro** configurável
 - **Alertas visuais** para processos parados há mais de 15 dias e prazos vencidos
@@ -55,13 +64,16 @@ Não requer instalação, servidor ou conexão à internet. Todos os dados ficam
 - **Navegador moderno** com suporte a IndexedDB e JavaScript ES6+
 - **Recomendado:** Google Chrome (versão 90+) ou Microsoft Edge (versão 90+)
 - Não requer instalação, servidor web, banco de dados externo ou conexão à internet
+- **Envio de e-mail e abertura via BAT:** Python 3.7+ para executar `server.py` (usa apenas stdlib, sem dependências externas); configure as credenciais SMTP em Configurações
+
+> ⚠️ **Importante:** o sistema deve ser aberto exclusivamente pelo `Iniciar SGCD.bat`. Abrir o `SGCD.html` diretamente pelo navegador cria uma base de dados separada e impede o envio de e-mails.
 
 ---
 
 ## Como Usar
 
 ### 1. Abrir o sistema
-Abra o arquivo `SGCD.html` diretamente no navegador (clique duplo ou arraste para o navegador).
+Execute o arquivo `Iniciar SGCD.bat`. O sistema verificará o Python, iniciará o servidor local e abrirá o SGCD automaticamente no Chrome ou Edge em modo de aplicativo.
 
 ### 2. Configuração inicial
 Ao abrir pela primeira vez, clique no ícone de **engrenagem (⚙)** na barra lateral e preencha:

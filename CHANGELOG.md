@@ -5,6 +5,44 @@
 
 ---
 
+## [1.12.1] — 2026-06-20
+
+### Adicionado
+- **Bloqueio de acesso direto via `file://`** — ao abrir o SGCD.html diretamente (fora do servidor local), o sistema exibe uma tela de aviso e bloqueia o acesso para evitar a criação acidental de uma base de dados separada
+
+### Melhorado
+- **Encerramento do servidor reescrito — arquitetura baseada em PID** — o `server.py` agora localiza o Chrome/Edge, lança o navegador internamente via `subprocess.Popen()` e monitora o processo com `proc.wait()`; quando o usuário fecha a janela do app, o Python detecta o encerramento do processo e chama `os._exit(0)` imediatamente, sem depender de beacons JS ou heartbeat. O `Iniciar SGCD.bat` foi simplificado para apenas verificar o Python e executar o servidor
+- **Heartbeat** mantido como fallback de 60s para o cenário em que nenhum navegador compatível é encontrado e o sistema usa o navegador padrão
+- **Fusão das etapas "Aviso de Dispensa" e "Publicação"** — as antigas etapas 8 e 9 foram unificadas em uma única etapa com todos os campos combinados; migração automática para processos existentes com 16 etapas
+- **Remoção do documento "Extrato para Diário Oficial"** — removido por ser redundante com o Aviso de Dispensa (Prefeitura de Orindiúva publica o aviso completo no D.O.)
+- **Extrato de Contrato — correção de texto** — "O presente instrumento tem por objeto a contratação de [objeto]" corrigido para "O presente instrumento tem por objeto: [objeto]" eliminando redundância
+- **Ata de Sessão — correção de número da DL** — o número da Dispensa de Licitação na seção "Abertura da Sessão" agora usa corretamente `num_dl` em vez de `num`
+
+### Corrigido
+- Todos os índices de etapas em geradores de documentos (Ata, Documento Consolidado, Extrato de Contrato, Agenda, Modal de E-mail) atualizados para refletir a fusão das etapas 8 e 9
+- Migração automática `_migrarFusaoAvisoPublicacao()` adicionada ao startup para preservar dados de processos existentes
+
+---
+
+## [1.12.0] — 2026-06-20
+
+### Adicionado
+- **Notas internas por etapa** — campo de texto amarelo ao final de cada etapa para anotações internas; não aparece em nenhum documento gerado
+- **Dotação orçamentária a nível de processo** — quatro novos campos (Programa/Ação, Elemento de Despesa, Fonte de Recursos, Dotação Completa) visíveis na aba de informações; preenchidos automaticamente na Autorização de Abertura e no Extrato de Contrato; copiados ao duplicar processo
+- **Cálculo automático de prazos (Art. 75, §3°)** — ao preencher a data de publicação no PNCP (etapa 9), o sistema calcula automaticamente a data mínima de encerramento de propostas (3 dias úteis, descontando fins de semana e feriados nacionais brasileiros); aviso visual em vermelho caso a data informada seja inferior ao mínimo legal
+- **Controle de limite anual — Art. 75, I e II** — painel lateral no processo exibe o valor acumulado no exercício corrente para o inciso aplicável, com barra de progresso e alerta quando o limite legal é atingido (I: R$ 130.984,20; II: R$ 65.492,11)
+- **Agenda de Vencimentos** — nova tela na barra lateral (ícone de calendário) listando encerramentos de propostas, vencimentos de contratos, prazos de processos e processos parados há mais de 15 dias, agrupados por proximidade temporal; clicar em qualquer evento abre o processo correspondente
+- **Vinculação entre processos** — campo na aba de informações do processo para vincular processos relacionados (Renovação de, Aditivo de, Continuidade de, Processo anterior); vínculos são bidirecionais automáticos; chips clicáveis no painel de informações permitem navegar entre processos vinculados
+- **Documento consolidado (PDF único)** — botão "📦 Processo Completo" no cabeçalho do processo gera um documento único com todas as seções preenchidas (Autorização, Publicação, Adjudicação, Homologação, Empenho e Instrumento Contratual) em uma única janela de impressão
+- **Visualização Kanban** — botão de alternância no dashboard agrupa processos em colunas por fase processual: Instrução, Publicado, Análise, Adjudicação, Contratação e Concluído; filtros do dashboard aplicam-se ao Kanban
+- **Notificações por e-mail via SMTP** — botão "✉ Notificar" no processo abre modal com dois templates (Fornecedor e Interno); envio direto via servidor local (server.py); configurações SMTP (host, porta, TLS/SSL, usuário, senha, destinatário interno) disponíveis em Configurações
+
+### Melhorado
+- `server.py` reescrito como servidor HTTP com suporte a CORS, endpoint `/health` e `/send-email` via `smtplib` (stdlib Python, sem dependências externas)
+- Processo duplicado agora copia os campos de dotação orçamentária
+
+---
+
 ## [1.11.8] — 2026-06-17
 
 ### Melhorado
