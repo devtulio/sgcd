@@ -1,6 +1,6 @@
 # SGCD — Sistema de Gestão de Contratação Direta
 
-![Versão](https://img.shields.io/badge/versão-v1.12.1-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-HTML5%20puro-orange) ![Licença](https://img.shields.io/badge/licença-uso%20interno-lightgrey)
+![Versão](https://img.shields.io/badge/versão-v1.12.2-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-HTML5%20puro-orange) ![Licença](https://img.shields.io/badge/licença-MIT-green)
 
 ## Descrição
 
@@ -15,7 +15,7 @@ Não requer instalação, servidor ou conexão à internet. Todos os dados ficam
 - **Checklist estruturado com 15 etapas** do processo de Dispensa de Licitação, cada uma com fundamento legal e orientação de preenchimento
 - **Geração de documentos** prontos para assinatura e publicação: Autorização de Abertura, Aviso de Dispensa, Ata de Sessão, Mapa de Preços e Extrato de Contrato
 - **Relatório geral** de processos com filtros por status, unidade, período e faixa de valor
-- **Cadastro de fornecedores** com consulta automática de CNPJ via BrasilAPI e controle de certidões
+- **Cadastro de fornecedores** com card expansível inline (visualização e edição sem modal), consulta automática de CNPJ via ReceitaWS/BrasilAPI e controle de certidões inline
 - **Gestão de propostas** com mapa de preços comparativo e vínculo automático do fornecedor vencedor
 - **Gestão de cotações** na etapa de pesquisa de preços com cálculo automático de média ou mediana como valor de referência
 - **Fundamento legal** como seleção dos 16 incisos do Art. 75 da Lei 14.133/2021
@@ -152,7 +152,16 @@ Consulte o [CHANGELOG.md](CHANGELOG.md) para o histórico completo de versões e
 | **CSS3** | Estilização, temas claro/escuro, layout responsivo |
 | **JavaScript puro (ES6+)** | Toda a lógica de negócio, sem frameworks externos |
 | **IndexedDB** | Armazenamento local dos dados no navegador |
-| **BrasilAPI** | Consulta de CNPJ (requer conexão à internet apenas nesta função) |
+| **ReceitaWS** | Consulta de CNPJ — fonte primária (via proxy local no server.py) |
+| **BrasilAPI** | Consulta de CNPJ — fallback automático |
+| **ViaCEP** | Preenchimento automático de endereço por CEP |
+| **Python 3 (stdlib)** | Servidor local (`server.py`): proxy CNPJ, envio de e-mail SMTP, heartbeat |
+
+---
+
+## Licença
+
+Distribuído sob a licença **MIT**. Veja [LICENSE](LICENSE) para detalhes.
 
 ---
 

@@ -5,6 +5,28 @@
 
 ---
 
+## [1.12.2] — 2026-06-20
+
+### Adicionado
+- **Card de fornecedor expansível inline** — clique no card da lista expande o cadastro completo diretamente na lista, sem abrir modal. Três estados: colapsado, visualização (abas Dados/Certidões) e edição. Apenas um card aberto por vez; abrir outro fecha o anterior automaticamente
+- **Certidão inline no card** — "+ Adicionar Certidão" e "✏" dentro do card renderizam o formulário diretamente no próprio card, sem modal separado; ao salvar ou cancelar, volta para a aba Certidões
+- **Proxy ReceitaWS via server.py** — novo endpoint `GET /cnpj/{digits}` no servidor local que consulta a ReceitaWS server-side, contornando a restrição de CORS do browser. A busca de CNPJ agora usa: proxy local → ReceitaWS direto → BrasilAPI como fallback
+- **Licença MIT** — repositório GitHub agora possui licença MIT explícita
+
+### Melhorado
+- **Iniciar SGCD.bat** — janela CMD abre minimizada na barra de tarefas e fecha automaticamente ao encerrar o sistema
+- **Watchdog do servidor** — timeout reduzido de 60 s para 8 s; o CMD fecha em no máximo 8 s caso o beacon `/shutdown` não chegue ao servidor
+- **Consulta de CNPJ** — ReceitaWS é agora a fonte primária (traz e-mail, telefone formatado, QSA com data de entrada); BrasilAPI é fallback automático
+
+### Corrigido
+- **Data de Abertura do CNPJ exibia "Invalid Date"** — ReceitaWS retorna a data no formato `DD/MM/YYYY`; o visualizador do card agora converte para ISO antes de parsear
+- **Botões Fechar/Editar dentro do card não funcionavam** — cliques dentro do corpo expandido propagavam para o `onclick` do card pai e causavam toggle indesejado; corrigido com `event.stopPropagation()`
+- **Campo CEP pequeno demais no formulário de edição** — coluna do grid ampliada de 90 px para 170 px para acomodar input + botão "🔍 CEP"
+- **Campo Entrada do QSA cortado** — coluna ampliada de 110 px para 150 px para exibir `dd/mm/aaaa` completo
+- **Relatório de fornecedores com colunas desalinhadas** — adicionado `table-layout: fixed` e `<colgroup>` com larguras explícitas; o `colspan="4"` nas linhas de cabeçalho do fornecedor não quebra mais o layout das colunas Situação, Porte e Município
+
+---
+
 ## [1.12.1] — 2026-06-20
 
 ### Adicionado
