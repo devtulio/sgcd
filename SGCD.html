@@ -2334,54 +2334,142 @@ function cnpjSitClass(sit) {
   if (s.includes('BAIXADA') || s.includes('INAPTA') || s.includes('CANCELADA')) return 'inativa';
   return 'outra';
 }
+// Normaliza resposta da ReceitaWS para o mesmo formato interno
+function _normReceitaWS(d, digits) {
+  const logr = d.logradouro || '';
+  const num  = d.numero || '';
+  const comp = d.complemento || '';
+  const bair = d.bairro || '';
+  const mun  = d.municipio || '';
+  const uf   = d.uf || '';
+  const cep  = (d.cep || '').replace(/\D/g, '');
+  const end  = [logr, num, comp, bair, mun ? `${mun}/${uf}` : '', cep ? `CEP ${cep}` : ''].filter(Boolean).join(', ');
+  return {
+    razao_social:      d.nome || '',
+    nome_fantasia:     d.fantasia || '',
+    situacao:          d.situacao || '',
+    data_situacao:     d.data_situacao || '',
+    motivo_situacao:   d.motivo_situacao || '',
+    matriz_filial:     d.tipo || '',
+    porte:             d.porte || '',
+    capital_social:    d.capital_social ? parseFloat(d.capital_social) : null,
+    abertura:          d.abertura || '',
+    natureza_juridica: d.natureza_juridica || '',
+    cnae_cod:          (d.atividade_principal?.[0]?.code || '').replace(/\D/g, ''),
+    cnae:              d.atividade_principal?.[0]?.text || '',
+    cnaes_secundarios: (d.atividades_secundarias || []).map(c => ({ codigo: (c.code || '').replace(/\D/g, ''), descricao: c.text })),
+    logradouro:        logr,
+    numero:            num,
+    complemento:       comp,
+    bairro:            bair,
+    municipio:         mun,
+    uf,
+    cep,
+    endereco:          end,
+    email:             d.email || '',
+    telefone:          d.telefone ? d.telefone.replace(/\D/g, '') : '',
+    telefone2:         '',
+    opcao_simples:     !!(d.simples?.optante),
+    opcao_mei:         !!(d.simei?.optante),
+    qsa:               (d.qsa || []).map(s => ({ nome: s.nome, qual: s.qual, entrada: '' })),
+  };
+}
+
+// Normaliza resposta da BrasilAPI para o mesmo formato interno
+function _normBrasilAPI(d) {
+  const logr = [d.descricao_tipo_de_logradouro, d.logradouro].filter(Boolean).join(' ');
+  const num  = d.numero || '';
+  const comp = d.complemento || '';
+  const bair = d.bairro || '';
+  const mun  = d.municipio || '';
+  const uf   = d.uf || '';
+  const cep  = (d.cep || '').replace(/\D/g, '');
+  const end  = [logr, num, comp, bair, mun ? `${mun}/${uf}` : '', cep ? `CEP ${cep}` : ''].filter(Boolean).join(', ');
+  return {
+    razao_social:      d.razao_social || '',
+    nome_fantasia:     d.nome_fantasia || '',
+    situacao:          d.descricao_situacao_cadastral || '',
+    data_situacao:     d.data_situacao_cadastral || '',
+    motivo_situacao:   d.motivo_situacao_cadastral || 0,
+    matriz_filial:     d.descricao_identificador_matriz_filial || '',
+    porte:             d.descricao_porte || '',
+    capital_social:    d.capital_social || null,
+    abertura:          d.data_inicio_atividade || '',
+    natureza_juridica: d.natureza_juridica || '',
+    cnae_cod:          d.cnae_fiscal || '',
+    cnae:              d.cnae_fiscal_descricao || '',
+    cnaes_secundarios: (d.cnaes_secundarios || []).map(c => ({ codigo: c.codigo, descricao: c.descricao })),
+    logradouro:        logr,
+    numero:            num,
+    complemento:       comp,
+    bairro:            bair,
+    municipio:         mun,
+    uf,
+    cep,
+    endereco:          end,
+    email:             d.email || '',
+    telefone:          d.ddd_telefone_1 || '',
+    telefone2:         d.ddd_telefone_2 || '',
+    opcao_simples:     !!d.opcao_pelo_simples,
+    opcao_mei:         !!d.opcao_pelo_mei,
+    qsa:               (d.qsa || []).map(s => ({ nome: s.nome_socio, qual: s.qualificacao_socio, entrada: s.data_entrada_sociedade || '' })),
+  };
+}
+
+// Consulta CNPJ: tenta ReceitaWS (primária), cai na BrasilAPI (fallback)
+async function fetchCnpjData(digits) {
+  try {
+    const r = await fetch(`https://receitaws.com.br/v1/cnpj/${digits}`, { signal: AbortSignal.timeout(8000) });
+    if (r.ok) {
+      const d = await r.json();
+      if (d.status === 'OK') return { data: _normReceitaWS(d, digits), fonte: 'ReceitaWS' };
+    }
+  } catch (_) { /* rate limit ou timeout — tenta fallback */ }
+  // Fallback: BrasilAPI
+  const r2 = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${digits}`, { signal: AbortSignal.timeout(10000) });
+  if (!r2.ok) throw new Error('CNPJ não encontrado ou inválido.');
+  const d2 = await r2.json();
+  if (d2.message) throw new Error(d2.message);
+  return { data: _normBrasilAPI(d2), fonte: 'BrasilAPI' };
+}
+
+// Consulta CEP via ViaCEP e preenche campos de endereço
+async function buscarCep(cepInputId, fieldPrefix) {
+  const digits = (document.getElementById(cepInputId)?.value || '').replace(/\D/g, '');
+  if (digits.length !== 8) { toast('CEP deve ter 8 dígitos.', 'error'); return; }
+  try {
+    const r = await fetch(`https://viacep.com.br/ws/${digits}/json/`, { signal: AbortSignal.timeout(8000) });
+    if (!r.ok) throw new Error('CEP não encontrado.');
+    const d = await r.json();
+    if (d.erro) throw new Error('CEP não encontrado.');
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+    set(`${fieldPrefix}-logradouro`, d.logradouro || '');
+    set(`${fieldPrefix}-bairro`,     d.bairro || '');
+    set(`${fieldPrefix}-municipio`,  d.localidade || '');
+    set(`${fieldPrefix}-uf`,         d.uf || '');
+    toast('Endereço preenchido via ViaCEP.', 'success');
+  } catch(e) { toast(e.message || 'Erro ao consultar CEP.', 'error'); }
+}
+
 async function buscarCnpj(stepIdx) {
   const input = document.getElementById(`cnpj-fld-${stepIdx}`);
   const digits = cleanCnpj(input.value);
   if (digits.length !== 14) { toast('CNPJ deve ter 14 dígitos.', 'error'); return; }
-  toast('Consultando BrasilAPI…', '');
+  toast('Consultando Receita Federal…', '');
   try {
-    const r = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${digits}`);
-    if (!r.ok) throw new Error('CNPJ não encontrado ou inválido.');
-    const d = await r.json();
-    const end = [d.logradouro, d.numero, d.complemento, d.bairro, d.municipio ? `${d.municipio}/${d.uf}` : '', d.cep ? `CEP ${d.cep}` : ''].filter(Boolean).join(', ');
+    const { data: d, fonte } = await fetchCnpjData(digits);
     const forn = {
       id: digits,
       cnpj: formatCnpj(digits),
       cnpj_digits: digits,
-      razao_social: d.razao_social || '',
-      nome_fantasia: d.nome_fantasia || '',
-      situacao: d.descricao_situacao_cadastral || '',
-      data_situacao: d.data_situacao_cadastral || '',
-      motivo_situacao: d.motivo_situacao_cadastral || 0,
-      matriz_filial: d.descricao_matriz_filial || '',
-      porte: d.descricao_porte || '',
-      capital_social: d.capital_social || null,
-      abertura: d.data_inicio_atividade || '',
-      natureza_juridica: d.natureza_juridica || '',
-      cnae_cod: d.cnae_fiscal || '',
-      cnae: d.cnae_fiscal_descricao || '',
-      cnaes_secundarios: (d.cnaes_secundarios || []).map(c => ({ codigo: c.codigo, descricao: c.descricao })),
-      logradouro: [d.descricao_tipo_logradouro, d.logradouro].filter(Boolean).join(' '),
-      numero: d.numero || '',
-      complemento: d.complemento || '',
-      bairro: d.bairro || '',
-      municipio: d.municipio || '',
-      uf: d.uf || '',
-      cep: d.cep || '',
-      endereco: end,
-      telefone: d.ddd_telefone_1 || '',
-      telefone2: d.ddd_telefone_2 || '',
-      opcao_simples: !!d.opcao_pelo_simples,
-      opcao_mei: !!d.opcao_pelo_mei,
-      qsa: (d.qsa || []).map(s => ({ nome: s.nome_socio, qual: s.qualificacao_socio, entrada: s.data_entrada_sociedade || '' })),
+      ...d,
       consultadoEm: Date.now()
     };
     currentProcess.fornecedor = forn;
-    // Auto-fill fornecedor field with razão social
     currentProcess.steps[stepIdx].fields.fornecedor = forn.razao_social;
     await saveProcess(currentProcess);
     await saveFornecedor(forn, currentProcess.id);
-    toast('Fornecedor encontrado e salvo!', 'success');
+    toast(`Fornecedor encontrado via ${fonte}!`, 'success');
     playSuccess();
     expandedSteps.add(stepIdx);
     renderSingleStep(stepIdx);
@@ -3356,7 +3444,10 @@ function _renderFornEdit() {
       <div class="info-field" style="margin:0"><label>UF</label>
         <input type="text" id="fe-uf" value="${escHtml(f.uf || '')}" maxlength="2" style="text-transform:uppercase"></div>
       <div class="info-field" style="margin:0"><label>CEP</label>
-        <input type="text" id="fe-cep" value="${escHtml(formatCep(f.cep || ''))}" oninput="maskCep(this)" maxlength="10" placeholder="00.000-000"></div>
+        <div style="display:flex;gap:4px;align-items:center">
+          <input type="text" id="fe-cep" value="${escHtml(formatCep(f.cep || ''))}" oninput="maskCep(this)" maxlength="10" placeholder="00.000-000" style="flex:1">
+          <button class="btn btn-outline btn-sm" onclick="buscarCep('fe-cep','fe')" title="Preencher endereço pelo CEP (ViaCEP)" style="white-space:nowrap">🔍 CEP</button>
+        </div></div>
     </div>
 
     <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-400);margin:10px 0 6px">Contato</div>
@@ -3387,45 +3478,12 @@ function _renderFornEdit() {
 async function _reconsultarForn() {
   const digits = cleanCnpj(document.getElementById('forn-edit-cnpj').value);
   if (digits.length !== 14) { toast('CNPJ inválido.', 'error'); return; }
-  toast('Consultando BrasilAPI…', '');
+  toast('Consultando Receita Federal…', '');
   try {
-    const r = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${digits}`);
-    if (!r.ok) throw new Error('CNPJ não encontrado.');
-    const d = await r.json();
-    const end = [d.logradouro, d.numero, d.complemento, d.bairro,
-      d.municipio ? `${d.municipio}/${d.uf}` : '', d.cep ? `CEP ${d.cep}` : ''].filter(Boolean).join(', ');
-    _currentForn = {
-      ..._currentForn,
-      razao_social: d.razao_social || _currentForn.razao_social,
-      nome_fantasia: d.nome_fantasia || '',
-      situacao: d.descricao_situacao_cadastral || '',
-      data_situacao: d.data_situacao_cadastral || '',
-      motivo_situacao: d.motivo_situacao_cadastral || 0,
-      matriz_filial: d.descricao_matriz_filial || '',
-      porte: d.descricao_porte || '',
-      capital_social: d.capital_social || null,
-      abertura: d.data_inicio_atividade || '',
-      natureza_juridica: d.natureza_juridica || '',
-      cnae_cod: d.cnae_fiscal || '',
-      cnae: d.cnae_fiscal_descricao || '',
-      cnaes_secundarios: (d.cnaes_secundarios || []).map(c => ({ codigo: c.codigo, descricao: c.descricao })),
-      logradouro: [d.descricao_tipo_logradouro, d.logradouro].filter(Boolean).join(' '),
-      numero: d.numero || '',
-      complemento: d.complemento || '',
-      bairro: d.bairro || '',
-      municipio: d.municipio || '',
-      uf: d.uf || '',
-      cep: d.cep || '',
-      endereco: end,
-      telefone: d.ddd_telefone_1 || '',
-      telefone2: d.ddd_telefone_2 || '',
-      opcao_simples: !!d.opcao_pelo_simples,
-      opcao_mei: !!d.opcao_pelo_mei,
-      qsa: (d.qsa || []).map(s => ({ nome: s.nome_socio, qual: s.qualificacao_socio, entrada: s.data_entrada_sociedade || '' })),
-      consultadoEm: Date.now()
-    };
+    const { data: d, fonte } = await fetchCnpjData(digits);
+    _currentForn = { ..._currentForn, ...d, consultadoEm: Date.now() };
     _renderFornEdit();
-    toast('Dados atualizados da Receita Federal!', 'success');
+    toast(`Dados atualizados via ${fonte}!`, 'success');
     playSuccess();
   } catch(e) { toast(e.message || 'Erro na consulta.', 'error'); playError(); }
 }
@@ -3778,26 +3836,14 @@ async function buscarCnpjModal() {
   const input = document.getElementById('forn-modal-cnpj');
   const digits = cleanCnpj(input.value);
   if (digits.length !== 14) { toast('CNPJ deve ter 14 dígitos.', 'error'); return; }
-  toast('Consultando BrasilAPI…', '');
+  toast('Consultando Receita Federal…', '');
   try {
-    const r = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${digits}`);
-    if (!r.ok) throw new Error('CNPJ não encontrado ou inválido.');
-    const d = await r.json();
-    const end = [d.logradouro, d.numero, d.complemento, d.bairro,
-      d.municipio ? `${d.municipio}/${d.uf}` : '', d.cep ? `CEP ${d.cep}` : ''].filter(Boolean).join(', ');
+    const { data: d, fonte } = await fetchCnpjData(digits);
     _fornModalData = {
       id: digits,
       cnpj: formatCnpj(digits),
       cnpj_digits: digits,
-      razao_social: d.razao_social || '',
-      nome_fantasia: d.nome_fantasia || '',
-      situacao: d.descricao_situacao_cadastral || '',
-      porte: d.descricao_porte || '',
-      abertura: d.data_inicio_atividade || '',
-      natureza_juridica: d.natureza_juridica || '',
-      cnae: d.cnae_fiscal_descricao || '',
-      endereco: end,
-      qsa: (d.qsa || []).map(s => ({ nome: s.nome_socio, qual: s.qualificacao_socio })),
+      ...d,
       consultadoEm: Date.now()
     };
     const f = _fornModalData;
