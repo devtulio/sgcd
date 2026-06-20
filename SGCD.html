@@ -3338,7 +3338,7 @@ function _setFornCardBody(html, mode = 'view') {
 }
 function _renderFornCardView() {
   const f = _currentForn;
-  _setFornCardBody(`<div class="forn-inline-body">
+  _setFornCardBody(`<div class="forn-inline-body" onclick="event.stopPropagation()">
     ${_fornTabsHtml('dados')}
     ${_fornViewHtml(f)}
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid var(--gray-200)">
@@ -3367,7 +3367,7 @@ function _renderFornCardCerts() {
       </div>
     </div>`;
   }).join('') : '<p style="color:var(--gray-500);font-size:.8rem;text-align:center;padding:20px 0">Nenhuma certidão cadastrada.</p>';
-  _setFornCardBody(`<div class="forn-inline-body">
+  _setFornCardBody(`<div class="forn-inline-body" onclick="event.stopPropagation()">
     ${_fornTabsHtml('certs')}
     <div class="forn-cert-list">${itemsHtml}</div>
     <button class="btn btn-outline" style="width:100%;margin-top:8px" onclick="openCertEdit('${f.id}', -1)">+ Adicionar Certidão</button>
@@ -3379,7 +3379,7 @@ function _renderFornCardCerts() {
 }
 function _renderFornCardEdit() {
   const f = _currentForn;
-  _setFornCardBody(`<div class="forn-inline-edit-header">
+  _setFornCardBody(`<div class="forn-inline-edit-header" onclick="event.stopPropagation()">
     <div style="font-size:.78rem;font-weight:600;color:var(--gray-700)">Editando: ${escHtml(f.razao_social)}</div>
     <div class="forn-lookup" style="margin-top:8px;margin-bottom:0">
       <label style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-500);display:block;margin-bottom:6px">Reconsultar CNPJ (atualiza dados da Receita Federal)</label>
@@ -3389,7 +3389,7 @@ function _renderFornCardEdit() {
       </div>
     </div>
   </div>
-  <div class="forn-inline-body" style="border-top:none">
+  <div class="forn-inline-body" style="border-top:none" onclick="event.stopPropagation()">
     ${_buildFornEditHtml(f)}
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid var(--gray-200)">
       <button class="btn btn-outline" onclick="_renderFornCardView()">Cancelar</button>
@@ -3506,7 +3506,7 @@ function _buildFornEditHtml(f) {
       <input type="text" id="fe-complemento" value="${escHtml(f.complemento || '')}"></div>
     <div class="info-field"><label>Bairro</label>
       <input type="text" id="fe-bairro" value="${escHtml(f.bairro || '')}"></div>
-    <div style="display:grid;grid-template-columns:1fr 60px 90px;gap:8px">
+    <div style="display:grid;grid-template-columns:1fr 60px 170px;gap:8px">
       <div class="info-field" style="margin:0"><label>Município</label>
         <input type="text" id="fe-municipio" value="${escHtml(f.municipio || '')}"></div>
       <div class="info-field" style="margin:0"><label>UF</label>
