@@ -15,7 +15,7 @@ from email.mime.multipart import MIMEMultipart
 
 PORT = 3000
 # Heartbeat: fallback para crash do navegador (proc.wait() é o mecanismo principal)
-HEARTBEAT_TIMEOUT = 60
+HEARTBEAT_TIMEOUT = 8
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 _last_heartbeat = time.time()
