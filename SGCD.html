@@ -2412,15 +2412,24 @@ function _normBrasilAPI(d) {
   };
 }
 
-// Consulta CNPJ: tenta ReceitaWS (primária), cai na BrasilAPI (fallback)
+// Consulta CNPJ: proxy local → ReceitaWS (primária) → BrasilAPI (fallback)
 async function fetchCnpjData(digits) {
+  // Tenta proxy local (server.py → ReceitaWS sem restrição de CORS)
+  try {
+    const r = await fetch(`http://localhost:3000/cnpj/${digits}`, { signal: AbortSignal.timeout(10000) });
+    if (r.ok) {
+      const d = await r.json();
+      if (d.status === 'OK') return { data: _normReceitaWS(d, digits), fonte: 'ReceitaWS' };
+    }
+  } catch (_) { /* servidor local indisponível — tenta direto */ }
+  // Tenta ReceitaWS direto (funciona se CORS permitido)
   try {
     const r = await fetch(`https://receitaws.com.br/v1/cnpj/${digits}`, { signal: AbortSignal.timeout(8000) });
     if (r.ok) {
       const d = await r.json();
       if (d.status === 'OK') return { data: _normReceitaWS(d, digits), fonte: 'ReceitaWS' };
     }
-  } catch (_) { /* rate limit ou timeout — tenta fallback */ }
+  } catch (_) { /* rate limit ou CORS — tenta BrasilAPI */ }
   // Fallback: BrasilAPI
   const r2 = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${digits}`, { signal: AbortSignal.timeout(10000) });
   if (!r2.ok) throw new Error('CNPJ não encontrado ou inválido.');
@@ -3758,13 +3767,63 @@ function _switchFornTab(tab) {
 }
 function _renderFornCerts() { _renderFornCardCerts(); }
 
-// ── Cert Edit Modal ────────────────────────────────────────
+// ── Cert Edit ─────────────────────────────────────────────
 let _certEditFornId = null;
 let _certEditIdx    = -1; // -1 = new
+let _certEditInline = false;
+
+function _buildCertFormHtml(c) {
+  const tiposHtml = CERT_TIPOS.map(t =>
+    `<option value="${t.id}" ${c && c.tipoId === t.id ? 'selected' : ''}>${escHtml(t.label)}</option>`
+  ).join('');
+  const outroSel = c && c.tipoId === 'outro';
+  return `
+    <div class="info-field">
+      <label style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-500)">Tipo de Certidão</label>
+      <select id="ce-tipo" onchange="onCeTipoChange()">${tiposHtml}</select>
+    </div>
+    <div class="info-field" id="ce-tipo-outro-wrap" style="display:${outroSel ? 'block' : 'none'}">
+      <label style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-500)">Descrição</label>
+      <input type="text" id="ce-tipo-outro" value="${escHtml(c && outroSel ? c.tipoDesc || '' : '')}" placeholder="Descreva a certidão…">
+    </div>
+    <div class="cert-add-row">
+      <div class="info-field">
+        <label style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-500)">Data de Emissão</label>
+        <input type="date" id="ce-emissao" value="${escHtml(c ? c.emissao || '' : '')}" oninput="onCeEmissaoChange()">
+      </div>
+      <div class="info-field">
+        <label style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-500)">Data de Validade</label>
+        <input type="date" id="ce-validade" value="${escHtml(c ? c.validade || '' : '')}">
+      </div>
+    </div>
+    <div class="info-field">
+      <label style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-500)">Observações</label>
+      <textarea id="ce-obs" rows="2" placeholder="Número, órgão emissor, etc…">${escHtml(c ? c.obs || '' : '')}</textarea>
+    </div>`;
+}
 
 function openCertEdit(fornId, idx) {
   _certEditFornId = fornId;
   _certEditIdx    = idx;
+  const c = idx >= 0 ? (_currentForn?.certidoes || [])[idx] : null;
+
+  // Se há um card de fornecedor aberto para este fornecedor, renderiza inline
+  if (_expandedFornId === fornId) {
+    _certEditInline = true;
+    const titulo = idx === -1 ? 'Nova Certidão' : 'Editar Certidão';
+    _setFornCardBody(`<div class="forn-inline-body" onclick="event.stopPropagation()">
+      <div style="font-size:.85rem;font-weight:700;color:var(--gray-700);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--gray-200)">${titulo}</div>
+      ${_buildCertFormHtml(c)}
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid var(--gray-200)">
+        <button class="btn btn-outline" onclick="closeCertEdit()">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveCertEdit()">Salvar Certidão</button>
+      </div>
+    </div>`, 'view');
+    return;
+  }
+
+  // Fora do card: usa o modal existente
+  _certEditInline = false;
   const sel = document.getElementById('ce-tipo');
   sel.innerHTML = CERT_TIPOS.map(t => `<option value="${t.id}">${escHtml(t.label)}</option>`).join('');
   document.getElementById('ce-emissao').value  = '';
@@ -3773,18 +3832,13 @@ function openCertEdit(fornId, idx) {
   document.getElementById('ce-tipo-outro').value = '';
   document.getElementById('ce-tipo-outro-wrap').style.display = 'none';
   document.getElementById('cert-edit-title').textContent = idx === -1 ? 'Nova Certidão' : 'Editar Certidão';
-
-  if (idx >= 0) {
-    const f = _currentForn;
-    const c = (f.certidoes || [])[idx];
-    if (c) {
-      sel.value = c.tipoId || CERTIDOES[0].id;
-      onCeTipoChange();
-      if (c.tipoId === 'outro') document.getElementById('ce-tipo-outro').value = c.tipoDesc || '';
-      document.getElementById('ce-emissao').value  = c.emissao  || '';
-      document.getElementById('ce-validade').value = c.validade || '';
-      document.getElementById('ce-obs').value      = c.obs      || '';
-    }
+  if (c) {
+    sel.value = c.tipoId || CERTIDOES[0].id;
+    onCeTipoChange();
+    if (c.tipoId === 'outro') document.getElementById('ce-tipo-outro').value = c.tipoDesc || '';
+    document.getElementById('ce-emissao').value  = c.emissao  || '';
+    document.getElementById('ce-validade').value = c.validade || '';
+    document.getElementById('ce-obs').value      = c.obs      || '';
   } else {
     onCeTipoChange();
   }
@@ -3792,7 +3846,12 @@ function openCertEdit(fornId, idx) {
 }
 
 function closeCertEdit() {
-  document.getElementById('cert-edit-overlay').classList.add('hidden');
+  if (_certEditInline) {
+    _certEditInline = false;
+    _renderFornCardCerts();
+  } else {
+    document.getElementById('cert-edit-overlay').classList.add('hidden');
+  }
 }
 
 function _ceAutoFillValidade() {
