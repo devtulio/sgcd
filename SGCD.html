@@ -3190,7 +3190,13 @@ let _expandedFornId = null;
 
 function _fornViewHtml(f) {
   const sitCls = cnpjSitClass(f.situacao);
-  const fmtD = s => s ? new Date(s+'T00:00:00').toLocaleDateString('pt-BR') : '—';
+  const fmtD = s => {
+    if (!s) return '—';
+    // DD/MM/YYYY (ReceitaWS) → converte para YYYY-MM-DD antes de parsear
+    const iso = /^\d{2}\/\d{2}\/\d{4}$/.test(s) ? s.split('/').reverse().join('-') : s;
+    const d = new Date(iso + 'T00:00:00');
+    return isNaN(d) ? s : d.toLocaleDateString('pt-BR');
+  };
   const fmtCap = v => v != null ? v.toLocaleString('pt-BR', {style:'currency',currency:'BRL'}) : null;
   const row = (icon, label, val) => val ? `<div style="display:flex;gap:6px;align-items:baseline;font-size:.78rem;color:var(--gray-700);padding:3px 0;border-bottom:1px solid var(--gray-100)"><span style="min-width:14px">${icon}</span><span style="color:var(--gray-400);min-width:110px;font-size:.72rem">${label}</span><span>${val}</span></div>` : '';
 
