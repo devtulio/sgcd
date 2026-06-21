@@ -5,6 +5,25 @@
 
 ---
 
+## [1.13.0] — 2026-06-20
+
+### Adicionado
+- **Dashboard com cards de métricas enriquecidos** — 6 cards de KPI substituem os 4 cards anteriores: Total, Em andamento, Concluídos, Não iniciados, Bloqueados e Valor total estimado; cada card exibe badge de percentual, subtítulo contextual e borda colorida lateral; hover com elevação suave
+- **Badge de alertas na Agenda** — bolinha vermelha com contagem sobre o ícone da Agenda na barra lateral quando há eventos urgentes: prazos vencidos, processos com prazo nos próximos 3 dias e processos parados há mais de 15 dias; atualiza automaticamente ao salvar qualquer processo
+- **Skeleton loading no dashboard** — blocos cinza pulsantes animados substituem a tela em branco enquanto os dados carregam do IndexedDB; transição suave com fade-out do skeleton e fade-in do conteúdo real
+- **Painel de informações ocultável no processo** — botão "⊟ Painel" no cabeçalho do processo alterna a visibilidade da coluna lateral de informações; preferência salva em Configurações → Interface; coluna oculta por padrão pode ser ativada individualmente por processo
+- **Confirmação em duas etapas para exclusão de processo** — clique em "Excluir" exige: (1) aviso geral com botão "Continuar" e (2) digitação do número do processo para confirmar; padrão idêntico ao factory reset
+
+### Melhorado
+- **Modo escuro sincronizado com Configurações** — toggle de Claro/Escuro adicionado em Configurações → Interface → Tema de aparência; o botão rápido na sidebar e a configuração ficam sempre em sincronia; `brand-light` agora adapta a tonalidade correta para cada tema de cor (azul, verde, roxo) em modo escuro
+- **Barra lateral expandida responsiva à fonte** — largura da sidebar expandida usa unidade fixa de 110 px para acomodar o rótulo "FORNECEDORES" completo em qualquer tamanho de fonte; rótulos nunca truncam
+- **Configurações não redireciona ao salvar** — ao clicar em Salvar nas Configurações, o sistema permanece na mesma aba em vez de redirecionar para o dashboard
+
+### Corrigido
+- **Conteúdo expandido sobrepunha a sidebar** — ao ativar largura expandida + sidebar expandida simultaneamente, o `padding-left` do conteúdo não respeitava os 110 px da sidebar; corrigido com regra CSS específica para a combinação das duas classes
+
+---
+
 ## [1.12.2] — 2026-06-20
 
 ### Adicionado
