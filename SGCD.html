@@ -7108,7 +7108,7 @@ function gerarTermoHomologacao() {
 <div class="section">
   <div class="section-title">II — Decisão de Homologação</div>
   <div class="despacho">
-    <p>Examinados os autos do presente processo de Dispensa de Licitação, verifico que foram observadas as formalidades legais e os princípios que regem a Administração Pública, nos termos da Lei Federal nº 14.133/2021${decRef}.</p>
+    <p>Examinados os autos do presente processo de Dispensa de Licitação, verifico que foram observados as formalidades legais e os princípios que regem a Administração Pública, nos termos da Lei Federal nº 14.133/2021${decRef}.</p>
     <p>Constata-se que o procedimento foi conduzido com regularidade, tendo sido realizada a pesquisa de preços, elaborado o enquadramento legal, divulgado o Aviso de Dispensa no PNCP, recebidas e analisadas as propostas, e procedida a habilitação e adjudicação do objeto à empresa <strong>${blank(fornNome)}</strong>${fornCnpj ? `, CNPJ nº ${escHtml(fornCnpj)},` : ''} pelo valor de <strong>${blank(valorAdj ? fmtMoney(valorAdj) : '')}</strong>.</p>
     <p>Diante do exposto, <strong><u>HOMOLOGO</u></strong> o procedimento de Dispensa de Licitação e o resultado da adjudicação, determinando o prosseguimento do processo para a emissão da Nota de Empenho e celebração do respectivo instrumento contratual.</p>
   </div>
@@ -7238,7 +7238,7 @@ function gerarAvisoDispensa() {
 <div class="section">
   <div class="section-title">Da Participação</div>
   <p>Os interessados deverão encaminhar suas propostas comerciais <strong>exclusivamente</strong> para o endereço/e-mail indicado acima, até a data e hora fixadas, observadas as condições estabelecidas neste Aviso e no Termo de Referência. Não serão consideradas propostas encaminhadas após o prazo fixado.</p>
-  <p>Não haverá sessão pública presencial nem sessão eletrônica em plataforma para esta contratação direta. O procedimento será conduzido mediante recebimento de propostas, análise interna pela Administração e posterior divulgação do resultado nos meios oficiais de publicidade do Município.</p>
+  <p>Não haverá sessão pública presencial nem sessão eletrônica para esta contratação direta. O procedimento será conduzido mediante recebimento de propostas, análise interna pela Administração e posterior divulgação do resultado nos meios oficiais de publicidade do Município.</p>
 </div>
 
 <div class="section">
@@ -7250,14 +7250,14 @@ function gerarAvisoDispensa() {
     <li>Valor global ou unitário, conforme o caso, em moeda corrente nacional;</li>
     <li>Prazo de validade mínima da proposta de 60 (sessenta) dias, contados da data de apresentação.</li>
   </ul>
-  <p>O Termo de Referência e os demais documentos pertinentes à presente contratação estão disponíveis para consulta junto ao Departamento de Licitações${u.orgao ? ' da ' + u.orgao : ''}${u.site_oficial ? ' e no site oficial (<a href="' + safeUrl(u.site_oficial) + '">' + escHtml(u.site_oficial) + '</a>)' : ''}. Pedidos de esclarecimento deverão ser encaminhados para o mesmo endereço/e-mail indicado para envio de propostas, até o término do prazo para recebimento.</p>
+  <p>O Termo de Referência e os demais documentos pertinentes à presente contratação estão disponíveis para consulta junto ao Departamento de Licitações${u.orgao ? ' da ' + u.orgao : ''}${u.site_oficial ? ' e no site oficial (<a href="' + safeUrl(u.site_oficial) + '">' + escHtml(u.site_oficial) + '</a>)' : ''}. Pedidos de esclarecimento deverão ser encaminhados para o mesmo endereço/e-mail indicado para envio de propostas, até o término do prazo para recebimento de propostas.</p>
 </div>
 
 <div class="section">
   <div class="section-title">Do Critério de Julgamento e da Proposta Mais Vantajosa</div>
   <p>O julgamento das propostas obedecerá ao critério de <strong>${criterioLabel}</strong>, nos termos do art. 33, inciso ${criterioInciso}, da Lei Federal nº 14.133/2021.</p>
   <p>Para fins de julgamento, considera-se proposta mais vantajosa para a Administração aquela que apresentar ${criterioVantajosa}.</p>
-  <p>O menor preço, por si só, não é critério suficiente para a classificação da proposta. Serão desclassificadas as propostas que: (i) não atendam às especificações técnicas mínimas ou aos padrões de qualidade previstos no Termo de Referência; (ii) apresentem preços inexequíveis ou manifestamente superiores aos praticados no mercado; ou (iii) descumpram quaisquer das condições estabelecidas neste Aviso e no Termo de Referência — nos termos do art. 59 da Lei Federal nº 14.133/2021, que assegura à Administração o direito de recusar propostas em desconformidade com os requisitos do instrumento convocatório.</p>
+  <p>O menor preço, por si só, não é critério suficiente para a classificação das propostas. Serão desclassificadas as propostas que: (i) não atendam às especificações técnicas mínimas ou aos padrões de qualidade previstos no Termo de Referência; (ii) apresentem preços inexequíveis ou manifestamente superiores aos praticados no mercado; ou (iii) descumpram quaisquer das condições estabelecidas neste Aviso e no Termo de Referência — nos termos do art. 59 da Lei Federal nº 14.133/2021, que assegura à Administração o direito de recusar propostas em desconformidade com os requisitos do instrumento convocatório.</p>
 </div>
 
 <div class="section">
@@ -7466,9 +7466,9 @@ function gerarEnquadramentoLegal() {
 </table>
 
 <div class="section">
-  <p>O <strong>Agente de Contratação</strong> do <strong>${blank(u.orgao)}</strong>, no exercício de suas atribuições legais, vem por meio desta justificativa declarar o enquadramento da contratação acima identificada na hipótese de <strong>Dispensa de Licitação</strong> prevista no <strong>${incisoLabel} da Lei Federal nº 14.133/2021</strong> (Nova Lei de Licitações e Contratos Administrativos), nos seguintes termos:</p>
+  <p>O <strong>Agente de Contratação</strong> da <strong>${blank(u.orgao)}</strong>, no exercício de suas atribuições legais, vem por meio desta justificativa declarar o enquadramento da contratação acima identificada na hipótese de <strong>Dispensa de Licitação</strong> prevista no <strong>${incisoLabel} da Lei Federal nº 14.133/2021</strong> (Nova Lei de Licitações e Contratos Administrativos), nos seguintes termos:</p>
 
-  <p>A contratação tem por objeto <strong>${blank(p.objeto)}</strong>, com valor estimado de <strong>${fmtVal(p.valor)}</strong>, em favor de ${blank(p.unidade)}. O valor apurado por meio de pesquisa de mercado está dentro dos limites estabelecidos pelo ${incisoLabel} da Lei nº 14.133/2021${p.legal && p.legal.includes('65.492') ? ', conforme atualização fixada pelo Decreto Federal nº 11.317/2022' : ''}, razão pela qual a licitação é dispensável.</p>
+  <p>A contratação tem por objeto <strong>${blank(p.objeto)}</strong>, com valor estimado de <strong>${fmtVal(p.valor)}</strong>, atendendo à demanda da unidade requisitante <strong>${blank(p.unidade)}</strong>. O valor apurado por meio de pesquisa de mercado está dentro dos limites estabelecidos pelo ${incisoLabel} da Lei nº 14.133/2021${p.legal && p.legal.includes('65.492') ? ', conforme atualização fixada pelo Decreto Federal nº 11.317/2022' : ''}, razão pela qual a licitação é dispensável.</p>
 
   <p>A presente contratação atende ao interesse público, está em conformidade com os princípios da legalidade, impessoalidade, moralidade, publicidade e eficiência (Art. 5º da Lei nº 14.133/2021), e a escolha do objeto foi precedida de pesquisa de preços nos termos do Art. 23 da referida Lei, garantindo a compatibilidade do valor com os praticados no mercado.</p>
 
