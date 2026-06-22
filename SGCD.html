@@ -897,9 +897,9 @@
   @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
   /* ── Task 3: Compact mode ──────────────────────────────── */
-  .checklist.compact .step-body { display: none !important; }
-  .checklist.compact .step-row { padding: 7px 14px; }
-  .checklist.compact .step-sub { display: none; }
+  #checklist.compact .step-body { display: none !important; }
+  #checklist.compact .step-row { padding: 7px 14px; }
+  #checklist.compact .step-sub { display: none; }
 
   /* ── Task 4: Unit dot ──────────────────────────────────── */
   .unit-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
@@ -3474,12 +3474,14 @@ function renderDash() {
   const btnV = document.getElementById('btn-toggle-view');
   if (btnV) btnV.textContent = _dashView === 'cards' ? '⊞' : '▤';
 
-  if (processes.length === 0 && !_loaded) {
-    list.innerHTML = [1,2,3].map(() => `<div class="skeleton skeleton-card"></div>`).join('');
+  if (!_loaded) {
     _loaded = true;
-    return;
+    if (processes.length === 0) {
+      list.innerHTML = [1,2,3].map(() => `<div class="skeleton skeleton-card"></div>`).join('');
+      setTimeout(() => renderDash(), 600);
+      return;
+    }
   }
-  _loaded = true;
 
   if (filtered.length === 0) {
     if (processes.length === 0) {
@@ -3492,7 +3494,7 @@ function renderDash() {
         </svg>
         <span class="empty-title">Nenhum processo cadastrado</span>
         <p>Registre sua primeira contratação direta<br>para acompanhar as etapas do processo.</p>
-        <button class="btn btn-primary empty-btn" onclick="openNewProcessModal()">+ Novo Processo</button>
+        <button class="btn btn-primary empty-btn" onclick="openNewModal()">+ Novo Processo</button>
       </div>`;
     } else {
       list.innerHTML = `<div class="empty">
