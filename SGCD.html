@@ -121,6 +121,8 @@
     position: sticky; top: 0; z-index: 100;
   }
   header .hdr-brand { display: flex; align-items: center; gap: 10px; position: absolute; left: 50%; transform: translateX(-50%); }
+  header .hdr-titles { display: flex; flex-direction: column; gap: 1px; }
+  header .hdr-instituicao { font-size: .65rem; font-weight: 400; letter-spacing: .6px; text-transform: uppercase; opacity: .55; white-space: nowrap; }
   header .hdr-logo {
     width: 32px; height: 32px; border-radius: 50%;
     background: var(--brand);
@@ -228,7 +230,7 @@
   .stat.prog    .stat-badge { background: var(--warning-light); color: #7a5800; }
   .stat.blocked .stat-badge { background: #fde8e8; color: var(--danger); }
   .stat.brand   .stat-badge { background: var(--brand-light); color: var(--brand); }
-  .stat-val { font-size: 2rem; font-weight: 700; line-height: 1; color: var(--gray-900); }
+  .stat-val { font-size: 2rem; font-weight: 700; line-height: 1; color: var(--gray-900); font-variant-numeric: tabular-nums; }
   .stat-lbl { font-size: .72rem; color: var(--gray-500); text-transform: uppercase; letter-spacing: .5px; }
   .stat-sub { font-size: .7rem; color: var(--gray-400); margin-top: 6px; padding-top: 6px;
     border-top: 1px solid var(--gray-100); }
@@ -308,6 +310,19 @@
   }
   .progress-fill { height: 100%; border-radius: 99px; background: var(--brand); transition: width .3s; }
   .progress-fill.done { background: var(--success); }
+
+  /* step indicators */
+  .step-indicators { display: flex; align-items: center; gap: 3px; flex-wrap: wrap; }
+  .step-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--gray-200); border: 2px solid var(--gray-200);
+    transition: background .2s, border-color .2s;
+    flex-shrink: 0;
+  }
+  .step-dot.done    { background: var(--success); border-color: var(--success); }
+  .step-dot.blocked { background: var(--danger);  border-color: var(--danger); }
+  .step-dot.pending { background: #fff; border-color: var(--gray-300); }
+  .progress-fill.done { background: var(--success); }
   .progress-pct { font-size: .75rem; font-weight: 600; color: var(--gray-500); white-space: nowrap; }
 
   .badge {
@@ -322,9 +337,12 @@
   /* empty state */
   .empty {
     text-align: center; padding: 64px 24px; color: var(--gray-500);
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
   }
-  .empty svg { opacity: .3; margin-bottom: 16px; }
-  .empty p { font-size: .9rem; }
+  .empty svg { opacity: .2; }
+  .empty p { font-size: .95rem; line-height: 1.6; }
+  .empty .empty-title { font-size: 1.05rem; font-weight: 600; color: var(--gray-700); }
+  .empty .empty-btn { margin-top: 4px; }
 
   /* ── Process detail ──────────────────────────────── */
   .detail-header {
@@ -899,7 +917,10 @@
 <header>
   <div class="hdr-brand">
     <div class="hdr-logo">CD</div>
-    <h1><strong>SGCD</strong> — Sistema de Gestão de Contratação Direta</h1>
+    <div class="hdr-titles">
+      <h1><strong>SGCD</strong> — Sistema de Gestão de Contratação Direta</h1>
+      <span class="hdr-instituicao">Prefeitura Municipal de Orindiúva</span>
+    </div>
   </div>
   <div style="display:flex;align-items:center;gap:14px">
     <button onclick="abrirGlobalSearch()" title="Busca global (Ctrl+K)" style="background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:.75rem;display:flex;align-items:center;gap:6px;opacity:.8">
@@ -1232,7 +1253,7 @@
             <button class="btn btn-ghost btn-sm" style="font-size:.7rem;padding:2px 6px" onclick="resetStepOrder()" id="btn-reset-order" title="Restaurar ordem padrão das etapas" style="display:none">↺ Ordem padrão</button>
           </h3>
           <div id="d-progress-wrap" class="progress-wrap">
-            <div class="progress-bar"><div class="progress-fill" id="d-progress-fill"></div></div>
+            <div class="step-indicators" id="d-step-dots"></div>
             <span class="progress-pct" id="d-progress-pct"></span>
           </div>
         </div>
@@ -3414,13 +3435,28 @@ function renderDash() {
   if (btnV) btnV.textContent = _dashView === 'cards' ? '⊞' : '▤';
 
   if (filtered.length === 0) {
-    list.innerHTML = `<div class="empty">
-      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-        <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="9"/>
-        <line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="15" x2="12" y2="15"/>
-      </svg>
-      <p>${processes.length === 0 ? 'Nenhum processo cadastrado.<br>Clique em <strong>Novo Processo</strong> para começar.' : 'Nenhum processo encontrado com esses filtros.'}</p>
-    </div>`;
+    if (processes.length === 0) {
+      list.innerHTML = `<div class="empty">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="12" y1="18" x2="12" y2="12"/>
+          <line x1="9" y1="15" x2="15" y2="15"/>
+        </svg>
+        <span class="empty-title">Nenhum processo cadastrado</span>
+        <p>Registre sua primeira contratação direta<br>para acompanhar as etapas do processo.</p>
+        <button class="btn btn-primary empty-btn" onclick="openNewProcessModal()">+ Novo Processo</button>
+      </div>`;
+    } else {
+      list.innerHTML = `<div class="empty">
+        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          <line x1="8" y1="11" x2="14" y2="11"/>
+        </svg>
+        <span class="empty-title">Nenhum resultado encontrado</span>
+        <p>Tente ajustar os filtros ou a busca.</p>
+      </div>`;
+    }
     return;
   }
 
@@ -4505,8 +4541,10 @@ function renderDetail() {
   `;
 
   const pc = pct(p);
-  document.getElementById('d-progress-fill').style.width = pc + '%';
-  document.getElementById('d-progress-fill').className = 'progress-fill' + (pc===100?' done':'');
+  document.getElementById('d-step-dots').innerHTML = p.steps.map(s => {
+    const cls = s.status === 'done' ? 'done' : s.status === 'blocked' ? 'blocked' : 'pending';
+    return `<div class="step-dot ${cls}" title="${s.status === 'done' ? 'Concluída' : s.status === 'blocked' ? 'Bloqueada' : 'Pendente'}"></div>`;
+  }).join('');
   document.getElementById('d-progress-pct').textContent = pc + '%';
 
   renderChecklist();
@@ -4712,7 +4750,7 @@ function renderStepFields(i, step, data, certFileMap = {}) {
     }
     if (MONEY_FIELDS.has(f)) {
       return `<label>${label}</label>
-        <input type="text" value="${val}" oninput="maskMoney(this)" onchange="updateField(${i},'${f}',this.value)">`;
+        <input type="text" value="${val}" oninput="maskMoney(this)" onchange="updateField(${i},'${f}',this.value)" style="font-variant-numeric:tabular-nums">`;
     }
     if (SELECT_FIELDS[f]) {
       const opts = SELECT_FIELDS[f];
