@@ -891,6 +891,28 @@
     .detail-header { flex-direction: column; }
     .stats { grid-template-columns: 1fr 1fr; }
   }
+
+  /* ── Task 2: Fade animation between views ─────────────── */
+  .view { animation: fadeIn .2s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ── Task 3: Compact mode ──────────────────────────────── */
+  .checklist.compact .step-body { display: none !important; }
+  .checklist.compact .step-row { padding: 7px 14px; }
+  .checklist.compact .step-sub { display: none; }
+
+  /* ── Task 4: Unit dot ──────────────────────────────────── */
+  .unit-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+
+  /* ── Task 6: Skeleton loading ──────────────────────────── */
+  .skeleton { background: linear-gradient(90deg, var(--gray-100) 25%, var(--gray-200) 50%, var(--gray-100) 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: var(--radius); }
+  @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+  .skeleton-card { height: 90px; margin-bottom: 10px; }
+
+  /* ── Task 7: CSS tooltips on step dots ─────────────────── */
+  .step-dot { position: relative; }
+  .step-dot::after { content: attr(data-tip); position: absolute; bottom: 140%; left: 50%; transform: translateX(-50%); background: #1a1a1a; color: #fff; font-size: .65rem; padding: 3px 7px; border-radius: 4px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity .15s; }
+  .step-dot:hover::after { opacity: 1; }
 </style>
 </head>
 <body>
@@ -1251,6 +1273,7 @@
         <div class="checklist-header">
           <h3 style="display:flex;align-items:center;gap:10px">Checklist do Processo
             <button class="btn btn-ghost btn-sm" style="font-size:.7rem;padding:2px 6px" onclick="resetStepOrder()" id="btn-reset-order" title="Restaurar ordem padrão das etapas" style="display:none">↺ Ordem padrão</button>
+            <button class="btn btn-ghost btn-sm" style="font-size:.7rem;padding:2px 6px" onclick="toggleCompactMode()" id="btn-compact-mode" title="Alternar modo compacto">⊟ Compacto</button>
           </h3>
           <div id="d-progress-wrap" class="progress-wrap">
             <div class="step-indicators" id="d-step-dots"></div>
@@ -2275,6 +2298,8 @@ let processes = [];
 let currentId = null;
 let currentProcess = null;
 let fracResultado = new Map();
+let _compactMode = false;
+let _loaded = false;
 
 // ══════════════════════════════════════════════════════════════
 // FRACIONAMENTO ENGINE
@@ -3325,6 +3350,21 @@ function showDash() {
   loadProcesses().then(() => { renderDash(); renderCertAlerts(); renderStallAlerts(); });
 }
 
+function unitColor(unidade) {
+  const colors = ['#E95420','#0e8420','#2563eb','#7c3aed','#db2777','#0891b2','#d97706','#be123c'];
+  let hash = 0;
+  for (let i = 0; i < unidade.length; i++) { hash = (hash * 31 + unidade.charCodeAt(i)) >>> 0; }
+  return colors[hash % colors.length];
+}
+
+function toggleCompactMode() {
+  _compactMode = !_compactMode;
+  const el = document.getElementById('checklist');
+  if (el) el.classList.toggle('compact', _compactMode);
+  const btn = document.getElementById('btn-compact-mode');
+  if (btn) btn.textContent = _compactMode ? '⊞ Expandido' : '⊟ Compacto';
+}
+
 function limparFiltros() {
   ['search','filter-de','filter-ate','filter-vmin','filter-vmax'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   const fsSel = document.getElementById('filter-status'); if (fsSel) fsSel.value = '';
@@ -3434,6 +3474,13 @@ function renderDash() {
   const btnV = document.getElementById('btn-toggle-view');
   if (btnV) btnV.textContent = _dashView === 'cards' ? '⊞' : '▤';
 
+  if (processes.length === 0 && !_loaded) {
+    list.innerHTML = [1,2,3].map(() => `<div class="skeleton skeleton-card"></div>`).join('');
+    _loaded = true;
+    return;
+  }
+  _loaded = true;
+
   if (filtered.length === 0) {
     if (processes.length === 0) {
       list.innerHTML = `<div class="empty">
@@ -3495,14 +3542,14 @@ function renderDash() {
         ${(()=>{ if (st !== 'progress') return ''; const nx = nextPendingStep(p); return nx ? `<div><span class="step-atual"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>${nx.idx+1}. ${escHtml(nx.step.name)}</span></div>` : ''; })()}
         <div class="meta">
           ${p.valor ? `<span>${ICONS.coin()} ${fmtMoney(p.valor)}</span>` : ''}
-          ${p.unidade ? `<span>${ICONS.building()} ${escHtml(p.unidade)}</span>` : ''}
+          ${p.unidade ? `<span style="display:inline-flex;align-items:center;gap:4px"><span class="unit-dot" style="background:${unitColor(p.unidade)}"></span>${ICONS.building()} ${escHtml(p.unidade)}</span>` : ''}
           ${(()=>{ const fn = typeof p.fornecedor==='object' ? (p.fornecedor?.razao_social||'') : (p.fornecedor||''); return fn ? `<span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> ${escHtml(fn)}</span>` : ''; })()}
-          ${(()=>{ if (!p.prazo) return ''; const d = new Date(p.prazo); const past = d < new Date(); return `<span style="color:${past?'var(--danger)':'var(--gray-500)'}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Prazo: ${d.toLocaleDateString('pt-BR')}${past?' ⚠':''}</span>`; })()}
+          ${(()=>{ if (!p.prazo) return ''; const d = new Date(p.prazo + 'T00:00:00'); const now = new Date(); const past = d < now; const diffDays = Math.ceil((d - now) / 86400000); if (past) return `<span style="background:var(--danger);color:#fff;padding:2px 7px;border-radius:99px;font-size:.68rem;font-weight:600">🔴 Vencido</span>`; if (diffDays < 7) return `<span style="background:var(--warning-light);color:#a16207;padding:2px 7px;border-radius:99px;font-size:.68rem;font-weight:600">⚠ ${diffDays} dias</span>`; return `<span style="color:var(--gray-500)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> ${d.toLocaleDateString('pt-BR')}</span>`; })()}
           <span>${ICONS.calendar()} ${fmt(p.createdAt)}</span>
           ${fracBadge}
         </div>
         <div class="progress-wrap" style="margin-top:8px">
-          <div class="progress-bar" style="flex:1"><div class="progress-fill ${pc===100?'done':''}" style="width:${pc}%"></div></div>
+          <div class="step-indicators">${(p.steps||[]).map(s => { const cls = s.status==='done'?'done':s.status==='blocked'?'blocked':'pending'; const tip = s.status==='done'?'Concluída':s.status==='blocked'?'Bloqueada':'Pendente'; return `<div class="step-dot ${cls}" style="width:8px;height:8px" data-tip="${escHtml(s.name||tip)}" title="${escHtml(s.name||tip)}"></div>`; }).join('')}</div>
           <span class="progress-pct">${pc}%</span>
         </div>
       </div>
@@ -4543,7 +4590,9 @@ function renderDetail() {
   const pc = pct(p);
   document.getElementById('d-step-dots').innerHTML = p.steps.map(s => {
     const cls = s.status === 'done' ? 'done' : s.status === 'blocked' ? 'blocked' : 'pending';
-    return `<div class="step-dot ${cls}" title="${s.status === 'done' ? 'Concluída' : s.status === 'blocked' ? 'Bloqueada' : 'Pendente'}"></div>`;
+    const tipLabel = s.status === 'done' ? 'Concluída' : s.status === 'blocked' ? 'Bloqueada' : 'Pendente';
+    const tipText = s.name ? `${s.name} — ${tipLabel}` : tipLabel;
+    return `<div class="step-dot ${cls}" title="${tipText}" data-tip="${tipText}"></div>`;
   }).join('');
   document.getElementById('d-progress-pct').textContent = pc + '%';
 
