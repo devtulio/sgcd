@@ -1567,6 +1567,8 @@
         <button class="cfg-tab" onclick="switchCfgTab('organizacao',this)">Organização</button>
         <button class="cfg-tab" onclick="switchCfgTab('comunicacao',this)">Comunicação</button>
         <button class="cfg-tab" onclick="switchCfgTab('dados',this)">Dados</button>
+        <button class="cfg-tab" onclick="switchCfgTab('seguranca',this)">Segurança</button>
+        <button class="cfg-tab" onclick="switchCfgTab('diagnostico',this);runDiagnostico()">Diagnóstico</button>
       </div>
 
       <!-- ── Aba: Interface ── -->
@@ -1678,6 +1680,14 @@
             <input type="text" id="s-orgao" placeholder="Ex: Prefeitura Municipal de Orindiúva"></div>
           <div class="info-field"><label>Município / UF</label>
             <input type="text" id="s-municipio" placeholder="Ex: Orindiúva/SP"></div>
+          <div class="info-field"><label>CNPJ do Órgão <span style="color:var(--gray-400);font-weight:400">(para exportação PNCP)</span></label>
+            <input type="text" id="s-cnpj-orgao" placeholder="Ex: 45.678.901/0001-00" maxlength="18"></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div class="info-field"><label>Código IBGE do Município <span style="color:var(--gray-400);font-weight:400">(PNCP)</span></label>
+              <input type="text" id="s-codigo-ibge" placeholder="Ex: 3534005" maxlength="7"></div>
+            <div class="info-field"><label>UF <span style="color:var(--gray-400);font-weight:400">(sigla)</span></label>
+              <input type="text" id="s-uf" placeholder="Ex: SP" maxlength="2" style="text-transform:uppercase"></div>
+          </div>
           <div class="info-field"><label>Site Oficial</label>
             <input type="url" id="s-site-oficial" placeholder="Ex: https://orindiuva.sp.gov.br/"></div>
           <div class="info-field"><label>URL do Diário Oficial Eletrônico</label>
@@ -1783,7 +1793,60 @@
         </fieldset>
       </div>
 
+      <!-- ── Aba: Segurança ── -->
+      <div class="cfg-panel" id="cfg-seguranca">
+        <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
+          <legend style="font-size:.72rem;font-weight:700;color:var(--aubergine-mid);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Senha de Acesso</legend>
+          <p style="font-size:.72rem;color:var(--gray-500);margin-bottom:12px;line-height:1.5">Proteja o sistema com uma senha de abertura. Na próxima vez que o sistema for carregado, será solicitada a senha antes de exibir os dados. Útil em computadores compartilhados.</p>
+          <div class="info-field">
+            <label>Senha atual (deixe em branco se não tiver senha)</label>
+            <input type="password" id="s-senha-atual" placeholder="••••••••" autocomplete="current-password">
+          </div>
+          <div class="info-field">
+            <label>Nova senha</label>
+            <input type="password" id="s-senha-nova" placeholder="••••••••" autocomplete="new-password">
+          </div>
+          <div class="info-field">
+            <label>Confirmar nova senha</label>
+            <input type="password" id="s-senha-confirmar" placeholder="••••••••" autocomplete="new-password">
+          </div>
+          <div style="display:flex;gap:8px;margin-top:6px">
+            <button class="btn btn-outline btn-sm" onclick="alterarSenha()">🔒 Definir Senha</button>
+            <button class="btn btn-outline btn-sm" onclick="removerSenha()" id="btn-remover-senha" style="display:none;color:#dc2626;border-color:#dc2626">✕ Remover Senha</button>
+          </div>
+          <p id="senha-status" style="font-size:.72rem;margin-top:8px;display:none"></p>
+        </fieldset>
+        <div class="nota" style="font-size:.72rem">
+          <strong>Limitação:</strong> Esta proteção impede acesso acidental, mas não é criptografia. Os dados no navegador podem ser acessados por um administrador local. Para proteger dados sensíveis, use o computador com senha de sistema operacional.
+        </div>
+      </div>
+
+      <!-- ── Aba: Diagnóstico ── -->
+      <div class="cfg-panel" id="cfg-diagnostico">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <p style="font-size:.75rem;color:var(--gray-500)">Verifica a integridade dos dados e a conformidade dos processos com as regras de negócio.</p>
+          <button class="btn btn-outline btn-sm" onclick="runDiagnostico()">↻ Reanalisar</button>
+        </div>
+        <div id="diagnostico-resultado" style="font-size:.82rem">
+          <p style="color:var(--gray-400);font-style:italic">Clique em "Reanalisar" para executar o diagnóstico.</p>
+        </div>
+      </div>
+
     </div>
+  </div>
+</div>
+
+<!-- ── PIN / Senha de acesso overlay ── -->
+<div class="overlay hidden" id="overlay-pin" style="z-index:99999;background:rgba(0,0,0,.85)">
+  <div class="modal" style="max-width:360px;text-align:center">
+    <div style="font-size:2rem;margin-bottom:8px">🔒</div>
+    <h2 style="margin-bottom:4px">SGCD — Acesso Restrito</h2>
+    <p style="font-size:.82rem;color:var(--gray-500);margin-bottom:16px">Digite a senha para acessar o sistema.</p>
+    <input type="password" id="pin-input" placeholder="Senha" autocomplete="current-password"
+      style="width:100%;padding:10px 14px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:1rem;margin-bottom:8px;text-align:center;letter-spacing:.2em"
+      onkeydown="if(event.key==='Enter')verificarSenha()">
+    <p id="pin-erro" style="color:#dc2626;font-size:.78rem;min-height:18px;margin-bottom:8px"></p>
+    <button class="btn btn-primary" style="width:100%" onclick="verificarSenha()">Entrar</button>
   </div>
 </div>
 
@@ -8514,9 +8577,9 @@ function exportarPNCP() {
     processo: p.num_proc || null,
     ano: p.createdAt ? new Date(p.createdAt).getFullYear() : new Date().getFullYear(),
 
-    // Órgão (preencher CNPJ e código IBGE nas configurações)
-    orgaoEntidade: { cnpj: u.cnpj_orgao || null, razaoSocial: u.orgao || null },
-    unidadeOrgao: { codigoUnidade: u.codigo_ibge || null, nomeUnidade: u.orgao || null, municipio: u.municipio || null, ufSigla: u.uf || null },
+    // Órgão
+    orgaoEntidade: { cnpj: (u.cnpj_orgao || '').replace(/\D/g,'') || null, razaoSocial: u.orgao || null },
+    unidadeOrgao: { codigoUnidade: u.codigo_ibge || null, nomeUnidade: u.orgao || null, municipio: (u.municipio || '').split('/')[0].trim() || null, ufSigla: u.uf || (u.municipio || '').split('/')[1]?.trim() || null },
     unidadeSubrogada: null,
 
     // Fornecedor adjudicado
@@ -9490,6 +9553,200 @@ async function _auditEvento(evento, detalhe, processId) {
   return entry;
 }
 
+// ══════════════════════════════════════════════════════════════
+// SEGURANÇA — SENHA DE ACESSO
+// ══════════════════════════════════════════════════════════════
+async function _hashSenha(senha) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('sgcd:' + senha));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+async function alterarSenha() {
+  const atual    = document.getElementById('s-senha-atual').value;
+  const nova     = document.getElementById('s-senha-nova').value;
+  const confirma = document.getElementById('s-senha-confirmar').value;
+  const statusEl = document.getElementById('senha-status');
+  const show = (msg, ok) => { statusEl.textContent = msg; statusEl.style.color = ok ? '#166534' : '#dc2626'; statusEl.style.display = ''; };
+
+  const hashAtual = localStorage.getItem('sgcd-access-hash');
+  if (hashAtual) {
+    const inputHash = await _hashSenha(atual);
+    if (inputHash !== hashAtual) { show('Senha atual incorreta.', false); return; }
+  }
+  if (!nova) { show('Digite a nova senha.', false); return; }
+  if (nova.length < 4) { show('Senha muito curta — mínimo 4 caracteres.', false); return; }
+  if (nova !== confirma) { show('As senhas não coincidem.', false); return; }
+
+  const hash = await _hashSenha(nova);
+  localStorage.setItem('sgcd-access-hash', hash);
+  document.getElementById('s-senha-atual').value = '';
+  document.getElementById('s-senha-nova').value = '';
+  document.getElementById('s-senha-confirmar').value = '';
+  document.getElementById('btn-remover-senha').style.display = '';
+  show('Senha definida com sucesso!', true);
+}
+
+async function removerSenha() {
+  const hashAtual = localStorage.getItem('sgcd-access-hash');
+  if (!hashAtual) { toast('Nenhuma senha configurada.', 'error'); return; }
+  const atual = document.getElementById('s-senha-atual').value;
+  const inputHash = await _hashSenha(atual);
+  const statusEl = document.getElementById('senha-status');
+  if (inputHash !== hashAtual) {
+    statusEl.textContent = 'Senha atual incorreta.';
+    statusEl.style.color = '#dc2626';
+    statusEl.style.display = '';
+    return;
+  }
+  localStorage.removeItem('sgcd-access-hash');
+  document.getElementById('btn-remover-senha').style.display = 'none';
+  document.getElementById('s-senha-atual').value = '';
+  statusEl.textContent = 'Senha removida. O sistema ficará sem proteção de acesso.';
+  statusEl.style.color = '#166534';
+  statusEl.style.display = '';
+}
+
+async function verificarSenha() {
+  const input = document.getElementById('pin-input').value;
+  const hash  = localStorage.getItem('sgcd-access-hash');
+  if (!hash) { document.getElementById('overlay-pin').classList.add('hidden'); return; }
+  const inputHash = await _hashSenha(input);
+  if (inputHash === hash) {
+    document.getElementById('overlay-pin').classList.add('hidden');
+    document.getElementById('pin-input').value = '';
+    document.getElementById('pin-erro').textContent = '';
+  } else {
+    document.getElementById('pin-erro').textContent = 'Senha incorreta. Tente novamente.';
+    document.getElementById('pin-input').value = '';
+    document.getElementById('pin-input').focus();
+  }
+}
+
+function _checkSenhaAcesso() {
+  if (localStorage.getItem('sgcd-access-hash')) {
+    document.getElementById('overlay-pin').classList.remove('hidden');
+    setTimeout(() => document.getElementById('pin-input').focus(), 100);
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// DIAGNÓSTICO DE INTEGRIDADE
+// ══════════════════════════════════════════════════════════════
+async function runDiagnostico() {
+  const el = document.getElementById('diagnostico-resultado');
+  if (!el) return;
+  el.innerHTML = '<p style="color:var(--gray-400);font-style:italic">Analisando…</p>';
+
+  const procs = await dbGetAll('processes');
+  const forns = await dbGetAll('fornecedores');
+  const issues = [];
+  const ok = [];
+
+  const iAdj = STEPS.findIndex(s => s.adjudicacao);
+  const iHom = STEPS.findIndex(s => s.homologacao);
+  const iHab = STEPS.findIndex(s => s.certidoes);
+  const iAvi = STEPS.findIndex(s => s.avisoDispensa);
+
+  for (const p of procs) {
+    const num = p.num_dl || p.num_proc || p.id.slice(0,8);
+    const st  = processStatus(p);
+
+    // Processo concluído sem fornecedor
+    if (st === 'done' && !_temFornecedor(p) && !_temPropostaVencedora(p))
+      issues.push({ sev: 'erro', msg: `Processo ${num} — concluído sem fornecedor vencedor identificado` });
+
+    // Processo concluído sem base legal
+    if (st === 'done' && !p.legal)
+      issues.push({ sev: 'erro', msg: `Processo ${num} — concluído sem enquadramento legal (Art. 75, inciso)` });
+
+    // Processo concluído sem homologação
+    if (st === 'done' && iHom >= 0 && p.steps[iHom]?.status !== 'done')
+      issues.push({ sev: 'aviso', msg: `Processo ${num} — status "done" mas etapa de Homologação não concluída` });
+
+    // Processo com aviso publicado mas sem data de publicação
+    if (iAvi >= 0 && p.steps[iAvi]?.status === 'done' && !p.steps[iAvi]?.fields?.data_publicacao)
+      issues.push({ sev: 'aviso', msg: `Processo ${num} — Aviso de Dispensa concluído sem data de publicação` });
+
+    // Valor estimado zerado em processo aberto
+    if (!p.valor && st !== 'done')
+      issues.push({ sev: 'info', msg: `Processo ${num} — sem valor estimado informado` });
+
+    // Habilitação sem fornecedor referenciado
+    if (iHab >= 0 && p.steps[iHab]?.status === 'done' && !p.steps[iHab]?.fields?.fornecedor && !_temFornecedor(p))
+      issues.push({ sev: 'aviso', msg: `Processo ${num} — Habilitação concluída sem fornecedor referenciado` });
+
+    // Processo sem objeto
+    if (!p.objeto?.trim())
+      issues.push({ sev: 'erro', msg: `Processo ${num} — sem objeto/descrição preenchido` });
+
+    // Processo sem número DL
+    if (!p.num_dl && st !== 'todo')
+      issues.push({ sev: 'info', msg: `Processo ${num} — sem número da Dispensa de Licitação` });
+  }
+
+  // Fornecedores com CNPJ duplicado
+  const cnpjMap = new Map();
+  for (const f of forns) {
+    const c = cleanCnpj(f.cnpj);
+    if (!c) continue;
+    if (cnpjMap.has(c)) issues.push({ sev: 'erro', msg: `CNPJ duplicado ${f.cnpj} — fornecedores: "${cnpjMap.get(c)}" e "${f.razao_social || f.nome_fantasia || f.id}"` });
+    else cnpjMap.set(c, f.razao_social || f.nome_fantasia || f.id);
+  }
+
+  // Fornecedores com CNPJ inválido
+  for (const f of forns) {
+    if (f.cnpj && !validarCnpj(f.cnpj))
+      issues.push({ sev: 'aviso', msg: `Fornecedor "${f.razao_social || f.nome_fantasia || f.id}" — CNPJ inválido: ${f.cnpj}` });
+  }
+
+  // Verificações globais OK
+  if (procs.length > 0) ok.push(`${procs.length} processo(s) analisado(s)`);
+  if (forns.length > 0) ok.push(`${forns.length} fornecedor(es) verificado(s)`);
+  const cnpjDups = issues.filter(i => i.msg.includes('duplicado')).length;
+  if (!cnpjDups) ok.push('Nenhum CNPJ duplicado no cadastro de fornecedores');
+  const semForn = issues.filter(i => i.msg.includes('sem fornecedor')).length;
+  if (!semForn) ok.push('Todos os processos concluídos têm fornecedor identificado');
+
+  // Configurações
+  const u = getUser();
+  if (!u.cnpj_orgao) issues.push({ sev: 'info', msg: 'CNPJ do órgão não informado nas Configurações → Organização (necessário para exportação PNCP)' });
+  if (!u.codigo_ibge) issues.push({ sev: 'info', msg: 'Código IBGE não informado nas Configurações → Organização (necessário para exportação PNCP)' });
+
+  const erros   = issues.filter(i => i.sev === 'erro');
+  const avisos  = issues.filter(i => i.sev === 'aviso');
+  const infos   = issues.filter(i => i.sev === 'info');
+
+  const icon = { erro: '🔴', aviso: '🟡', info: '🔵' };
+  const cor  = { erro: '#dc2626', aviso: '#d97706', info: '#2563eb' };
+  const bg   = { erro: '#fef2f2', aviso: '#fffbeb', info: '#eff6ff' };
+
+  const renderGroup = (items, label) => items.length === 0 ? '' :
+    `<div style="margin-bottom:14px">
+       <div style="font-weight:700;font-size:.75rem;text-transform:uppercase;letter-spacing:.4px;color:${cor[items[0].sev]};margin-bottom:6px">${icon[items[0].sev]} ${label} (${items.length})</div>
+       ${items.map(i => `<div style="background:${bg[i.sev]};border-left:3px solid ${cor[i.sev]};padding:5px 10px;border-radius:0 4px 4px 0;margin-bottom:4px;font-size:.78rem">${escHtml(i.msg)}</div>`).join('')}
+     </div>`;
+
+  const resumo = erros.length === 0 && avisos.length === 0
+    ? `<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:12px 16px;margin-bottom:14px;color:#166534;font-weight:600">✅ Nenhum problema crítico encontrado.</div>`
+    : `<div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:12px 16px;margin-bottom:14px;color:#7f1d1d">
+         ${erros.length} erro(s) crítico(s) · ${avisos.length} aviso(s) · ${infos.length} informação(ões)
+       </div>`;
+
+  const okHtml = ok.length ? `<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--gray-200)">
+    <div style="font-weight:700;font-size:.75rem;text-transform:uppercase;letter-spacing:.4px;color:#166534;margin-bottom:6px">✅ Verificações OK</div>
+    ${ok.map(m => `<div style="font-size:.78rem;color:#166534;margin-bottom:2px">• ${escHtml(m)}</div>`).join('')}
+  </div>` : '';
+
+  el.innerHTML = `
+    <div style="font-size:.72rem;color:var(--gray-400);margin-bottom:10px">Analisado em ${new Date().toLocaleString('pt-BR')} — ${procs.length} processos, ${forns.length} fornecedores</div>
+    ${resumo}
+    ${renderGroup(erros,  'Erros críticos')}
+    ${renderGroup(avisos, 'Avisos')}
+    ${renderGroup(infos,  'Informações')}
+    ${okHtml}
+  `;
+}
+
 function updateHeaderUser() {
   const u = getUser();
   const el = document.getElementById('hdr-user-name');
@@ -9506,7 +9763,18 @@ function showSettings() {
   document.getElementById('s-aut-cargo').value     = u.aut_cargo     || '';
   document.getElementById('s-site-oficial').value  = u.site_oficial  || '';
   document.getElementById('s-diario-url').value    = u.diario_url    || '';
+  document.getElementById('s-cnpj-orgao').value    = u.cnpj_orgao    || '';
+  document.getElementById('s-codigo-ibge').value   = u.codigo_ibge   || '';
+  document.getElementById('s-uf').value            = u.uf            || '';
   document.getElementById('s-frac-janela').value   = u.frac_janela   || 'exercicio';
+  // Segurança — senha
+  document.getElementById('s-senha-atual').value     = '';
+  document.getElementById('s-senha-nova').value      = '';
+  document.getElementById('s-senha-confirmar').value = '';
+  document.getElementById('s-senha-status') && (document.getElementById('s-senha-status').style.display = 'none');
+  const temSenha = !!localStorage.getItem('sgcd-access-hash');
+  const btnRem = document.getElementById('btn-remover-senha');
+  if (btnRem) btnRem.style.display = temSenha ? '' : 'none';
   document.getElementById('s-auto-backup-exit').checked = !!u.auto_backup_exit;
   document.getElementById('s-dark-mode').value = u.dark_mode || 'light';
   document.getElementById('s-layout-width').value = u.layout_width || 'compacto';
@@ -9573,6 +9841,9 @@ function saveSettings() {
     aut_cargo:        document.getElementById('s-aut-cargo').value.trim(),
     site_oficial:     document.getElementById('s-site-oficial').value.trim(),
     diario_url:       document.getElementById('s-diario-url').value.trim(),
+    cnpj_orgao:       document.getElementById('s-cnpj-orgao').value.trim(),
+    codigo_ibge:      document.getElementById('s-codigo-ibge').value.trim(),
+    uf:               document.getElementById('s-uf').value.trim().toUpperCase(),
     frac_janela:      document.getElementById('s-frac-janela').value,
     auto_backup_exit: document.getElementById('s-auto-backup-exit').checked,
     dark_mode:        document.getElementById('s-dark-mode').value,
@@ -11435,6 +11706,7 @@ function _hideDashSkeletonWhenReady(fn) {
 }
 
 initDB()
+  .then(() => _checkSenhaAcesso())
   .then(() => _migrarStepsParecer().catch(console.error))
   .then(() => _migrarFusaoAvisoPublicacao().catch(console.error))
   .then(() => _migrarCertidoesFornecedores().catch(console.error))
