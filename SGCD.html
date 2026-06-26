@@ -8929,14 +8929,6 @@ function gerarProcessoCompleto() {
   }
   @page { @bottom-right { content: "Folha " counter(page); font-size: 8pt; color: #888; } }
 </style></head><body>
-<div class="page-num-footer" id="pgnum"></div>
-<script>
-  // Numera páginas via JS ao imprimir (Chrome não suporta @page margin-boxes em todas as versões)
-  window.addEventListener('beforeprint', function() {
-    var el = document.getElementById('pgnum');
-    if (el) el.textContent = 'Folha ' + (window._pgCurrent || '');
-  });
-</script>
 <button class="btn-print no-print" onclick="window.print()">🖨 Imprimir / Salvar PDF</button>
 ${coverPage}
 <div class="content-pages">
