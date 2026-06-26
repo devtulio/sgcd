@@ -5,6 +5,69 @@
 
 ---
 
+## [1.18.0] — 2026-06-26
+
+### Adicionado
+- **Controle de acesso por senha** — nova aba "Segurança" nas Configurações; senha armazenada como hash SHA-256 via Web Crypto API; overlay de acesso restrito exibido ao carregar quando senha está ativa; funções `alterarSenha()`, `removerSenha()` e `verificarSenha()`
+- **Tela de login redesenhada** — identidade visual institucional com header aubergine, brasão SVG, badge "Lei 14.133/2021", card do órgão com sigla gerada automaticamente, campo de senha com toggle mostrar/ocultar, animação de shake em senha incorreta, painel de último backup e versão no rodapé
+- **Painel de Diagnóstico** — nova aba "Diagnóstico" nas Configurações; analisa todos os processos e fornecedores do banco; classifica resultados em Erros críticos / Avisos / Informações; verifica: processos concluídos sem fornecedor ou base legal, homologação ausente, aviso sem data de publicação, habilitação sem fornecedor, CNPJs duplicados e inválidos, campos de configuração PNCP ausentes
+- **Campos PNCP no perfil do órgão** — CNPJ do órgão, Código IBGE do município e UF adicionados em Configurações → Organização; utilizados automaticamente no JSON de exportação PNCP
+- **Validação ao concluir etapa** — ao marcar etapa como "Concluída", verifica campos obrigatórios da etapa e exibe confirmação não-bloqueante listando os campos faltantes; usuário pode concluir mesmo assim ou voltar para preencher
+
+### Melhorado
+- **Backup automático por salvamento** — `saveProcess()` agora dispara `_autoBackupSnapshot()` com debounce de 3 segundos após cada alteração, sem dependência da configuração "Snapshot ao fechar"
+- **Banner de alerta de backup** — faixa laranja persistente no rodapé exibida quando o último backup manual foi exportado há mais de 7 dias ou nunca foi realizado; dispensada automaticamente após exportar
+- **exportBackup()** registra timestamp do último export em `sgcd-last-manual-export` para alimentar o banner de alerta e a tela de login
+- **customConfirm()** estendido com parâmetro `cancelLabel` para personalizar o texto do botão de cancelamento
+- **Exportação PNCP** usa CNPJ e código IBGE reais do órgão (configurados nas Configurações) em vez de `null`
+
+### Corrigido
+- **Índice hardcoded no Relatório de Fornecedores** — `p.steps?.[10]` substituído por `STEPS.findIndex(s => s.adjudicacao)`, eliminando dependência de posição fixa da etapa de Adjudicação
+- **`showToast` inexistente** — chamada em `setStepStatus` substituída por `toast()` (função correta do sistema)
+
+---
+
+## [1.17.0] — 2026-06-26
+
+### Adicionado
+- **Exportação PNCP** — botão "📤 Exportar PNCP" na etapa Aviso de Dispensa gera arquivo JSON estruturado no formato da API do Portal Nacional de Contratações Públicas com os dados do processo pré-preenchidos; inclui modalidade, critério de julgamento, amparo legal, valores, datas, órgão e item
+- **Validação de base legal** — Termo de Adjudicação e Termo de Homologação agora exibem aviso não-bloqueante quando o campo de enquadramento legal (Art. 75, inciso) não estiver preenchido no processo
+
+### Melhorado
+- **Ata de Procedimento** — índices de etapas substituídos por `STEPS.findIndex()` dinâmico, corrigindo bugs nos campos de Propostas (era índice 9, correto 8) e Habilitação/Certidões (era índice 10, correto 9)
+- **Referência normativa dos limites de dispensa** — Decreto nº 11.317/2022 substituído pelo Decreto nº 12.807/2025 (vigente desde 1º jan/2026) em todos os documentos e textos do sistema; valores (R$ 130.984,20 e R$ 65.492,11) permanecem inalterados
+
+### Corrigido
+- **Artigos nos documentos gerados** — revisão geral em todos os 16 modelos: arts. 3º/9º Lei 9.784/99 nos Despachos de Recusa e Inabilitação; art. 72, VII na Justificativa de Enquadramento Legal; art. 94 c/c art. 91 §4º no Extrato de Contrato; art. 72, parágrafo único no Aviso de Dispensa; concordâncias gramaticais e parágrafos duplicados removidos
+- **Ata — número da DL** — `blank(p.num)` substituído por `blank(p.num_dl || p.num)` para priorizar o campo correto
+
+---
+
+## [1.16.0] — 2026-06-26
+
+### Adicionado
+- **Relatório de Fornecedores** — relatório global com indicadores de participação, vitórias, aprovação/reprovação por fornecedor e ranking dos 5 principais; inclui QR Code de autenticidade via `_qrFooterReport()`
+- **Relatório Executivo** — relatório consolidado de contratações diretas com 4 KPIs, gráfico de barras de valores por processo, tabela de alertas e lista dos últimos processos
+- **Aba Participações no cadastro de fornecedores** — histórico de todos os processos em que o fornecedor participou com status colorido, valor adjudicado e link direto para o processo
+- **Processo Completo (PDF único)** — botão "📦 Processo Completo" gera documento único agregando todos os atos do processo com QR Code de autenticidade e numeração de seções; erro de `<script>` embutido em template literal corrigido
+- **`_qrFooterReport(label)`** — função para rodapé QR em relatórios globais (sem objeto de processo), complementando a `_qrFooter(p)` existente
+
+### Corrigido
+- **QR Code ausente em documentos** — varredura geral; todos os 16 geradores de documento agora incluem QR Code no rodapé
+- **Rodapé duplicado no Processo Completo** — removido `<div class="footer">` legado que coexistia com o `_qrFooter(p)`
+- **StatusMap em Participações do fornecedor** — mapa de status corrigido para exibir rótulos corretos (Não iniciado, Em andamento, Concluído, Bloqueado)
+
+---
+
+## [1.15.0] — 2026-06-25
+
+### Adicionado
+- **Paginação no dashboard** — listagem de processos exibe resultados paginados com controles de navegação; melhora performance com grande volume de processos
+- **Lazy loading das etapas** — cards de etapa renderizados sob demanda ao expandir, reduzindo tempo de abertura do painel de processo
+- **Filtros avançados ampliados no dashboard** — filtros por valor mínimo/máximo, período de criação e combinação de critérios; persistência dos filtros ativos entre navegações
+
+---
+
 ## [1.14.0] — 2026-06-25
 
 ### Adicionado
