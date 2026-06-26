@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Manual Operacional — SGCD v1.13.0</title>
+<title>Manual Operacional — SGCD v1.17.0</title>
 <style>
   /* Reset e base */
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -89,7 +89,7 @@
       margin: 20mm 20mm 25mm;
       size: A4;
       @top-center {
-        content: "SGCD v1.14.0 — Manual Operacional";
+        content: "SGCD v1.17.0 — Manual Operacional";
         font-family: 'Times New Roman', serif;
         font-size: 9pt;
         color: #666;
@@ -118,7 +118,7 @@
     <div class="cover-title">Manual Operacional</div>
     <div class="cover-subtitle">SGCD — Sistema de Gestão de Contratação Direta</div>
     <div class="cover-system">Gestão de Processos de Dispensa de Licitação</div>
-    <div class="cover-version">Versão v1.14.0</div>
+    <div class="cover-version">Versão v1.17.0</div>
     <br>
     <div style="font-size:11pt; color:#555; line-height:1.8;">
       Aplicação web single-file para agentes de contratação pública<br>
@@ -1386,8 +1386,44 @@
 </div>
 
 <hr class="section-divider">
+
+<!-- ─────────────────────────────────────────────── SEÇÃO 21 -->
+<h2 id="sec21">21. Histórico de Versões</h2>
+
+<h3 id="sec21-1">21.1 v1.17.0 — Junho/2026</h3>
+<ul>
+  <li><strong>Exportação PNCP:</strong> novo botão "📤 Exportar PNCP" na etapa do Aviso de Dispensa gera um arquivo JSON estruturado no formato da API do Portal Nacional de Contratações Públicas, pré-preenchido com os dados do processo.</li>
+  <li><strong>Correção da Ata de Procedimento:</strong> os índices das etapas (Cotações, Propostas, Habilitação, Adjudicação e Homologação) agora são calculados dinamicamente via <code>STEPS.findIndex()</code>, eliminando bugs silenciosos quando etapas são reordenadas.</li>
+  <li><strong>Validação do campo "Base Legal":</strong> os documentos Termo de Adjudicação e Termo de Homologação agora exibem aviso quando o campo de enquadramento legal (Art. 75, inciso) não estiver selecionado.</li>
+  <li><strong>Decreto nº 12.807/2025:</strong> atualizada a referência normativa dos limites de valor para Dispensa de Licitação (o decreto anterior era nº 11.317/2022). Os limites permanecem R$ 130.984,20 (obras/serviços de engenharia) e R$ 65.492,11 (demais compras e serviços).</li>
+  <li><strong>Correções legais nos documentos:</strong> revisão geral em todos os 16 modelos de documentos — artigos corrigidos (arts. 3º/9º Lei 9.784/99, art. 72 Lei 14.133/2021, art. 94 c/c art. 91 §4º, art. 72 VII), concordâncias gramaticais, termos técnicos padronizados e parágrafos duplicados removidos.</li>
+</ul>
+
+<h3 id="sec21-2">21.2 v1.16.0</h3>
+<ul>
+  <li><strong>Relatório de Fornecedores:</strong> novo relatório global com indicadores de participação, aprovação e reprovação por fornecedor, incluindo QR Code de autenticidade.</li>
+  <li><strong>Relatório Executivo:</strong> novo relatório consolidado de contratações diretas com gráfico de barras de valores por processo, filtros e indicadores de conformidade.</li>
+  <li><strong>Aba Participações no cadastro de fornecedores:</strong> visualização histórica de todos os processos em que o fornecedor participou, com status colorido e link direto para o processo.</li>
+  <li><strong>Processo Completo (PDF):</strong> documento único que agrega todos os atos do processo, com QR Code de autenticidade no rodapé e numeração de seções.</li>
+</ul>
+
+<h3 id="sec21-3">21.3 v1.15.0</h3>
+<ul>
+  <li><strong>Dashboard com paginação:</strong> a listagem de processos no painel inicial passou a exibir resultados paginados, melhorando a performance com grande volume de processos.</li>
+  <li><strong>Lazy loading nas etapas:</strong> os cards de cada etapa do processo são renderizados sob demanda, reduzindo o tempo de abertura do painel de processo.</li>
+  <li><strong>Filtros avançados no Dashboard:</strong> adicionados filtros por valor mínimo/máximo, período e combinação de critérios.</li>
+</ul>
+
+<h3 id="sec21-4">21.4 v1.14.0</h3>
+<ul>
+  <li><strong>QR Code de autenticidade:</strong> todos os documentos gerados passaram a incluir QR Code no rodapé com código de verificação derivado dos dados do processo (ver Seção 20).</li>
+  <li><strong>Histórico por campo:</strong> botão 🕐 em cada campo do painel de informações exibe o histórico completo de alterações com data, valor anterior e novo valor (ver Seção 20.3).</li>
+  <li><strong>Trilha de auditoria global:</strong> registro automático de todos os eventos do sistema (criação, edição, geração de documentos, exportações) em tabela dedicada.</li>
+</ul>
+
+<hr class="section-divider">
 <p style="text-align:center; font-size:9pt; color:#888; margin-top:20pt;">
-  SGCD v1.14.0 — Manual Operacional<br>
+  SGCD v1.17.0 — Manual Operacional<br>
   Sistema de Gestão de Contratação Direta<br>
   Lei Federal nº 14.133/2021
 </p>

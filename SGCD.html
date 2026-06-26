@@ -2193,7 +2193,7 @@ const ICONS = {
 // DB — IndexedDB wrapper
 // ══════════════════════════════════════════════════════════════
 let db;
-const SGCD_VERSION = '1.16.0';
+const SGCD_VERSION = '1.17.0';
 document.title = `SGCD v${SGCD_VERSION}`;
 const DB_NAME = 'dispensaDB', DB_VER = 3;
 
@@ -5786,6 +5786,7 @@ function renderStepFields(i, step, data, certFileMap = {}) {
   if (step.avisoDispensa) {
     html += `<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn btn-outline btn-sm" onclick="gerarAvisoDispensa()">📰 Gerar Aviso de Dispensa</button>
+      <button class="btn btn-outline btn-sm" onclick="exportarPNCP()" title="Exportar JSON para publicação no PNCP">📤 Exportar PNCP</button>
       <button class="btn btn-outline btn-sm" onclick="abrirEmailModal()" title="Notificar fornecedores sobre esta dispensa">✉ Notificar Fornecedores</button>
     </div>`;
   }
@@ -8006,6 +8007,7 @@ function gerarTermoAdjudicacao() {
     { ok: _temFornecedor(proc) || _temPropostaVencedora(proc), msg: 'Nenhum fornecedor vencedor identificado — vincule um fornecedor ou marque uma proposta como vencedora na etapa de Propostas', bloqueia: true },
     { ok: !!proc.objeto,  msg: 'Objeto da contratação não preenchido', bloqueia: false },
     { ok: !!proc.num_dl,  msg: 'Número da DL não informado', bloqueia: false },
+    { ok: !!proc.legal,   msg: 'Base legal (Art. 75, inciso) não selecionada — o enquadramento legal ficará em branco', bloqueia: false },
   ])) return;
   const u = getUser();
   const stepIdx = STEPS.findIndex(s => s.adjudicacao);
@@ -8121,6 +8123,7 @@ function gerarTermoHomologacao() {
     { ok: _temFornecedor(proc) || _temPropostaVencedora(proc), msg: 'Nenhum fornecedor vencedor identificado — vincule um fornecedor ou marque uma proposta como vencedora', bloqueia: true },
     { ok: !!proc.num_dl,  msg: 'Número da DL não informado', bloqueia: false },
     { ok: !!proc.objeto,  msg: 'Objeto da contratação não preenchido', bloqueia: false },
+    { ok: !!proc.legal,   msg: 'Base legal (Art. 75, inciso) não selecionada — o enquadramento legal ficará em branco', bloqueia: false },
   ])) return;
   const u = getUser();
   const stepAdj = STEPS.findIndex(s => s.adjudicacao);
@@ -8382,6 +8385,105 @@ ${_qrFooter(proc)}
 
   const win = window.open('', '_blank', 'width=900,height=700');
   _gerarDocumento(win, html, 'Aviso de Dispensa de Licitação');
+}
+
+// ══════════════════════════════════════════════════════════════
+// EXPORTAR JSON PNCP — Portal Nacional de Contratações Públicas
+// ══════════════════════════════════════════════════════════════
+function exportarPNCP() {
+  const p = currentProcess;
+  const u = getUser();
+  if (!p) return;
+
+  const stepAviso = STEPS.findIndex(s => s.avisoDispensa);
+  const stepAdj   = STEPS.findIndex(s => s.adjudicacao);
+  const fAviso = stepAviso >= 0 ? (p.steps[stepAviso]?.fields || {}) : {};
+  const fAdj   = stepAdj   >= 0 ? (p.steps[stepAdj]?.fields   || {}) : {};
+
+  // Mapa de critérios para código PNCP (criterioJulgamentoId)
+  const criterioMap = { menor_preco: 1, maior_desconto: 2, melhor_tecnica: 4, tecnica_preco: 5, maior_retorno: 6 };
+  const criterioId = criterioMap[p.criterio_selecao] || 1;
+
+  // Mapa de amparo legal (modalidadeId = 8 para dispensa)
+  const amparoMap = {
+    'Art. 75, I':  { id: 1,  descricao: 'Art. 75, inciso I — Lei nº 14.133/2021' },
+    'Art. 75, II': { id: 2,  descricao: 'Art. 75, inciso II — Lei nº 14.133/2021' },
+    'Art. 75, III':{ id: 3,  descricao: 'Art. 75, inciso III — Lei nº 14.133/2021' },
+    'Art. 75, IV': { id: 4,  descricao: 'Art. 75, inciso IV — Lei nº 14.133/2021' },
+  };
+  const incisoChave = (p.legal || '').split(' — ')[0].trim();
+  const amparo = amparoMap[incisoChave] || { id: null, descricao: p.legal || '' };
+
+  const forn = typeof p.fornecedor === 'object' ? p.fornecedor : null;
+  const valorAdj = parseValor(fAdj.valor_adjudicado || p.valor || 0);
+  const valorEst = parseValor(p.valor || 0);
+
+  const payload = {
+    _sgcd_versao: SGCD_VERSION,
+    _gerado_em: new Date().toISOString(),
+    _aviso: 'Verifique e complemente os campos marcados com "null" antes de enviar ao PNCP.',
+
+    // Dados da compra
+    modalidadeId: 8,
+    modoDisputaId: 4,
+    criterioJulgamentoId: criterioId,
+    situacaoCompraId: processStatus(p) === 'done' ? 2 : 1,
+    descricao: p.objeto || '',
+    informacaoComplementar: p.descricao_complementar || '',
+    amparoLegal: { id: amparo.id, nome: amparo.descricao },
+
+    // Valores
+    valorTotalEstimado: valorEst || null,
+    valorTotalHomologado: valorAdj > 0 ? valorAdj : null,
+
+    // Datas
+    dataAberturaProposta: fAviso.data_publicacao || null,
+    dataEncerramentoProposta: fAviso.data_encerramento || null,
+
+    // Publicação
+    linkSistemaOrigem: fAviso.link_site || null,
+    linkEdital: fAviso.link_pncp || null,
+
+    // Números do processo
+    numeroCompra: p.num_dl || null,
+    processo: p.num_proc || null,
+    ano: p.createdAt ? new Date(p.createdAt).getFullYear() : new Date().getFullYear(),
+
+    // Órgão (preencher CNPJ e código IBGE nas configurações)
+    orgaoEntidade: { cnpj: u.cnpj_orgao || null, razaoSocial: u.orgao || null },
+    unidadeOrgao: { codigoUnidade: u.codigo_ibge || null, nomeUnidade: u.orgao || null, municipio: u.municipio || null, ufSigla: u.uf || null },
+    unidadeSubrogada: null,
+
+    // Fornecedor adjudicado
+    ...(forn || valorAdj > 0 ? { fornecedores: [{
+      cnpj: forn?.cnpj?.replace(/\D/g,'') || null,
+      razaoSocial: forn?.razao_social || forn?.nome_fantasia || null,
+      valorTotal: valorAdj > 0 ? valorAdj : null,
+      tipoPessoa: 'PJ',
+    }] } : {}),
+
+    // Itens (estrutura básica — detalhar conforme necessidade)
+    itens: [{
+      numeroItem: 1,
+      descricao: p.objeto || '',
+      quantidade: 1,
+      unidadeMedida: 'UN',
+      valorUnitarioEstimado: valorEst || null,
+      valorUnitarioHomologado: valorAdj > 0 ? valorAdj : null,
+      criterioJulgamentoId: criterioId,
+    }],
+  };
+
+  const json = JSON.stringify(payload, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = `PNCP_${p.num_dl || p.num_proc || 'dispensa'}_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('JSON PNCP exportado. Revise os campos "null" antes de enviar ao portal.', 'success');
+  _auditEvento('PNCP_EXPORT', `Exportação PNCP — ${p.num_dl || p.num_proc || p.objeto?.slice(0,40)}`, p.id);
 }
 
 function gerarExtratoContrato() {
@@ -8958,21 +9060,25 @@ function gerarAta() {
   const d = s => s ? new Date(s).toLocaleDateString('pt-BR') : '___/___/______';
   const blank = txt => txt || '_'.repeat(40);
 
-  // Cotações (step 4, idx 3)
+  // Índices calculados dinamicamente para resistir a reordenação de etapas
+  const iCotacoes   = STEPS.findIndex(s => s.cotacoes);
+  const iPropostas  = STEPS.findIndex(s => s.propostas);
+  const iHabilitacao = STEPS.findIndex(s => s.certidoes);
+  const iAdjudicacao = STEPS.findIndex(s => s.adjudicacao);
+  const iHomologacao = STEPS.findIndex(s => s.homologacao);
+
   const cotacoes = (() => {
-    try { return JSON.parse(f(3)._cotacoes || '[]'); } catch { return []; }
+    try { return JSON.parse(f(iCotacoes)._cotacoes || '[]'); } catch { return []; }
   })();
   const cotacoesValidas = cotacoes.filter(c => c.situacao === 'valida' || !c.situacao);
 
-  // Propostas (step 10, idx 9)
   const propostas = (() => {
-    try { return JSON.parse(f(9)._propostas || '[]'); } catch { return []; }
+    try { return JSON.parse(f(iPropostas)._propostas || '[]'); } catch { return []; }
   })();
   const vencedora = propostas.find(x => x.situacao === 'vencedora') || propostas.find(x => x.situacao === 'aceita') || {};
 
-  // Certidões (step 11, idx 10)
   const certSaved = (() => {
-    try { return JSON.parse(f(10)._certidoes || '{}'); } catch { return {}; }
+    try { return JSON.parse(f(iHabilitacao)._certidoes || '{}'); } catch { return {}; }
   })();
   const engenharia = !!certSaved._engenharia;
   const certAplicaveis = CERTIDOES.filter(c => !c.engenharia || engenharia);
@@ -9111,33 +9217,33 @@ function gerarAta() {
   <div class="secao-titulo">VI — Habilitação do Fornecedor</div>
   <p>O(A) Agente de Contratação procedeu à verificação da regularidade fiscal, trabalhista e jurídica do fornecedor com proposta mais vantajosa:</p>
   <div class="dado"><strong>Fornecedor:</strong> ${blank(v(9,'fornecedor'))}</div>
-  <div class="dado"><strong>CNPJ:</strong> ${blank(currentProcess?.fornecedor?.cnpj || v(9,'cnpj'))}</div>
+  <div class="dado"><strong>CNPJ:</strong> ${blank(currentProcess?.fornecedor?.cnpj || v(iHabilitacao,'cnpj'))}</div>
   <br>
   <table>
     <thead><tr><th>Certidão</th><th>Descrição</th><th>Situação</th></tr></thead>
     <tbody>${certHtml}</tbody>
   </table>
-  ${v(9,'observacoes') ? `<p style="margin-top:8pt"><strong>Observações:</strong> ${v(9,'observacoes')}</p>` : ''}
+  ${v(iHabilitacao,'observacoes') ? `<p style="margin-top:8pt"><strong>Observações:</strong> ${v(iHabilitacao,'observacoes')}</p>` : ''}
   <div class="resultado-hab ${todasObtidas ? 'habilitado' : 'pendente'}">${resultadoHab}</div>
 </div>
 
 <div class="secao">
   <div class="secao-titulo">VII — Adjudicação</div>
   <p>Com base na análise das propostas e na verificação da habilitação, o(a) Agente de Contratação adjudica o objeto ao seguinte fornecedor:</p>
-  <div class="dado"><strong>Fornecedor:</strong> ${blank(v(9,'fornecedor') || vencedora.fornecedor)}</div>
+  <div class="dado"><strong>Fornecedor:</strong> ${blank(v(iHabilitacao,'fornecedor') || vencedora.fornecedor)}</div>
   <div class="dado"><strong>CNPJ:</strong> ${blank(vencedora.cnpj || currentProcess?.fornecedor?.cnpj)}</div>
-  <div class="dado"><strong>Valor Adjudicado:</strong> ${v(10,'valor_adjudicado') ? fmtMoney(v(10,'valor_adjudicado')) : '_'.repeat(20)}</div>
-  <div class="dado"><strong>Data:</strong> ${d(v(10,'data_conclusao'))}</div>
-  ${v(10,'observacoes') ? `<p><strong>Observações:</strong> ${v(10,'observacoes')}</p>` : ''}
+  <div class="dado"><strong>Valor Adjudicado:</strong> ${v(iAdjudicacao,'valor_adjudicado') ? fmtMoney(v(iAdjudicacao,'valor_adjudicado')) : '_'.repeat(20)}</div>
+  <div class="dado"><strong>Data:</strong> ${d(v(iAdjudicacao,'data_conclusao'))}</div>
+  ${v(iAdjudicacao,'observacoes') ? `<p><strong>Observações:</strong> ${v(iAdjudicacao,'observacoes')}</p>` : ''}
 </div>
 
 <div class="secao">
   <div class="secao-titulo">VIII — Homologação</div>
   <p>A autoridade competente homologa o procedimento de Dispensa de Licitação nº ${blank(p.num_dl || p.num)}, declarando válidos todos os atos praticados.</p>
-  <div class="dado"><strong>Autoridade:</strong> ${blank(v(11,'autoridade'))}</div>
-  <div class="dado"><strong>Valor homologado:</strong> ${v(10,'valor_adjudicado') ? fmtMoney(v(10,'valor_adjudicado')) : blank('')}</div>
-  <div class="dado"><strong>Data:</strong> ${d(v(11,'data_conclusao'))}</div>
-  ${v(11,'observacoes') ? `<p><strong>Observações:</strong> ${v(11,'observacoes')}</p>` : ''}
+  <div class="dado"><strong>Autoridade:</strong> ${blank(v(iHomologacao,'autoridade'))}</div>
+  <div class="dado"><strong>Valor homologado:</strong> ${v(iAdjudicacao,'valor_adjudicado') ? fmtMoney(v(iAdjudicacao,'valor_adjudicado')) : blank('')}</div>
+  <div class="dado"><strong>Data:</strong> ${d(v(iHomologacao,'data_conclusao'))}</div>
+  ${v(iHomologacao,'observacoes') ? `<p><strong>Observações:</strong> ${v(iHomologacao,'observacoes')}</p>` : ''}
 </div>
 
 <div class="secao">
