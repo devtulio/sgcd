@@ -1004,6 +1004,10 @@
     background: var(--brand); color: #fff;
     padding: 2px 7px; border-radius: 99px; flex-shrink: 0; white-space: nowrap;
   }
+  .step-summary-line {
+    font-size: .7rem; color: var(--gray-500); margin-top: 2px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
+  }
 </style>
 </head>
 <body>
@@ -5012,6 +5016,23 @@ async function createProcess() {
   const objeto   = document.getElementById('m-obj').value.trim();
   if (!objeto) { toast('Informe o objeto do processo.','error'); return; }
 
+  // Verifica duplicatas de numeração
+  if (num_proc || num_dl) {
+    const dupPA = num_proc && processes.find(p => p.num_proc && p.num_proc === num_proc);
+    const dupDL = num_dl   && processes.find(p => p.num_dl   && p.num_dl   === num_dl);
+    const msgs = [
+      dupPA && `Já existe um processo com PA nº ${num_proc} (${dupPA.objeto?.slice(0,40)})`,
+      dupDL && `Já existe um processo com DL nº ${num_dl} (${dupDL.objeto?.slice(0,40)})`
+    ].filter(Boolean);
+    if (msgs.length > 0) {
+      const continuar = await customConfirm(
+        `Numeração duplicada detectada:\n\n${msgs.join('\n')}\n\nDeseja criar o processo mesmo assim?`,
+        { title: 'Número duplicado', icon: '⚠️', okLabel: 'Criar mesmo assim', cancelLabel: 'Cancelar' }
+      );
+      if (!continuar) return;
+    }
+  }
+
   const p = {
     id: genId(),
     num_proc,
@@ -5221,6 +5242,49 @@ async function resetStepOrder() {
   renderChecklist();
 }
 
+// Retorna uma linha de resumo dos dados preenchidos numa etapa concluída
+function _stepSummaryLine(i, step, data) {
+  const f = data.fields || {};
+  const parts = [];
+
+  // Campos textuais relevantes por categoria
+  if (f.responsavel)       parts.push(`Resp.: ${f.responsavel}`);
+  if (f.valor_estimado)    parts.push(`R$ ${f.valor_estimado}`);
+  if (f.data_publicacao)   parts.push(`Pub.: ${fmtDate(f.data_publicacao)}`);
+  if (f.data_encerramento) parts.push(`Enc.: ${fmtDate(f.data_encerramento)}`);
+  if (f.data_assinatura)   parts.push(`Ass.: ${fmtDate(f.data_assinatura)}`);
+  if (f.vigencia_inicial && f.vigencia_final)
+    parts.push(`Vig.: ${fmtDate(f.vigencia_inicial)} a ${fmtDate(f.vigencia_final)}`);
+  if (f.valor_contrato)    parts.push(`Vlr. contrato: ${f.valor_contrato}`);
+  if (f.link_pncp)         parts.push('PNCP ✓');
+  if (f.link_diario)       parts.push('D.O. ✓');
+
+  // Cotações
+  if (step.cotacoes) {
+    try {
+      const cots = JSON.parse(f._cotacoes || '[]');
+      const validas = cots.filter(c => !c.situacao || c.situacao === 'valida');
+      if (validas.length) parts.push(`${validas.length} cotação(ões)`);
+    } catch {}
+  }
+
+  // Propostas
+  if (step.propostas) {
+    try {
+      const props = JSON.parse(f._propostas || '[]');
+      if (props.length) {
+        const venc = props.find(p => p.situacao === 'vencedora');
+        parts.push(`${props.length} proposta(s)${venc ? ` · Vencedor: ${venc.fornecedor || venc.cnpj || ''}` : ''}`);
+      }
+    } catch {}
+  }
+
+  if (!parts.length) return '';
+  const text = parts.join(' · ');
+  const truncated = text.length > 80 ? text.slice(0, 77) + '…' : text;
+  return `<div class="step-summary-line" title="${escHtml(text)}">${escHtml(truncated)}</div>`;
+}
+
 // Gera o HTML de um único card de etapa (usado tanto no render completo quanto no parcial)
 async function _buildStepCardHtml(i, p, isNext = false) {
   const step = STEPS[i];
@@ -5243,6 +5307,7 @@ async function _buildStepCardHtml(i, p, isNext = false) {
         <div class="step-info">
           <div class="step-name">${i+1}. ${escHtml(step.name)}</div>
           <div class="step-sub">${escHtml(step.sub)}${fileCount ? ` · 📎 ${fileCount} arquivo${fileCount>1?'s':''}` : ''}</div>
+          ${isDone ? _stepSummaryLine(i, step, data) : ''}
         </div>
         ${nextBadge}
         ${data.completedAt ? `<div class="step-date">${fmtDate(data.completedAt)}</div>` : ''}
@@ -5404,7 +5469,10 @@ function renderStepFields(i, step, data, certFileMap = {}) {
     html += `<div style="margin-top:12px"><button class="btn btn-outline btn-sm" onclick="gerarTermoHomologacao()">📄 Gerar Termo de Homologação</button></div>`;
   }
   if (step.avisoDispensa) {
-    html += `<div style="margin-top:12px"><button class="btn btn-outline btn-sm" onclick="gerarAvisoDispensa()">📰 Gerar Aviso de Dispensa</button></div>`;
+    html += `<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-outline btn-sm" onclick="gerarAvisoDispensa()">📰 Gerar Aviso de Dispensa</button>
+      <button class="btn btn-outline btn-sm" onclick="abrirEmailModal()" title="Notificar fornecedores sobre esta dispensa">✉ Notificar Fornecedores</button>
+    </div>`;
   }
   if (step.extratoContrato) {
     html += `<div style="margin-top:12px"><button class="btn btn-outline btn-sm" onclick="gerarExtratoContrato()">📄 Gerar Extrato de Contrato</button></div>`;
@@ -6034,7 +6102,18 @@ function renderInfoFields() {
       </div>`).join('')}
     <button class="btn btn-outline btn-sm" onclick="abrirVinculoModal()" style="width:100%;margin-top:4px;font-size:.75rem">+ Vincular processo</button>`;
 
-  document.getElementById('info-fields').innerHTML = fields.map(f => {
+  // Grupos de campos com cabeçalhos visuais
+  const fieldGroups = [
+    { label: 'Identificação', keys: ['num_proc','num_dl'] },
+    { label: 'Objeto e Contratação', keys: ['objeto','legal','criterio_selecao','valor'] },
+    { label: 'Logística', keys: ['unidade','prazo','obs'] },
+  ];
+  const groupHeader = label =>
+    `<div style="border-top:1px solid var(--gray-200);margin:10px 0 6px;padding-top:8px">
+      <p style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-500);margin-bottom:4px">${label}</p>
+    </div>`;
+
+  function _renderField(f) {
     const val = escHtml(p[f.key] || '');
     const histBtn = `<button class="field-hist-btn" onclick="abrirFieldHist('${f.key}','${escHtml(f.label)}',this)" title="Ver histórico de alterações deste campo">🕐</button>`;
     if (f.type === 'textarea') {
@@ -6077,7 +6156,16 @@ function renderInfoFields() {
     }
     return `<div class="info-field"><label style="display:flex;justify-content:space-between;align-items:center">${f.label}${histBtn}</label>
       <input type="text" value="${val}" onchange="updateProcessField('${f.key}',this.value)"></div>`;
-  }).join('') + dotacaoHtml + vinculosHtml + classHtml;
+  }
+
+  const groupedHtml = fieldGroups.map(g =>
+    groupHeader(g.label) + g.keys.map(key => {
+      const f = fields.find(x => x.key === key);
+      return f ? _renderField(f) : '';
+    }).join('')
+  ).join('');
+
+  document.getElementById('info-fields').innerHTML = groupedHtml + dotacaoHtml + vinculosHtml + classHtml;
 }
 
 function infoNaturezaChange(val) {
@@ -6217,6 +6305,14 @@ async function setStepStatus(i, status) {
   renderDetail();
   expandedSteps.add(i);
   renderChecklist();
+
+  // Ao concluir a última etapa, abre automaticamente o painel de conformidade
+  if (status === 'done' && processStatus(p) === 'done') {
+    setTimeout(() => {
+      showToast('🎉 Processo concluído! Verificando conformidade…', 'success');
+      verificarConformidade();
+    }, 400);
+  }
 }
 
 async function updateField(i, field, value) {
@@ -7308,6 +7404,9 @@ ${_qrFooter(proc)}
 
 function gerarDespachoInabilitacao(stepIdx) {
   const proc = currentProcess;
+  if (!_validarDocumento([
+    { ok: _temFornecedor(proc) || !!(proc.steps?.[stepIdx]?.fields?.fornecedor), msg: 'Nenhum fornecedor identificado — consulte o CNPJ na etapa de Habilitação', bloqueia: true },
+  ])) return;
   const u = getUser();
   const data = proc.steps[stepIdx] || {};
   const saved = data.fields?._certidoes ? JSON.parse(data.fields._certidoes) : {};
@@ -7449,6 +7548,9 @@ ${_qrFooter(proc)}
 
 function gerarDespachoHabilitacao(stepIdx) {
   const proc = currentProcess;
+  if (!_validarDocumento([
+    { ok: _temFornecedor(proc) || !!(proc.steps?.[stepIdx]?.fields?.fornecedor), msg: 'Nenhum fornecedor identificado — consulte o CNPJ na etapa de Habilitação', bloqueia: true },
+  ])) return;
   const u = getUser();
   const data = proc.steps[stepIdx] || {};
   const saved = data.fields?._certidoes ? JSON.parse(data.fields._certidoes) : {};
@@ -7566,6 +7668,11 @@ ${_qrFooter(proc)}
 
 function gerarTermoAdjudicacao() {
   const proc = currentProcess;
+  if (!_validarDocumento([
+    { ok: _temFornecedor(proc) || _temPropostaVencedora(proc), msg: 'Nenhum fornecedor vencedor identificado — vincule um fornecedor ou marque uma proposta como vencedora na etapa de Propostas', bloqueia: true },
+    { ok: !!proc.objeto,  msg: 'Objeto da contratação não preenchido', bloqueia: false },
+    { ok: !!proc.num_dl,  msg: 'Número da DL não informado', bloqueia: false },
+  ])) return;
   const u = getUser();
   const stepIdx = STEPS.findIndex(s => s.adjudicacao);
   const propStepIdx = proc.steps.findIndex(s => s.propostas);
@@ -7675,6 +7782,11 @@ ${_qrFooter(proc)}
 
 function gerarTermoHomologacao() {
   const proc = currentProcess;
+  if (!_validarDocumento([
+    { ok: _temFornecedor(proc) || _temPropostaVencedora(proc), msg: 'Nenhum fornecedor vencedor identificado — vincule um fornecedor ou marque uma proposta como vencedora', bloqueia: true },
+    { ok: !!proc.num_dl,  msg: 'Número da DL não informado', bloqueia: false },
+    { ok: !!proc.objeto,  msg: 'Objeto da contratação não preenchido', bloqueia: false },
+  ])) return;
   const u = getUser();
   const stepAdj = STEPS.findIndex(s => s.adjudicacao);
   const stepHom = STEPS.findIndex(s => s.homologacao);
@@ -7779,6 +7891,12 @@ ${_qrFooter(proc)}
 
 function gerarAvisoDispensa() {
   const proc = currentProcess;
+  if (!_validarDocumento([
+    { ok: !!proc.num_dl,    msg: 'Número da DL não informado (campo "Nº DL" no painel lateral)', bloqueia: false },
+    { ok: !!proc.objeto,    msg: 'Objeto da contratação não preenchido', bloqueia: true },
+    { ok: !!proc.legal,     msg: 'Base legal (Art. 75, inciso) não selecionada', bloqueia: false },
+    { ok: !!(proc.valor || proc.steps?.[3]?.fields?.valor_estimado), msg: 'Valor estimado não informado', bloqueia: false },
+  ])) return;
   const u = getUser();
   const p = i => proc.steps[i]?.fields || {};
   const v = (i, f) => p(i)[f] || '';
@@ -7932,6 +8050,12 @@ ${_qrFooter(proc)}
 
 function gerarExtratoContrato() {
   const proc = currentProcess;
+  if (!_validarDocumento([
+    { ok: _temFornecedor(proc), msg: 'Nenhum fornecedor vinculado ao processo — o campo "Contratado" ficará em branco', bloqueia: true },
+    { ok: !!proc.num_dl,        msg: 'Número da DL não informado', bloqueia: false },
+    { ok: !!(proc.steps?.[13]?.fields?.valor_contrato || proc.valor), msg: 'Valor do contrato não preenchido (etapa de Contratação)', bloqueia: false },
+    { ok: !!(proc.steps?.[13]?.fields?.vigencia_inicial), msg: 'Vigência do contrato não informada (etapa de Contratação)', bloqueia: false },
+  ])) return;
   const u = getUser();
   const data = proc.steps[13]?.fields || {};
   const hoje = new Date().toLocaleDateString('pt-BR', { day:'numeric', month:'long', year:'numeric' });
@@ -8147,6 +8271,11 @@ ${_qrFooter(p)}
 
 function gerarAutorizacao() {
   const p = currentProcess;
+  if (!_validarDocumento([
+    { ok: !!p.objeto,  msg: 'Objeto da contratação não preenchido', bloqueia: true },
+    { ok: !!p.legal,   msg: 'Base legal (Art. 75, inciso) não selecionada', bloqueia: false },
+    { ok: !!p.num_dl,  msg: 'Número da DL não informado', bloqueia: false },
+  ])) return;
   const u = getUser();
   const hoje = new Date().toLocaleDateString('pt-BR', { day:'numeric', month:'long', year:'numeric' });
   const blank = txt => txt || '_'.repeat(40);
@@ -9092,10 +9221,22 @@ async function abrirEmailModal() {
   const fornsComEmail = todosForns.filter(f => f.email);
   const fornVinculadoId = typeof p.fornecedor === 'object' ? p.fornecedor?.id : null;
 
+  // Avisa se fornecedor vinculado ao processo não tem e-mail
+  const fornVinculado = typeof p.fornecedor === 'object' ? p.fornecedor : null;
+  const fornVinculadoSemEmail = fornVinculado && !fornVinculado.email;
+  const avisoSemEmail = fornVinculadoSemEmail
+    ? `<div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:6px;padding:7px 10px;margin-bottom:6px;font-size:.78rem;color:#92400e">
+        ⚠️ O fornecedor vinculado a este processo (<strong>${escHtml(fornVinculado.razao_social || fornVinculado.nome_fantasia || 'Sem nome')}</strong>)
+        não tem e-mail cadastrado e não aparecerá na lista de destinatários.
+        <a href="#" onclick="fecharEmailModal();abrirFornecedor('${escHtml(fornVinculado.id||'')}');return false"
+           style="color:#b45309;font-weight:600;margin-left:4px">Cadastrar e-mail →</a>
+      </div>`
+    : '';
+
   if (fornsComEmail.length === 0) {
-    fornList.innerHTML = '<div style="padding:8px;font-size:.8rem;color:var(--gray-500)">Nenhum fornecedor cadastrado com e-mail.</div>';
+    fornList.innerHTML = avisoSemEmail + '<div style="padding:8px;font-size:.8rem;color:var(--gray-500)">Nenhum fornecedor cadastrado com e-mail.</div>';
   } else {
-    fornList.innerHTML = fornsComEmail.map(f => {
+    fornList.innerHTML = avisoSemEmail + fornsComEmail.map(f => {
       const nome = f.razao_social || f.nome || '';
       const socio = f.qsa?.[0]?.nome || '';
       return `<label style="display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:6px;cursor:pointer;border-bottom:1px solid var(--gray-100)">
@@ -10321,6 +10462,49 @@ function _qrFooter(p, extraInfo) {
 // ══════════════════════════════════════════════════════════════
 // DOCUMENT AUTH CODE (item 7)
 // ══════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════
+// VALIDAÇÃO ANTES DE GERAR DOCUMENTOS
+// ══════════════════════════════════════════════════════════════
+/**
+ * Valida pré-condições antes de gerar um documento.
+ * @param {Array<{ok: boolean, msg: string, bloqueia: boolean}>} checks
+ * @returns {boolean} — true = pode prosseguir, false = bloqueado
+ *
+ * Checks com bloqueia=true impedem a geração completamente.
+ * Checks com bloqueia=false exibem aviso mas permitem continuar.
+ */
+function _validarDocumento(checks) {
+  const bloqueios  = checks.filter(c => !c.ok && c.bloqueia);
+  const avisos     = checks.filter(c => !c.ok && !c.bloqueia);
+
+  if (bloqueios.length > 0) {
+    const msgs = bloqueios.map(c => `• ${c.msg}`).join('\n');
+    alert(`Não é possível gerar este documento:\n\n${msgs}\n\nPreencha os dados indicados e tente novamente.`);
+    return false;
+  }
+
+  if (avisos.length > 0) {
+    const msgs = avisos.map(c => `• ${c.msg}`).join('\n');
+    return confirm(`Atenção — o documento será gerado com campos incompletos:\n\n${msgs}\n\nDeseja continuar mesmo assim?`);
+  }
+
+  return true;
+}
+
+function _temFornecedor(proc) {
+  const forn = proc.fornecedor;
+  if (!forn) return false;
+  if (typeof forn === 'string') return forn.trim().length > 0;
+  return !!(forn.razao_social || forn.nome_fantasia || forn.cnpj);
+}
+
+function _temPropostaVencedora(proc) {
+  const propIdx = proc.steps?.findIndex(s => s.propostas);
+  if (propIdx < 0) return false;
+  const lista = JSON.parse(proc.steps[propIdx]?.fields?._propostas || '[]');
+  return lista.some(p => p.situacao === 'vencedora');
+}
+
 function _docAuthCode(p) {
   const str = [p.id, p.objeto, p.valor, p.createdAt].join('|');
   let h = 0;
