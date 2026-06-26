@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Manual Operacional — SGCD v1.17.0</title>
+<title>Manual Operacional — SGCD v1.18.0</title>
 <style>
   /* Reset e base */
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -89,7 +89,7 @@
       margin: 20mm 20mm 25mm;
       size: A4;
       @top-center {
-        content: "SGCD v1.17.0 — Manual Operacional";
+        content: "SGCD v1.18.0 — Manual Operacional";
         font-family: 'Times New Roman', serif;
         font-size: 9pt;
         color: #666;
@@ -118,7 +118,7 @@
     <div class="cover-title">Manual Operacional</div>
     <div class="cover-subtitle">SGCD — Sistema de Gestão de Contratação Direta</div>
     <div class="cover-system">Gestão de Processos de Dispensa de Licitação</div>
-    <div class="cover-version">Versão v1.17.0</div>
+    <div class="cover-version">Versão v1.18.0</div>
     <br>
     <div style="font-size:11pt; color:#555; line-height:1.8;">
       Aplicação web single-file para agentes de contratação pública<br>
@@ -1387,10 +1387,154 @@
 
 <hr class="section-divider">
 
+<!-- ─────────────────────────────────────────────── SEÇÃO 22 -->
+<h2 id="sec22">22. Backup Automático e Proteção de Dados</h2>
+<p>A partir da versão 1.18.0, o SGCD protege os dados do usuário de forma automática, sem necessidade de ação manual a cada alteração.</p>
+
+<h3 id="sec22-1">22.1 Snapshot automático</h3>
+<p>Toda vez que um processo é salvo, o sistema aguarda 3 segundos e grava automaticamente um <strong>snapshot compactado</strong> no armazenamento local do navegador (<code>localStorage</code>). Esse snapshot contém todos os processos e fornecedores cadastrados, exceto anexos de arquivo (para não exceder o limite de espaço do navegador).</p>
+<div class="nota">
+  <strong>Limite de tamanho:</strong> O <code>localStorage</code> comporta aproximadamente 5 MB. Se a base de dados exceder esse limite, o sistema exibirá um aviso solicitando a exportação de um backup manual.
+</div>
+<p>O snapshot automático também é gravado quando o usuário fecha ou recarrega a aba do navegador, desde que a opção <strong>"Snapshot ao fechar"</strong> esteja ativa nas Configurações → Dados.</p>
+
+<h3 id="sec22-2">22.2 Banner de alerta de backup</h3>
+<p>Uma faixa de alerta laranja é exibida na parte inferior da tela quando:</p>
+<ul>
+  <li>Nenhum backup manual foi exportado ainda (primeiro uso do sistema); ou</li>
+  <li>O último backup manual foi exportado há <strong>mais de 7 dias</strong>.</li>
+</ul>
+<p>O banner exibe o número de dias sem backup e um botão de exportação rápida. Ao exportar o backup, o banner é dispensado automaticamente. Clicar em <strong>"Lembrar depois"</strong> oculta o banner até o próximo carregamento.</p>
+
+<h3 id="sec22-3">22.3 Exportação manual recomendada</h3>
+<p>O backup manual (<strong>Configurações → Dados → Exportar Backup</strong>) gera um arquivo <code>.json</code> completo com processos, fornecedores, arquivos anexados, configurações e brasão. Este é o único formato que inclui anexos e que pode ser importado para restaurar o sistema em outro computador ou navegador.</p>
+<div class="aviso">
+  <strong>Atenção:</strong> O snapshot automático é um mecanismo de proteção contra falhas imediatas — não substitui o backup manual. Guarde os arquivos de backup exportados em local seguro (pasta de rede, nuvem ou mídia externa).
+</div>
+
+<h3 id="sec22-4">22.4 Validação ao concluir etapas</h3>
+<p>Ao marcar uma etapa como <strong>Concluída</strong>, o sistema verifica se os campos obrigatórios daquela etapa foram preenchidos. Se algum campo estiver em branco, uma caixa de confirmação é exibida listando os campos faltantes:</p>
+<ul>
+  <li>Clicar em <strong>"Concluir mesmo assim"</strong> marca a etapa como concluída sem preencher os campos.</li>
+  <li>Clicar em <strong>"Voltar e preencher"</strong> cancela a ação e retorna ao formulário da etapa.</li>
+</ul>
+<p>A validação não é bloqueante — permite flexibilidade para fluxos em que alguns campos são opcionais em contextos específicos. Os campos verificados por etapa são:</p>
+<table>
+  <tr><th>Etapa</th><th>Campos verificados</th></tr>
+  <tr><td>DFD</td><td>Responsável, Data de conclusão</td></tr>
+  <tr><td>TR</td><td>Responsável, Data de conclusão</td></tr>
+  <tr><td>Pesquisa de Preços</td><td>Responsável, Data de conclusão, Valor estimado</td></tr>
+  <tr><td>Parecer Jurídico</td><td>Responsável, Data de conclusão, Número do parecer</td></tr>
+  <tr><td>Autorização</td><td>Responsável, Data de conclusão, Autoridade competente</td></tr>
+  <tr><td>Aviso de Dispensa</td><td>Responsável, Data de conclusão, Data de publicação</td></tr>
+  <tr><td>Habilitação</td><td>Responsável, Fornecedor habilitado</td></tr>
+  <tr><td>Adjudicação</td><td>Responsável, Data de conclusão, Valor adjudicado</td></tr>
+  <tr><td>Homologação</td><td>Responsável, Data de conclusão, Autoridade competente</td></tr>
+  <tr><td>Nota de Empenho</td><td>Responsável, Data de conclusão, Número do empenho</td></tr>
+  <tr><td>Instrumento Contratual</td><td>Responsável, Número do contrato, Data de assinatura, Valor do contrato</td></tr>
+</table>
+
+<hr class="section-divider">
+
+<!-- ─────────────────────────────────────────────── SEÇÃO 23 -->
+<h2 id="sec23">23. Controle de Acesso por Senha</h2>
+<p>O SGCD permite configurar uma senha de abertura para proteger o acesso ao sistema em computadores compartilhados.</p>
+
+<h3 id="sec23-1">23.1 Configurando a senha</h3>
+<p>Acesse <strong>Configurações → Segurança</strong>. O painel exibe três campos:</p>
+<ol>
+  <li><strong>Senha atual</strong> — deixe em branco se ainda não há senha configurada.</li>
+  <li><strong>Nova senha</strong> — mínimo de 4 caracteres.</li>
+  <li><strong>Confirmar nova senha</strong> — deve ser idêntica ao campo anterior.</li>
+</ol>
+<p>Clique em <strong>"Definir Senha"</strong> para salvar. Para remover a proteção, informe a senha atual e clique em <strong>"Remover Senha"</strong>.</p>
+
+<h3 id="sec23-2">23.2 Tela de acesso restrito</h3>
+<p>Quando uma senha está configurada, o sistema exibe uma tela de acesso ao ser carregado. Essa tela apresenta:</p>
+<ul>
+  <li>O nome do órgão configurado nas Configurações → Organização.</li>
+  <li>A data do último backup exportado.</li>
+  <li>Um campo de senha com opção de visualizar os caracteres digitados.</li>
+</ul>
+<p>Em caso de senha incorreta, o formulário exibe uma mensagem de erro com animação visual e limpa o campo para nova tentativa. Pressionar <kbd>Enter</kbd> no campo de senha aciona o botão de entrar.</p>
+<div class="nota">
+  <strong>Limitação técnica:</strong> A senha é armazenada como hash SHA-256 no <code>localStorage</code> do navegador. Essa proteção impede acesso acidental, mas não é equivalente a criptografia do banco de dados. Um administrador com acesso às ferramentas de desenvolvedor do navegador pode, em tese, limpar o hash e remover a proteção. Para ambientes que exijam segurança elevada, combine o uso do SGCD com senha de login do sistema operacional.
+</div>
+
+<h3 id="sec23-3">23.3 Recuperação de acesso</h3>
+<p>Se a senha for esquecida, é possível removê-la manualmente pelo console do navegador:</p>
+<ol>
+  <li>Abra as ferramentas de desenvolvedor (F12).</li>
+  <li>Acesse a aba <strong>Console</strong>.</li>
+  <li>Execute: <code>localStorage.removeItem('sgcd-access-hash')</code></li>
+  <li>Recarregue a página.</li>
+</ol>
+<div class="aviso">
+  <strong>Atenção:</strong> Este procedimento deve ser realizado apenas pelo administrador do sistema. Mantenha a senha anotada em local seguro.
+</div>
+
+<hr class="section-divider">
+
+<!-- ─────────────────────────────────────────────── SEÇÃO 24 -->
+<h2 id="sec24">24. Painel de Diagnóstico</h2>
+<p>O Painel de Diagnóstico analisa automaticamente todos os processos e fornecedores cadastrados, identificando inconsistências, campos obrigatórios faltantes e situações de não conformidade.</p>
+
+<h3 id="sec24-1">24.1 Como acessar</h3>
+<p>Acesse <strong>Configurações → Diagnóstico</strong> e clique em <strong>"Reanalisar"</strong>. O sistema percorre todos os registros do banco de dados e apresenta o resultado em segundos.</p>
+
+<h3 id="sec24-2">24.2 O que é verificado</h3>
+<p>O diagnóstico agrupa os resultados em três categorias:</p>
+<table>
+  <tr><th>Categoria</th><th>Cor</th><th>Significado</th></tr>
+  <tr><td>Erros críticos</td><td style="color:#dc2626;font-weight:700">Vermelho</td><td>Situações que comprometem a validade jurídica do processo ou a integridade dos dados</td></tr>
+  <tr><td>Avisos</td><td style="color:#d97706;font-weight:700">Amarelo</td><td>Inconsistências que podem causar problemas, mas não necessariamente invalidam o processo</td></tr>
+  <tr><td>Informações</td><td style="color:#2563eb;font-weight:700">Azul</td><td>Campos recomendados não preenchidos ou configurações incompletas</td></tr>
+</table>
+
+<h3 id="sec24-3">24.3 Verificações realizadas</h3>
+<p>Para cada processo, o diagnóstico verifica:</p>
+<ul>
+  <li>Processo concluído sem fornecedor vencedor identificado.</li>
+  <li>Processo concluído sem base legal (Art. 75, inciso) selecionada.</li>
+  <li>Processo com status "concluído" mas etapa de Homologação não marcada como concluída.</li>
+  <li>Aviso de Dispensa concluído sem data de publicação registrada.</li>
+  <li>Processo sem valor estimado informado.</li>
+  <li>Habilitação concluída sem fornecedor referenciado.</li>
+  <li>Processo sem objeto/descrição preenchido.</li>
+  <li>Processo em andamento sem número da Dispensa de Licitação.</li>
+</ul>
+<p>Para o cadastro de fornecedores, o diagnóstico verifica:</p>
+<ul>
+  <li>CNPJs duplicados — dois ou mais fornecedores com o mesmo CNPJ cadastrado.</li>
+  <li>CNPJs inválidos — dígitos verificadores incorretos segundo o algoritmo da Receita Federal.</li>
+</ul>
+<p>Para as configurações do sistema, o diagnóstico verifica:</p>
+<ul>
+  <li>CNPJ do órgão não informado (necessário para a exportação PNCP).</li>
+  <li>Código IBGE do município não informado (necessário para a exportação PNCP).</li>
+</ul>
+<div class="dica">
+  <strong>Boas práticas:</strong> Execute o diagnóstico antes de encaminhar um processo para publicação ou assinatura, e ao final de cada exercício financeiro para identificar processos com dados incompletos.
+</div>
+
+<hr class="section-divider">
+
 <!-- ─────────────────────────────────────────────── SEÇÃO 21 -->
 <h2 id="sec21">21. Histórico de Versões</h2>
 
-<h3 id="sec21-1">21.1 v1.17.0 — Junho/2026</h3>
+<h3 id="sec21-0">21.1 v1.18.0 — Junho/2026</h3>
+<ul>
+  <li><strong>Backup automático por salvamento:</strong> snapshot gravado no <code>localStorage</code> 3 segundos após cada alteração em processo, sem intervenção do usuário (ver Seção 22.1).</li>
+  <li><strong>Banner de alerta de backup:</strong> faixa laranja persistente exibida quando o último backup manual foi exportado há mais de 7 dias ou nunca foi exportado, com botão de exportação rápida (ver Seção 22.2).</li>
+  <li><strong>Validação ao concluir etapa:</strong> ao marcar uma etapa como concluída, o sistema verifica campos obrigatórios e exibe confirmação não-bloqueante listando os campos faltantes (ver Seção 22.4).</li>
+  <li><strong>Controle de acesso por senha:</strong> nova aba "Segurança" nas Configurações para definir, alterar e remover senha de abertura do sistema. Senha armazenada como hash SHA-256. Tela de acesso redesenhada com identidade visual institucional (ver Seção 23).</li>
+  <li><strong>Tela de login redesenhada:</strong> identidade visual com cor institucional aubergine, brasão SVG, badge da Lei 14.133/2021, card do órgão com sigla automática, campo de senha com toggle mostrar/ocultar, animação de shake em senha incorreta e painel de último backup.</li>
+  <li><strong>Painel de Diagnóstico:</strong> nova aba "Diagnóstico" nas Configurações que analisa todos os processos e fornecedores, classificando inconsistências em Erros críticos, Avisos e Informações (ver Seção 24).</li>
+  <li><strong>Exportação PNCP aprimorada:</strong> novos campos CNPJ do órgão, Código IBGE e UF nas Configurações → Organização; JSON exportado usa esses dados reais no preenchimento do órgão contratante.</li>
+  <li><strong>Correção de índices no Relatório de Fornecedores:</strong> índice de valor adjudicado substituído por <code>STEPS.findIndex()</code>, eliminando dependência de posição fixa das etapas.</li>
+</ul>
+
+<h3 id="sec21-2">21.3 v1.17.0 — Junho/2026</h3>
 <ul>
   <li><strong>Exportação PNCP:</strong> novo botão "📤 Exportar PNCP" na etapa do Aviso de Dispensa gera um arquivo JSON estruturado no formato da API do Portal Nacional de Contratações Públicas, pré-preenchido com os dados do processo.</li>
   <li><strong>Correção da Ata de Procedimento:</strong> os índices das etapas (Cotações, Propostas, Habilitação, Adjudicação e Homologação) agora são calculados dinamicamente via <code>STEPS.findIndex()</code>, eliminando bugs silenciosos quando etapas são reordenadas.</li>
@@ -1399,7 +1543,7 @@
   <li><strong>Correções legais nos documentos:</strong> revisão geral em todos os 16 modelos de documentos — artigos corrigidos (arts. 3º/9º Lei 9.784/99, art. 72 Lei 14.133/2021, art. 94 c/c art. 91 §4º, art. 72 VII), concordâncias gramaticais, termos técnicos padronizados e parágrafos duplicados removidos.</li>
 </ul>
 
-<h3 id="sec21-2">21.2 v1.16.0</h3>
+<h3 id="sec21-3">21.4 v1.16.0</h3>
 <ul>
   <li><strong>Relatório de Fornecedores:</strong> novo relatório global com indicadores de participação, aprovação e reprovação por fornecedor, incluindo QR Code de autenticidade.</li>
   <li><strong>Relatório Executivo:</strong> novo relatório consolidado de contratações diretas com gráfico de barras de valores por processo, filtros e indicadores de conformidade.</li>
@@ -1407,14 +1551,14 @@
   <li><strong>Processo Completo (PDF):</strong> documento único que agrega todos os atos do processo, com QR Code de autenticidade no rodapé e numeração de seções.</li>
 </ul>
 
-<h3 id="sec21-3">21.3 v1.15.0</h3>
+<h3 id="sec21-4">21.5 v1.15.0</h3>
 <ul>
   <li><strong>Dashboard com paginação:</strong> a listagem de processos no painel inicial passou a exibir resultados paginados, melhorando a performance com grande volume de processos.</li>
   <li><strong>Lazy loading nas etapas:</strong> os cards de cada etapa do processo são renderizados sob demanda, reduzindo o tempo de abertura do painel de processo.</li>
   <li><strong>Filtros avançados no Dashboard:</strong> adicionados filtros por valor mínimo/máximo, período e combinação de critérios.</li>
 </ul>
 
-<h3 id="sec21-4">21.4 v1.14.0</h3>
+<h3 id="sec21-5">21.6 v1.14.0</h3>
 <ul>
   <li><strong>QR Code de autenticidade:</strong> todos os documentos gerados passaram a incluir QR Code no rodapé com código de verificação derivado dos dados do processo (ver Seção 20).</li>
   <li><strong>Histórico por campo:</strong> botão 🕐 em cada campo do painel de informações exibe o histórico completo de alterações com data, valor anterior e novo valor (ver Seção 20.3).</li>
@@ -1423,7 +1567,7 @@
 
 <hr class="section-divider">
 <p style="text-align:center; font-size:9pt; color:#888; margin-top:20pt;">
-  SGCD v1.17.0 — Manual Operacional<br>
+  SGCD v1.18.0 — Manual Operacional<br>
   Sistema de Gestão de Contratação Direta<br>
   Lei Federal nº 14.133/2021
 </p>
