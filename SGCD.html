@@ -2171,6 +2171,12 @@
 
 <div id="toast"></div>
 <div id="step-dot-tooltip"></div>
+<div id="backup-alert-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9000;background:#7c2d12;color:#fff;padding:10px 20px;display:none;align-items:center;gap:12px;font-size:.82rem;border-top:3px solid #f97316">
+  <span style="font-size:1.1em">⚠</span>
+  <span id="backup-alert-msg" style="flex:1"></span>
+  <button onclick="exportBackup()" style="background:#f97316;color:#fff;border:none;padding:5px 14px;border-radius:6px;font-size:.8rem;font-weight:700;cursor:pointer;white-space:nowrap">💾 Exportar Backup</button>
+  <button onclick="document.getElementById('backup-alert-banner').style.display='none'" style="background:transparent;color:#fca97d;border:1px solid #fca97d;padding:5px 10px;border-radius:6px;font-size:.8rem;cursor:pointer;white-space:nowrap">Lembrar depois</button>
+</div>
 
 <script>
 // ══════════════════════════════════════════════════════════════
@@ -2483,6 +2489,8 @@ async function exportBackup() {
     });
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    localStorage.setItem('sgcd-last-manual-export', Date.now().toString());
+    document.getElementById('backup-alert-banner').style.display = 'none';
     toast(`Backup exportado — ${processes.length} processos, ${fornecedores.length} fornecedores, ${files.length} arquivos, ${auditGlobal.length} registros de auditoria.`, 'success');
   } catch(e) { toast('Erro ao exportar: ' + e.message, 'error'); }
 }
@@ -3079,12 +3087,16 @@ function _hideSaveIndicator() {
   _saveIndicatorTimer = setTimeout(() => { el.style.opacity = '0'; }, 1800);
 }
 
+let _autoBackupDebounceTimer = null;
 async function saveProcess(p) {
   _showSaveIndicator();
   p.updatedAt = Date.now();
   await dbPut('processes', p);
   updateAgendaBadge();
   _hideSaveIndicator();
+  // Snapshot automático debounced — salva 3s após o último saveProcess
+  clearTimeout(_autoBackupDebounceTimer);
+  _autoBackupDebounceTimer = setTimeout(() => _autoBackupSnapshot(), 3000);
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -3443,7 +3455,8 @@ async function renderFornecedores() {
       if (!fData) continue;
       const nome = fData.razao_social || fData.nome || key;
       const isVenc = processStatus(p) === 'done';
-      const valor = parseValor(p.steps?.[10]?.fields?.valor_adjudicado || p.valor || 0);
+      const iAdj = STEPS.findIndex(s => s.adjudicacao);
+      const valor = parseValor((iAdj >= 0 ? p.steps?.[iAdj]?.fields?.valor_adjudicado : null) || p.valor || 0);
       const anoProc = new Date(p.createdAt).getFullYear();
       if (!scoreMap.has(key)) scoreMap.set(key, { nome, participacoes: 0, vitorias: 0, valorAno: 0 });
       const e = scoreMap.get(key);
@@ -6603,8 +6616,60 @@ async function markStep(i, status) {
   await setStepStatus(i, status);
 }
 
+// Campos obrigatórios por etapa — apenas os realmente críticos (não inclui observacoes)
+const STEP_REQUIRED_FIELDS = {
+  responsavel:      'Responsável',
+  data_conclusao:   'Data de conclusão',
+  valor_estimado:   'Valor estimado',
+  num_parecer:      'Número do parecer',
+  autoridade:       'Autoridade competente',
+  data_publicacao:  'Data de publicação',
+  num_empenho:      'Número do empenho',
+  num_contrato:     'Número do contrato/instrumento',
+  data_assinatura:  'Data de assinatura',
+  valor_contrato:   'Valor do contrato',
+  valor_adjudicado: 'Valor adjudicado',
+  fornecedor:       'Fornecedor habilitado',
+};
+
+// Subconjunto realmente obrigatório para marcar "done" (por step index)
+const STEP_DONE_REQUIRED = [
+  /* 0  DFD              */ ['responsavel','data_conclusao'],
+  /* 1  ETP              */ ['responsavel'],
+  /* 2  TR               */ ['responsavel','data_conclusao'],
+  /* 3  Pesquisa Preços  */ ['responsavel','data_conclusao','valor_estimado'],
+  /* 4  Enquadramento    */ ['responsavel','data_conclusao'],
+  /* 5  Parecer Jurídico */ ['responsavel','data_conclusao','num_parecer'],
+  /* 6  Autorização      */ ['responsavel','data_conclusao','autoridade'],
+  /* 7  Aviso Dispensa   */ ['responsavel','data_conclusao','data_publicacao'],
+  /* 8  Propostas        */ ['responsavel','data_conclusao'],
+  /* 9  Habilitação      */ ['responsavel','fornecedor'],
+  /* 10 Adjudicação      */ ['responsavel','data_conclusao','valor_adjudicado'],
+  /* 11 Homologação      */ ['responsavel','data_conclusao','autoridade'],
+  /* 12 Nota Empenho     */ ['responsavel','data_conclusao','num_empenho'],
+  /* 13 Instrumento      */ ['responsavel','num_contrato','data_assinatura','valor_contrato'],
+];
+
+async function _confirmarConclusaoEtapa(i) {
+  const required = STEP_DONE_REQUIRED[i];
+  if (!required) return true; // etapa não mapeada — permite
+  const fields = (currentProcess.steps[i]?.fields) || {};
+  const faltam = required
+    .filter(f => !fields[f] || String(fields[f]).trim() === '')
+    .map(f => STEP_REQUIRED_FIELDS[f] || f);
+  if (!faltam.length) return true;
+  return customConfirm(
+    `Os seguintes campos não foram preenchidos:\n\n• ${faltam.join('\n• ')}\n\nDeseja concluir a etapa mesmo assim?`,
+    { title: `Campos em branco — ${STEPS[i].name}`, icon: '⚠️', okLabel: 'Concluir mesmo assim', okClass: 'btn-danger', cancelLabel: 'Voltar e preencher' }
+  );
+}
+
 async function setStepStatus(i, status) {
   const p = currentProcess;
+  if (status === 'done') {
+    const ok = await _confirmarConclusaoEtapa(i);
+    if (!ok) return;
+  }
   const prev = p.steps[i].status;
   p.steps[i].status = status;
   p.steps[i].completedAt = status === 'done' ? Date.now() : null;
@@ -6627,7 +6692,7 @@ async function setStepStatus(i, status) {
   // Ao concluir a última etapa, abre automaticamente o painel de conformidade
   if (status === 'done' && processStatus(p) === 'done') {
     setTimeout(() => {
-      showToast('🎉 Processo concluído! Verificando conformidade…', 'success');
+      toast('🎉 Processo concluído! Verificando conformidade…', 'success');
       verificarConformidade();
     }, 400);
   }
@@ -9352,15 +9417,16 @@ function playNotify() {
 // ══════════════════════════════════════════════════════════════
 // CONFIRM MODAL — substitui confirm() nativo
 // ══════════════════════════════════════════════════════════════
-function customConfirm(msg, { title = 'Confirmar', icon = '⚠️', okLabel = 'Confirmar', okClass = 'btn-danger' } = {}) {
+function customConfirm(msg, { title = 'Confirmar', icon = '⚠️', okLabel = 'Confirmar', okClass = 'btn-danger', cancelLabel = 'Cancelar' } = {}) {
   return new Promise(res => {
     document.getElementById('confirm-msg').textContent   = msg;
     document.getElementById('confirm-title').textContent = title;
     document.getElementById('confirm-icon').textContent  = icon;
     const okBtn     = document.getElementById('confirm-ok');
     const cancelBtn = document.getElementById('confirm-cancel');
-    okBtn.textContent  = okLabel;
-    okBtn.className    = 'btn ' + okClass;
+    okBtn.textContent     = okLabel;
+    okBtn.className       = 'btn ' + okClass;
+    cancelBtn.textContent = cancelLabel;
     document.getElementById('confirm-overlay').classList.remove('hidden');
 
     const finish = val => {
@@ -11232,30 +11298,51 @@ async function _autoBackupSnapshot() {
   }
 }
 async function checkAutoBackupRestore() {
+  // ── 1. Verifica se há snapshot automático para restaurar (dados perdidos) ──
   const snap = localStorage.getItem('sgcd-auto-backup');
-  if (!snap) return;
-  const at = parseInt(localStorage.getItem('sgcd-auto-backup-at') || '0');
-  const u = getUser();
-  if (!u.auto_backup_exit) return;
-  // Only offer if snapshot is within last 7 days and has data
-  const age = Date.now() - at;
-  if (age > 7 * 86400000) return;
-  try {
-    const data = JSON.parse(snap);
-    if (!data._auto || !data.processes?.length) return;
-    const current = await dbGetAll('processes');
-    if (current.length >= data.processes.length) return; // no need to restore
-    const ok = await customConfirm(
-      `Encontrado snapshot automático de ${new Date(at).toLocaleString('pt-BR')} com ${data.processes.length} processos (atual: ${current.length}).\n\nDeseja restaurar?`,
-      { title: 'Restaurar snapshot automático', icon: '💾', okLabel: 'Restaurar', okClass: 'btn-primary' }
-    );
-    if (!ok) return;
-    await Promise.all(['processes','fornecedores'].map(s => dbClearStore(s)));
-    for (const p of data.processes   || []) await dbPut('processes',   p);
-    for (const f of data.fornecedores|| []) await dbPut('fornecedores', f);
-    toast(`Snapshot restaurado: ${data.processes.length} processos.`, 'success');
-    await loadProcesses(); renderDash();
-  } catch(e) { console.warn('Erro ao verificar snapshot:', e); }
+  if (snap) {
+    const at = parseInt(localStorage.getItem('sgcd-auto-backup-at') || '0');
+    const age = Date.now() - at;
+    if (age <= 7 * 86400000) {
+      try {
+        const data = JSON.parse(snap);
+        if (data._auto && data.processes?.length) {
+          const current = await dbGetAll('processes');
+          if (current.length < data.processes.length) {
+            const ok = await customConfirm(
+              `Encontrado snapshot automático de ${new Date(at).toLocaleString('pt-BR')} com ${data.processes.length} processos (atual: ${current.length}).\n\nDeseja restaurar?`,
+              { title: 'Restaurar snapshot automático', icon: '💾', okLabel: 'Restaurar', okClass: 'btn-primary' }
+            );
+            if (ok) {
+              await Promise.all(['processes','fornecedores'].map(s => dbClearStore(s)));
+              for (const p of data.processes   || []) await dbPut('processes',   p);
+              for (const f of data.fornecedores|| []) await dbPut('fornecedores', f);
+              toast(`Snapshot restaurado: ${data.processes.length} processos.`, 'success');
+              await loadProcesses(); renderDash();
+            }
+          }
+        }
+      } catch(e) { console.warn('Erro ao verificar snapshot:', e); }
+    }
+  }
+
+  // ── 2. Alerta se o último backup manual está vencido (> 7 dias) ──
+  const lastExport = parseInt(localStorage.getItem('sgcd-last-manual-export') || '0');
+  const ALERTA_DIAS = 7;
+  const diasSemBackup = lastExport
+    ? Math.floor((Date.now() - lastExport) / 86400000)
+    : null;
+  const banner = document.getElementById('backup-alert-banner');
+  const msg    = document.getElementById('backup-alert-msg');
+  if (!banner || !msg) return;
+
+  if (!lastExport) {
+    msg.textContent = 'Nenhum backup manual registrado. Exporte um backup para proteger seus dados contra perda por limpeza do navegador.';
+    banner.style.display = 'flex';
+  } else if (diasSemBackup >= ALERTA_DIAS) {
+    msg.textContent = `Último backup exportado há ${diasSemBackup} dias. Recomendamos exportar um novo backup para garantir a segurança dos dados.`;
+    banner.style.display = 'flex';
+  }
 }
 
 window.addEventListener('beforeunload', () => {
