@@ -89,7 +89,7 @@
       margin: 20mm 20mm 25mm;
       size: A4;
       @top-center {
-        content: "SGCD v1.13.0 — Manual Operacional";
+        content: "SGCD v1.14.0 — Manual Operacional";
         font-family: 'Times New Roman', serif;
         font-size: 9pt;
         color: #666;
@@ -118,7 +118,7 @@
     <div class="cover-title">Manual Operacional</div>
     <div class="cover-subtitle">SGCD — Sistema de Gestão de Contratação Direta</div>
     <div class="cover-system">Gestão de Processos de Dispensa de Licitação</div>
-    <div class="cover-version">Versão v1.13.0</div>
+    <div class="cover-version">Versão v1.14.0</div>
     <br>
     <div style="font-size:11pt; color:#555; line-height:1.8;">
       Aplicação web single-file para agentes de contratação pública<br>
@@ -197,6 +197,25 @@
     <div class="toc-item h3"><a href="#sec15-1">15.1 Acessando a trilha de auditoria</a></div>
     <div class="toc-item h3"><a href="#sec15-2">15.2 Tipos de eventos registrados</a></div>
     <div class="toc-item h3"><a href="#sec15-3">15.3 Filtros e relatório de auditoria</a></div>
+
+    <div class="toc-item h2"><a href="#sec16">16. Notificações In-App</a></div>
+    <div class="toc-item h3"><a href="#sec16-1">16.1 Abrindo o painel de alertas</a></div>
+    <div class="toc-item h3"><a href="#sec16-2">16.2 Tipos de alerta</a></div>
+
+    <div class="toc-item h2"><a href="#sec17">17. Templates de Processo</a></div>
+    <div class="toc-item h3"><a href="#sec17-1">17.1 Salvando um modelo</a></div>
+    <div class="toc-item h3"><a href="#sec17-2">17.2 Aplicando um modelo</a></div>
+
+    <div class="toc-item h2"><a href="#sec18">18. Importação de Fornecedores via CSV</a></div>
+    <div class="toc-item h3"><a href="#sec18-1">18.1 Formato do arquivo</a></div>
+    <div class="toc-item h3"><a href="#sec18-2">18.2 Realizando a importação</a></div>
+
+    <div class="toc-item h2"><a href="#sec19">19. Relatório Executivo</a></div>
+
+    <div class="toc-item h2"><a href="#sec20">20. QR Code e Verificação de Autenticidade</a></div>
+    <div class="toc-item h3"><a href="#sec20-1">20.1 QR Code nos documentos</a></div>
+    <div class="toc-item h3"><a href="#sec20-2">20.2 Como verificar um documento</a></div>
+    <div class="toc-item h3"><a href="#sec20-3">20.3 Histórico de edições por campo</a></div>
   </div>
 </div>
 
@@ -1213,8 +1232,162 @@
 </div>
 
 <hr class="section-divider">
+
+<!-- ─────────────────────────────────────────────── SEÇÃO 16 -->
+<h2 id="sec16">16. Notificações In-App</h2>
+<p>A partir da versão 1.14.0, o SGCD monitora automaticamente situações críticas nos processos e certidões e exibe alertas em tempo real diretamente na interface, sem necessidade de acessar cada processo individualmente.</p>
+
+<h3 id="sec16-1">16.1 Abrindo o painel de alertas</h3>
+<p>O ícone de <strong>sino (🔔)</strong> na barra lateral exibe um <strong>badge vermelho</strong> com a contagem de alertas ativos. Clique no ícone para abrir o painel "Alertas". O painel fecha automaticamente ao clicar fora dele ou ao navegar para um processo.</p>
+<div class="dica">
+  <strong>Dica:</strong> O badge é atualizado automaticamente toda vez que os processos são carregados. Não é necessário recarregar a página.
+</div>
+
+<h3 id="sec16-2">16.2 Tipos de alerta</h3>
+<table>
+  <tr><th>Ícone</th><th>Tipo</th><th>Critério</th></tr>
+  <tr><td>🟡</td><td><strong>Prazo vencendo</strong></td><td>Processo com prazo nos próximos 7 dias (inclusive hoje)</td></tr>
+  <tr><td>🔴</td><td><strong>Prazo vencido</strong></td><td>Processo com prazo já ultrapassado e não concluído</td></tr>
+  <tr><td>⏸</td><td><strong>Processo parado</strong></td><td>Processo não concluído sem atualização há 15 dias ou mais</td></tr>
+  <tr><td>📋</td><td><strong>Certidão vencendo</strong></td><td>Certidão de fornecedor com validade nos próximos 30 dias</td></tr>
+</table>
+<p>Clique em qualquer alerta para navegar diretamente ao processo correspondente.</p>
+
+<hr class="section-divider">
+
+<!-- ─────────────────────────────────────────────── SEÇÃO 17 -->
+<h2 id="sec17">17. Templates de Processo</h2>
+<p>Templates permitem salvar a configuração de um processo existente como modelo reutilizável, agilizando a criação de novos processos com características semelhantes — mesma base legal, natureza de despesa, critério de seleção, unidade solicitante etc.</p>
+
+<h3 id="sec17-1">17.1 Salvando um modelo</h3>
+<ol>
+  <li>Abra o processo que deseja usar como modelo</li>
+  <li>No cabeçalho do processo, clique no botão <strong>"⊞ Modelo"</strong></li>
+  <li>Digite um nome descritivo para o modelo (ex.: "Manutenção predial — Art. 75, II")</li>
+  <li>Clique em <strong>OK</strong></li>
+</ol>
+<p>Os seguintes campos são salvos no modelo: objeto, base legal, critério de seleção, valor estimado, unidade solicitante, natureza de despesa, categoria e subcategoria.</p>
+<div class="nota">
+  <strong>Nota:</strong> Os modelos são armazenados localmente no <code>localStorage</code> do navegador e persistem entre sessões. Não são afetados pelo backup/restauração do IndexedDB.
+</div>
+
+<h3 id="sec17-2">17.2 Aplicando um modelo</h3>
+<ol>
+  <li>Clique em <strong>"+ Novo Processo"</strong> no dashboard</li>
+  <li>Se houver modelos salvos, uma barra de chips aparece acima do formulário com os nomes dos modelos disponíveis</li>
+  <li>Clique no chip do modelo desejado para preencher automaticamente os campos</li>
+  <li>Ajuste os campos conforme necessário e clique em <strong>"Criar"</strong></li>
+</ol>
+<p>Para remover um modelo, clique no <strong>✕</strong> ao lado do nome do chip. A exclusão é imediata e irreversível.</p>
+
+<hr class="section-divider">
+
+<!-- ─────────────────────────────────────────────── SEÇÃO 18 -->
+<h2 id="sec18">18. Importação de Fornecedores via CSV</h2>
+<p>O SGCD permite importar múltiplos fornecedores de uma vez a partir de um arquivo CSV, eliminando o cadastro manual um a um. O sistema consulta automaticamente os dados na Receita Federal para completar o cadastro de cada fornecedor importado.</p>
+
+<h3 id="sec18-1">18.1 Formato do arquivo</h3>
+<p>O arquivo CSV deve seguir as seguintes regras:</p>
+<ul>
+  <li>Separador: <strong>vírgula (,)</strong> ou <strong>ponto e vírgula (;)</strong> — detectado automaticamente</li>
+  <li>A <strong>primeira linha</strong> deve conter os nomes das colunas (cabeçalho)</li>
+  <li>Campos obrigatórios: ao menos <strong>cnpj</strong> ou <strong>razao_social</strong></li>
+  <li>Codificação: <strong>UTF-8</strong> (recomendado) ou ANSI</li>
+</ul>
+<p>Clique em <strong>"Baixar modelo CSV"</strong> dentro do modal de importação para obter um arquivo de exemplo com todos os 23 campos suportados já preenchidos com dados fictícios. Basta substituir os dados e importar.</p>
+<table>
+  <tr><th>Coluna</th><th>Descrição</th></tr>
+  <tr><td><code>cnpj</code></td><td>CNPJ do fornecedor (com ou sem formatação)</td></tr>
+  <tr><td><code>razao_social</code></td><td>Razão social ou nome empresarial</td></tr>
+  <tr><td><code>nome_fantasia</code></td><td>Nome fantasia (opcional)</td></tr>
+  <tr><td><code>email</code></td><td>E-mail de contato</td></tr>
+  <tr><td><code>telefone</code> / <code>telefone2</code></td><td>Telefones de contato</td></tr>
+  <tr><td><code>cep</code>, <code>logradouro</code>, <code>numero</code>…</td><td>Campos de endereço completo</td></tr>
+  <tr><td><code>opcao_simples</code> / <code>opcao_mei</code></td><td>Regime tributário (SIM/NÃO)</td></tr>
+</table>
+
+<h3 id="sec18-2">18.2 Realizando a importação</h3>
+<ol>
+  <li>Na tela de <strong>Fornecedores</strong>, clique em <strong>"Importar CSV"</strong></li>
+  <li>Leia as instruções de formato e, se necessário, baixe o modelo</li>
+  <li>Clique na área de upload ou arraste o arquivo CSV para a área indicada</li>
+  <li>Verifique a <strong>pré-visualização</strong> das primeiras 8 linhas detectadas</li>
+  <li>Marque ou desmarque a opção <strong>"Consultar CNPJ automaticamente"</strong> conforme desejado</li>
+  <li>Clique em <strong>"Importar"</strong> e acompanhe a barra de progresso</li>
+</ol>
+<div class="aviso">
+  <strong>Atenção:</strong> A consulta automática de CNPJ exige conexão à internet e pode ser mais lenta para arquivos com muitos registros, pois cada CNPJ é consultado individualmente. Para importações grandes, considere desmarcar essa opção e completar os dados depois pelo card de edição do fornecedor.
+</div>
+
+<hr class="section-divider">
+
+<!-- ─────────────────────────────────────────────── SEÇÃO 19 -->
+<h2 id="sec19">19. Relatório Executivo</h2>
+<p>O Relatório Executivo oferece uma visão consolidada e gerencial de todos os processos cadastrados no sistema, ideal para apresentações internas, reuniões de gestão ou prestação de contas.</p>
+<p>Para gerar o relatório:</p>
+<ol>
+  <li>Acesse o <strong>Dashboard</strong> (tela inicial de Processos)</li>
+  <li>Clique no botão <strong>"Executivo"</strong> ao lado do botão "Relatório"</li>
+  <li>O documento abrirá em uma nova janela</li>
+  <li>Clique em <strong>"🖨 Imprimir / PDF"</strong> para salvar ou imprimir</li>
+</ol>
+<p>O relatório contém:</p>
+<ul>
+  <li><strong>Cabeçalho institucional</strong> com nome do órgão e data/hora de geração</li>
+  <li><strong>4 indicadores-chave (KPIs)</strong>: total de processos, concluídos (com percentual), em andamento e valor total estimado</li>
+  <li><strong>Gráfico de barras</strong> mostrando a distribuição por status (Concluído, Em andamento, Não iniciado, Bloqueado)</li>
+  <li><strong>Tabela de alertas</strong> listando processos parados há 15 dias ou mais, com indicação do tempo parado em destaque vermelho</li>
+  <li><strong>Lista dos últimos 20 processos</strong> com número, objeto, unidade, status colorido e valor estimado</li>
+</ul>
+
+<hr class="section-divider">
+
+<!-- ─────────────────────────────────────────────── SEÇÃO 20 -->
+<h2 id="sec20">20. QR Code e Verificação de Autenticidade</h2>
+<p>A partir da versão 1.14.0, todos os documentos gerados pelo SGCD incluem um <strong>QR Code no rodapé</strong> que permite verificar a autenticidade do documento de forma rápida, confirmando que ele foi gerado pelo sistema e não foi adulterado.</p>
+
+<h3 id="sec20-1">20.1 QR Code nos documentos</h3>
+<p>O rodapé de cada documento gerado (Autorização, Ata, Aviso, Extrato de Contrato, Despachos, Termos e Mapa de Preços) exibe:</p>
+<ul>
+  <li>Um <strong>QR Code</strong> gerado localmente (sem dependências externas)</li>
+  <li>A <strong>data e hora</strong> de geração do documento</li>
+  <li>O <strong>código de autenticidade</strong> no formato <code>XXXX-XXXX</code> (8 caracteres hexadecimais derivados dos dados do processo)</li>
+</ul>
+<p>O QR Code codifica o endereço: <code>http://localhost:3000/verificar/{código}</code></p>
+
+<h3 id="sec20-2">20.2 Como verificar um documento</h3>
+<p>A verificação funciona enquanto o SGCD estiver em execução na máquina onde o documento foi gerado (ou em computadores com acesso à mesma rede local).</p>
+<ol>
+  <li>Abra o <strong>Iniciar SGCD.bat</strong> para garantir que o servidor local está em execução</li>
+  <li>Escaneie o <strong>QR Code</strong> impresso no rodapé do documento com um smartphone ou tablet</li>
+  <li>O navegador abrirá a página de verificação em <code>http://localhost:3000/verificar/XXXX-XXXX</code></li>
+  <li>O sistema consultará automaticamente a base de dados local e exibirá o resultado</li>
+</ol>
+<table>
+  <tr><th>Resultado</th><th>Significado</th></tr>
+  <tr><td style="color:#166534;font-weight:700">✓ Documento Autêntico</td><td>O código corresponde a um processo existente na base. São exibidos: número PA/DL, objeto, unidade, valor estimado e data de criação</td></tr>
+  <tr><td style="color:#b91c1c;font-weight:700">✗ Documento não encontrado</td><td>O código não corresponde a nenhum processo. O documento pode ter sido adulterado, gerado em outra instalação do SGCD ou a base de dados pode estar em outro computador</td></tr>
+</table>
+<div class="aviso">
+  <strong>Limitação:</strong> A verificação é local — funciona apenas enquanto o SGCD estiver aberto na mesma máquina (ou acessível via rede local). Documentos enviados externamente não podem ser verificados pelo destinatário sem acesso ao servidor do órgão emissor.
+</div>
+
+<h3 id="sec20-3">20.3 Histórico de edições por campo</h3>
+<p>Cada campo editável no <strong>painel de informações</strong> do processo possui um botão <strong>🕐</strong> ao lado do seu rótulo. Clique nele para visualizar um histórico completo de todas as alterações já realizadas naquele campo específico.</p>
+<p>O painel de histórico exibe, para cada alteração:</p>
+<ul>
+  <li>A <strong>data e hora</strong> exata da modificação</li>
+  <li>O <strong>valor anterior</strong> (em vermelho)</li>
+  <li>O <strong>novo valor</strong> (em verde)</li>
+</ul>
+<p>O histórico é baseado nos eventos <strong>"Campo alterado"</strong> registrados na Trilha de Auditoria Global (ver Seção 15). Se nenhuma alteração foi registrada para o campo, o painel indicará "Nenhuma alteração registrada".</p>
+<div class="dica">
+  <strong>Dica:</strong> O histórico por campo é especialmente útil para rastrear mudanças em valores estimados, prazos e bases legais — informações críticas para conformidade do processo.
+</div>
+
+<hr class="section-divider">
 <p style="text-align:center; font-size:9pt; color:#888; margin-top:20pt;">
-  SGCD v1.13.0 — Manual Operacional<br>
+  SGCD v1.14.0 — Manual Operacional<br>
   Sistema de Gestão de Contratação Direta<br>
   Lei Federal nº 14.133/2021
 </p>
