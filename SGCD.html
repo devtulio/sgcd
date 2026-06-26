@@ -5509,7 +5509,7 @@ async function onStepDrop(e, tgtIdx) {
   p.stepOrder = order; _dragSrcIdx = null;
   await saveProcess(p); renderChecklist();
 }
-async async function resetStepOrder() {
+async function resetStepOrder() {
   currentProcess.stepOrder = null;
   await saveProcess(currentProcess);
   renderChecklist();
