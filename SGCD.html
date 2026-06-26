@@ -1293,6 +1293,7 @@
       </select>
     </div>
     <div id="forn-results-info" style="display:none;font-size:.75rem;color:var(--gray-500);margin-bottom:8px;padding:0 2px"></div>
+    <div id="forn-ranking" style="display:none;background:var(--bg-card);border-radius:10px;border:1px solid var(--gray-100);padding:12px 14px;margin-bottom:14px"></div>
     <div id="forn-list"></div>
   </div>
 
@@ -1416,9 +1417,17 @@
         <div class="checklist-header" style="flex-wrap:nowrap;gap:8px;margin-bottom:8px">
           <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:0">
             <h3>Checklist do Processo</h3>
+            <span id="save-indicator" style="font-size:.68rem;color:var(--success);opacity:0;transition:opacity .3s;white-space:nowrap;font-weight:600"></span>
             <button class="btn btn-ghost btn-sm" style="font-size:.68rem;padding:2px 5px;white-space:nowrap" onclick="resetStepOrder()" id="btn-reset-order" title="Restaurar ordem padrão das etapas">↺</button>
             <button class="btn btn-ghost btn-sm" style="font-size:.68rem;padding:2px 5px;white-space:nowrap" onclick="toggleCompactMode()" id="btn-compact-mode" title="Alternar modo compacto">⊟ Compacto</button>
             <button class="btn btn-ghost btn-sm" style="font-size:.68rem;padding:2px 5px;white-space:nowrap" onclick="toggleExpandAll()" id="btn-expand-all" title="Expandir ou recolher todas as etapas">⊞ Expandir</button>
+          </div>
+          <div style="position:relative;flex-shrink:0">
+            <input type="text" id="step-search" placeholder="Buscar etapa…"
+              oninput="filtrarEtapas(this.value)"
+              onkeydown="if(event.key==='Escape'){this.value='';filtrarEtapas('');this.blur()}"
+              style="font-size:.72rem;padding:3px 24px 3px 8px;border:1px solid var(--gray-200);border-radius:6px;width:140px;background:var(--bg-card);color:inherit">
+            <span style="position:absolute;right:6px;top:50%;transform:translateY(-50%);color:var(--gray-400);font-size:.7rem;pointer-events:none">🔍</span>
           </div>
         </div>
         <div id="d-progress-wrap" class="progress-wrap" style="margin-bottom:12px;width:100%">
@@ -2184,7 +2193,7 @@ const ICONS = {
 // DB — IndexedDB wrapper
 // ══════════════════════════════════════════════════════════════
 let db;
-const SGCD_VERSION = '1.15.0';
+const SGCD_VERSION = '1.16.0';
 document.title = `SGCD v${SGCD_VERSION}`;
 const DB_NAME = 'dispensaDB', DB_VER = 3;
 
@@ -3055,9 +3064,27 @@ async function loadProcesses() {
   try { renderNotificacoes(); } catch {}
 }
 
+let _saveIndicatorTimer = null;
+function _showSaveIndicator() {
+  let el = document.getElementById('save-indicator');
+  if (!el) return;
+  el.textContent = '💾 Salvando…';
+  el.style.opacity = '1';
+  clearTimeout(_saveIndicatorTimer);
+}
+function _hideSaveIndicator() {
+  let el = document.getElementById('save-indicator');
+  if (!el) return;
+  el.textContent = '✓ Salvo';
+  _saveIndicatorTimer = setTimeout(() => { el.style.opacity = '0'; }, 1800);
+}
+
 async function saveProcess(p) {
+  _showSaveIndicator();
+  p.updatedAt = Date.now();
   await dbPut('processes', p);
   updateAgendaBadge();
+  _hideSaveIndicator();
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -3400,6 +3427,47 @@ async function renderFornecedores() {
     } else {
       info.style.display = 'none';
     }
+  }
+
+  // Ranking de fornecedores
+  const rankingEl = document.getElementById('forn-ranking');
+  if (rankingEl && !q && processes.length > 0) {
+    const anoAtual = new Date().getFullYear();
+    const scoreMap = new Map();
+    for (const p of processes) {
+      const fId = typeof p.fornecedor === 'object' ? p.fornecedor?.id : null;
+      const fCnpj = typeof p.fornecedor === 'object' ? p.fornecedor?.cnpj : null;
+      if (!fId && !fCnpj) continue;
+      const key = fId || fCnpj;
+      const fData = all.find(x => x.id === key || x.cnpj === fCnpj);
+      if (!fData) continue;
+      const nome = fData.razao_social || fData.nome || key;
+      const isVenc = processStatus(p) === 'done';
+      const valor = parseValor(p.steps?.[10]?.fields?.valor_adjudicado || p.valor || 0);
+      const anoProc = new Date(p.createdAt).getFullYear();
+      if (!scoreMap.has(key)) scoreMap.set(key, { nome, participacoes: 0, vitorias: 0, valorAno: 0 });
+      const e = scoreMap.get(key);
+      e.participacoes++;
+      if (isVenc) e.vitorias++;
+      if (anoProc === anoAtual) e.valorAno += valor;
+    }
+    const top = [...scoreMap.values()].sort((a, b) => b.vitorias - a.vitorias || b.participacoes - a.participacoes).slice(0, 5);
+    if (top.length > 0) {
+      rankingEl.innerHTML = `<div style="margin-bottom:16px">
+        <h4 style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--gray-500);margin-bottom:8px">🏆 Top Fornecedores (${anoAtual})</h4>
+        ${top.map((f, i) => `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--gray-100)">
+          <span style="width:18px;height:18px;border-radius:50%;background:${['#f59e0b','#94a3b8','#b45309','var(--gray-200)','var(--gray-200)'][i]};color:#fff;font-size:.6rem;font-weight:700;display:flex;align-items:center;justify-content:center">${i+1}</span>
+          <span style="flex:1;font-size:.78rem;font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(f.nome)}</span>
+          <span style="font-size:.68rem;color:var(--gray-500)">${f.vitorias} vitória${f.vitorias!==1?'s':''}</span>
+          ${f.valorAno > 0 ? `<span style="font-size:.65rem;color:var(--success);white-space:nowrap">${fmtMoney(f.valorAno)}</span>` : ''}
+        </div>`).join('')}
+      </div>`;
+      rankingEl.style.display = '';
+    } else {
+      rankingEl.style.display = 'none';
+    }
+  } else if (rankingEl) {
+    rankingEl.style.display = 'none';
   }
 
   const el = document.getElementById('forn-list');
@@ -3965,6 +4033,7 @@ function filtrarPorStat(card, status) {
   renderDash();
 }
 
+let _lastDashFilters = '';
 function renderDash() {
   const q     = document.getElementById('search').value.toLowerCase();
   const fSt   = document.getElementById('filter-status').value;
@@ -3973,6 +4042,10 @@ function renderDash() {
   const fAte  = document.getElementById('filter-ate').value;
   const fVmin = parseFloat(document.getElementById('filter-vmin').value) || null;
   const fVmax = parseFloat(document.getElementById('filter-vmax').value) || null;
+
+  // Reseta paginação ao mudar filtros
+  const filtersKey = [q, fSt, fUn, fDe, fAte, fVmin, fVmax, document.getElementById('sort-by')?.value].join('|');
+  if (filtersKey !== _lastDashFilters) { window._dashPage = 1; _lastDashFilters = filtersKey; }
 
   // Populate unidade dropdown
   const unidadeSel = document.getElementById('filter-unidade');
@@ -4140,8 +4213,14 @@ function renderDash() {
   }
   _setKanbanActive(false);
 
+  // Paginação
+  const PAGE_SIZE = 25;
+  if (!window._dashPage) window._dashPage = 1;
+  const paginated = filtered.slice(0, window._dashPage * PAGE_SIZE);
+  const hasMore = filtered.length > paginated.length;
+
   const hoje = new Date(); hoje.setHours(0,0,0,0);
-  list.innerHTML = filtered.map(p => {
+  list.innerHTML = paginated.map(p => {
     const st   = processStatus(p);
     const pc   = pct(p);
     const stl  = { todo:'badge-todo', progress:'badge-progress', done:'badge-done', blocked:'badge-blocked' }[st];
@@ -4171,7 +4250,18 @@ function renderDash() {
         </div>
         ${(()=>{ if (st !== 'progress') return ''; const nx = nextPendingStep(p); return nx ? `<div><span class="step-atual"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>${nx.idx+1}. ${escHtml(nx.step.name)}</span></div>` : ''; })()}
         <div class="meta">
-          ${p.valor ? `<span>${ICONS.coin()} ${fmtMoney(p.valor)}</span>` : ''}
+          ${(()=>{
+            if (!p.valor) return '';
+            const ve = parseValor(p.valor);
+            const adj = p.steps?.[10]?.fields?.valor_adjudicado;
+            const va = adj ? parseValor(adj) : null;
+            if (va && va > 0 && ve > 0 && va < ve) {
+              const eco = ve - va;
+              const pctEco = Math.round(eco / ve * 100);
+              return `<span title="Valor estimado: ${fmtMoney(p.valor)}">${ICONS.coin()} ${fmtMoney(adj)} <span style="color:var(--success);font-size:.65rem;font-weight:700">▼${pctEco}%</span></span>`;
+            }
+            return `<span>${ICONS.coin()} ${fmtMoney(p.valor)}</span>`;
+          })()}
           ${p.unidade ? `<span style="display:inline-flex;align-items:center;gap:4px"><span class="unit-dot" style="background:${unitColor(p.unidade)}"></span>${ICONS.building()} ${escHtml(p.unidade)}</span>` : ''}
           ${(()=>{ const fn = typeof p.fornecedor==='object' ? (p.fornecedor?.razao_social||'') : (p.fornecedor||''); return fn ? `<span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> ${escHtml(fn)}</span>` : ''; })()}
           ${(()=>{ if (!p.prazo) return ''; const d = new Date(p.prazo + 'T00:00:00'); const now = new Date(); const past = d < now; const diffDays = Math.ceil((d - now) / 86400000); if (past) return `<span style="background:var(--danger);color:#fff;padding:2px 7px;border-radius:99px;font-size:.68rem;font-weight:600">🔴 Vencido</span>`; if (diffDays < 7) return `<span style="background:var(--warning-light);color:#a16207;padding:2px 7px;border-radius:99px;font-size:.68rem;font-weight:600">⚠ ${diffDays} dias</span>`; return `<span style="color:var(--gray-500)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> ${d.toLocaleDateString('pt-BR')}</span>`; })()}
@@ -4186,6 +4276,14 @@ function renderDash() {
       ${stallBar}
     </div>`;
   }).join('');
+
+  if (hasMore) {
+    list.insertAdjacentHTML('beforeend', `<div style="text-align:center;padding:16px 0">
+      <button class="btn btn-outline" onclick="window._dashPage++;renderDash()" style="font-size:.8rem">
+        Carregar mais (${filtered.length - paginated.length} restantes)
+      </button>
+    </div>`);
+  }
 }
 
 function escHtml(s) {
@@ -5411,10 +5509,42 @@ async function onStepDrop(e, tgtIdx) {
   p.stepOrder = order; _dragSrcIdx = null;
   await saveProcess(p); renderChecklist();
 }
-async function resetStepOrder() {
+async async function resetStepOrder() {
   currentProcess.stepOrder = null;
   await saveProcess(currentProcess);
   renderChecklist();
+}
+
+function filtrarEtapas(q) {
+  const term = (q || '').toLowerCase().trim();
+  const cards = document.querySelectorAll('#checklist .step-card');
+  let found = 0;
+  cards.forEach(card => {
+    const id = card.id.replace('step-card-', '');
+    const step = STEPS[parseInt(id)] || {};
+    const text = ((step.name || '') + ' ' + (step.sub || '')).toLowerCase();
+    const match = !term || text.includes(term);
+    card.style.display = match ? '' : 'none';
+    if (match) {
+      found++;
+      // Expande automaticamente a etapa encontrada quando há busca ativa
+      if (term && !card.classList.contains('expanded')) {
+        expandedSteps.add(parseInt(id));
+        card.classList.add('expanded');
+        card.querySelector('.step-body')?.classList.remove('hidden');
+      }
+    }
+  });
+  // Feedback quando nenhuma etapa corresponde
+  let noResult = document.getElementById('step-search-empty');
+  if (!noResult) {
+    noResult = document.createElement('p');
+    noResult.id = 'step-search-empty';
+    noResult.style.cssText = 'color:var(--gray-400);font-size:.8rem;text-align:center;padding:16px 0;display:none';
+    noResult.textContent = 'Nenhuma etapa encontrada.';
+    document.getElementById('checklist').after(noResult);
+  }
+  noResult.style.display = (term && found === 0) ? '' : 'none';
 }
 
 // Retorna uma linha de resumo dos dados preenchidos numa etapa concluída
@@ -5468,9 +5598,35 @@ async function _buildStepCardHtml(i, p, isNext = false) {
   const expanded = expandedSteps.has(i);
   const isDone    = status === 'done';
   const isBlocked = status === 'blocked';
-  const files = await dbGetByIndex('files', 'processId', p.id + '_' + i);
-  const certFileMap = step.certidoes ? await getCertFilesMap(p.id, i) : {};
-  const fileCount = files.length;
+
+  // Lazy loading: só carrega arquivos/fields quando a etapa está expandida
+  let files = [], certFileMap = {}, fileCount = 0, bodyHtml = '';
+  if (expanded) {
+    files = await dbGetByIndex('files', 'processId', p.id + '_' + i);
+    certFileMap = step.certidoes ? await getCertFilesMap(p.id, i) : {};
+    fileCount = files.length;
+    bodyHtml = `${renderStepFields(i, step, data, certFileMap)}
+      ${step.certidoes ? '' : `<div style="margin-top:12px">
+        <label style="display:block;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-500);margin-bottom:4px">Documentos anexos</label>
+        ${renderFileList(files, i)}
+        <div class="upload-zone" onclick="triggerUpload(${i})" id="dz-${i}"
+             ondragover="event.preventDefault();this.classList.add('dragover')"
+             ondragleave="this.classList.remove('dragover')"
+             ondrop="handleDrop(event,${i})">
+          <input type="file" id="fu-${i}" multiple accept=".pdf,.docx,.doc,.xlsx,.xls,.png,.jpg,.jpeg" onchange="handleFiles(${i})">
+          📎 Clique ou arraste arquivos (PDF, DOCX, etc.)
+        </div>
+      </div>`}
+      <div class="step-actions">
+        <button class="btn btn-success btn-sm" onclick="markStep(${i},'done')">✓ Concluída</button>
+        <button class="btn btn-outline btn-sm" onclick="markStep(${i},'pending')">Desfazer</button>
+        <button class="btn btn-danger btn-sm"  onclick="markStep(${i},'blocked')">✗ Bloqueada</button>
+      </div>`;
+  } else {
+    // Conta arquivos de forma eficiente apenas para exibir no header
+    try { files = await dbGetByIndex('files', 'processId', p.id + '_' + i); fileCount = files.length; } catch {}
+  }
+
   const nextBadge = isNext ? `<span class="step-next-badge" title="Próxima etapa a concluir">▶ Próxima</span>` : '';
   return `<div class="step-card ${isDone?'completed':''} ${isBlocked?'blocked':''} ${expanded?'expanded':''}" id="step-card-${i}" draggable="true" ondragstart="onStepDragStart(event,${i})" ondragover="onStepDragOver(event,${i})" ondragleave="onStepDragLeave(${i})" ondrop="onStepDrop(event,${i})">
       <div class="step-row" onclick="toggleStep(${i})">
@@ -5488,23 +5644,7 @@ async function _buildStepCardHtml(i, p, isNext = false) {
         ${data.completedAt ? `<div class="step-date">${fmtDate(data.completedAt)}</div>` : ''}
       </div>
       <div class="step-body ${expanded?'':'hidden'}" id="step-body-${i}">
-        ${renderStepFields(i, step, data, certFileMap)}
-        ${step.certidoes ? '' : `<div style="margin-top:12px">
-          <label style="display:block;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-500);margin-bottom:4px">Documentos anexos</label>
-          ${renderFileList(files, i)}
-          <div class="upload-zone" onclick="triggerUpload(${i})" id="dz-${i}"
-               ondragover="event.preventDefault();this.classList.add('dragover')"
-               ondragleave="this.classList.remove('dragover')"
-               ondrop="handleDrop(event,${i})">
-            <input type="file" id="fu-${i}" multiple accept=".pdf,.docx,.doc,.xlsx,.xls,.png,.jpg,.jpeg" onchange="handleFiles(${i})">
-            📎 Clique ou arraste arquivos (PDF, DOCX, etc.)
-          </div>
-        </div>`}
-        <div class="step-actions">
-          <button class="btn btn-success btn-sm" onclick="markStep(${i},'done')">✓ Concluída</button>
-          <button class="btn btn-outline btn-sm" onclick="markStep(${i},'pending')">Desfazer</button>
-          <button class="btn btn-danger btn-sm"  onclick="markStep(${i},'blocked')">✗ Bloqueada</button>
-        </div>
+        ${bodyHtml}
       </div>
     </div>`;
 }
@@ -8590,17 +8730,35 @@ function _gerarDocumento(win, html, docNome) {
     const ref = currentProcess ? ` — ${currentProcess.num_dl || currentProcess.objeto?.slice(0, 40) || ''}` : '';
     _auditEvento('DOCUMENTO_GERADO', `${docNome}${ref}`, currentProcess?.id || null);
   }
+
+  // Injeta marca d'água "MINUTA" quando o processo ainda não está concluído
+  if (currentProcess && processStatus(currentProcess) !== 'done') {
+    const watermarkCss = `<style>
+      @media print { body::before { content:'MINUTA'; } }
+      body::before {
+        content: 'MINUTA';
+        position: fixed; top: 50%; left: 50%;
+        transform: translate(-50%, -50%) rotate(-35deg);
+        font-size: 96pt; font-weight: 900; font-family: Arial, sans-serif;
+        color: rgba(220,0,0,.07); pointer-events: none; z-index: 9999;
+        letter-spacing: 8px; white-space: nowrap; user-select: none;
+      }
+    </style>`;
+    html = html.replace('</head>', watermarkCss + '</head>');
+  }
   const custom = localStorage.getItem('sgcd-brasao-dataurl');
   let finalHtml;
   if (custom) {
-    // Fix #2: gerarAta embute o brasão como base64 direto (sem placeholder);
-    // tenta substituir o placeholder primeiro e, se ausente, substitui qualquer base64 longo de imagem
-    finalHtml = html.includes('__BRASAO_PLACEHOLDER__')
-      ? html.replace('data:image/png;base64,__BRASAO_PLACEHOLDER__', custom)
-      : html.replace(/data:image\/png;base64,[A-Za-z0-9+\/=]{200,}/, custom);
+    // Substitui TODAS as ocorrências do placeholder (ex: cover page + header no Processo Completo)
+    if (html.includes('__BRASAO_PLACEHOLDER__')) {
+      finalHtml = html.replaceAll('data:image/png;base64,__BRASAO_PLACEHOLDER__', custom);
+    } else {
+      // gerarAta embute o brasão diretamente — substitui todas as imagens base64 longas
+      finalHtml = html.replace(/data:image\/png;base64,[A-Za-z0-9+\/=]{200,}/g, custom);
+    }
   } else {
-    // gerarAta já tem o base64 padrão embutido; o replace abaixo é no-op (sem placeholder) — correto
-    finalHtml = html.replace('__BRASAO_PLACEHOLDER__', _getBrasaoB64());
+    // Sem brasão customizado: usa o padrão embutido no gerarAta
+    finalHtml = html.replaceAll('__BRASAO_PLACEHOLDER__', _getBrasaoB64());
   }
   win.document.write(finalHtml);
   win.document.close();
@@ -8700,10 +8858,8 @@ function gerarProcessoCompleto() {
 
   const statusLabel = { pending:'Em instrução', done:'Concluído', blocked:'Bloqueado' };
   const procStatus = processStatus(p);
-  const brasaoSrc = u.brasao || null;
-  const brasaoTag = brasaoSrc
-    ? `<img src="${brasaoSrc}" alt="Brasão" style="height:80pt;width:auto;display:block;margin:0 auto 12pt">`
-    : '';
+  // Usa o placeholder padrão — _gerarDocumento() substitui pelo brasão real
+  const brasaoTag = `<img src="data:image/png;base64,__BRASAO_PLACEHOLDER__" alt="Brasão" style="height:80pt;width:auto;display:block;margin:0 auto 12pt">`;
 
   const coverPage = `<div class="cover-page">
     ${brasaoTag}
@@ -9918,6 +10074,25 @@ async function _buildNotificacoes() {
     }
   }
 
+  // Vigência contratual vencendo em 30 dias (todos os processos concluídos com contrato)
+  for (const p of processes) {
+    const vigFinal = p.steps?.[13]?.fields?.vigencia_final;
+    if (!vigFinal) continue;
+    const d = new Date(vigFinal + 'T00:00:00');
+    const diff = Math.ceil((d - now) / 86400000);
+    if (diff >= 0 && diff <= 30) {
+      const num = p.num_dl ? 'DL ' + p.num_dl : p.num_proc ? 'PA ' + p.num_proc : '';
+      itens.push({ tipo: 'vigencia', p, diff,
+        titulo: `Vigência contratual vence em ${diff === 0 ? 'hoje' : diff + ' dia' + (diff > 1 ? 's' : '')}`,
+        sub: (num ? num + ' — ' : '') + (p.objeto?.slice(0, 60) || '') });
+    } else if (diff < 0 && diff >= -7) {
+      const num = p.num_dl ? 'DL ' + p.num_dl : p.num_proc ? 'PA ' + p.num_proc : '';
+      itens.push({ tipo: 'vigencia-vencida', p, diff,
+        titulo: `Vigência contratual venceu há ${Math.abs(diff)} dia${Math.abs(diff) > 1 ? 's' : ''}`,
+        sub: (num ? num + ' — ' : '') + (p.objeto?.slice(0, 60) || '') });
+    }
+  }
+
   // Certidões vencendo em 30 dias (lê fornecedores diretamente do IndexedDB)
   try {
     const allForns = await dbGetAll('fornecedores');
@@ -9951,8 +10126,8 @@ async function renderNotificacoes() {
     list.innerHTML = '<div class="notif-empty">✅ Nenhum alerta no momento</div>';
     return;
   }
-  const _icon = { prazo:'🟡', vencido:'🔴', parado:'⏸', cert:'📋' };
-  const _bg   = { prazo:'#FFF3CD', vencido:'#FCEBEB', parado:'#F3F4F6', cert:'#EFF6FF' };
+  const _icon = { prazo:'🟡', vencido:'🔴', parado:'⏸', cert:'📋', vigencia:'📅', 'vigencia-vencida':'🔴' };
+  const _bg   = { prazo:'#FFF3CD', vencido:'#FCEBEB', parado:'#F3F4F6', cert:'#EFF6FF', vigencia:'#FFF3CD', 'vigencia-vencida':'#FCEBEB' };
   list.innerHTML = itens.map(it => `
     <div class="notif-item" onclick="toggleNotificacoes();${it.p ? `openProcess('${it.p.id}')` : ''}">
       <div class="notif-icon" style="background:${_bg[it.tipo]}">${_icon[it.tipo]}</div>
