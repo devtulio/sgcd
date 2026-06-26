@@ -120,7 +120,10 @@
     box-shadow: 0 2px 8px rgba(0,0,0,.4);
     position: sticky; top: 0; z-index: 100;
   }
-  header .hdr-brand { display: flex; align-items: center; gap: 10px; position: absolute; left: 50%; transform: translateX(-50%); }
+  header .hdr-brand { display: flex; align-items: center; gap: 10px; }
+  header .hdr-left  { flex: 1; display: flex; align-items: center; }
+  header .hdr-center{ flex: 0 1 auto; display: flex; align-items: center; }
+  header .hdr-right { flex: 1; display: flex; align-items: center; justify-content: flex-end; gap: 14px; }
   header .hdr-titles { display: flex; flex-direction: column; gap: 1px; }
   header .hdr-instituicao { font-size: .65rem; font-weight: 400; letter-spacing: .6px; text-transform: uppercase; opacity: .55; white-space: nowrap; }
   header .hdr-logo {
@@ -166,6 +169,8 @@
   .cfg-tab.active { color:var(--brand); border-bottom-color:var(--brand); }
   .cfg-panel { display:none; }
   .cfg-panel.active { display:block; }
+  #btn-save-settings.has-changes { animation: cfg-pulse 1.8s ease-in-out infinite; box-shadow: 0 0 0 3px rgba(233,84,32,.25); }
+  @keyframes cfg-pulse { 0%,100% { box-shadow:0 0 0 3px rgba(233,84,32,.25); } 50% { box-shadow:0 0 0 6px rgba(233,84,32,.08); } }
 
   /* ── Skeleton loading ────────────────────────────── */
   @keyframes skeleton-pulse {
@@ -214,6 +219,8 @@
     transition: box-shadow .15s, transform .15s;
   }
   .stat:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+  .stat[data-filter] { cursor: pointer; }
+  .stat[data-filter].stat-active { outline: 2px solid var(--brand); outline-offset: 2px; }
   .stat.done    { border-left-color: var(--success); }
   .stat.prog    { border-left-color: var(--warning); }
   .stat.blocked { border-left-color: var(--danger); }
@@ -276,6 +283,10 @@
   .title-edit-btn { opacity: 0; border: none; background: none; cursor: pointer; color: var(--gray-400); padding: 0; font-size: .8rem; flex-shrink: 0; line-height: 1; transition: opacity .15s, color .15s; }
   .process-card:hover .title-edit-btn { opacity: 1; }
   .title-edit-btn:hover { color: var(--brand); }
+  .pc-quick-open { position: absolute; bottom: 10px; right: 12px; opacity: 0; background: var(--brand); color: #fff; border: none; border-radius: 6px; padding: 3px 10px; font-size: .7rem; font-weight: 600; cursor: pointer; transition: opacity .15s; white-space: nowrap; pointer-events: none; }
+  .process-card { position: relative; }
+  .process-card:hover .pc-quick-open { opacity: 1; pointer-events: auto; }
+  .pc-stall-bar { display: flex; align-items: center; gap: 5px; font-size: .7rem; color: var(--warning); background: var(--warning-light); border-top: 1px solid var(--warning); padding: 4px 14px; margin-top: 2px; }
   .process-card .meta { font-size: .78rem; color: var(--gray-500); display: flex; gap: 14px; flex-wrap: wrap; }
   .process-card .meta span { display: flex; align-items: center; gap: 3px; }
 
@@ -322,6 +333,8 @@
   .step-dot.done    { background: var(--success); border-color: var(--success); }
   .step-dot.blocked { background: var(--danger);  border-color: var(--danger); }
   .step-dot.pending { background: #fff; border-color: var(--gray-300); }
+  /* Dots do checklist distribuídos por toda a largura */
+  #d-step-dots { justify-content: space-between; gap: 0; }
   .progress-fill.done { background: var(--success); }
   .progress-pct { font-size: .75rem; font-weight: 600; color: var(--gray-500); white-space: nowrap; }
 
@@ -506,6 +519,50 @@
   .modal-header .btn-ghost { color: rgba(255,255,255,.7); }
   .modal-header .btn-ghost:hover { background: rgba(255,255,255,.1); color: #fff; }
   .modal-body { padding: 20px 24px; }
+  /* ── Notificações in-app ── */
+  #notif-panel { position:fixed;bottom:16px;width:360px;max-height:460px;overflow-y:auto;background:#fff;border:1px solid var(--gray-200);border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.28);z-index:9999;display:none;flex-direction:column }
+  [data-theme="dark"] #notif-panel { background:#1e2028 }
+  #notif-panel.open { display:flex }
+  .notif-header { padding:12px 16px 8px;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--gray-500);border-bottom:1px solid var(--gray-100);display:flex;justify-content:space-between;align-items:center }
+  .notif-item { padding:10px 16px;border-bottom:1px solid var(--gray-100);cursor:pointer;transition:background .1s;display:flex;gap:10px;align-items:flex-start }
+  .notif-item:hover { background:var(--gray-50) }
+  .notif-item:last-child { border-bottom:none }
+  .notif-icon { width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px }
+  .notif-body { flex:1;min-width:0 }
+  .notif-title { font-size:.8rem;font-weight:600;color:var(--gray-800);white-space:nowrap;overflow:hidden;text-overflow:ellipsis }
+  .notif-sub { font-size:.72rem;color:var(--gray-500);margin-top:2px }
+  .notif-empty { padding:24px 16px;text-align:center;font-size:.82rem;color:var(--gray-500) }
+  #btn-notif { position:relative }
+  #notif-count { display:none;position:absolute;top:4px;right:4px;min-width:16px;height:16px;background:var(--danger);color:#fff;border-radius:8px;font-size:10px;font-weight:700;line-height:16px;text-align:center;padding:0 3px;pointer-events:none }
+
+  /* ── Templates de processo ── */
+  .template-chip { display:inline-flex;align-items:center;gap:6px;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:99px;padding:3px 10px;font-size:.75rem;cursor:pointer;transition:background .12s;max-width:100%;overflow:hidden }
+  .template-chip:hover { background:color-mix(in srgb,var(--brand) 10%,var(--gray-100)) }
+  .template-chip-del { color:var(--gray-400);font-size:.9rem;flex-shrink:0;line-height:1 }
+  .template-chip-del:hover { color:var(--danger) }
+  #templates-list { display:flex;flex-wrap:wrap;gap:6px;margin-top:8px }
+
+  /* ── CSV Import ── */
+  .csv-preview-table { width:100%;border-collapse:collapse;font-size:.76rem }
+  .csv-preview-table th { background:var(--gray-100);padding:4px 8px;text-align:left;border:1px solid var(--gray-200);font-weight:600 }
+  .csv-preview-table td { padding:4px 8px;border:1px solid var(--gray-200) }
+  .csv-preview-table tr:nth-child(even) { background:var(--gray-50) }
+
+  /* ── Histórico de campo ── */
+  .field-hist-btn { background:none;border:none;cursor:pointer;color:var(--gray-400);font-size:.75rem;padding:0 3px;vertical-align:middle;line-height:1;transition:color .12s }
+  .field-hist-btn:hover { color:var(--brand) }
+  #field-hist-panel { position:fixed;z-index:9999;background:var(--bg-card);border:1px solid var(--gray-200);border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.15);width:300px;max-height:280px;overflow-y:auto;display:none }
+  .field-hist-item { padding:8px 12px;border-bottom:1px solid var(--gray-100);font-size:.76rem }
+  .field-hist-item:last-child { border:none }
+  .field-hist-arrow { color:var(--brand);font-weight:600;margin:0 4px }
+
+  /* ── Rich-text editor toolbar ── */
+  ._etb { background:var(--gray-50);border:1px solid var(--gray-200);border-radius:4px;padding:2px 7px;cursor:pointer;font-size:.8rem;line-height:1.6;color:var(--gray-700);transition:background .12s; }
+  ._etb:hover { background:var(--gray-200); }
+  ._etb-sep { display:inline-block;width:1px;background:var(--gray-300);margin:2px 3px;align-self:stretch; }
+  ._etb-sel { background:var(--gray-50);border:1px solid var(--gray-200);border-radius:4px;padding:3px 4px;font-size:.78rem;cursor:pointer;color:var(--gray-700);height:auto;line-height:1.4; }
+  #email-body-forn:focus { border-color:var(--brand); box-shadow:0 0 0 2px rgba(233,84,32,.15); }
+
   .modal-footer {
     padding: 14px 24px; border-top: 1px solid var(--gray-200);
     display: flex; justify-content: flex-end; gap: 10px;
@@ -664,6 +721,8 @@
   body.dark .stat          { background: #2a2a2a; border-color: #383838; }
   body.dark .stat.done     { background: #0d2e15; border-color: var(--success); }
   body.dark .stat.prog     { background: #2e1e00; border-color: var(--warning); }
+  body.dark .pc-stall-bar { background: rgba(202,138,4,.12); border-color: var(--warning); color: #fcd34d; }
+  body.dark .pc-quick-open { background: var(--brand); }
   body.dark .process-card,
   body.dark .step-card,
   body.dark .sidebar-card,
@@ -868,10 +927,11 @@
   /* ── Proc table (dash table view) ───────────────── */
   .proc-table-wrap { overflow-x: auto; }
   .proc-table { width:100%; border-collapse:collapse; font-size:.83rem; white-space:nowrap; }
-  .proc-table th { background:var(--gray-100); color:var(--gray-600); font-weight:700; font-size:.72rem; text-transform:uppercase; letter-spacing:.4px; padding:8px 10px; text-align:left; border-bottom:2px solid var(--gray-200); cursor:pointer; user-select:none; }
+  .proc-table th { background:var(--gray-100); color:var(--gray-600); font-weight:700; font-size:.72rem; text-transform:uppercase; letter-spacing:.4px; padding:8px 10px; text-align:left; border-bottom:2px solid var(--gray-200); cursor:pointer; user-select:none; transition:background .1s; }
   .proc-table th:hover { background:var(--gray-200); }
-  .proc-table th .sort-icon { margin-left:4px; opacity:.4; font-style:normal; }
-  .proc-table th.sorted .sort-icon { opacity:1; color:var(--brand); }
+  .proc-table th .sort-icon { margin-left:4px; opacity:.3; font-style:normal; font-size:.8em; }
+  .proc-table th.sorted { background:color-mix(in srgb,var(--brand) 8%,var(--gray-100)); color:var(--brand); border-bottom-color:var(--brand); }
+  .proc-table th.sorted .sort-icon { opacity:1; font-weight:900; }
   .proc-table td { padding:8px 10px; border-bottom:1px solid var(--gray-100); vertical-align:middle; }
   .proc-table tr:hover td { background:var(--gray-50); cursor:pointer; }
   body.dark .proc-table th { background:#2a2a2a; color:var(--gray-400); border-bottom-color:#3a3a3a; }
@@ -909,10 +969,41 @@
   @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
   .skeleton-card { height: 90px; margin-bottom: 10px; }
 
-  /* ── Task 7: CSS tooltips on step dots ─────────────────── */
-  .step-dot { position: relative; }
-  .step-dot::after { content: attr(data-tip); position: absolute; bottom: 140%; left: 50%; transform: translateX(-50%); background: #1a1a1a; color: #fff; font-size: .65rem; padding: 3px 7px; border-radius: 4px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity .15s; }
-  .step-dot:hover::after { opacity: 1; }
+  /* ── Task 7: tooltip global dos step-dots ── */
+  #step-dot-tooltip {
+    position: fixed; background: #1a1a1a; color: #fff; font-size: .65rem;
+    padding: 4px 8px; border-radius: 4px; white-space: nowrap; pointer-events: none;
+    opacity: 0; transition: opacity .15s; z-index: 500; transform: translateX(-50%);
+  }
+  #step-dot-tooltip.visible { opacity: 1; }
+
+  /* ── Dropdown "Mais ações" ── */
+  .more-actions-wrap { position: relative; display: inline-flex; }
+  .more-actions-menu {
+    display: none; position: absolute; top: calc(100% + 6px); right: 0;
+    background: #fff; border: 1px solid var(--gray-200); border-radius: 8px;
+    box-shadow: var(--shadow-md); min-width: 200px; z-index: 300;
+    overflow: hidden;
+  }
+  .more-actions-menu.open { display: block; }
+  .more-actions-menu button {
+    display: flex; align-items: center; gap: 8px; width: 100%;
+    padding: 9px 14px; font-size: .83rem; font-weight: 500; border: none;
+    background: none; cursor: pointer; color: var(--gray-700); text-align: left;
+    font-family: inherit; transition: background .12s;
+  }
+  .more-actions-menu button:hover { background: var(--gray-50); color: var(--gray-900); }
+  body.dark .more-actions-menu { background: #2a2a2a; border-color: #444; }
+  body.dark .more-actions-menu button { color: var(--gray-300); }
+  body.dark .more-actions-menu button:hover { background: #333; color: #fff; }
+
+  /* ── Próxima etapa ── */
+  .step-next-badge {
+    display: inline-flex; align-items: center; gap: 3px;
+    font-size: .62rem; font-weight: 700; text-transform: uppercase; letter-spacing: .4px;
+    background: var(--brand); color: #fff;
+    padding: 2px 7px; border-radius: 99px; flex-shrink: 0; white-space: nowrap;
+  }
 </style>
 </head>
 <body>
@@ -937,14 +1028,17 @@
 <a href="#app" class="skip-link">Ir para o conteúdo principal</a>
 
 <header>
-  <div class="hdr-brand">
-    <div class="hdr-logo">CD</div>
-    <div class="hdr-titles">
-      <h1><strong>SGCD</strong> — Sistema de Gestão de Contratação Direta</h1>
-      <span class="hdr-instituicao">Prefeitura Municipal de Orindiúva</span>
+  <div class="hdr-left"></div>
+  <div class="hdr-center">
+    <div class="hdr-brand">
+      <div class="hdr-logo">CD</div>
+      <div class="hdr-titles">
+        <h1><strong>SGCD</strong> — Sistema de Gestão de Contratação Direta</h1>
+        <span class="hdr-instituicao" id="hdr-instituicao">Prefeitura Municipal de Orindiúva</span>
+      </div>
     </div>
   </div>
-  <div style="display:flex;align-items:center;gap:14px">
+  <div class="hdr-right">
     <button onclick="abrirGlobalSearch()" title="Busca global (Ctrl+K)" style="background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:.75rem;display:flex;align-items:center;gap:6px;opacity:.8">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       Buscar <kbd style="font-size:.65rem;opacity:.7;background:rgba(255,255,255,.2);padding:1px 4px;border-radius:3px">Ctrl+K</kbd>
@@ -974,6 +1068,12 @@
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
     <span class="nav-tooltip">Auditoria</span>
     <span class="nav-label">Auditoria</span>
+  </button>
+  <button class="nav-btn" id="btn-notif" onclick="toggleNotificacoes()" aria-label="Notificações">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+    <span id="notif-count"></span>
+    <span class="nav-tooltip">Notificações</span>
+    <span class="nav-label">Alertas</span>
   </button>
   <div class="nav-spacer"></div>
   <div class="nav-divider"></div>
@@ -1031,6 +1131,10 @@
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
           Relatório
         </button>
+        <button class="btn btn-outline" onclick="gerarRelatorioExecutivo()" title="Relatório executivo com KPIs e gráficos">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          Executivo
+        </button>
         <button class="btn btn-primary" onclick="openNewModal()">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
           Novo Processo
@@ -1040,7 +1144,7 @@
 
     <div class="stats">
       <!-- Total -->
-      <div class="stat brand">
+      <div class="stat brand" data-filter="" onclick="filtrarPorStat(this,'')" title="Mostrar todos os processos">
         <div class="stat-top">
           <div class="stat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></div>
           <span class="stat-badge" id="st-total-badge">—</span>
@@ -1050,7 +1154,7 @@
         <div class="stat-sub" id="st-total-sub">—</div>
       </div>
       <!-- Em andamento -->
-      <div class="stat prog">
+      <div class="stat prog" data-filter="progress" onclick="filtrarPorStat(this,'progress')" title="Filtrar: Em andamento">
         <div class="stat-top">
           <div class="stat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
           <span class="stat-badge" id="st-prog-badge">—</span>
@@ -1060,7 +1164,7 @@
         <div class="stat-sub" id="st-prog-sub">—</div>
       </div>
       <!-- Concluídos -->
-      <div class="stat done">
+      <div class="stat done" data-filter="done" onclick="filtrarPorStat(this,'done')" title="Filtrar: Concluídos">
         <div class="stat-top">
           <div class="stat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
           <span class="stat-badge" id="st-done-badge">—</span>
@@ -1070,7 +1174,7 @@
         <div class="stat-sub" id="st-done-sub">—</div>
       </div>
       <!-- Não iniciados -->
-      <div class="stat pend">
+      <div class="stat pend" data-filter="todo" onclick="filtrarPorStat(this,'todo')" title="Filtrar: Não iniciados">
         <div class="stat-top">
           <div class="stat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="10" y1="15" x2="10" y2="9"/><line x1="14" y1="15" x2="14" y2="9"/></svg></div>
           <span class="stat-badge" id="st-pend-badge">—</span>
@@ -1080,7 +1184,7 @@
         <div class="stat-sub" id="st-pend-sub">—</div>
       </div>
       <!-- Bloqueados -->
-      <div class="stat blocked">
+      <div class="stat blocked" data-filter="blocked" onclick="filtrarPorStat(this,'blocked')" title="Filtrar: Bloqueados">
         <div class="stat-top">
           <div class="stat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
           <span class="stat-badge" id="st-block-badge">—</span>
@@ -1101,8 +1205,16 @@
       </div>
     </div>
 
-    <div class="filters">
-      <input type="text" id="search" placeholder="Buscar por objeto, nº ou fornecedor…" oninput="renderDash()">
+    <div class="filters" style="flex-wrap:nowrap;align-items:center">
+      <input type="text" id="search" placeholder="Buscar por objeto, nº ou fornecedor…" oninput="renderDash()" style="flex:1;min-width:180px">
+      <button class="btn btn-outline btn-sm" id="btn-toggle-filters" onclick="toggleFiltrosAvancados()" title="Mostrar/ocultar filtros avançados" style="white-space:nowrap;flex-shrink:0;display:flex;align-items:center;gap:6px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+        Filtros<span id="filtros-count-badge" style="display:none;background:rgba(255,255,255,.3);color:inherit;border-radius:99px;font-size:.65rem;font-weight:700;padding:0 6px;line-height:1.6"></span>
+      </button>
+      <button class="btn btn-outline btn-sm" onclick="limparFiltros()" id="btn-limpar-filtros" style="display:none;white-space:nowrap;flex-shrink:0">✕ Limpar</button>
+    </div>
+    <div id="dash-results-info" style="display:none;font-size:.75rem;color:var(--gray-500);margin-bottom:8px;padding:0 2px"></div>
+    <div id="filtros-avancados" style="display:none;flex-wrap:wrap;gap:10px;margin-bottom:16px;padding:12px;background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--radius)">
       <select id="filter-status" onchange="renderDash()">
         <option value="">Todos os status</option>
         <option value="todo">Não iniciado</option>
@@ -1124,7 +1236,6 @@
         <option value="valor-desc">↓ Valor</option>
         <option value="valor-asc">↑ Valor</option>
       </select>
-      <button class="btn btn-outline btn-sm" onclick="limparFiltros()" id="btn-limpar-filtros" style="display:none;white-space:nowrap">✕ Limpar filtros</button>
     </div>
 
     <div id="stall-alert-panel" style="display:none;margin-bottom:14px"></div>
@@ -1142,15 +1253,30 @@
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
           Relatório
         </button>
+        <button class="btn btn-outline" onclick="abrirModalCsv()" title="Importar fornecedores de arquivo CSV">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Importar CSV
+        </button>
         <button class="btn btn-primary" onclick="openFornModal()">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
           Novo Fornecedor
         </button>
       </div>
     </div>
-    <div class="filters">
-      <input type="text" id="forn-search" placeholder="Buscar por CNPJ, razão social…" oninput="renderFornecedores()">
+    <div class="filters" style="flex-wrap:nowrap;align-items:center">
+      <div style="position:relative;flex:1;min-width:180px">
+        <input type="text" id="forn-search" placeholder="Buscar por CNPJ, razão social…" oninput="renderFornecedores()" style="width:100%;padding-right:28px">
+        <button onclick="limparBuscaForn()" id="forn-search-clear" title="Limpar busca" style="display:none;position:absolute;right:7px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--gray-400);font-size:.85rem;padding:0;line-height:1">✕</button>
+      </div>
+      <select id="forn-sort" onchange="renderFornecedores()" title="Ordenar fornecedores" style="flex:0 0 auto;width:170px">
+        <option value="recent">↓ Mais recente</option>
+        <option value="az">A → Z</option>
+        <option value="za">Z → A</option>
+        <option value="sit">Situação (Ativa primeiro)</option>
+        <option value="cert">Certidões vencidas</option>
+      </select>
     </div>
+    <div id="forn-results-info" style="display:none;font-size:.75rem;color:var(--gray-500);margin-bottom:8px;padding:0 2px"></div>
     <div id="forn-list"></div>
   </div>
 
@@ -1255,30 +1381,33 @@
         <div class="detail-title" id="d-title"></div>
         <div class="detail-meta" id="d-meta"></div>
       </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn btn-outline btn-sm" onclick="printProcess()">&#128438; Imprimir</button>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         <button class="btn btn-outline btn-sm" onclick="gerarAta()" style="border-color:var(--aubergine-mid);color:var(--aubergine-mid)">&#128196; Gerar Ata</button>
         <button class="btn btn-outline btn-sm" onclick="verificarConformidade()" style="border-color:#7c3aed;color:#7c3aed">✔ Conformidade</button>
-        <button class="btn btn-outline btn-sm" onclick="duplicarProcess()" title="Criar cópia deste processo">⎘ Duplicar</button>
-        <button class="btn btn-outline btn-sm" onclick="abrirEmailModal()" title="Enviar notificação por e-mail">✉ Notificar</button>
-        <button class="btn btn-outline btn-sm" onclick="gerarProcessoCompleto()" title="Gerar documento consolidado com todos os documentos do processo" style="border-color:var(--brand);color:var(--brand)">📦 Processo Completo</button>
         <button class="btn btn-outline btn-sm" id="btn-toggle-sidebar-detail" onclick="toggleDetailSidebar()" title="Mostrar/ocultar painel de informações">⊟ Painel</button>
-        <button class="btn btn-danger  btn-sm" onclick="deleteProcess()">Excluir</button>
+        <button class="btn btn-outline btn-sm" onclick="salvarComoTemplate()" title="Salvar este processo como modelo reutilizável">⊞ Modelo</button>
+        <button class="btn btn-outline btn-sm" onclick="printProcess()" title="Imprimir processo">🖨 Imprimir</button>
+        <button class="btn btn-outline btn-sm" onclick="gerarProcessoCompleto()" title="Gerar PDF consolidado">📦 PDF</button>
+        <button class="btn btn-outline btn-sm" onclick="duplicarProcess()" title="Duplicar processo">⎘ Duplicar</button>
+        <button class="btn btn-outline btn-sm" onclick="abrirEmailModal()" title="Notificar por e-mail">✉ Notificar</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteProcess()" style="margin-left:4px">Excluir</button>
       </div>
     </div>
 
     <div class="detail-grid">
       <!-- Checklist -->
       <div>
-        <div class="checklist-header">
-          <h3 style="display:flex;align-items:center;gap:10px">Checklist do Processo
-            <button class="btn btn-ghost btn-sm" style="font-size:.7rem;padding:2px 6px" onclick="resetStepOrder()" id="btn-reset-order" title="Restaurar ordem padrão das etapas" style="display:none">↺ Ordem padrão</button>
-            <button class="btn btn-ghost btn-sm" style="font-size:.7rem;padding:2px 6px" onclick="toggleCompactMode()" id="btn-compact-mode" title="Alternar modo compacto">⊟ Compacto</button>
-          </h3>
-          <div id="d-progress-wrap" class="progress-wrap">
-            <div class="step-indicators" id="d-step-dots"></div>
-            <span class="progress-pct" id="d-progress-pct"></span>
+        <div class="checklist-header" style="flex-wrap:nowrap;gap:8px;margin-bottom:8px">
+          <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:0">
+            <h3>Checklist do Processo</h3>
+            <button class="btn btn-ghost btn-sm" style="font-size:.68rem;padding:2px 5px;white-space:nowrap" onclick="resetStepOrder()" id="btn-reset-order" title="Restaurar ordem padrão das etapas">↺</button>
+            <button class="btn btn-ghost btn-sm" style="font-size:.68rem;padding:2px 5px;white-space:nowrap" onclick="toggleCompactMode()" id="btn-compact-mode" title="Alternar modo compacto">⊟ Compacto</button>
+            <button class="btn btn-ghost btn-sm" style="font-size:.68rem;padding:2px 5px;white-space:nowrap" onclick="toggleExpandAll()" id="btn-expand-all" title="Expandir ou recolher todas as etapas">⊞ Expandir</button>
           </div>
+        </div>
+        <div id="d-progress-wrap" class="progress-wrap" style="margin-bottom:12px;width:100%">
+          <div class="step-indicators" id="d-step-dots" style="flex:1;gap:3px"></div>
+          <span class="progress-pct" id="d-progress-pct" style="flex-shrink:0"></span>
         </div>
         <div id="checklist"></div>
       </div>
@@ -1324,6 +1453,17 @@
     <div class="dash-top">
       <h2>Agenda de Vencimentos</h2>
     </div>
+    <div style="max-width:720px;margin:0 auto;padding:0 16px 12px">
+      <div class="filters" style="flex-wrap:nowrap;align-items:center;margin-bottom:0">
+        <select id="agenda-filter-tipo" onchange="renderAgenda()" title="Filtrar por tipo de evento" style="flex-shrink:0;max-width:220px">
+          <option value="">Todos os tipos</option>
+          <option value="encerramento">Encerramento de propostas</option>
+          <option value="contrato">Vencimento de contrato</option>
+          <option value="prazo">Prazo do processo</option>
+          <option value="parado">Processo parado</option>
+        </select>
+      </div>
+    </div>
     <div id="agenda-body" style="max-width:720px;margin:0 auto;padding:0 16px 32px"></div>
   </div>
 
@@ -1339,10 +1479,18 @@
       </div>
     </div>
     <div id="audit-inner" style="max-width:960px;margin:0 auto;padding:0 16px">
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:flex-end">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <button class="btn btn-outline btn-sm" id="btn-audit-filters" onclick="toggleAuditFilters()" style="display:flex;align-items:center;gap:6px;white-space:nowrap">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+          Filtros<span id="audit-filter-badge" style="display:none;background:rgba(233,84,32,.15);color:var(--brand);border-radius:99px;font-size:.65rem;font-weight:700;padding:0 6px;line-height:1.6"></span>
+        </button>
+        <button class="btn btn-ghost btn-sm" id="btn-audit-limpar" onclick="limparFiltrosAudit()" style="display:none">✕ Limpar</button>
+        <span id="audit-count" style="font-size:.75rem;color:var(--gray-500);margin-left:auto"></span>
+      </div>
+      <div id="audit-filters-panel" style="display:none;flex-wrap:wrap;gap:10px;margin-bottom:14px;padding:12px;background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--radius)">
         <div>
           <label style="font-size:.72rem;font-weight:600;color:var(--gray-500);display:block;margin-bottom:4px">Tipo de evento</label>
-          <select id="audit-filter-tipo" onchange="renderAudit()" style="font-size:.8rem;padding:4px 8px;border:1px solid var(--gray-200);border-radius:4px;background:var(--gray-50)">
+          <select id="audit-filter-tipo" onchange="renderAudit();_syncAuditFilterBadge()" style="font-size:.8rem;padding:4px 8px;border:1px solid var(--gray-200);border-radius:4px;background:var(--gray-50)">
             <option value="">Todos</option>
             <option value="ETAPA_DONE">Etapa concluída</option>
             <option value="ETAPA_BLOCKED">Etapa bloqueada</option>
@@ -1359,18 +1507,16 @@
         </div>
         <div>
           <label style="font-size:.72rem;font-weight:600;color:var(--gray-500);display:block;margin-bottom:4px">De</label>
-          <input type="date" id="audit-filter-de" onchange="renderAudit()" style="font-size:.8rem;padding:4px 8px;border:1px solid var(--gray-200);border-radius:4px;background:var(--gray-50)">
+          <input type="date" id="audit-filter-de" onchange="renderAudit();_syncAuditFilterBadge()" style="font-size:.8rem;padding:4px 8px;border:1px solid var(--gray-200);border-radius:4px;background:var(--gray-50)">
         </div>
         <div>
           <label style="font-size:.72rem;font-weight:600;color:var(--gray-500);display:block;margin-bottom:4px">Até</label>
-          <input type="date" id="audit-filter-ate" onchange="renderAudit()" style="font-size:.8rem;padding:4px 8px;border:1px solid var(--gray-200);border-radius:4px;background:var(--gray-50)">
+          <input type="date" id="audit-filter-ate" onchange="renderAudit();_syncAuditFilterBadge()" style="font-size:.8rem;padding:4px 8px;border:1px solid var(--gray-200);border-radius:4px;background:var(--gray-50)">
         </div>
         <div>
           <label style="font-size:.72rem;font-weight:600;color:var(--gray-500);display:block;margin-bottom:4px">Usuário</label>
-          <input type="text" id="audit-filter-user" oninput="renderAuditDebounced()" placeholder="Filtrar por usuário…" style="font-size:.8rem;padding:4px 8px;border:1px solid var(--gray-200);border-radius:4px;background:var(--gray-50);width:180px">
+          <input type="text" id="audit-filter-user" oninput="renderAuditDebounced();_syncAuditFilterBadge()" placeholder="Filtrar por usuário…" style="font-size:.8rem;padding:4px 8px;border:1px solid var(--gray-200);border-radius:4px;background:var(--gray-50);width:180px">
         </div>
-        <button class="btn btn-ghost btn-sm" onclick="limparFiltrosAudit()" style="margin-top:20px">✕ Limpar</button>
-        <span id="audit-count" style="font-size:.75rem;color:var(--gray-500);margin-top:24px"></span>
       </div>
       <div id="audit-timeline" style="padding-bottom:8px"></div>
       <div id="audit-load-more" style="text-align:center;margin:16px 0;display:none">
@@ -1385,7 +1531,7 @@
       <h2>Configurações</h2>
       <div style="display:flex;gap:8px">
         <button class="btn btn-outline" onclick="showDash()">← Voltar</button>
-        <button class="btn btn-primary" onclick="saveSettings()">Salvar</button>
+        <button class="btn btn-primary" onclick="saveSettings()" id="btn-save-settings">Salvar</button>
       </div>
     </div>
     <div id="settings-inner" style="max-width:620px;padding:0 0 40px;margin:0 auto">
@@ -1623,7 +1769,15 @@
       <h2>Novo Processo de Dispensa</h2>
       <button class="btn btn-ghost btn-icon" onclick="closeModal()">✕</button>
     </div>
-    <div class="modal-body">
+    <div class="modal-body" style="padding-top:12px">
+      <!-- Templates -->
+      <div id="modal-template-bar" style="display:none;margin-bottom:14px;padding:10px 12px;background:color-mix(in srgb,var(--brand) 6%,var(--gray-50));border:1px solid color-mix(in srgb,var(--brand) 20%,var(--gray-200));border-radius:8px">
+        <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--brand);margin-bottom:6px">Usar um modelo salvo</div>
+        <div id="modal-templates-chips" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+      </div>
+
+      <!-- Grupo 1: Identificação -->
+      <p style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--brand);margin-bottom:8px">Identificação</p>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
         <div class="info-field" style="margin:0">
           <label>Processo Administrativo</label>
@@ -1637,6 +1791,11 @@
       <div class="info-field">
         <label>Objeto (descrição resumida) *</label>
         <input type="text" id="m-obj" placeholder="Ex: Aquisição de material de limpeza">
+      </div>
+
+      <!-- Grupo 2: Base legal -->
+      <div style="border-top:1px solid var(--gray-200);margin:14px 0 10px;padding-top:12px">
+        <p style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--brand);margin-bottom:8px">Base Legal e Critério</p>
       </div>
       <div class="info-field">
         <label>Fundamentação Legal (Art. 75, inciso)</label>
@@ -1660,40 +1819,51 @@
           <option value="maior_retorno">Maior retorno econômico (Art. 33, VI)</option>
         </select>
       </div>
-      <div class="info-field">
-        <label>Valor Estimado (R$)</label>
-        <input type="text" id="m-valor" placeholder="0,00" oninput="maskMoney(this)">
+
+      <!-- Grupo 3: Financeiro e prazo -->
+      <div style="border-top:1px solid var(--gray-200);margin:14px 0 10px;padding-top:12px">
+        <p style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--brand);margin-bottom:8px">Financeiro e Prazo</p>
       </div>
-      <div style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;align-items:end">
+        <div class="info-field" style="margin:0">
+          <label>Valor Estimado (R$)</label>
+          <input type="text" id="m-valor" placeholder="0,00" oninput="maskMoney(this)">
+        </div>
         <div class="info-field" style="margin:0">
           <label>Unidade Solicitante</label>
-          <input type="text" id="m-unidade" placeholder="Ex: Secretaria de Saúde">
+          <input type="text" id="m-unidade" placeholder="Ex: Sec. de Saúde">
         </div>
         <div class="info-field" style="margin:0">
           <label>Prazo para conclusão</label>
           <input type="date" id="m-prazo">
         </div>
       </div>
-      <div style="border-top:1px solid var(--gray-200);margin:12px 0 8px;padding-top:12px">
-        <p style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-500);margin-bottom:8px">Classificação do objeto (para controle de fracionamento)</p>
+
+      <!-- Grupo 4: Classificação (colapsável) -->
+      <div style="border-top:1px solid var(--gray-200);margin:14px 0 10px;padding-top:12px">
+        <button type="button" onclick="toggleModalClassif(this)" style="background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:6px;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--gray-500);padding:0;font-family:inherit">
+          <span id="modal-classif-arrow">▶</span> Classificação do objeto (fracionamento)
+        </button>
       </div>
-      <div class="info-field">
-        <label>Natureza</label>
-        <select id="m-natureza" onchange="onModalNaturezaChange()">
-          <option value="">Selecionar…</option>
-        </select>
-      </div>
-      <div class="info-field">
-        <label>Categoria</label>
-        <select id="m-categoria" disabled onchange="onModalCategoriaChange()">
-          <option value="">Selecione a natureza primeiro</option>
-        </select>
-      </div>
-      <div class="info-field">
-        <label>Subcategoria</label>
-        <select id="m-subcategoria" disabled>
-          <option value="">Selecione a categoria primeiro</option>
-        </select>
+      <div id="modal-classif-body" style="display:none">
+        <div class="info-field">
+          <label>Natureza</label>
+          <select id="m-natureza" onchange="onModalNaturezaChange()">
+            <option value="">Selecionar…</option>
+          </select>
+        </div>
+        <div class="info-field">
+          <label>Categoria</label>
+          <select id="m-categoria" disabled onchange="onModalCategoriaChange()">
+            <option value="">Selecione a natureza primeiro</option>
+          </select>
+        </div>
+        <div class="info-field">
+          <label>Subcategoria</label>
+          <select id="m-subcategoria" disabled>
+            <option value="">Selecione a categoria primeiro</option>
+          </select>
+        </div>
       </div>
       <div class="info-field">
         <label>Observações iniciais</label>
@@ -1719,9 +1889,98 @@
   </div>
 </div>
 
+<!-- ── Painel de Notificações ── -->
+<div id="notif-panel">
+  <div class="notif-header">
+    <span>Alertas</span>
+    <button onclick="toggleNotificacoes()" style="background:none;border:none;cursor:pointer;color:var(--gray-400);font-size:.85rem">✕</button>
+  </div>
+  <div id="notif-list"></div>
+</div>
+
+<!-- ── Modal Templates ── -->
+<div class="overlay hidden" id="modal-templates" onclick="if(event.target===this)fecharModalTemplates()">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">
+      <h3>Modelos de Processo</h3>
+      <button class="btn btn-ghost btn-sm" onclick="fecharModalTemplates()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:.82rem;color:var(--gray-600);margin-bottom:14px">Selecione um modelo para pré-preencher o formulário ou gerencie seus modelos salvos.</p>
+      <div id="modal-templates-list"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="fecharModalTemplates()">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal CSV Import ── -->
+<div class="overlay hidden" id="modal-csv" onclick="if(event.target===this)fecharModalCsv()">
+  <div class="modal" style="max-width:680px;width:96vw">
+    <div class="modal-header">
+      <h3>Importar Fornecedores via CSV</h3>
+      <button class="btn btn-ghost btn-sm" onclick="fecharModalCsv()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="csv-step-upload">
+        <div style="background:var(--gray-50);border:1px solid var(--gray-200);border-radius:8px;padding:12px 16px;margin-bottom:14px;font-size:.8rem;color:var(--gray-600)">
+          <div style="font-weight:600;margin-bottom:6px;color:var(--gray-700)">Formato do arquivo</div>
+          O arquivo deve ser CSV com separador <strong>vírgula (,)</strong> ou <strong>ponto e vírgula (;)</strong>.<br>
+          A primeira linha deve conter os nomes das colunas (cabeçalho).<br>
+          Campos obrigatórios: <strong>cnpj</strong> ou <strong>razao_social</strong>. Os demais são opcionais.<br>
+          Se o CNPJ for informado, os dados serão consultados automaticamente na Receita Federal.
+          <div style="margin-top:10px">
+            <button class="btn btn-outline btn-sm" onclick="baixarModeloCsv()" style="gap:6px">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Baixar modelo CSV
+            </button>
+          </div>
+        </div>
+        <div style="border:2px dashed var(--gray-300);border-radius:8px;padding:32px;text-align:center;cursor:pointer" onclick="document.getElementById('csv-file-input').click()">
+          <div style="font-size:2rem;margin-bottom:8px">📂</div>
+          <div style="font-size:.85rem;color:var(--gray-600)">Clique para selecionar o arquivo CSV</div>
+          <input type="file" id="csv-file-input" accept=".csv,text/csv" style="display:none" onchange="carregarCsv(this)">
+        </div>
+      </div>
+      <div id="csv-step-preview" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <span id="csv-preview-count" style="font-size:.82rem;color:var(--gray-600)"></span>
+          <label style="font-size:.78rem;display:flex;align-items:center;gap:6px;cursor:pointer">
+            <input type="checkbox" id="csv-opt-cnpj" checked style="accent-color:var(--brand)">
+            Consultar CNPJ automaticamente
+          </label>
+        </div>
+        <div style="max-height:280px;overflow-y:auto">
+          <table class="csv-preview-table" id="csv-preview-table"></table>
+        </div>
+      </div>
+      <div id="csv-step-progress" style="display:none;text-align:center;padding:24px">
+        <div style="font-size:.9rem;color:var(--gray-600);margin-bottom:12px" id="csv-progress-msg">Importando…</div>
+        <div style="background:var(--gray-200);border-radius:99px;height:8px;overflow:hidden">
+          <div id="csv-progress-bar" style="height:100%;background:var(--brand);border-radius:99px;transition:width .3s;width:0%"></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="fecharModalCsv()">Cancelar</button>
+      <button class="btn btn-primary" id="btn-csv-import" style="display:none" onclick="importarCsv()">Importar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal Histórico de Campo ── -->
+<div id="field-hist-panel">
+  <div style="padding:10px 12px 6px;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-500);border-bottom:1px solid var(--gray-100);display:flex;justify-content:space-between">
+    <span id="field-hist-title">Histórico</span>
+    <button onclick="fecharFieldHist()" style="background:none;border:none;cursor:pointer;color:var(--gray-400);font-size:.85rem;padding:0">✕</button>
+  </div>
+  <div id="field-hist-list"></div>
+</div>
+
 <!-- ── E-mail Modal ── -->
 <div class="overlay hidden" id="email-modal" onclick="if(event.target===this)fecharEmailModal()">
-  <div class="modal" style="max-width:520px">
+  <div class="modal" style="max-width:880px;width:96vw">
     <div class="modal-header">
       <h3>✉ Enviar Notificação</h3>
       <button class="btn btn-ghost btn-sm" onclick="fecharEmailModal()">✕</button>
@@ -1744,12 +2003,96 @@
           <div id="email-forn-list" style="max-height:160px;overflow-y:auto;border:1px solid var(--gray-200);border-radius:6px;padding:6px;background:var(--bg-card)"></div>
         </div>
         <div class="info-field"><label>Assunto</label><input type="text" id="email-subj-forn"></div>
-        <div class="info-field"><label>Mensagem</label><textarea rows="7" id="email-body-forn" style="resize:vertical;min-height:120px"></textarea></div>
+        <div class="info-field">
+          <label>Mensagem</label>
+          <div id="email-editor-toolbar" style="display:flex;flex-wrap:wrap;gap:2px;padding:5px 6px;background:var(--gray-100);border:1px solid var(--gray-200);border-bottom:none;border-radius:6px 6px 0 0">
+            <button type="button" class="_etb" onclick="document.execCommand('bold')" title="Negrito (Ctrl+B)"><b>B</b></button>
+            <button type="button" class="_etb" onclick="document.execCommand('italic')" title="Itálico (Ctrl+I)"><i>I</i></button>
+            <button type="button" class="_etb" onclick="document.execCommand('underline')" title="Sublinhado (Ctrl+U)"><u>U</u></button>
+            <span class="_etb-sep"></span>
+            <button type="button" class="_etb" onclick="document.execCommand('justifyLeft')" title="Alinhar à esquerda">&#8676;</button>
+            <button type="button" class="_etb" onclick="document.execCommand('justifyCenter')" title="Centralizar">&#8801;</button>
+            <button type="button" class="_etb" onclick="document.execCommand('justifyRight')" title="Alinhar à direita">&#8677;</button>
+            <button type="button" class="_etb" onclick="document.execCommand('justifyFull')" title="Justificar">&#8723;</button>
+            <span class="_etb-sep"></span>
+            <select class="_etb-sel" style="width:120px" onchange="document.execCommand('fontName',false,this.value);this.blur()" title="Fonte">
+              <option value="Arial">Arial</option>
+              <option value="Calibri">Calibri</option>
+              <option value="Georgia">Georgia</option>
+              <option value="Times New Roman">Times New Roman</option>
+              <option value="Verdana" selected>Verdana</option>
+            </select>
+            <select class="_etb-sel" style="width:62px" onchange="document.execCommand('fontSize',false,_emailPtToSize(this.value));this.blur()" title="Tamanho">
+              <option value="9">9pt</option>
+              <option value="10">10pt</option>
+              <option value="11">11pt</option>
+              <option value="12" selected>12pt</option>
+              <option value="14">14pt</option>
+              <option value="16">16pt</option>
+              <option value="18">18pt</option>
+            </select>
+            <span class="_etb-sep"></span>
+            <button type="button" class="_etb" onclick="document.execCommand('insertUnorderedList')" title="Lista com marcadores">&#8226;&#8226;</button>
+            <button type="button" class="_etb" onclick="document.execCommand('insertOrderedList')" title="Lista numerada">1.</button>
+            <button type="button" class="_etb" onclick="document.execCommand('indent')" title="Aumentar recuo">&#8677;&#8677;</button>
+            <button type="button" class="_etb" onclick="document.execCommand('outdent')" title="Diminuir recuo">&#8676;&#8676;</button>
+            <span class="_etb-sep"></span>
+            <button type="button" class="_etb" onclick="_emailInsertLink()" title="Inserir link">&#128279;</button>
+            <button type="button" class="_etb" onclick="document.execCommand('removeFormat')" title="Remover formatação">&#10007;</button>
+            <span class="_etb-sep"></span>
+            <button type="button" class="_etb" onclick="document.execCommand('undo')" title="Desfazer (Ctrl+Z)">&#8634;</button>
+            <button type="button" class="_etb" onclick="document.execCommand('redo')" title="Refazer (Ctrl+Y)">&#8635;</button>
+          </div>
+          <div id="email-body-forn" contenteditable="true" spellcheck="true"
+            style="min-height:220px;max-height:380px;overflow-y:auto;border:1px solid var(--gray-200);border-radius:0 0 6px 6px;padding:12px 14px;background:var(--bg-card);font-family:Verdana,sans-serif;font-size:13px;line-height:1.7;text-align:justify;outline:none"></div>
+        </div>
       </div>
       <div id="email-tab-int-body" style="display:none">
         <div class="info-field"><label>Para</label><input type="email" id="email-to-int"></div>
         <div class="info-field"><label>Assunto</label><input type="text" id="email-subj-int"></div>
-        <div class="info-field"><label>Mensagem</label><textarea rows="7" id="email-body-int" style="resize:vertical;min-height:120px"></textarea></div>
+        <div class="info-field">
+          <label>Mensagem</label>
+          <div id="email-editor-toolbar-int" style="display:flex;flex-wrap:wrap;gap:2px;padding:5px 6px;background:var(--gray-100);border:1px solid var(--gray-200);border-bottom:none;border-radius:6px 6px 0 0">
+            <button type="button" class="_etb" onclick="_etbCmd('int','bold')" title="Negrito"><b>B</b></button>
+            <button type="button" class="_etb" onclick="_etbCmd('int','italic')" title="Itálico"><i>I</i></button>
+            <button type="button" class="_etb" onclick="_etbCmd('int','underline')" title="Sublinhado"><u>U</u></button>
+            <span class="_etb-sep"></span>
+            <button type="button" class="_etb" onclick="_etbCmd('int','justifyLeft')" title="Alinhar à esquerda">&#8676;</button>
+            <button type="button" class="_etb" onclick="_etbCmd('int','justifyCenter')" title="Centralizar">&#8801;</button>
+            <button type="button" class="_etb" onclick="_etbCmd('int','justifyRight')" title="Alinhar à direita">&#8677;</button>
+            <button type="button" class="_etb" onclick="_etbCmd('int','justifyFull')" title="Justificar">&#8723;</button>
+            <span class="_etb-sep"></span>
+            <select class="_etb-sel" style="width:120px" onchange="_etbCmd('int','fontName',this.value);this.blur()" title="Fonte">
+              <option value="Arial">Arial</option>
+              <option value="Calibri">Calibri</option>
+              <option value="Georgia">Georgia</option>
+              <option value="Times New Roman">Times New Roman</option>
+              <option value="Verdana" selected>Verdana</option>
+            </select>
+            <select class="_etb-sel" style="width:62px" onchange="_etbCmd('int','fontSize',_emailPtToSize(this.value));this.blur()" title="Tamanho">
+              <option value="9">9pt</option>
+              <option value="10">10pt</option>
+              <option value="11">11pt</option>
+              <option value="12" selected>12pt</option>
+              <option value="14">14pt</option>
+              <option value="16">16pt</option>
+              <option value="18">18pt</option>
+            </select>
+            <span class="_etb-sep"></span>
+            <button type="button" class="_etb" onclick="_etbCmd('int','insertUnorderedList')" title="Lista com marcadores">&#8226;&#8226;</button>
+            <button type="button" class="_etb" onclick="_etbCmd('int','insertOrderedList')" title="Lista numerada">1.</button>
+            <button type="button" class="_etb" onclick="_etbCmd('int','indent')" title="Aumentar recuo">&#8677;&#8677;</button>
+            <button type="button" class="_etb" onclick="_etbCmd('int','outdent')" title="Diminuir recuo">&#8676;&#8676;</button>
+            <span class="_etb-sep"></span>
+            <button type="button" class="_etb" onclick="_emailInsertLinkInt()" title="Inserir link">&#128279;</button>
+            <button type="button" class="_etb" onclick="_etbCmd('int','removeFormat')" title="Remover formatação">&#10007;</button>
+            <span class="_etb-sep"></span>
+            <button type="button" class="_etb" onclick="_etbCmd('int','undo')" title="Desfazer">&#8634;</button>
+            <button type="button" class="_etb" onclick="_etbCmd('int','redo')" title="Refazer">&#8635;</button>
+          </div>
+          <div id="email-body-int" contenteditable="true" spellcheck="true"
+            style="min-height:220px;max-height:380px;overflow-y:auto;border:1px solid var(--gray-200);border-radius:0 0 6px 6px;padding:12px 14px;background:var(--bg-card);font-family:Verdana,sans-serif;font-size:13px;line-height:1.7;text-align:justify;outline:none"></div>
+        </div>
       </div>
     </div>
     <div class="modal-footer">
@@ -1802,6 +2145,7 @@
 </div>
 
 <div id="toast"></div>
+<div id="step-dot-tooltip"></div>
 
 <script>
 // ══════════════════════════════════════════════════════════════
@@ -1824,7 +2168,7 @@ const ICONS = {
 // DB — IndexedDB wrapper
 // ══════════════════════════════════════════════════════════════
 let db;
-const SGCD_VERSION = '1.13.0';
+const SGCD_VERSION = '1.14.0';
 document.title = `SGCD v${SGCD_VERSION}`;
 const DB_NAME = 'dispensaDB', DB_VER = 3;
 
@@ -2630,6 +2974,7 @@ async function loadProcesses() {
   processes.sort((a,b) => b.createdAt - a.createdAt);
   fracResultado = analisarFracionamento(processes);
   updateAgendaBadge();
+  try { renderNotificacoes(); } catch {}
 }
 
 async function saveProcess(p) {
@@ -2908,12 +3253,47 @@ async function showFornecedores() {
   setNavActive('nav-forn');
   await renderFornecedores();
 }
+function limparBuscaForn() {
+  const inp = document.getElementById('forn-search');
+  if (inp) inp.value = '';
+  renderFornecedores();
+}
+
 async function renderFornecedores() {
   const all = await dbGetAll('fornecedores');
-  const q = (document.getElementById('forn-search')?.value || '').toLowerCase();
+  const q    = (document.getElementById('forn-search')?.value || '').toLowerCase();
+  const sort = document.getElementById('forn-sort')?.value || 'recent';
+
+  // Botão ✕ inline
+  const clearBtn = document.getElementById('forn-search-clear');
+  if (clearBtn) clearBtn.style.display = q ? '' : 'none';
+
   const lista = all
     .filter(f => !q || f.razao_social?.toLowerCase().includes(q) || f.cnpj?.includes(q) || f.nome_fantasia?.toLowerCase().includes(q))
-    .sort((a, b) => (b.updatedAt || b.addedAt || 0) - (a.updatedAt || a.addedAt || 0));
+    .sort((a, b) => {
+      if (sort === 'az')   return (a.razao_social||'').localeCompare(b.razao_social||'', 'pt-BR');
+      if (sort === 'za')   return (b.razao_social||'').localeCompare(a.razao_social||'', 'pt-BR');
+      if (sort === 'sit')  {
+        const ord = s => s === 'ATIVA' ? 0 : s === 'INAPTA' ? 2 : 1;
+        return ord(a.situacao) - ord(b.situacao);
+      }
+      if (sort === 'cert') {
+        const exp = f => (f.certidoes||[]).filter(c => certStatus(c) === 'expired').length;
+        return exp(b) - exp(a);
+      }
+      return (b.updatedAt || b.addedAt || 0) - (a.updatedAt || a.addedAt || 0);
+    });
+
+  // Contagem de resultados
+  const info = document.getElementById('forn-results-info');
+  if (info) {
+    if (q) {
+      info.style.display = '';
+      info.textContent = `${lista.length} de ${all.length} fornecedor${all.length !== 1 ? 'es' : ''} encontrado${lista.length !== 1 ? 's' : ''}`;
+    } else {
+      info.style.display = 'none';
+    }
+  }
 
   const el = document.getElementById('forn-list');
   if (!lista.length) {
@@ -2929,10 +3309,14 @@ async function renderFornecedores() {
       return p ? `<span class="forn-proc-link" onclick="openProcess('${escHtml(pid)}')">${escHtml(p.num_dl ? `DL ${p.num_dl}` : p.num_proc ? `PA ${p.num_proc}` : p.num || p.objeto.slice(0, 25))}</span>` : '';
     }).filter(Boolean).join('');
     const qsaNames = (f.qsa || []).map(s => escHtml(s.nome)).join(', ');
+    const nProcs = (f.processos || []).filter(pid => processes.find(x => x.id === pid)).length;
     return `<div class="forn-list-item" data-forn-id="${f.id}" onclick="toggleFornCard('${f.id}')">
       <div class="forn-list-header">
         <div>
-          <div class="forn-razao">${escHtml(f.razao_social)}</div>
+          <div class="forn-razao" style="display:flex;align-items:center;gap:8px">
+            ${escHtml(f.razao_social)}
+            ${nProcs > 0 ? `<span style="flex-shrink:0;background:var(--gray-200);color:var(--gray-600);border-radius:99px;font-size:.65rem;font-weight:700;padding:1px 8px">${nProcs} processo${nProcs !== 1 ? 's' : ''}</span>` : ''}
+          </div>
           ${f.nome_fantasia ? `<div class="forn-fantasia">${escHtml(f.nome_fantasia)}</div>` : ''}
           <div class="forn-cnpj-row" style="margin-top:4px">
             <span class="forn-cnpj-txt">${escHtml(f.cnpj)}</span>
@@ -3023,52 +3407,70 @@ function renderAgenda() {
   const today = new Date(); today.setHours(0,0,0,0);
   const in7   = new Date(today); in7.setDate(in7.getDate()+7);
   const in30  = new Date(today); in30.setDate(in30.getDate()+30);
+  const tipoFiltro = document.getElementById('agenda-filter-tipo')?.value || '';
 
   const events = [];
   processes.forEach(p => {
-    function addEvent(dateStr, label) {
+    function addEvent(dateStr, label, tipo) {
       if (!dateStr) return;
       const d = new Date(dateStr.length === 10 ? dateStr + 'T00:00:00' : dateStr);
       if (isNaN(d)) return;
-      events.push({ date: d, label, pid: p.id, urgente: d < today });
+      events.push({ date: d, label, pid: p.id, urgente: d < today, tipo });
     }
-    addEvent(p.steps?.[7]?.fields?.data_encerramento, `Encerramento de propostas — ${p.objeto}`);
-    addEvent(p.steps?.[13]?.fields?.vigencia_final,   `Vencimento de contrato — ${p.objeto}`);
-    addEvent(p.prazo, `Prazo do processo — ${p.objeto}`);
+    addEvent(p.steps?.[7]?.fields?.data_encerramento, `Encerramento de propostas — ${p.objeto}`, 'encerramento');
+    addEvent(p.steps?.[13]?.fields?.vigencia_final,   `Vencimento de contrato — ${p.objeto}`, 'contrato');
+    addEvent(p.prazo, `Prazo do processo — ${p.objeto}`, 'prazo');
     const lastUp = p.updatedAt || p.createdAt;
     if (lastUp && processStatus(p) === 'progress') {
       const diasParado = Math.floor((today - new Date(lastUp)) / 86400000);
       if (diasParado > 15) {
-        events.push({ date: new Date(lastUp), label: `Processo parado há ${diasParado} dias — ${p.objeto}`, pid: p.id, parado: true, urgente: true });
+        events.push({ date: new Date(lastUp), label: `Processo parado há ${diasParado} dias — ${p.objeto}`, pid: p.id, parado: true, urgente: true, tipo: 'parado' });
       }
     }
   });
 
   events.sort((a,b) => a.date - b.date);
 
+  const filtered = tipoFiltro ? events.filter(e => e.tipo === tipoFiltro) : events;
+
+  function countBadge(n) {
+    return `<span style="background:var(--gray-200);color:var(--gray-600);border-radius:99px;padding:1px 8px;font-size:.7rem;font-weight:600;margin-left:6px">${n}</span>`;
+  }
+
   function grupo(title, evs) {
     if (!evs.length) return '';
     return `<div style="margin-bottom:24px">
-      <h3 style="font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--gray-500);margin-bottom:10px">${title}</h3>
-      ${evs.map(e => `
-        <div onclick="openProcess('${e.pid}')" style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid ${e.urgente?'var(--danger)':'var(--gray-200)'};border-radius:8px;margin-bottom:8px;cursor:pointer;background:${e.urgente?'#fff1f0':'var(--bg-card)'}">
-          <div style="font-size:1.1rem;flex-shrink:0">${e.parado?'🛑':e.urgente?'⚠':'📅'}</div>
-          <div>
+      <h3 style="font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--gray-500);margin-bottom:10px">${title}${countBadge(evs.length)}</h3>
+      ${evs.map(e => {
+        const _agendaIcon = {
+          encerramento: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#185FA5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="14" x2="16" y2="14"/></svg>`,
+          contrato:     `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5E2750" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`,
+          prazo:        `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#854F0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+          parado:       `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A32D2D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
+        }[e.tipo] || `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gray-400)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg>`;
+        const _iconBg = { encerramento:'#E6F1FB', contrato:'#F3EDF8', prazo:'#FFF3D8', parado:'#FCEBEB' }[e.tipo] || 'var(--gray-100)';
+        return `<div onclick="openProcess('${e.pid}')" style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid ${e.urgente?'var(--danger)':'var(--gray-200)'};border-radius:8px;margin-bottom:8px;cursor:pointer;background:${e.urgente&&e.parado?'#fff1f0':'var(--bg-card)'}">
+          <div style="flex-shrink:0;width:30px;height:30px;border-radius:50%;background:${_iconBg};display:flex;align-items:center;justify-content:center">${_agendaIcon}</div>
+          <div style="flex:1">
             <div style="font-size:.85rem;font-weight:500;color:${e.urgente?'var(--danger)':'var(--gray-900)'}">${escHtml(e.label)}</div>
-            <div style="font-size:.72rem;color:var(--gray-500);margin-top:2px">${e.parado?'Última atualização: ':''} ${e.date.toLocaleDateString('pt-BR')}</div>
+            <div style="font-size:.72rem;color:var(--gray-500);margin-top:2px">${e.parado?'Última atualização: ':''}${e.date.toLocaleDateString('pt-BR')}</div>
           </div>
-        </div>`).join('')}
+        </div>`;
+      }).join('')}
     </div>`;
   }
 
   const el = document.getElementById('agenda-body');
-  const venc  = events.filter(e => !e.parado && e.date < today);
-  const prox7 = events.filter(e => e.date >= today && e.date <= in7);
-  const prox30= events.filter(e => e.date > in7 && e.date <= in30);
-  const mais  = events.filter(e => e.date > in30);
-  const parados = events.filter(e => e.parado);
+  const venc    = filtered.filter(e => !e.parado && e.date < today);
+  const prox7   = filtered.filter(e => e.date >= today && e.date <= in7);
+  const prox30  = filtered.filter(e => e.date > in7 && e.date <= in30);
+  const mais    = filtered.filter(e => e.date > in30);
+  const parados = filtered.filter(e => e.parado);
 
-  if (!events.length) { el.innerHTML = `<p style="color:var(--gray-400);padding:32px 0;text-align:center">Nenhum vencimento registrado.</p>`; return; }
+  if (!filtered.length) {
+    el.innerHTML = `<p style="color:var(--gray-400);padding:32px 0;text-align:center">${tipoFiltro ? 'Nenhum evento deste tipo.' : 'Nenhum vencimento registrado.'}</p>`;
+    return;
+  }
   el.innerHTML = grupo('Vencidos', venc) + grupo('Parados há mais de 15 dias', parados) + grupo('Próximos 7 dias', prox7) + grupo('Este mês', prox30) + grupo('Mais adiante', mais);
 }
 
@@ -3084,6 +3486,30 @@ async function showAudit() {
   await renderAudit();
 }
 
+function toggleAuditFilters() {
+  const panel = document.getElementById('audit-filters-panel');
+  const btn   = document.getElementById('btn-audit-filters');
+  if (!panel) return;
+  const open = panel.style.display !== 'none';
+  panel.style.display = open ? 'none' : 'flex';
+  btn.style.background   = open ? '' : 'var(--brand)';
+  btn.style.color        = open ? '' : '#fff';
+  btn.style.borderColor  = open ? '' : 'var(--brand)';
+}
+
+function _syncAuditFilterBadge() {
+  const n = [
+    document.getElementById('audit-filter-tipo')?.value,
+    document.getElementById('audit-filter-de')?.value,
+    document.getElementById('audit-filter-ate')?.value,
+    document.getElementById('audit-filter-user')?.value,
+  ].filter(Boolean).length;
+  const badge  = document.getElementById('audit-filter-badge');
+  const limpar = document.getElementById('btn-audit-limpar');
+  if (badge)  { badge.textContent = n; badge.style.display = n > 0 ? '' : 'none'; }
+  if (limpar) limpar.style.display = n > 0 ? '' : 'none';
+}
+
 function limparFiltrosAudit() {
   document.getElementById('audit-filter-tipo').value = '';
   document.getElementById('audit-filter-de').value = '';
@@ -3091,6 +3517,7 @@ function limparFiltrosAudit() {
   document.getElementById('audit-filter-user').value = '';
   _auditPage = 0;
   _auditLastDay = null;
+  _syncAuditFilterBadge();
   renderAudit();
 }
 
@@ -3199,6 +3626,13 @@ async function renderAudit(loadMore = false) {
     return;
   }
 
+  // Pré-calcula contagem de eventos por dia para o badge no separador
+  const _dayCount = {};
+  for (const e of filtered) {
+    const dl = _dayLabel(e.at);
+    _dayCount[dl] = (_dayCount[dl] || 0) + 1;
+  }
+
   for (let i = 0; i < shown.length; i++) {
     const e = shown[i];
     const dayLabel = _dayLabel(e.at);
@@ -3206,9 +3640,11 @@ async function renderAudit(loadMore = false) {
 
     if (dayLabel !== _auditLastDay) {
       _auditLastDay = dayLabel;
+      const cnt = _dayCount[dayLabel] || 0;
       html += `<div style="display:flex;align-items:center;gap:10px;margin:${i === 0 && !loadMore ? '4px' : '20px'} 0 12px">
         <div style="flex:none;width:32px"></div>
         <div style="font-size:.7rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--gray-400);white-space:nowrap">${escHtml(dayLabel)}</div>
+        <span style="background:var(--gray-200);color:var(--gray-500);border-radius:99px;padding:0 7px;font-size:.65rem;font-weight:700;white-space:nowrap">${cnt}</span>
         <div style="flex:1;height:1px;background:var(--gray-100)"></div>
       </div>`;
     }
@@ -3233,7 +3669,11 @@ async function renderAudit(loadMore = false) {
           ${e.usuario ? `<span style="font-size:.72rem;color:var(--gray-500)">${escHtml(e.usuario)}</span>` : ''}
         </div>
         ${e.detalhe ? `<div style="margin-top:4px;font-size:.8rem;color:var(--gray-700)">${escHtml(e.detalhe)}</div>` : ''}
-        ${procLabel ? `<div style="margin-top:3px;font-size:.7rem;color:var(--gray-400)">${escHtml(procLabel)}</div>` : ''}
+        ${proc ? `<div style="margin-top:5px">
+          <button onclick="openProcess('${escHtml(e.processId)}')" style="font-size:.68rem;color:var(--brand);background:none;border:1px solid var(--brand);border-radius:4px;padding:1px 8px;cursor:pointer;font-family:inherit">
+            → ${escHtml(proc.num_dl ? 'DL '+proc.num_dl : proc.num_proc ? 'PA '+proc.num_proc : proc.objeto?.slice(0,40) || 'Abrir processo')}
+          </button>
+        </div>` : ''}
       </div>
     </div>`;
   }
@@ -3357,6 +3797,20 @@ function unitColor(unidade) {
   return colors[hash % colors.length];
 }
 
+function toggleExpandAll() {
+  if (!currentProcess) return;
+  const allIdxs = currentProcess.steps.map((_, i) => i);
+  const allExpanded = allIdxs.every(i => expandedSteps.has(i));
+  if (allExpanded) {
+    expandedSteps.clear();
+  } else {
+    allIdxs.forEach(i => expandedSteps.add(i));
+  }
+  const btn = document.getElementById('btn-expand-all');
+  if (btn) btn.textContent = allExpanded ? '⊞ Expandir todas' : '⊟ Recolher todas';
+  renderChecklist();
+}
+
 function toggleCompactMode() {
   _compactMode = !_compactMode;
   const el = document.getElementById('checklist');
@@ -3369,6 +3823,37 @@ function limparFiltros() {
   ['search','filter-de','filter-ate','filter-vmin','filter-vmax'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   const fsSel = document.getElementById('filter-status'); if (fsSel) fsSel.value = '';
   const fuSel = document.getElementById('filter-unidade'); if (fuSel) fuSel.value = '';
+  document.querySelectorAll('.stat[data-filter]').forEach(el => el.classList.remove('stat-active'));
+  // Fecha painel de filtros avançados e reseta botão
+  const painel = document.getElementById('filtros-avancados');
+  const btnF   = document.getElementById('btn-toggle-filters');
+  if (painel) painel.style.display = 'none';
+  if (btnF)   { btnF.style.background = ''; btnF.style.color = ''; btnF.style.borderColor = ''; }
+  renderDash();
+}
+
+function toggleFiltrosAvancados() {
+  const painel = document.getElementById('filtros-avancados');
+  const btn    = document.getElementById('btn-toggle-filters');
+  if (!painel) return;
+  const aberto = painel.style.display !== 'none';
+  painel.style.display = aberto ? 'none' : 'flex';
+  btn.style.background = aberto ? '' : 'var(--brand)';
+  btn.style.color      = aberto ? '' : '#fff';
+  btn.style.borderColor = aberto ? '' : 'var(--brand)';
+}
+
+function filtrarPorStat(card, status) {
+  const sel = document.getElementById('filter-status');
+  if (!sel) return;
+  const already = card.classList.contains('stat-active');
+  document.querySelectorAll('.stat[data-filter]').forEach(el => el.classList.remove('stat-active'));
+  if (already) {
+    sel.value = '';
+  } else {
+    sel.value = status;
+    card.classList.add('stat-active');
+  }
   renderDash();
 }
 
@@ -3390,8 +3875,22 @@ function renderDash() {
 
   const sortBy = document.getElementById('sort-by')?.value || 'date-desc';
   const hasFilters = q || fSt || fUn || fDe || fAte || fVmin || fVmax;
+
+  // Sincroniza visual dos cards KPI com o filtro de status atual
+  document.querySelectorAll('.stat[data-filter]').forEach(el => {
+    const match = el.dataset.filter === fSt;
+    el.classList.toggle('stat-active', match);
+  });
   const btnLimpar = document.getElementById('btn-limpar-filtros');
   if (btnLimpar) btnLimpar.style.display = hasFilters ? '' : 'none';
+
+  // Contador de filtros avançados ativos (exclui busca textual)
+  const nFiltrosAtivos = [fSt, fUn, fDe, fAte, fVmin, fVmax].filter(Boolean).length;
+  const badge = document.getElementById('filtros-count-badge');
+  if (badge) {
+    badge.textContent = nFiltrosAtivos;
+    badge.style.display = nFiltrosAtivos > 0 ? '' : 'none';
+  }
 
   const filtered = processes.filter(p => {
     const st = processStatus(p);
@@ -3474,6 +3973,19 @@ function renderDash() {
   const btnV = document.getElementById('btn-toggle-view');
   if (btnV) btnV.textContent = _dashView === 'cards' ? '⊞' : '▤';
 
+  // Linha de contagem de resultados
+  const resultsInfo = document.getElementById('dash-results-info');
+  if (resultsInfo) {
+    if (hasFilters && processes.length > 0) {
+      resultsInfo.style.display = '';
+      resultsInfo.textContent = filtered.length === processes.length
+        ? `${filtered.length} processo${filtered.length !== 1 ? 's' : ''}`
+        : `${filtered.length} de ${processes.length} processo${processes.length !== 1 ? 's' : ''}`;
+    } else {
+      resultsInfo.style.display = 'none';
+    }
+  }
+
   if (!_loaded) {
     _loaded = true;
     if (processes.length === 0) {
@@ -3520,6 +4032,7 @@ function renderDash() {
   }
   _setKanbanActive(false);
 
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
   list.innerHTML = filtered.map(p => {
     const st   = processStatus(p);
     const pc   = pct(p);
@@ -3528,14 +4041,21 @@ function renderDash() {
     const fracBadge = frac && frac.nivel !== 'ok'
       ? `<span class="frac-badge ${frac.nivel}">${frac.nivel === 'alerta' ? '🔴 Alerta Fracionamento' : '🟡 Atenção Fracionamento'} ${frac.pct}%</span>`
       : '';
+    const diasParado = st === 'progress'
+      ? Math.floor((hoje - new Date(p.updatedAt || p.createdAt)) / 86400000)
+      : 0;
+    const stallBar = diasParado > 15
+      ? `<div class="pc-stall-bar">⚠ Parado há ${diasParado} dias — última atualização: ${new Date(p.updatedAt||p.createdAt).toLocaleDateString('pt-BR')}</div>`
+      : '';
     return `<div class="process-card pc-${st}" onclick="openProcess('${p.id}')">
+      <button class="pc-quick-open" onclick="event.stopPropagation();openProcess('${p.id}')" title="Abrir processo">Abrir →</button>
       <div class="pc-stripe"></div>
       <div class="pc-body">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
           <div class="num">${p.num_proc || p.num_dl
             ? [p.num_proc && `PA ${escHtml(p.num_proc)}`, p.num_dl && `DL ${escHtml(p.num_dl)}`].filter(Boolean).join(' · ')
             : escHtml(p.num || '—')}</div>
-          <span class="badge ${stl}">${statusLabel(st)}</span>
+          <span class="badge ${stl}" title="${{ todo:'Não iniciado — nenhuma etapa iniciada', progress:'Em andamento — etapas em progresso', done:'Concluído — todas as etapas finalizadas', blocked:'Bloqueado — há etapas impedidas' }[st]}">${statusLabel(st)}</span>
         </div>
         <div class="title">
           <span class="title-text" id="card-title-${p.id}">${escHtml(p.objeto)}</span>
@@ -3555,6 +4075,7 @@ function renderDash() {
           <span class="progress-pct">${pc}%</span>
         </div>
       </div>
+      ${stallBar}
     </div>`;
   }).join('');
 }
@@ -4472,9 +4993,17 @@ function openNewModal() {
 
   document.getElementById('modal-overlay').classList.remove('hidden');
   document.getElementById('m-obj').focus();
+  renderModalTemplatBar();
 }
 function closeModal() {
   document.getElementById('modal-overlay').classList.add('hidden');
+}
+function toggleModalClassif(btn) {
+  const body  = document.getElementById('modal-classif-body');
+  const arrow = document.getElementById('modal-classif-arrow');
+  const open  = body.style.display !== 'none';
+  body.style.display  = open ? 'none' : 'block';
+  arrow.textContent   = open ? '▶' : '▼';
 }
 
 async function createProcess() {
@@ -4579,14 +5108,16 @@ function renderDetail() {
     ? [p.num_proc && `PA ${escHtml(p.num_proc)}`, p.num_dl && `DL ${escHtml(p.num_dl)}`].filter(Boolean).join(' &nbsp;·&nbsp; ')
     : escHtml(p.num || '');
   document.getElementById('d-title').textContent = p.objeto;
+  const _diasAberto = Math.floor((Date.now() - p.createdAt) / 86400000);
+  const _diasStr = _diasAberto === 0 ? 'Criado hoje' : `Aberto há ${_diasAberto} dia${_diasAberto !== 1 ? 's' : ''}`;
   document.getElementById('d-meta').innerHTML = `
     <span><span class="badge ${stl}">${statusLabel(st)}</span></span>
-    ${p.legal   ? `<span>⚖️ ${escHtml(p.legal)}</span>` : ''}
-    ${p.valor   ? `<span>💰 ${fmtMoney(p.valor)}</span>` : ''}
-    ${p.unidade ? `<span>🏛 ${escHtml(p.unidade)}</span>` : ''}
-    ${(()=>{ const fn = typeof p.fornecedor==='object'?(p.fornecedor?.razao_social||''):(p.fornecedor||''); return fn?`<span>👤 ${escHtml(fn)}</span>`:''; })()}
-    ${(()=>{ if(!p.prazo) return ''; const d=new Date(p.prazo); const past=d<new Date(); return `<span style="color:${past?'var(--danger)':'inherit'}">⏰ Prazo: ${d.toLocaleDateString('pt-BR')}${past?' (vencido)':''}</span>`; })()}
-    <span>📅 Criado em ${fmt(p.createdAt)}</span>
+    ${p.legal   ? `<span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> ${escHtml(p.legal)}</span>` : ''}
+    ${p.valor   ? `<span>${ICONS.coin()} ${fmtMoney(p.valor)}</span>` : ''}
+    ${p.unidade ? `<span>${ICONS.building(12)} ${escHtml(p.unidade)}</span>` : ''}
+    ${(()=>{ const fn = typeof p.fornecedor==='object'?(p.fornecedor?.razao_social||''):(p.fornecedor||''); return fn?`<span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> ${escHtml(fn)}</span>`:''; })()}
+    ${(()=>{ if(!p.prazo) return ''; const d=new Date(p.prazo+'T00:00:00'); const past=d<new Date(); return `<span style="color:${past?'var(--danger)':'inherit'}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Prazo: ${d.toLocaleDateString('pt-BR')}${past?' (vencido)':''}</span>`; })()}
+    <span title="Data de criação: ${fmt(p.createdAt)}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> ${_diasStr}</span>
   `;
 
   const pc = pct(p);
@@ -4691,7 +5222,7 @@ async function resetStepOrder() {
 }
 
 // Gera o HTML de um único card de etapa (usado tanto no render completo quanto no parcial)
-async function _buildStepCardHtml(i, p) {
+async function _buildStepCardHtml(i, p, isNext = false) {
   const step = STEPS[i];
   const data = p.steps[i] || { status: 'pending', fields: {}, completedAt: null };
   const status   = data.status;
@@ -4701,6 +5232,7 @@ async function _buildStepCardHtml(i, p) {
   const files = await dbGetByIndex('files', 'processId', p.id + '_' + i);
   const certFileMap = step.certidoes ? await getCertFilesMap(p.id, i) : {};
   const fileCount = files.length;
+  const nextBadge = isNext ? `<span class="step-next-badge" title="Próxima etapa a concluir">▶ Próxima</span>` : '';
   return `<div class="step-card ${isDone?'completed':''} ${isBlocked?'blocked':''} ${expanded?'expanded':''}" id="step-card-${i}" draggable="true" ondragstart="onStepDragStart(event,${i})" ondragover="onStepDragOver(event,${i})" ondragleave="onStepDragLeave(${i})" ondrop="onStepDrop(event,${i})">
       <div class="step-row" onclick="toggleStep(${i})">
         <div class="step-drag-handle" onclick="event.stopPropagation()" title="Arraste para reordenar">⠿</div>
@@ -4712,6 +5244,7 @@ async function _buildStepCardHtml(i, p) {
           <div class="step-name">${i+1}. ${escHtml(step.name)}</div>
           <div class="step-sub">${escHtml(step.sub)}${fileCount ? ` · 📎 ${fileCount} arquivo${fileCount>1?'s':''}` : ''}</div>
         </div>
+        ${nextBadge}
         ${data.completedAt ? `<div class="step-date">${fmtDate(data.completedAt)}</div>` : ''}
       </div>
       <div class="step-body ${expanded?'':'hidden'}" id="step-body-${i}">
@@ -4767,9 +5300,23 @@ async function renderChecklist() {
   const resetBtn = document.getElementById('btn-reset-order');
   if (resetBtn) resetBtn.style.display = hasCustomOrder ? '' : 'none';
 
+  // Sincroniza label do botão expandir/recolher
+  const expandBtn = document.getElementById('btn-expand-all');
+  if (expandBtn) {
+    const allExpanded = order.every(i => expandedSteps.has(i));
+    expandBtn.textContent = allExpanded ? '⊟ Recolher todas' : '⊞ Expandir todas';
+  }
+
+  // Determina a primeira etapa pendente (não concluída e não bloqueada) para o badge "Próxima"
+  const nextIdx = order.find(si => {
+    const st = (p.steps[si] || {}).status;
+    return !st || st === 'pending';
+  });
+
   let html = '';
   for (let pos = 0; pos < order.length; pos++) {
-    html += await _buildStepCardHtml(order[pos], p);
+    const si = order[pos];
+    html += await _buildStepCardHtml(si, p, si === nextIdx);
   }
   container.innerHTML = html;
 }
@@ -5489,12 +6036,13 @@ function renderInfoFields() {
 
   document.getElementById('info-fields').innerHTML = fields.map(f => {
     const val = escHtml(p[f.key] || '');
+    const histBtn = `<button class="field-hist-btn" onclick="abrirFieldHist('${f.key}','${escHtml(f.label)}',this)" title="Ver histórico de alterações deste campo">🕐</button>`;
     if (f.type === 'textarea') {
-      return `<div class="info-field"><label>${f.label}</label>
+      return `<div class="info-field"><label style="display:flex;justify-content:space-between;align-items:center">${f.label}${histBtn}</label>
         <textarea rows="2" onchange="updateProcessField('${f.key}',this.value)">${val}</textarea></div>`;
     }
     if (f.type === 'money') {
-      return `<div class="info-field"><label>${f.label}</label>
+      return `<div class="info-field"><label style="display:flex;justify-content:space-between;align-items:center">${f.label}${histBtn}</label>
         <input type="text" value="${val}" oninput="maskMoney(this)" onchange="updateProcessField('${f.key}',this.value)"></div>`;
     }
     if (f.type === 'select') {
@@ -5507,7 +6055,7 @@ function renderInfoFields() {
         'Outro'
       ];
       const options = opts.map(o => `<option value="${o}" ${p[f.key]===o?'selected':''}>${o || 'Selecionar…'}</option>`).join('');
-      return `<div class="info-field"><label>${f.label}</label>
+      return `<div class="info-field"><label style="display:flex;justify-content:space-between;align-items:center">${f.label}${histBtn}</label>
         <select onchange="updateProcessField('${f.key}',this.value)">${options}</select></div>`;
     }
     if (f.type === 'criterio') {
@@ -5520,14 +6068,14 @@ function renderInfoFields() {
       ];
       const cur = p[f.key] || 'menor_preco';
       const options = criterios.map(c => `<option value="${c.v}" ${cur===c.v?'selected':''}>${c.l}</option>`).join('');
-      return `<div class="info-field"><label>${f.label}</label>
+      return `<div class="info-field"><label style="display:flex;justify-content:space-between;align-items:center">${f.label}${histBtn}</label>
         <select onchange="updateProcessField('${f.key}',this.value)">${options}</select></div>`;
     }
     if (f.type === 'date') {
-      return `<div class="info-field"><label>${f.label}</label>
+      return `<div class="info-field"><label style="display:flex;justify-content:space-between;align-items:center">${f.label}${histBtn}</label>
         <input type="date" value="${escHtml(p[f.key] || '')}" onchange="updateProcessField('${f.key}',this.value||null)"></div>`;
     }
-    return `<div class="info-field"><label>${f.label}</label>
+    return `<div class="info-field"><label style="display:flex;justify-content:space-between;align-items:center">${f.label}${histBtn}</label>
       <input type="text" value="${val}" onchange="updateProcessField('${f.key}',this.value)"></div>`;
   }).join('') + dotacaoHtml + vinculosHtml + classHtml;
 }
@@ -6319,7 +6867,7 @@ ${mediaRef?`<div class="ref-box">
     <div style="font-size:9.5pt;margin-top:2pt">${escHtml(u.cargo||'Agente de Contratação')}</div>
   </div>
 </div>
-<div class="footer-line">Documento gerado pelo SGCD — Sistema de Gestão de Contratação Direta &nbsp;·&nbsp; v${SGCD_VERSION} &nbsp;·&nbsp; Lei Federal nº 14.133/2021 &nbsp;·&nbsp; ${new Date().toLocaleString('pt-BR')} &nbsp;·&nbsp; Cód. ${_docAuthCode(p)}</div>
+${_qrFooter(p)}
 </body></html>`;
   _gerarDocumento(window.open('','_blank','width=900,height=700'), html, 'Mapa de Preços');
 }
@@ -6475,6 +7023,8 @@ function processoFase(p) {
   return 'Contratação';
 }
 
+let _kanbanScrollX = 0;
+
 function renderKanban(procs) {
   const phases = ['Instrução','Publicado','Análise','Adjudicação','Contratação','Concluído'];
   const byPhase = {};
@@ -6482,7 +7032,7 @@ function renderKanban(procs) {
   procs.forEach(p => { const ph = processoFase(p); if (byPhase[ph]) byPhase[ph].push(p); });
 
   const list = document.getElementById('process-list');
-  list.innerHTML = `<div class="kanban-board">${phases.map(ph => `
+  list.innerHTML = `<div class="kanban-board" id="kanban-board">${phases.map(ph => `
     <div class="kanban-col">
       <div class="kanban-col-title">${ph} <span style="background:var(--gray-200);color:var(--gray-600);border-radius:10px;padding:1px 7px;font-size:.7rem;margin-left:4px">${byPhase[ph].length}</span></div>
       ${byPhase[ph].map(p => {
@@ -6501,6 +7051,13 @@ function renderKanban(procs) {
       }).join('')}
     </div>`).join('')}
   </div>`;
+
+  // Restaura scroll salvo e configura listener para persistir
+  const board = document.getElementById('kanban-board');
+  if (board) {
+    board.scrollLeft = _kanbanScrollX;
+    board.addEventListener('scroll', () => { _kanbanScrollX = board.scrollLeft; }, { passive: true });
+  }
 }
 
 let _tblSort = { key: null, dir: 'asc' };
@@ -6741,7 +7298,7 @@ function gerarDespachoRecusa(stepIdx, pi) {
   </div>
 </div>
 
-<div class="footer">Documento gerado pelo SGCD — Sistema de Gestão de Contratação Direta &nbsp;·&nbsp; v${SGCD_VERSION} &nbsp;·&nbsp; Lei Federal nº 14.133/2021 &nbsp;·&nbsp; Cód. ${_docAuthCode(proc)}</div>
+${_qrFooter(proc)}
 </body>
 </html>`;
 
@@ -6882,7 +7439,7 @@ function gerarDespachoInabilitacao(stepIdx) {
   </div>
 </div>
 
-<div class="footer">Documento gerado pelo SGCD — Sistema de Gestão de Contratação Direta &nbsp;·&nbsp; v${SGCD_VERSION} &nbsp;·&nbsp; Lei Federal nº 14.133/2021 &nbsp;·&nbsp; Cód. ${_docAuthCode(proc)}</div>
+${_qrFooter(proc)}
 </body>
 </html>`;
 
@@ -6999,7 +7556,7 @@ function gerarDespachoHabilitacao(stepIdx) {
   </div>
 </div>
 
-<div class="footer">Documento gerado pelo SGCD — Sistema de Gestão de Contratação Direta &nbsp;·&nbsp; v${SGCD_VERSION} &nbsp;·&nbsp; Lei Federal nº 14.133/2021 &nbsp;·&nbsp; Cód. ${_docAuthCode(proc)}</div>
+${_qrFooter(proc)}
 </body>
 </html>`;
 
@@ -7108,7 +7665,7 @@ function gerarTermoAdjudicacao() {
   </div>
 </div>
 
-<div class="footer">Documento gerado pelo SGCD — Sistema de Gestão de Contratação Direta &nbsp;·&nbsp; v${SGCD_VERSION} &nbsp;·&nbsp; Lei Federal nº 14.133/2021 &nbsp;·&nbsp; Cód. ${_docAuthCode(proc)}</div>
+${_qrFooter(proc)}
 </body>
 </html>`;
 
@@ -7212,7 +7769,7 @@ function gerarTermoHomologacao() {
   </div>
 </div>
 
-<div class="footer">Documento gerado pelo SGCD — Sistema de Gestão de Contratação Direta &nbsp;·&nbsp; v${SGCD_VERSION} &nbsp;·&nbsp; Lei Federal nº 14.133/2021 &nbsp;·&nbsp; Cód. ${_docAuthCode(proc)}</div>
+${_qrFooter(proc)}
 </body>
 </html>`;
 
@@ -7365,7 +7922,7 @@ function gerarAvisoDispensa() {
   </div>
 </div>
 
-<div class="footer">Documento gerado pelo SGCD — Sistema de Gestão de Contratação Direta &nbsp;·&nbsp; v${SGCD_VERSION} &nbsp;·&nbsp; Lei Federal nº 14.133/2021 &nbsp;·&nbsp; Cód. ${_docAuthCode(proc)}</div>
+${_qrFooter(proc)}
 </body>
 </html>`;
 
@@ -7473,7 +8030,7 @@ function gerarExtratoContrato() {
   </div>
 </div>
 
-<div class="footer">Documento gerado pelo SGCD — Sistema de Gestão de Contratação Direta &nbsp;·&nbsp; v${SGCD_VERSION} &nbsp;·&nbsp; Lei Federal nº 14.133/2021 &nbsp;·&nbsp; Cód. ${_docAuthCode(proc)}</div>
+${_qrFooter(proc)}
 </body>
 </html>`;
 
@@ -7580,7 +8137,7 @@ ${observacoes ? `<div class="obs-box"><strong>Observações complementares:</str
   </div>
 </div>
 
-<div class="footer">Documento gerado pelo SGCD — Sistema de Gestão de Contratação Direta &nbsp;·&nbsp; v${SGCD_VERSION} &nbsp;·&nbsp; Lei Federal nº 14.133/2021 &nbsp;·&nbsp; Cód. ${_docAuthCode(p)}</div>
+${_qrFooter(p)}
 </body>
 </html>`;
 
@@ -7678,7 +8235,7 @@ function gerarAutorizacao() {
   </div>
 </div>
 
-<div class="footer">Documento gerado pelo SGCD — Sistema de Gestão de Contratação Direta &nbsp;·&nbsp; v${SGCD_VERSION} &nbsp;·&nbsp; Lei Federal nº 14.133/2021 &nbsp;·&nbsp; Cód. ${_docAuthCode(p)}</div>
+${_qrFooter(p)}
 </body>
 </html>`;
 
@@ -8061,8 +8618,7 @@ function gerarAta() {
   </div>
 </div>
 
-<hr style="margin-top:40pt; border-top:1px solid #ccc;">
-<p style="text-align:center; font-size:9pt; color:#666; margin-top:8pt;">Documento gerado pelo SGCD — Sistema de Gestão de Contratação Direta &nbsp;·&nbsp; v${SGCD_VERSION} &nbsp;·&nbsp; Lei Federal nº 14.133/2021 &nbsp;·&nbsp; Cód. ${_docAuthCode(p)}</p>
+${_qrFooter(p)}
 
 </body>
 </html>`;
@@ -8282,6 +8838,15 @@ function showSettings() {
   setNavActive('nav-settings');
   document.getElementById('s-nome').focus();
   playClick();
+
+  // Detecta mudanças nos campos para ativar indicador de "não salvo"
+  const settingsInner = document.getElementById('settings-inner');
+  const btnSave = document.getElementById('btn-save-settings');
+  if (settingsInner && btnSave) {
+    btnSave.classList.remove('has-changes');
+    settingsInner.addEventListener('input',  () => btnSave.classList.add('has-changes'), { once: true });
+    settingsInner.addEventListener('change', () => btnSave.classList.add('has-changes'), { once: true });
+  }
 }
 function saveSettings() {
   const nome = document.getElementById('s-nome').value.trim();
@@ -8326,6 +8891,10 @@ function saveSettings() {
   }
   localStorage.setItem('sgcd-user', JSON.stringify(u));
 
+  // Atualiza nome do órgão no header
+  const hdrInst = document.getElementById('hdr-instituicao');
+  if (hdrInst && u.orgao) hdrInst.textContent = u.orgao;
+
   // Save SMTP config
   const smtpUser = document.getElementById('s-smtp-user').value.trim();
   saveSmtp({
@@ -8339,6 +8908,7 @@ function saveSettings() {
   });
 
   updateHeaderUser();
+  document.getElementById('btn-save-settings')?.classList.remove('has-changes');
 }
 
 function switchCfgTab(id, btn) {
@@ -8370,6 +8940,16 @@ function _applySidebarMode(val) {
   sidebar.classList.toggle('sidebar-expanded', expanded);
   app.classList.toggle('sidebar-expanded-app', expanded);
 }
+
+function toggleMoreActions(e) {
+  e.stopPropagation();
+  document.getElementById('more-actions-menu').classList.toggle('open');
+}
+function closeMoreActions() {
+  document.getElementById('more-actions-menu')?.classList.remove('open');
+}
+// Fecha ao clicar fora
+document.addEventListener('click', () => closeMoreActions());
 
 function toggleDetailSidebar() {
   const grid = document.querySelector('.detail-grid');
@@ -8485,6 +9065,7 @@ async function abrirEmailModal() {
   const smtp = getSmtp();
   const modal = document.getElementById('email-modal');
   modal.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
 
   // Status do servidor
   const statusEl = document.getElementById('email-server-status');
@@ -8516,8 +9097,9 @@ async function abrirEmailModal() {
   } else {
     fornList.innerHTML = fornsComEmail.map(f => {
       const nome = f.razao_social || f.nome || '';
+      const socio = f.qsa?.[0]?.nome || '';
       return `<label style="display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:6px;cursor:pointer;border-bottom:1px solid var(--gray-100)">
-        <input type="checkbox" data-email="${escHtml(f.email)}" data-nome="${escHtml(nome)}"
+        <input type="checkbox" data-email="${escHtml(f.email)}" data-nome="${escHtml(nome)}" data-socio="${escHtml(socio)}"
           ${f.id === fornVinculadoId ? 'checked' : ''} style="flex-shrink:0;width:15px;height:15px;accent-color:var(--brand)">
         <span style="flex:1;min-width:0;overflow:hidden">
           <div style="font-weight:600;font-size:.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(nome)}</div>
@@ -8538,9 +9120,44 @@ async function abrirEmailModal() {
   const linkSite   = stepPubl.link_site   ? `Site Oficial do Município: ${stepPubl.link_site}` : null;
   const linksBlock = [encLine, linkPncp, linkDiario, linkSite].filter(Boolean).join('\n');
 
-  document.getElementById('email-subj-forn').value = `Aviso de Dispensa — ${nums}`;
-  document.getElementById('email-body-forn').value =
-    `Prezado(a) fornecedor(a),\n\nInformamos que está aberto o prazo para envio de propostas para a seguinte Dispensa de Licitação:\n\nÓrgão: ${u.orgao||''}\nObjeto: ${p.objeto}\nValor estimado: ${p.valor ? fmtMoney(p.valor) : 'a definir'}\n\n${linksBlock}\n\nAtenciosamente,\n${u.nome||''}\n${u.cargo||'Agente de Contratação'}\n${u.orgao||''}`;
+  document.getElementById('email-subj-forn').value = `Aviso de Dispensa de Licitação — ${nums}`;
+  const _municipio = u.municipio ? `, ${u.municipio}` : '';
+  const _valor = p.valor ? fmtMoney(p.valor) : 'a definir';
+  const _linksSection = (() => {
+    const parts = [];
+    if (linkPncp)   parts.push(`• Portal Nacional de Contratações Públicas (PNCP): ${linkPncp}`);
+    if (linkDiario) parts.push(`• Diário Oficial do Município: ${linkDiario}`);
+    if (linkSite)   parts.push(`• Site Oficial do Município: ${linkSite}`);
+    return parts.length ? `Os documentos do processo estão disponíveis nos seguintes endereços:\n\n${parts.join('\n')}\n\n` : '';
+  })();
+  const _prazoLine = dtEnc
+    ? `As propostas deverão ser enviadas até o dia ${dtEnc}, conforme prazo publicado no Aviso de Dispensa.`
+    : `As propostas deverão ser enviadas até a data de encerramento constante no Aviso de Dispensa publicado.`;
+  // Usa sócio do fornecedor vinculado como exemplo no template (substituído por destinatário no envio)
+  const _fornVinculado = todosForns.find(f => f.id === fornVinculadoId)
+    || fornsComEmail.find(f => f.qsa?.length);
+  const _socioExemplo = _fornVinculado?.qsa?.[0]?.nome || 'fornecedor(a)';
+  _emailSetContent(
+`Prezado(a) ${_socioExemplo},
+
+Por meio desta mensagem, convidamos Vossa Empresa a apresentar proposta de preços para a seguinte contratação pública, nos termos da Lei Federal nº 14.133/2021:
+
+Órgão: ${u.orgao||''}
+Processo: ${nums}
+
+Objeto: ${p.objeto}
+Valor estimado: ${_valor}
+
+${_linksSection}${_prazoLine}
+
+Para participar, encaminhe sua proposta comercial com os dados da empresa, descrição detalhada do produto ou serviço, prazo de entrega/execução e validade da proposta para este endereço de e-mail ou conforme orientações constantes no Aviso de Dispensa.
+
+Atenciosamente,
+
+${u.nome||''}
+${u.cargo||'Agente de Contratação'}
+${u.orgao||''}`);
+
 
   // ── Aba Interno: lista etapas pendentes ──
   const pendentes = (p.steps || [])
@@ -8552,8 +9169,17 @@ async function abrirEmailModal() {
 
   document.getElementById('email-to-int').value = smtp.to?.email || '';
   document.getElementById('email-subj-int').value = `Pendência — ${nums}`;
-  document.getElementById('email-body-int').value =
-    `Processo: ${nums}\nObjeto: ${p.objeto}\n\n${pendentesText}\n\nAtenciosamente,\n${u.nome||''}\n${u.cargo||'Agente de Contratação'}\n${u.orgao||''}`;
+  _emailSetContentInt(
+`Processo: ${nums}
+Objeto: ${p.objeto}
+
+${pendentesText}
+
+Atenciosamente,
+
+${u.nome||''}
+${u.cargo||'Agente de Contratação'}
+${u.orgao||''}`);
 
   setEmailTab('forn');
 }
@@ -8564,6 +9190,65 @@ function emailFornSelecionarTodos(sel) {
 
 function fecharEmailModal() {
   document.getElementById('email-modal').classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
+function _etbCmd(tab, cmd, val) {
+  // Foca o editor correto antes de executar o comando
+  const editorId = tab === 'forn' ? 'email-body-forn' : 'email-body-int';
+  document.getElementById(editorId)?.focus();
+  document.execCommand(cmd, false, val);
+}
+
+function _emailInsertLinkInt() {
+  const url = prompt('URL do link:');
+  if (!url) return;
+  const text = prompt('Texto do link (deixe em branco para usar a URL):') || url;
+  document.getElementById('email-body-int').focus();
+  document.execCommand('insertHTML', false, `<a href="${url}" target="_blank">${text}</a>`);
+}
+
+function _emailSetContentInt(text) {
+  const div = document.getElementById('email-body-int');
+  if (!div) return;
+  div.innerHTML = text.split('\n').map(l =>
+    l === '' ? '<div><br></div>' : `<div>${l.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`
+  ).join('');
+}
+
+function _emailPtToSize(pt) {
+  // execCommand fontSize aceita 1-7; mapeamos pt → tamanho aproximado
+  const map = {'9':1,'10':2,'11':2,'12':3,'14':4,'16':5,'18':6,'24':7};
+  return map[String(pt)] || 3;
+}
+
+function _emailInsertLink() {
+  const url = prompt('URL do link:');
+  if (!url) return;
+  const text = prompt('Texto do link (deixe em branco para usar a URL):') || url;
+  document.getElementById('email-body-forn').focus();
+  document.execCommand('insertHTML', false, `<a href="${url}" target="_blank">${text}</a>`);
+}
+
+function _emailGetHtml() {
+  const div = document.getElementById('email-body-forn');
+  return div ? div.innerHTML : '';
+}
+
+function _emailGetText() {
+  const div = document.getElementById('email-body-forn');
+  return div ? div.innerText : '';
+}
+
+function _emailSetContent(text) {
+  const div = document.getElementById('email-body-forn');
+  if (!div) return;
+  // Cada linha vira um <div>; linhas vazias viram <div><br></div> (padrão do contenteditable Chrome)
+  div.innerHTML = text.split('\n').map(l =>
+    l === ''
+      ? '<div><br></div>'
+      : `<div>${l.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`
+  ).join('');
 }
 
 function setEmailTab(tab) {
@@ -8579,17 +9264,37 @@ async function enviarNotificacao() {
   btn.disabled = true; btn.textContent = '⏳ Enviando...';
   try {
     const subject = document.getElementById(`email-subj-${_emailTab}`).value.trim();
-    const text    = document.getElementById(`email-body-${_emailTab}`).value.trim();
     if (!subject) { toast('Preencha o assunto.', 'error'); return; }
-    const html = `<pre style="font-family:inherit;white-space:pre-wrap;font-size:14px">${escHtml(text)}</pre>`;
+    let html, text;
+    if (_emailTab === 'forn') {
+      html = `<div style="font-family:Verdana,Arial,sans-serif;font-size:13px;line-height:1.7;max-width:700px">${_emailGetHtml()}</div>`;
+      text = _emailGetText();
+    } else {
+      const intDiv = document.getElementById('email-body-int');
+      html = `<div style="font-family:Verdana,Arial,sans-serif;font-size:13px;line-height:1.7;max-width:700px">${intDiv?.innerHTML || ''}</div>`;
+      text = intDiv?.innerText || '';
+    }
 
     if (_emailTab === 'forn') {
       const selecionados = [...document.querySelectorAll('#email-forn-list input[type=checkbox]:checked')];
       if (!selecionados.length) { toast('Selecione ao menos um fornecedor.', 'error'); return; }
       let enviados = 0, erros = [];
+      // Substitui o nome do sócio no HTML para cada destinatário individualmente
+      const _htmlBase = html;
+      const _textBase = text;
       for (const cb of selecionados) {
         try {
-          await smtpSend({ to: cb.dataset.email, subject, html, text });
+          const socio = cb.dataset.socio || 'fornecedor(a)';
+          // Substitui o nome do sócio do fornecedor vinculado pelo do destinatário atual
+          const _htmlPersonalizado = _htmlBase.replace(
+            /Prezado\(a\) ([^,<\n]+),/,
+            `Prezado(a) ${socio},`
+          );
+          const _textPersonalizado = _textBase.replace(
+            /Prezado\(a\) ([^,\n]+),/,
+            `Prezado(a) ${socio},`
+          );
+          await smtpSend({ to: cb.dataset.email, subject, html: _htmlPersonalizado, text: _textPersonalizado });
           enviados++;
         } catch(e) {
           erros.push(`${cb.dataset.nome}: ${e.message}`);
@@ -8635,6 +9340,555 @@ async function enviarNotificacao() {
 })();
 
 updateHeaderUser();
+
+// ══════════════════════════════════════════════════════════════
+// FEATURE 1 — TEMPLATES DE PROCESSO
+// ══════════════════════════════════════════════════════════════
+function _getTemplates() {
+  try { return JSON.parse(localStorage.getItem('sgcd-templates') || '[]'); } catch { return []; }
+}
+function _saveTemplates(arr) {
+  localStorage.setItem('sgcd-templates', JSON.stringify(arr));
+}
+
+function salvarComoTemplate() {
+  const p = currentProcess;
+  if (!p) return;
+  const nome = prompt('Nome do modelo:', p.objeto?.slice(0, 60) || 'Novo modelo');
+  if (!nome) return;
+  const tpls = _getTemplates();
+  tpls.push({
+    id: genId(),
+    nome,
+    createdAt: Date.now(),
+    legal: p.legal,
+    criterio_selecao: p.criterio_selecao,
+    valor: p.valor,
+    unidade: p.unidade,
+    natureza: p.natureza,
+    categoria: p.categoria,
+    subcategoria: p.subcategoria,
+    objeto: p.objeto,
+  });
+  _saveTemplates(tpls);
+  toast('Modelo salvo!', 'success');
+}
+
+function deleteTemplate(id) {
+  const tpls = _getTemplates().filter(t => t.id !== id);
+  _saveTemplates(tpls);
+  renderTemplatesModal();
+  renderModalTemplatBar();
+}
+
+function applyTemplate(id) {
+  const t = _getTemplates().find(x => x.id === id);
+  if (!t) return;
+  if (t.objeto)   document.getElementById('m-obj').value       = t.objeto;
+  if (t.legal)    document.getElementById('m-legal').value     = t.legal;
+  if (t.criterio_selecao) document.getElementById('m-criterio').value = t.criterio_selecao;
+  if (t.valor)    document.getElementById('m-valor').value     = t.valor;
+  if (t.unidade)  document.getElementById('m-unidade').value   = t.unidade;
+  if (t.natureza) document.getElementById('m-natureza').value  = t.natureza;
+  if (t.categoria) document.getElementById('m-categoria').value = t.categoria;
+  if (t.subcategoria) document.getElementById('m-subcategoria').value = t.subcategoria;
+  toast(`Modelo "${t.nome}" aplicado.`, 'success');
+}
+
+function renderModalTemplatBar() {
+  const tpls = _getTemplates();
+  const bar  = document.getElementById('modal-template-bar');
+  const list = document.getElementById('modal-templates-chips');
+  if (!bar || !list) return;
+  if (tpls.length === 0) { bar.style.display = 'none'; return; }
+  bar.style.display = '';
+  list.innerHTML = tpls.map(t => `
+    <span class="template-chip" onclick="applyTemplate('${t.id}')">
+      <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(t.nome)}</span>
+      <span class="template-chip-del" onclick="event.stopPropagation();deleteTemplate('${t.id}')" title="Remover modelo">✕</span>
+    </span>`).join('');
+}
+
+function renderTemplatesModal() {
+  const tpls = _getTemplates();
+  const el   = document.getElementById('modal-templates-list');
+  if (!el) return;
+  if (tpls.length === 0) {
+    el.innerHTML = '<p style="font-size:.82rem;color:var(--gray-500);text-align:center;padding:16px 0">Nenhum modelo salvo ainda.<br>Abra um processo e clique em "⊞ Modelo" para salvar.</p>';
+    return;
+  }
+  el.innerHTML = tpls.map(t => `
+    <div style="display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--gray-100)">
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;font-size:.85rem">${escHtml(t.nome)}</div>
+        <div style="font-size:.72rem;color:var(--gray-500)">${escHtml(t.legal||'')} · ${escHtml(t.unidade||'')} · ${t.valor ? fmtMoney(t.valor) : ''}</div>
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="applyTemplate('${t.id}');fecharModalTemplates()">Usar</button>
+      <button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="deleteTemplate('${t.id}')">✕</button>
+    </div>`).join('');
+}
+
+function abrirModalTemplates() {
+  renderTemplatesModal();
+  document.getElementById('modal-templates').classList.remove('hidden');
+}
+function fecharModalTemplates() {
+  document.getElementById('modal-templates').classList.add('hidden');
+}
+
+// Chama ao abrir o modal de novo processo
+const _origOpenNewModal = typeof openNewModal === 'function' ? openNewModal : null;
+
+// ══════════════════════════════════════════════════════════════
+// FEATURE 2 — NOTIFICAÇÕES IN-APP
+// ══════════════════════════════════════════════════════════════
+let _notifOpen = false;
+
+async function _buildNotificacoes() {
+  const itens = [];
+  const now = Date.now();
+
+  for (const p of processes) {
+    const st = processStatus(p);
+    if (st === 'done') continue;
+
+    // Prazo vencendo em 7 dias
+    if (p.prazo) {
+      const d = new Date(p.prazo + 'T00:00:00');
+      const diff = Math.ceil((d - now) / 86400000);
+      if (diff >= 0 && diff <= 7) {
+        itens.push({ tipo: 'prazo', p, diff,
+          titulo: `Prazo em ${diff === 0 ? 'hoje' : diff + ' dia' + (diff>1?'s':'')}`,
+          sub: (p.num_dl ? 'DL '+p.num_dl+' — ' : '') + (p.objeto?.slice(0,60)||'') });
+      } else if (diff < 0) {
+        itens.push({ tipo: 'vencido', p, diff,
+          titulo: 'Prazo vencido',
+          sub: (p.num_dl ? 'DL '+p.num_dl+' — ' : '') + (p.objeto?.slice(0,60)||'') });
+      }
+    }
+
+    // Processos parados há 15+ dias
+    const updated = p.updatedAt || p.createdAt;
+    const parado = Math.floor((now - updated) / 86400000);
+    if (parado >= 15 && st !== 'done') {
+      itens.push({ tipo: 'parado', p, parado,
+        titulo: `Parado há ${parado} dias`,
+        sub: (p.num_dl ? 'DL '+p.num_dl+' — ' : '') + (p.objeto?.slice(0,60)||'') });
+    }
+  }
+
+  // Certidões vencendo em 30 dias (lê fornecedores diretamente do IndexedDB)
+  try {
+    const allForns = await dbGetAll('fornecedores');
+    for (const f of allForns) {
+      for (const c of (f.certidoes || [])) {
+        if (!c.validade) continue;
+        const d = certDaysLeft(c);
+        if (d !== null && d >= 0 && d <= 30) {
+          const fNome = f.razao_social || f.nome || f.cnpj || '';
+          itens.push({ tipo: 'cert', f, c, d,
+            titulo: `Certidão vencendo em ${d} dia${d!==1?'s':''}`,
+            sub: `${escHtml(c.tipo||c.tipoId||'')} — ${escHtml(fNome.slice(0,40))}` });
+        }
+      }
+    }
+  } catch {}
+
+  return itens;
+}
+
+async function renderNotificacoes() {
+  const itens = await _buildNotificacoes();
+  const count = document.getElementById('notif-count');
+  const list  = document.getElementById('notif-list');
+  if (count) {
+    count.textContent = itens.length;
+    count.style.display = itens.length > 0 ? '' : 'none';
+  }
+  if (!list) return;
+  if (itens.length === 0) {
+    list.innerHTML = '<div class="notif-empty">✅ Nenhum alerta no momento</div>';
+    return;
+  }
+  const _icon = { prazo:'🟡', vencido:'🔴', parado:'⏸', cert:'📋' };
+  const _bg   = { prazo:'#FFF3CD', vencido:'#FCEBEB', parado:'#F3F4F6', cert:'#EFF6FF' };
+  list.innerHTML = itens.map(it => `
+    <div class="notif-item" onclick="toggleNotificacoes();${it.p ? `openProcess('${it.p.id}')` : ''}">
+      <div class="notif-icon" style="background:${_bg[it.tipo]}">${_icon[it.tipo]}</div>
+      <div class="notif-body">
+        <div class="notif-title">${it.titulo}</div>
+        <div class="notif-sub">${it.sub}</div>
+      </div>
+    </div>`).join('');
+}
+
+function toggleNotificacoes() {
+  _notifOpen = !_notifOpen;
+  const panel = document.getElementById('notif-panel');
+  panel.classList.toggle('open', _notifOpen);
+  if (_notifOpen) {
+    // Posiciona à direita da sidebar, qualquer que seja a largura atual
+    const sidebar = document.getElementById('sidebar');
+    const sidebarW = sidebar ? sidebar.getBoundingClientRect().width : 48;
+    panel.style.left = (sidebarW + 12) + 'px';
+    renderNotificacoes();
+    setTimeout(() => document.addEventListener('click', _closeNotifOutside, { once: true }), 10);
+  }
+}
+
+function _closeNotifOutside(e) {
+  const panel = document.getElementById('notif-panel');
+  const btn   = document.getElementById('btn-notif');
+  if (!panel?.contains(e.target) && !btn?.contains(e.target)) {
+    _notifOpen = false;
+    panel?.classList.remove('open');
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// FEATURE 3 — IMPORTAÇÃO CSV DE FORNECEDORES
+// ══════════════════════════════════════════════════════════════
+let _csvRows = [];
+
+function baixarModeloCsv() {
+  const cabecalho = [
+    'cnpj',
+    'razao_social',
+    'nome_fantasia',
+    'email',
+    'telefone',
+    'telefone2',
+    'cep',
+    'logradouro',
+    'numero',
+    'complemento',
+    'bairro',
+    'municipio',
+    'uf',
+    'natureza_juridica',
+    'porte',
+    'abertura',
+    'capital_social',
+    'situacao',
+    'cnae_cod',
+    'cnae',
+    'opcao_simples',
+    'opcao_mei',
+    'matriz_filial',
+  ];
+
+  const exemplo = [
+    '12.345.678/0001-99',
+    'Empresa Exemplo Ltda',
+    'Exemplo',
+    'contato@empresa.com.br',
+    '(11) 98765-4321',
+    '(11) 3456-7890',
+    '01310-100',
+    'Avenida Paulista',
+    '1000',
+    'Sala 201',
+    'Bela Vista',
+    'São Paulo',
+    'SP',
+    'Sociedade Empresária Limitada',
+    'ME',
+    '2010-03-15',
+    '50000',
+    'ATIVA',
+    '4751201',
+    'Comércio varejista especializado',
+    'SIM',
+    'NÃO',
+    'MATRIZ',
+  ];
+
+  const linhas = [cabecalho.join(';'), exemplo.join(';')];
+  const blob = new Blob(['﻿' + linhas.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = 'modelo_importacao_fornecedores.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function abrirModalCsv() {
+  _csvRows = [];
+  document.getElementById('csv-step-upload').style.display   = '';
+  document.getElementById('csv-step-preview').style.display  = 'none';
+  document.getElementById('csv-step-progress').style.display = 'none';
+  document.getElementById('btn-csv-import').style.display    = 'none';
+  document.getElementById('csv-file-input').value            = '';
+  document.getElementById('modal-csv').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+
+function fecharModalCsv() {
+  document.getElementById('modal-csv').classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
+function carregarCsv(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const text = e.target.result;
+    const lines = text.split(/\r?\n/).filter(l => l.trim());
+    if (lines.length < 2) { toast('CSV vazio ou sem dados.', 'error'); return; }
+
+    const sep = lines[0].includes(';') ? ';' : ',';
+    const headers = lines[0].split(sep).map(h => h.trim().toLowerCase().replace(/['"]/g,''));
+    _csvRows = lines.slice(1).map(l => {
+      const vals = l.split(sep).map(v => v.trim().replace(/^["']|["']$/g,''));
+      const row = {};
+      headers.forEach((h, i) => row[h] = vals[i] || '');
+      return row;
+    }).filter(r => r.cnpj || r.razao_social);
+
+    if (_csvRows.length === 0) { toast('Nenhuma linha válida encontrada.', 'error'); return; }
+
+    // Preview
+    document.getElementById('csv-step-upload').style.display  = 'none';
+    document.getElementById('csv-step-preview').style.display = '';
+    document.getElementById('btn-csv-import').style.display   = '';
+    document.getElementById('csv-preview-count').textContent  = `${_csvRows.length} fornecedor(es) encontrado(s)`;
+
+    const colsShow = ['cnpj','razao_social','email','telefone'].filter(c => headers.includes(c));
+    const table = document.getElementById('csv-preview-table');
+    table.innerHTML =
+      `<thead><tr>${colsShow.map(c => `<th>${c}</th>`).join('')}</tr></thead>` +
+      `<tbody>${_csvRows.slice(0,8).map(r =>
+        `<tr>${colsShow.map(c => `<td>${escHtml(r[c]||'')}</td>`).join('')}</tr>`
+      ).join('')}${_csvRows.length > 8 ? `<tr><td colspan="${colsShow.length}" style="color:var(--gray-500);font-style:italic">… mais ${_csvRows.length-8} linha(s)</td></tr>` : ''}</tbody>`;
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+async function importarCsv() {
+  if (!_csvRows.length) return;
+  const consultarCnpj = document.getElementById('csv-opt-cnpj').checked;
+  document.getElementById('csv-step-preview').style.display  = 'none';
+  document.getElementById('csv-step-progress').style.display = '';
+  document.getElementById('btn-csv-import').style.display    = 'none';
+  document.querySelector('#modal-csv .btn-ghost').style.display = 'none';
+
+  let ok = 0, erros = 0;
+  const progressBar = document.getElementById('csv-progress-bar');
+  const progressMsg = document.getElementById('csv-progress-msg');
+
+  for (let i = 0; i < _csvRows.length; i++) {
+    const r = _csvRows[i];
+    progressBar.style.width = `${Math.round((i / _csvRows.length) * 100)}%`;
+    progressMsg.textContent = `Importando ${i+1} de ${_csvRows.length}…`;
+
+    try {
+      let forn = {
+        id: genId(),
+        cnpj: (r.cnpj || '').replace(/\D/g, ''),
+        razao_social: r.razao_social || '',
+        nome: r.nome || r.razao_social || '',
+        email: r.email || '',
+        telefone: r.telefone || '',
+        createdAt: Date.now(),
+        certidoes: [],
+        processos: [],
+      };
+
+      if (consultarCnpj && forn.cnpj.length === 14) {
+        try {
+          const resp = await fetch(`http://localhost:3000/cnpj/${forn.cnpj}`, { signal: AbortSignal.timeout(8000) });
+          if (resp.ok) {
+            const d = await resp.json();
+            if (d.status !== 'ERROR') {
+              forn = { ...forn, ...parseCnpjData(d) };
+            }
+          }
+        } catch { /* ignora erro de CNPJ individual */ }
+      }
+
+      await dbPut('fornecedores', forn);
+      ok++;
+    } catch { erros++; }
+  }
+
+  progressBar.style.width = '100%';
+  progressMsg.textContent = `Concluído! ${ok} importado(s)${erros ? ', '+erros+' erro(s)' : ''}.`;
+  await loadFornecedores?.();
+  renderFornecedores();
+  setTimeout(() => {
+    fecharModalCsv();
+    toast(`${ok} fornecedor(es) importado(s) com sucesso!`, 'success');
+  }, 1400);
+}
+
+// ══════════════════════════════════════════════════════════════
+// FEATURE 5 — RELATÓRIO EXECUTIVO PDF
+// ══════════════════════════════════════════════════════════════
+function gerarRelatorioExecutivo() {
+  const u    = processes;
+  const user = getUser();
+  const now  = new Date();
+  const dtGer = now.toLocaleDateString('pt-BR') + ' às ' + now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+
+  const total  = processes.length;
+  const done   = processes.filter(p => processStatus(p) === 'done').length;
+  const prog   = processes.filter(p => processStatus(p) === 'progress').length;
+  const pend   = processes.filter(p => processStatus(p) === 'todo').length;
+  const blk    = processes.filter(p => processStatus(p) === 'blocked').length;
+  const valSum = processes.reduce((s,p) => s + (parseValor(p.valor)||0), 0);
+  const stalled = processes.filter(p => {
+    if (processStatus(p) === 'done') return false;
+    return Math.floor((Date.now() - (p.updatedAt||p.createdAt)) / 86400000) >= 15;
+  });
+  const pctDone = total ? Math.round(done/total*100) : 0;
+
+  const bar = (n, max, color) => {
+    const pct = max ? Math.round(n/max*100) : 0;
+    return `<div style="display:flex;align-items:center;gap:10px">
+      <div style="flex:1;height:10px;background:#eee;border-radius:99px;overflow:hidden">
+        <div style="width:${pct}%;height:100%;background:${color};border-radius:99px"></div>
+      </div>
+      <span style="font-size:12px;color:#555;width:28px;text-align:right">${pct}%</span>
+    </div>`;
+  };
+
+  const alertRows = stalled.map(p => {
+    const dias = Math.floor((Date.now()-(p.updatedAt||p.createdAt))/86400000);
+    return `<tr><td>${escHtml(p.num_proc?'PA '+p.num_proc:'—')}</td><td>${escHtml(p.objeto?.slice(0,60)||'')}</td>
+      <td>${escHtml(p.unidade||'')}</td><td style="color:#dc2626;font-weight:600">${dias} dias</td></tr>`;
+  }).join('');
+
+  const procRows = [...processes].sort((a,b) => (b.createdAt||0)-(a.createdAt||0)).slice(0,20).map(p => {
+    const st = processStatus(p);
+    const stC = {done:'#16a34a',progress:'#d97706',todo:'#6b7280',blocked:'#dc2626'}[st]||'#6b7280';
+    const stL = {done:'Concluído',progress:'Em andamento',todo:'Não iniciado',blocked:'Bloqueado'}[st]||st;
+    return `<tr>
+      <td>${escHtml([p.num_proc&&'PA '+p.num_proc,p.num_dl&&'DL '+p.num_dl].filter(Boolean).join(' · ')||'—')}</td>
+      <td>${escHtml(p.objeto?.slice(0,55)||'')}</td>
+      <td>${escHtml(p.unidade||'')}</td>
+      <td style="color:${stC};font-weight:600">${stL}</td>
+      <td style="text-align:right">${p.valor?fmtMoney(p.valor):'—'}</td>
+    </tr>`;
+  }).join('');
+
+  const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+<title>Relatório Executivo — ${escHtml(user.orgao||'SGCD')}</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Arial,sans-serif;font-size:13px;color:#1f2937;background:#fff;padding:32px 40px}
+  h1{font-size:22px;color:#3b0764;margin-bottom:4px}
+  h2{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#6b7280;margin:28px 0 12px;padding-bottom:6px;border-bottom:2px solid #e5e7eb}
+  .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:20px 0}
+  .kpi{background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:16px 20px}
+  .kpi-val{font-size:32px;font-weight:800;line-height:1;margin-bottom:4px}
+  .kpi-lbl{font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.5px}
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th{background:#f3f4f6;padding:7px 10px;text-align:left;border:1px solid #e5e7eb;font-weight:600}
+  td{padding:6px 10px;border:1px solid #e5e7eb;vertical-align:top}
+  tr:nth-child(even) td{background:#fafafa}
+  .bar-row{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+  .bar-lbl{width:110px;font-size:12px;color:#374151}
+  .bar-cnt{font-size:12px;font-weight:700;width:24px;text-align:right;color:#374151}
+  .footer{margin-top:36px;padding-top:14px;border-top:1px solid #e5e7eb;font-size:11px;color:#9ca3af;text-align:center}
+  @media print{body{padding:16px 20px}.no-print{display:none!important}}
+</style></head><body>
+<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px">
+  <div>
+    <h1>${escHtml(user.orgao||'Órgão não configurado')}</h1>
+    <div style="font-size:12px;color:#6b7280">Relatório Executivo de Contratações Diretas · ${dtGer}</div>
+    <div style="font-size:11px;color:#9ca3af;margin-top:2px">Lei Federal nº 14.133/2021 — Art. 75</div>
+  </div>
+  <button onclick="window.print()" class="no-print" style="background:#e95220;color:#fff;border:none;border-radius:6px;padding:8px 18px;cursor:pointer;font-size:13px">🖨 Imprimir / PDF</button>
+</div>
+
+<h2>Visão Geral</h2>
+<div class="kpi-grid">
+  <div class="kpi"><div class="kpi-val" style="color:#1f2937">${total}</div><div class="kpi-lbl">Total de processos</div></div>
+  <div class="kpi"><div class="kpi-val" style="color:#16a34a">${done}</div><div class="kpi-lbl">Concluídos (${pctDone}%)</div></div>
+  <div class="kpi"><div class="kpi-val" style="color:#d97706">${prog}</div><div class="kpi-lbl">Em andamento</div></div>
+  <div class="kpi"><div class="kpi-val" style="color:#374151">${valSum>0?fmtMoney(valSum):'—'}</div><div class="kpi-lbl">Valor total estimado</div></div>
+</div>
+
+<h2>Distribuição por Status</h2>
+<div style="max-width:420px">
+  <div class="bar-row"><span class="bar-lbl">✅ Concluído</span>${bar(done,total,'#16a34a')}<span class="bar-cnt">${done}</span></div>
+  <div class="bar-row"><span class="bar-lbl">🔄 Em andamento</span>${bar(prog,total,'#d97706')}<span class="bar-cnt">${prog}</span></div>
+  <div class="bar-row"><span class="bar-lbl">⏳ Não iniciado</span>${bar(pend,total,'#6b7280')}<span class="bar-cnt">${pend}</span></div>
+  <div class="bar-row"><span class="bar-lbl">🔴 Bloqueado</span>${bar(blk,total,'#dc2626')}<span class="bar-cnt">${blk}</span></div>
+</div>
+
+${stalled.length > 0 ? `
+<h2>⚠ Processos Parados (≥ 15 dias sem atualização)</h2>
+<table><thead><tr><th>Processo</th><th>Objeto</th><th>Unidade</th><th>Parado há</th></tr></thead>
+<tbody>${alertRows}</tbody></table>` : ''}
+
+<h2>Lista de Processos (últimos ${Math.min(20,total)})</h2>
+<table><thead><tr><th>Nº</th><th>Objeto</th><th>Unidade</th><th>Status</th><th style="text-align:right">Valor</th></tr></thead>
+<tbody>${procRows}</tbody></table>
+
+<div class="footer">Documento gerado pelo SGCD — Sistema de Gestão de Contratação Direta · ${escHtml(user.orgao||'')} · ${dtGer}</div>
+</body></html>`;
+
+  _gerarDocumento(window.open('', '_blank', 'width=1100,height=780'), html, 'Relatório Executivo');
+}
+
+// ══════════════════════════════════════════════════════════════
+// FEATURE 6 — HISTÓRICO DE EDIÇÕES POR CAMPO
+// ══════════════════════════════════════════════════════════════
+let _fieldHistAudit = [];
+
+async function abrirFieldHist(campoNome, labelExibido, anchorEl) {
+  if (!_fieldHistAudit.length) {
+    _fieldHistAudit = await dbGetAll('auditGlobal');
+  }
+  const pid = currentProcess?.id;
+  const eventos = _fieldHistAudit.filter(e =>
+    e.evento === 'CAMPO_ALTERADO' &&
+    e.processId === pid &&
+    e.detalhe?.startsWith(campoNome + ':')
+  ).sort((a, b) => b.at - a.at);
+
+  const panel = document.getElementById('field-hist-panel');
+  document.getElementById('field-hist-title').textContent = `Histórico: ${labelExibido}`;
+  const list = document.getElementById('field-hist-list');
+
+  if (eventos.length === 0) {
+    list.innerHTML = '<div style="padding:12px 14px;font-size:.78rem;color:var(--gray-500)">Nenhuma alteração registrada.</div>';
+  } else {
+    list.innerHTML = eventos.map(e => {
+      const match = e.detalhe.match(/^[^:]+: "(.+)" → "(.+)"$/s);
+      return `<div class="field-hist-item">
+        <div style="color:var(--gray-500);font-size:.68rem;margin-bottom:3px">${new Date(e.at).toLocaleString('pt-BR')}</div>
+        ${match
+          ? `<span style="color:var(--danger)">${escHtml(match[1])}</span>
+             <span class="field-hist-arrow">→</span>
+             <span style="color:var(--success)">${escHtml(match[2])}</span>`
+          : escHtml(e.detalhe)}
+      </div>`;
+    }).join('');
+  }
+
+  // Posiciona o painel próximo ao botão
+  const rect = anchorEl.getBoundingClientRect();
+  panel.style.display = 'block';
+  panel.style.top  = `${rect.bottom + window.scrollY + 4}px`;
+  panel.style.left = `${Math.min(rect.left, window.innerWidth - 320)}px`;
+
+  setTimeout(() => document.addEventListener('click', _closeFieldHist, { once: true }), 10);
+}
+
+function fecharFieldHist() {
+  const panel = document.getElementById('field-hist-panel');
+  if (panel) panel.style.display = 'none';
+  _fieldHistAudit = [];
+}
+
+function _closeFieldHist(e) {
+  const panel = document.getElementById('field-hist-panel');
+  if (!panel?.contains(e.target)) fecharFieldHist();
+}
 
 // ── Wire sounds to all buttons globally ──────────────────────
 document.addEventListener('click', e => {
@@ -8854,6 +10108,217 @@ function removerBrasao() {
 }
 
 // ══════════════════════════════════════════════════════════════
+// QR CODE GENERATOR — pure JS, no deps
+// Byte mode · ECC level M · versions 1-10 (up to 216 bytes)
+// ══════════════════════════════════════════════════════════════
+const _QR = (function () {
+  'use strict';
+  // GF(256)
+  const EXP = new Uint8Array(512), LOG = new Uint8Array(256);
+  (function () {
+    for (let i = 0, x = 1; i < 255; i++) {
+      EXP[i] = EXP[i + 255] = x; LOG[x] = i;
+      x = x < 128 ? x << 1 : (x << 1) ^ 0x11d;
+    }
+  })();
+  const gm = (a, b) => a && b ? EXP[LOG[a] + LOG[b]] : 0;
+
+  function rsPoly(n) {
+    let g = [1];
+    for (let i = 0; i < n; i++) {
+      const h = new Uint8Array(g.length + 1);
+      for (let j = 0; j < g.length; j++) { h[j] ^= g[j]; h[j+1] ^= gm(g[j], EXP[i]); }
+      g = h;
+    }
+    return g;
+  }
+  function rsRem(data, gen) {
+    const r = new Uint8Array(gen.length - 1);
+    for (const b of data) {
+      const c = b ^ r[0];
+      r.copyWithin(0, 1); r[r.length - 1] = 0;
+      if (c) for (let j = 0; j < r.length; j++) r[j] ^= gm(gen[j + 1], c);
+    }
+    return r;
+  }
+
+  // [ec_per_blk, g1_blk, g1_dc, g2_blk, g2_dc]  — ECC level M
+  const TB = [0,
+    [10,1,16,0,0],[16,1,28,0,0],[26,1,44,0,0],[18,2,32,0,0],
+    [24,2,43,0,0],[16,4,27,0,0],[18,4,31,0,0],[22,2,38,2,39],
+    [22,3,36,2,37],[26,4,43,1,44],
+  ];
+  const AP = [0,[],[6,18],[6,22],[6,26],[6,30],[6,34],
+    [6,22,38],[6,24,42],[6,26,46],[6,28,50]];
+
+  const MF = [
+    (r,c)=>(r+c)%2===0,(r,c)=>r%2===0,(r,c)=>c%3===0,(r,c)=>(r+c)%3===0,
+    (r,c)=>(Math.floor(r/2)+Math.floor(c/3))%2===0,(r,c)=>r*c%2+r*c%3===0,
+    (r,c)=>(r*c%2+r*c%3)%2===0,(r,c)=>((r+c)%2+r*c%3)%2===0,
+  ];
+
+  function grid(n) { return Array.from({length:n},()=>new Int8Array(n).fill(-1)); }
+
+  function finder(g, r0, c0) {
+    for (let r=-1;r<=7;r++) for (let c=-1;c<=7;c++) {
+      const rr=r0+r,cc=c0+c;
+      if (rr<0||cc<0||rr>=g.length||cc>=g.length) continue;
+      if (r>=0&&r<=6&&c>=0&&c<=6)
+        g[rr][cc]=(r===0||r===6||c===0||c===6||(r>=2&&r<=4&&c>=2&&c<=4))?1:0;
+      else g[rr][cc]=0;
+    }
+  }
+  function align(g,r,c) {
+    for (let dr=-2;dr<=2;dr++) for (let dc=-2;dc<=2;dc++)
+      g[r+dr][c+dc]=(Math.abs(dr)===2||Math.abs(dc)===2||(dr===0&&dc===0))?1:0;
+  }
+  function reserveFmt(g) {
+    const n=g.length;
+    for (let i=0;i<=8;i++) {
+      if (g[8][i]<0) g[8][i]=0; if (g[i][8]<0) g[i][8]=0;
+      if (i<8&&g[8][n-1-i]<0) g[8][n-1-i]=0;
+      if (i<8&&g[n-1-i][8]<0) g[n-1-i][8]=0;
+    }
+    g[n-8][8]=1;
+  }
+  function writeFmt(g,mask) {
+    const n=g.length;
+    let d=(0b00<<3)|mask, rem=d<<10;
+    for (let i=14;i>=10;i--) if ((rem>>i)&1) rem^=(0x537<<(i-10));
+    const f=((d<<10)|(rem&0x3FF))^0b101010000010010;
+    const s1=[[8,0],[8,1],[8,2],[8,3],[8,4],[8,5],[8,7],[8,8],[7,8],[5,8],[4,8],[3,8],[2,8],[1,8],[0,8]];
+    const s2=[[n-1,8],[n-2,8],[n-3,8],[n-4,8],[n-5,8],[n-6,8],[n-7,8],[8,n-8],[8,n-7],[8,n-6],[8,n-5],[8,n-4],[8,n-3],[8,n-2],[8,n-1]];
+    for (let i=0;i<15;i++) { const b=(f>>i)&1; g[s1[i][0]][s1[i][1]]=b; g[s2[i][0]][s2[i][1]]=b; }
+  }
+  function placeData(g,bytes) {
+    const n=g.length; let bi=0,up=true;
+    for (let col=n-1;col>=1;col-=2) {
+      if (col===6) col--;
+      for (let dy=0;dy<n;dy++) {
+        const row=up?n-1-dy:dy;
+        for (const c of [col,col-1]) {
+          if (g[row][c]>=0) continue;
+          const byi=bi>>3,bii=7-(bi&7);
+          g[row][c]=bi<bytes.length*8?(bytes[byi]>>bii)&1:0;
+          bi++;
+        }
+      }
+      up=!up;
+    }
+  }
+  function pen(g) {
+    const n=g.length; let p=0;
+    for (let r=0;r<n;r++) for (let t=0;t<2;t++) {
+      let run=1,prev=t?g[0][r]:g[r][0];
+      for (let i=1;i<n;i++) {
+        const v=t?g[i][r]:g[r][i];
+        if (v===prev){if(++run===5)p+=3;else if(run>5)p++;}else{run=1;prev=v;}
+      }
+    }
+    for (let r=0;r<n-1;r++) for (let c=0;c<n-1;c++)
+      if (g[r][c]===g[r+1][c]&&g[r][c]===g[r][c+1]&&g[r][c]===g[r+1][c+1]) p+=3;
+    let dk=0; for (let r=0;r<n;r++) for (let c=0;c<n;c++) dk+=g[r][c];
+    const pct=dk*100/(n*n);
+    p+=Math.min(Math.abs(Math.floor(pct/5)*5-50),Math.abs(Math.ceil(pct/5)*5-50))/5*10;
+    return p;
+  }
+
+  function encode(text) {
+    const bytes=new TextEncoder().encode(text);
+    const len=bytes.length;
+    let ver=1;
+    while (ver<=10) {
+      const [,g1b,g1dc,g2b,g2dc]=TB[ver];
+      const ccb=ver<=9?8:16;
+      if ((g1b*g1dc+g2b*g2dc)*8>=4+ccb+len*8) break;
+      ver++;
+    }
+    if (ver>10) throw new Error('too long');
+    const [ec,g1b,g1dc,g2b,g2dc]=TB[ver];
+    const totalDC=g1b*g1dc+g2b*g2dc;
+    const n=ver*4+17;
+    // Encode bits
+    const bits=[];
+    const push=(v,l)=>{for(let i=l-1;i>=0;i--)bits.push((v>>i)&1);};
+    push(0b0100,4); push(bytes.length,ver<=9?8:16);
+    for (const b of bytes) push(b,8);
+    const cap=totalDC*8;
+    for (let i=0;i<4&&bits.length<cap;i++) bits.push(0);
+    while (bits.length%8) bits.push(0);
+    const pads=[0xEC,0x11]; let pi=0;
+    while (bits.length<cap) push(pads[pi++%2],8);
+    // To codewords
+    const cw=[];
+    for (let i=0;i<bits.length;i+=8){let b=0;for(let j=0;j<8;j++)b=(b<<1)|bits[i+j];cw.push(b);}
+    // Blocks + ECC
+    const blks=[],ecbs=[]; let pos=0;
+    for (let i=0;i<g1b+g2b;i++) {
+      const dc=i<g1b?g1dc:g2dc;
+      const blk=cw.slice(pos,pos+dc); pos+=dc;
+      blks.push(blk); ecbs.push([...rsRem(blk,rsPoly(ec))]);
+    }
+    // Interleave
+    const fin=[]; const mdc=Math.max(g1dc,g2dc||0);
+    for (let i=0;i<mdc;i++) for (const b of blks) if (i<b.length) fin.push(b[i]);
+    for (let i=0;i<ec;i++) for (const b of ecbs) fin.push(b[i]);
+    // Build matrix
+    const g=grid(n);
+    finder(g,0,0); finder(g,0,n-7); finder(g,n-7,0);
+    for (let i=8;i<n-8;i++) g[6][i]=g[i][6]=i%2===0?1:0;
+    if (ver>=2) {
+      const ap=AP[ver];
+      for (const r of ap) for (const c of ap) if (g[r][c]<0) align(g,r,c);
+    }
+    reserveFmt(g);
+    const fg=g.map(r=>Int8Array.from(r));
+    placeData(g,fin);
+    // Best mask
+    let bm=0,bp=Infinity,bg=null;
+    for (let m=0;m<8;m++) {
+      const h=g.map(r=>Int8Array.from(r));
+      const fn=MF[m];
+      for (let r=0;r<n;r++) for (let c=0;c<n;c++) if (fg[r][c]<0&&fn(r,c)) h[r][c]^=1;
+      writeFmt(h,m);
+      const pp=pen(h);
+      if (pp<bp){bp=pp;bm=m;bg=h;}
+    }
+    return bg;
+  }
+
+  function toSVG(g, px) {
+    const n=g.length, q=px*4, sz=n*px+q*2;
+    const r=[];
+    for (let row=0;row<n;row++) for (let col=0;col<n;col++)
+      if (g[row][col]===1) r.push(`<rect x="${q+col*px}" y="${q+row*px}" width="${px}" height="${px}"/>`);
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}" shape-rendering="crispEdges"><rect width="${sz}" height="${sz}" fill="#fff"/><g fill="#000">${r.join('')}</g></svg>`;
+  }
+
+  return {
+    svg(text, px=3) {
+      try { return toSVG(encode(text), px); }
+      catch(e) { console.warn('QR:', e.message); return null; }
+    }
+  };
+})();
+
+// Gera o bloco HTML de rodapé com QR code para documentos gerados
+function _qrFooter(p, extraInfo) {
+  const cod  = _docAuthCode(p);
+  const qrText = `http://localhost:3000/verificar/${cod}`;
+  const svg  = _QR.svg(qrText, 3);
+  const svgB64 = svg ? 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg))) : null;
+  const dtFmt = new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'}) + ' ' + new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  return `
+<div style="margin-top:28pt;border-top:1px solid #ccc;padding-top:8pt;display:flex;align-items:center;gap:16pt">
+  ${svgB64 ? `<img src="${svgB64}" width="64" height="64" alt="QR" style="flex-shrink:0;border:1px solid #eee">` : ''}
+  <div style="font-size:7.5pt;color:#666;line-height:1.6">
+    Documento gerado pelo <strong>SGCD</strong> — Sistema de Gestão de Contratação Direta &nbsp;·&nbsp; v${SGCD_VERSION}<br>
+    Lei Federal nº 14.133/2021 &nbsp;·&nbsp; ${dtFmt} &nbsp;·&nbsp; Código de autenticidade: <strong>${cod}</strong>
+  </div>
+</div>`;
+}
+
+// ══════════════════════════════════════════════════════════════
 // DOCUMENT AUTH CODE (item 7)
 // ══════════════════════════════════════════════════════════════
 function _docAuthCode(p) {
@@ -8922,6 +10387,36 @@ window.addEventListener('beforeunload', () => {
 // INIT
 // ══════════════════════════════════════════════════════════════
 document.getElementById('hdr-date').textContent = new Date().toLocaleDateString('pt-BR', { weekday:'long', day:'2-digit', month:'long', year:'numeric' });
+// Atualiza nome do órgão no header dinamicamente a partir das configurações
+(function() {
+  const u = getUser();
+  if (u.orgao) {
+    const el = document.getElementById('hdr-instituicao');
+    if (el) el.textContent = u.orgao;
+  }
+})();
+
+// ── Tooltip fixo para step-dots (não corta em overflow:hidden) ──
+(function() {
+  const tip = document.getElementById('step-dot-tooltip');
+  document.addEventListener('mouseover', e => {
+    const dot = e.target.closest('.step-dot[data-tip]');
+    if (!dot || !tip) return;
+    tip.textContent = dot.dataset.tip;
+    tip.classList.add('visible');
+  });
+  document.addEventListener('mousemove', e => {
+    const dot = e.target.closest('.step-dot[data-tip]');
+    if (!dot || !tip) return;
+    tip.style.left = e.clientX + 'px';
+    tip.style.top  = (e.clientY - 28) + 'px';
+  });
+  document.addEventListener('mouseout', e => {
+    const dot = e.target.closest('.step-dot[data-tip]');
+    if (!dot || !tip) return;
+    tip.classList.remove('visible');
+  });
+})();
 
 // Atalho global Ctrl+K
 document.addEventListener('keydown', e => {
@@ -8992,13 +10487,9 @@ initDB()
   })
   .catch(err => { console.error('Erro ao inicializar SGCD:', err); alert('Erro ao inicializar o sistema. Recarregue a página.'); });
 
-// Encerra o servidor ao fechar o app.
-// pagehide é mais confiável que beforeunload em janelas de app (Edge/Chrome --app mode).
-function _notifyShutdown() {
-  try { navigator.sendBeacon('http://localhost:3000/shutdown'); } catch {}
-}
-window.addEventListener('pagehide',     _notifyShutdown);
-window.addEventListener('beforeunload', _notifyShutdown);
+// O encerramento do servidor é feito exclusivamente pelo watchdog de heartbeat
+// no server.py. Não enviamos /shutdown via pagehide/beforeunload porque esses
+// eventos também disparam no F5 (reload), o que encerraria o servidor indevidamente.
 
 // Heartbeat — fallback caso o beacon não chegue (ex: crash do navegador).
 (function _startHeartbeat() {
