@@ -1135,6 +1135,10 @@
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
           Relatório
         </button>
+        <button class="btn btn-outline" onclick="toggleDashChart()" title="Exibir gráfico de processos por mês">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          Gráfico
+        </button>
         <button class="btn btn-outline" onclick="gerarRelatorioExecutivo()" title="Relatório executivo com KPIs e gráficos">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
           Executivo
@@ -1207,6 +1211,14 @@
         <div class="stat-lbl">Valor total estimado</div>
         <div class="stat-sub" id="st-valor-sub">—</div>
       </div>
+    </div>
+
+    <div id="dash-chart-wrap" style="margin-bottom:12px;display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <span style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-500)">Processos por mês — últimos 12 meses</span>
+        <button onclick="document.getElementById('dash-chart-wrap').style.display='none'" style="background:none;border:none;cursor:pointer;font-size:.8rem;color:var(--gray-400)" title="Ocultar gráfico">✕</button>
+      </div>
+      <div id="dash-chart-svg" style="width:100%;overflow-x:auto"></div>
     </div>
 
     <div class="filters" style="flex-wrap:nowrap;align-items:center">
@@ -3760,6 +3772,7 @@ async function gerarRelatorioAuditoria() {
   .btn-print { display: block; margin: 0 auto 20pt; padding: 8pt 24pt; background: #2C001E; color: #fff; border: none; border-radius: 4px; font-size: 11pt; cursor: pointer; letter-spacing: .5px; }
   .btn-print:hover { background: #5E2750; }
   @media print { body { padding: 0; } .no-print { display: none !important; } }
+  @page { @bottom-right { content: "Folha " counter(page); font-size: 8pt; color: #888; } }
 </style></head><body>
 <button class="btn-print no-print" onclick="window.print()">🖨 Imprimir / Salvar PDF</button>
 <div class="header">
@@ -4750,15 +4763,81 @@ function _fornTabsHtml(active) {
   return `<div class="forn-tabs">
     <button class="forn-tab ${active==='dados'?'active':''}" onclick="_switchFornTab('dados')">Dados</button>
     <button class="forn-tab ${active==='certs'?'active':''}" onclick="_switchFornTab('certs')">Certidões</button>
+    <button class="forn-tab ${active==='historico'?'active':''}" onclick="_switchFornTab('historico')">Participações</button>
   </div>`;
 }
 
 function _switchFornTab(tab) {
   _fornTab = tab;
   if (tab === 'dados') _renderFornCardView();
+  else if (tab === 'historico') _renderFornCardHistorico();
   else _renderFornCardCerts();
 }
 function _renderFornCerts() { _renderFornCardCerts(); }
+
+async function _renderFornCardHistorico() {
+  _fornTab = 'historico';
+  const f = _currentForn;
+  const allProcs = await dbGetAll('processes');
+  const cnpjDigits = (f.cnpj || '').replace(/\D/g, '');
+
+  // Coleta processos onde este fornecedor participou como proponente ou vencedor
+  const participacoes = [];
+  for (const p of allProcs) {
+    const vencedorObj = typeof p.fornecedor === 'object' ? p.fornecedor : null;
+    const vencedorId = vencedorObj?.id || null;
+    const isVencedor = vencedorId === f.id || (cnpjDigits && (vencedorObj?.cnpj||'').replace(/\D/g,'') === cnpjDigits);
+
+    // Verifica propostas em qualquer etapa
+    let isProponente = isVencedor;
+    if (!isProponente) {
+      for (const step of (p.steps || [])) {
+        try {
+          const props = JSON.parse(step.fields?._propostas || '[]');
+          if (props.some(pr => {
+            const pCnpj = (pr.cnpj||'').replace(/\D/g,'');
+            return (cnpjDigits && pCnpj === cnpjDigits) ||
+                   (f.razao_social && pr.fornecedor?.toLowerCase() === f.razao_social.toLowerCase());
+          })) { isProponente = true; break; }
+        } catch {}
+      }
+    }
+
+    if (isProponente) {
+      const num = [p.num_proc && `PA ${p.num_proc}`, p.num_dl && `DL ${p.num_dl}`].filter(Boolean).join(' · ') || p.num || '—';
+      participacoes.push({ p, num, isVencedor });
+    }
+  }
+
+  participacoes.sort((a, b) => b.p.createdAt - a.p.createdAt);
+
+  const rows = participacoes.length ? participacoes.map(({ p, num, isVencedor }) => {
+    const statusMap = { pending:'Em instrução', done:'Concluído', blocked:'Bloqueado' };
+    const st = processStatus(p);
+    const badge = isVencedor
+      ? `<span style="font-size:.65rem;background:#dcfce7;color:#166534;padding:1px 6px;border-radius:99px;font-weight:700;margin-left:4px">Vencedor</span>`
+      : '';
+    return `<div style="padding:7px 10px;border-bottom:1px solid var(--gray-100);display:flex;flex-direction:column;gap:2px">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+        <a href="#" onclick="event.preventDefault();_collapseFornCard('${f.id}');openProcess('${p.id}')"
+           style="font-size:.8rem;font-weight:600;color:var(--brand);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
+           title="${escHtml(p.objeto)}">${escHtml(p.objeto)}</a>
+        ${badge}
+      </div>
+      <div style="font-size:.72rem;color:var(--gray-500)">${escHtml(num)} · ${statusMap[st]||st}${p.valor ? ` · ${fmtMoney(p.valor)}` : ''}</div>
+    </div>`;
+  }).join('') : `<p style="color:var(--gray-500);font-size:.8rem;text-align:center;padding:20px 0">Nenhuma participação encontrada.</p>`;
+
+  _setFornCardBody(`<div class="forn-inline-body" onclick="event.stopPropagation()">
+    ${_fornTabsHtml('historico')}
+    <div style="max-height:320px;overflow-y:auto;border:1px solid var(--gray-200);border-radius:6px;margin-top:8px">
+      ${rows}
+    </div>
+    <div style="display:flex;justify-content:flex-end;margin-top:12px;padding-top:10px;border-top:1px solid var(--gray-200)">
+      <button class="btn btn-outline" onclick="_collapseFornCard('${f.id}')">Fechar</button>
+    </div>
+  </div>`, 'view');
+}
 
 // ── Cert Edit ─────────────────────────────────────────────
 let _certEditFornId = null;
@@ -6731,6 +6810,7 @@ function gerarRelatorio() {
   .btn-print { display: block; margin: 0 auto 20pt; padding: 8pt 24pt; background: #2C001E; color: #fff; border: none; border-radius: 4px; font-size: 11pt; cursor: pointer; letter-spacing: .5px; }
   .btn-print:hover { background: #5E2750; }
   @media print { body { padding: 0; } .no-print { display: none !important; } }
+  @page { @bottom-right { content: "Folha " counter(page); font-size: 8pt; color: #888; } }
 </style></head><body>
 <button class="btn-print no-print" onclick="window.print()">🖨 Imprimir / Salvar PDF</button>
 <div class="header">
@@ -6848,6 +6928,7 @@ async function gerarRelatorioFornecedores() {
   .btn-print { display: block; margin: 0 auto 20pt; padding: 8pt 24pt; background: #2C001E; color: #fff; border: none; border-radius: 4px; font-size: 11pt; cursor: pointer; }
   .btn-print:hover { background: #5E2750; }
   @media print { body { padding: 0; } .no-print { display: none !important; } }
+  @page { @bottom-right { content: "Folha " counter(page); font-size: 8pt; color: #888; } }
 </style></head><body>
 <button class="btn-print no-print" onclick="window.print()">🖨 Imprimir / Salvar PDF</button>
 <div class="header">
@@ -7326,6 +7407,7 @@ function gerarDespachoRecusa(stepIdx, pi) {
   .btn-print { display: block; margin: 0 auto 20pt; padding: 8pt 24pt; background: #2C001E; color: #fff; border: none; border-radius: 4px; font-size: 11pt; cursor: pointer; letter-spacing: .5px; }
   .btn-print:hover { background: #5E2750; }
   @media print { body { padding: 0; } .no-print { display: none !important; } }
+  @page { @bottom-right { content: "Folha " counter(page); font-size: 8pt; color: #888; } }
 </style>
 </head>
 <body>
@@ -7468,6 +7550,7 @@ function gerarDespachoInabilitacao(stepIdx) {
   .btn-print { display: block; margin: 0 auto 20pt; padding: 8pt 24pt; background: #2C001E; color: #fff; border: none; border-radius: 4px; font-size: 11pt; cursor: pointer; letter-spacing: .5px; }
   .btn-print:hover { background: #5E2750; }
   @media print { body { padding: 0; } .no-print { display: none !important; } }
+  @page { @bottom-right { content: "Folha " counter(page); font-size: 8pt; color: #888; } }
 </style>
 </head>
 <body>
@@ -7607,6 +7690,7 @@ function gerarDespachoHabilitacao(stepIdx) {
   .btn-print { display: block; margin: 0 auto 20pt; padding: 8pt 24pt; background: #2C001E; color: #fff; border: none; border-radius: 4px; font-size: 11pt; cursor: pointer; letter-spacing: .5px; }
   .btn-print:hover { background: #5E2750; }
   @media print { body { padding: 0; } .no-print { display: none !important; } }
+  @page { @bottom-right { content: "Folha " counter(page); font-size: 8pt; color: #888; } }
 </style>
 </head>
 <body>
@@ -7719,6 +7803,7 @@ function gerarTermoAdjudicacao() {
   .btn-print { display: block; margin: 0 auto 20pt; padding: 8pt 24pt; background: #2C001E; color: #fff; border: none; border-radius: 4px; font-size: 11pt; cursor: pointer; }
   .btn-print:hover { background: #5E2750; }
   @media print { body { padding: 0; } .no-print { display: none !important; } }
+  @page { @bottom-right { content: "Folha " counter(page); font-size: 8pt; color: #888; } }
 </style>
 </head>
 <body>
@@ -7833,6 +7918,7 @@ function gerarTermoHomologacao() {
   .btn-print { display: block; margin: 0 auto 20pt; padding: 8pt 24pt; background: #2C001E; color: #fff; border: none; border-radius: 4px; font-size: 11pt; cursor: pointer; }
   .btn-print:hover { background: #5E2750; }
   @media print { body { padding: 0; } .no-print { display: none !important; } }
+  @page { @bottom-right { content: "Folha " counter(page); font-size: 8pt; color: #888; } }
 </style>
 </head>
 <body>
@@ -7967,6 +8053,7 @@ function gerarAvisoDispensa() {
   .btn-print { display: block; margin: 0 auto 20pt; padding: 8pt 24pt; background: #2C001E; color: #fff; border: none; border-radius: 4px; font-size: 11pt; cursor: pointer; letter-spacing: .5px; }
   .btn-print:hover { background: #5E2750; }
   @media print { body { padding: 0; } .no-print { display: none !important; } }
+  @page { @bottom-right { content: "Folha " counter(page); font-size: 8pt; color: #888; } }
 </style>
 </head>
 <body>
@@ -8097,6 +8184,7 @@ function gerarExtratoContrato() {
   .btn-print { display: block; margin: 0 auto 20pt; padding: 8pt 24pt; background: #2C001E; color: #fff; border: none; border-radius: 4px; font-size: 11pt; cursor: pointer; letter-spacing: .5px; }
   .btn-print:hover { background: #5E2750; }
   @media print { body { padding: 0; } .no-print { display: none !important; } }
+  @page { @bottom-right { content: "Folha " counter(page); font-size: 8pt; color: #888; } }
 </style>
 </head>
 <body>
@@ -8209,6 +8297,7 @@ function gerarEnquadramentoLegal() {
   .btn-print { display: block; margin: 0 auto 20pt; padding: 8pt 24pt; background: #2C001E; color: #fff; border: none; border-radius: 4px; font-size: 11pt; cursor: pointer; letter-spacing: .5px; }
   .btn-print:hover { background: #5E2750; }
   @media print { body { padding: 0; } .no-print { display: none !important; } }
+  @page { @bottom-right { content: "Folha " counter(page); font-size: 8pt; color: #888; } }
 </style>
 </head>
 <body>
@@ -8317,6 +8406,7 @@ function gerarAutorizacao() {
   .btn-print { display: block; margin: 0 auto 20pt; padding: 8pt 24pt; background: #2C001E; color: #fff; border: none; border-radius: 4px; font-size: 11pt; cursor: pointer; letter-spacing: .5px; }
   .btn-print:hover { background: #5E2750; }
   @media print { body { padding: 0; } .no-print { display: none !important; } }
+  @page { @bottom-right { content: "Folha " counter(page); font-size: 8pt; color: #888; } }
 </style>
 </head>
 <body>
@@ -8498,11 +8588,51 @@ function gerarProcessoCompleto() {
     fundamento ? ['Fundamento', fundamento] : null,
   ]));
 
+  const statusLabel = { pending:'Em instrução', done:'Concluído', blocked:'Bloqueado' };
+  const procStatus = processStatus(p);
+  const brasaoSrc = u.brasao || null;
+  const brasaoTag = brasaoSrc
+    ? `<img src="${brasaoSrc}" alt="Brasão" style="height:80pt;width:auto;display:block;margin:0 auto 12pt">`
+    : '';
+
+  const coverPage = `<div class="cover-page">
+    ${brasaoTag}
+    <div class="cover-orgao">${escHtml(u.orgao || '')}</div>
+    <div class="cover-municipio">${escHtml(u.municipio || '')}</div>
+    <div class="cover-rule"></div>
+    <div class="cover-tipo">PROCESSO DE DISPENSA DE LICITAÇÃO</div>
+    <div class="cover-titulo">${escHtml(p.legal ? p.legal.split(' — ')[0] : 'Art. 75 da Lei Federal nº 14.133/2021')}</div>
+    <div class="cover-nums">${escHtml(nums || 'Sem numeração')}</div>
+    <div class="cover-objeto">${escHtml(p.objeto || '')}</div>
+    <table class="cover-table">
+      ${p.valor ? `<tr><td>Valor estimado:</td><td><strong>${fmtMoney(p.valor)}</strong></td></tr>` : ''}
+      ${p.unidade ? `<tr><td>Unidade solicitante:</td><td>${escHtml(p.unidade)}</td></tr>` : ''}
+      ${fornNome ? `<tr><td>Fornecedor/Adjudicatário:</td><td>${escHtml(fornNome)}${fornCnpj ? ` — CNPJ: ${fornCnpj}` : ''}</td></tr>` : ''}
+      <tr><td>Agente de contratação:</td><td>${escHtml(u.nome || '')}${u.cargo ? `, ${u.cargo}` : ''}${u.matricula ? ` — Matrícula: ${u.matricula}` : ''}</td></tr>
+      <tr><td>Status do processo:</td><td>${statusLabel[procStatus] || procStatus}</td></tr>
+      <tr><td>Documento gerado em:</td><td>${hoje}</td></tr>
+    </table>
+    <div class="cover-footer">SGCD — Sistema de Gestão de Contratação Direta &nbsp;·&nbsp; v${SGCD_VERSION} &nbsp;·&nbsp; Lei Federal nº 14.133/2021</div>
+  </div>`;
+
   const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
 <title>Processo Completo — ${escHtml(p.objeto)}</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; color: #000; background: #fff; padding: 2cm 2.5cm; }
+  body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; color: #000; background: #fff; }
+  .content-pages { padding: 2cm 2.5cm; }
+  .cover-page { display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:3cm 3cm;text-align:center; }
+  .cover-orgao { font-size: 16pt; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; margin-top:6pt; }
+  .cover-municipio { font-size: 12pt; color: #444; margin-top: 4pt; }
+  .cover-rule { width: 80%; height: 2px; background: #000; margin: 20pt auto; }
+  .cover-tipo { font-size: 11pt; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #555; margin-bottom: 8pt; }
+  .cover-titulo { font-size: 11pt; color: #333; margin-bottom: 20pt; }
+  .cover-nums { font-size: 14pt; font-weight: 700; margin-bottom: 6pt; }
+  .cover-objeto { font-size: 13pt; margin-bottom: 30pt; max-width: 80%; }
+  .cover-table { border-collapse: collapse; margin: 0 auto 30pt; font-size: 10.5pt; text-align: left; }
+  .cover-table td { padding: 4pt 10pt; border: 1px solid #ccc; vertical-align: top; }
+  .cover-table td:first-child { font-weight: 700; background: #f5f5f5; white-space: nowrap; }
+  .cover-footer { font-size: 8pt; color: #888; margin-top: auto; padding-top: 20pt; }
   .header { text-align: center; margin-bottom: 20pt; border-bottom: 2px solid #000; padding-bottom: 12pt; }
   .header img { height: 70pt; width: auto; margin-bottom: 6pt; display: block; margin: 0 auto 6pt; }
   .header h1 { font-size: 13pt; font-weight: 700; text-transform: uppercase; }
@@ -8511,7 +8641,6 @@ function gerarProcessoCompleto() {
   .doc-title h3 { font-size: 12pt; font-weight: 700; text-transform: uppercase; }
   .doc-section { margin-bottom: 10pt; padding-bottom: 10pt; border-bottom: 1px solid #ccc; }
   .doc-section:last-child { border-bottom: none; }
-  @media print { .doc-section { page-break-inside: avoid; } }
   h2 { font-size: 11pt; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 6pt; padding-bottom: 4pt; border-bottom: 1px solid #000; }
   .body-text { font-size: 11pt; line-height: 1.7; text-align: justify; margin-bottom: 8pt; }
   .ft { width: 100%; border-collapse: collapse; margin: 6pt 0; }
@@ -8519,11 +8648,19 @@ function gerarProcessoCompleto() {
   .ft td.lbl { font-weight: 700; text-transform: uppercase; font-size: 9pt; letter-spacing: .3px; width: 38%; background: #f5f5f5; text-align: center; vertical-align: middle; }
   .footer { margin-top: 30pt; border-top: 1px solid #ccc; padding-top: 6pt; text-align: center; font-size: 8pt; color: #666; }
   .btn-print { display: block; margin: 0 auto 20pt; padding: 8pt 24pt; background: #2C001E; color: #fff; border: none; border-radius: 4px; font-size: 11pt; cursor: pointer; }
-  @media print { .no-print { display: none !important; } body { padding: 1cm 1.5cm; } }
+  @media print {
+    .no-print { display: none !important; }
+    .cover-page { page-break-after: always; padding: 2cm; }
+    .content-pages { padding: 1cm 1.5cm; }
+    .doc-section { page-break-inside: avoid; }
+    @page { @bottom-right { content: "Folha " counter(page); font-size: 8pt; color: #888; } }
+  }
 </style></head><body>
 <button class="btn-print no-print" onclick="window.print()">🖨 Imprimir / Salvar PDF</button>
+${coverPage}
+<div class="content-pages">
 <div class="header">
-  <img src="data:image/png;base64,__BRASAO_PLACEHOLDER__" alt="Brasão">
+  ${brasaoTag}
   <h1>${escHtml(blank(u.orgao))}</h1>
   <h2>${escHtml(blank(u.municipio))}</h2>
 </div>
@@ -8533,6 +8670,7 @@ function gerarProcessoCompleto() {
 </div>
 ${sections.join('\n')}
 <div class="footer">Documento gerado pelo SGCD — Sistema de Gestão de Contratação Direta &nbsp;·&nbsp; v${SGCD_VERSION} &nbsp;·&nbsp; ${hoje}</div>
+</div>
 </body></html>`;
 
   _gerarDocumento(window.open('', '_blank', 'width=900,height=700'), html, 'Processo Completo');
@@ -9862,6 +10000,90 @@ async function importarCsv() {
     fecharModalCsv();
     toast(`${ok} fornecedor(es) importado(s) com sucesso!`, 'success');
   }, 1400);
+}
+
+// ══════════════════════════════════════════════════════════════
+// GRÁFICO MENSAL DO DASHBOARD
+// ══════════════════════════════════════════════════════════════
+function toggleDashChart() {
+  const wrap = document.getElementById('dash-chart-wrap');
+  if (!wrap) return;
+  const visible = wrap.style.display !== 'none';
+  if (visible) {
+    wrap.style.display = 'none';
+  } else {
+    wrap.style.display = '';
+    renderDashChart();
+  }
+}
+
+function renderDashChart() {
+  const el = document.getElementById('dash-chart-svg');
+  if (!el) return;
+
+  // Monta contadores para os últimos 12 meses
+  const now = new Date();
+  const months = [];
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push({ year: d.getFullYear(), month: d.getMonth(), criados: 0, concluidos: 0 });
+  }
+
+  for (const p of processes) {
+    const d = new Date(p.createdAt);
+    const idx = months.findIndex(m => m.year === d.getFullYear() && m.month === d.getMonth());
+    if (idx >= 0) months[idx].criados++;
+    if (processStatus(p) === 'done') {
+      const lastDone = p.steps?.reduce((max, s) => {
+        if (s.status === 'done' && s.completedAt > max) return s.completedAt;
+        return max;
+      }, 0);
+      if (lastDone) {
+        const dd = new Date(lastDone);
+        const idx2 = months.findIndex(m => m.year === dd.getFullYear() && m.month === dd.getMonth());
+        if (idx2 >= 0) months[idx2].concluidos++;
+      }
+    }
+  }
+
+  const MESES_PT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const maxVal = Math.max(1, ...months.map(m => Math.max(m.criados, m.concluidos)));
+  const W = 700, H = 120, PAD_L = 28, PAD_B = 22, PAD_T = 10;
+  const chartW = W - PAD_L, chartH = H - PAD_B - PAD_T;
+  const barW = Math.floor(chartW / months.length);
+  const groupW = barW - 4;
+  const bW = Math.max(4, Math.floor(groupW / 2) - 1);
+
+  let bars = '', labels = '', legend = '';
+  months.forEach((m, i) => {
+    const x = PAD_L + i * barW;
+    const hC = m.criados   ? Math.round((m.criados   / maxVal) * chartH) : 0;
+    const hD = m.concluidos ? Math.round((m.concluidos / maxVal) * chartH) : 0;
+    const yC = PAD_T + chartH - hC;
+    const yD = PAD_T + chartH - hD;
+    bars += `<rect x="${x+2}" y="${yC}" width="${bW}" height="${hC}" fill="var(--brand)" rx="2" opacity=".85">
+      <title>Criados: ${m.criados}</title></rect>`;
+    bars += `<rect x="${x+2+bW+1}" y="${yD}" width="${bW}" height="${hD}" fill="#22c55e" rx="2" opacity=".75">
+      <title>Concluídos: ${m.concluidos}</title></rect>`;
+    labels += `<text x="${x + barW/2}" y="${H - 4}" text-anchor="middle" font-size="9" fill="currentColor" opacity=".6">${MESES_PT[m.month]}</text>`;
+    // Y-axis grid lines
+    if (i === 0) {
+      for (let g = 0; g <= 4; g++) {
+        const yg = PAD_T + chartH - Math.round((g/4) * chartH);
+        const val = Math.round((g/4) * maxVal);
+        bars += `<line x1="${PAD_L}" y1="${yg}" x2="${W}" y2="${yg}" stroke="currentColor" stroke-width=".4" opacity=".15"/>`;
+        bars += `<text x="${PAD_L-2}" y="${yg+3}" text-anchor="end" font-size="8" fill="currentColor" opacity=".5">${val}</text>`;
+      }
+    }
+  });
+
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;color:var(--gray-700)">
+    ${bars}${labels}
+    <rect x="${W-120}" y="4" width="10" height="8" fill="var(--brand)" rx="1" opacity=".85"/>
+    <text x="${W-107}" y="11" font-size="9" fill="currentColor">Criados</text>
+    <rect x="${W-70}" y="4" width="10" height="8" fill="#22c55e" rx="1" opacity=".75"/>
+    <text x="${W-57}" y="11" font-size="9" fill="currentColor">Concluídos</text>
+  </svg>`;
 }
 
 // ══════════════════════════════════════════════════════════════
