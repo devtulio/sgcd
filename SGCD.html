@@ -5001,7 +5001,7 @@ async function _renderFornCardHistorico() {
   participacoes.sort((a, b) => b.p.createdAt - a.p.createdAt);
 
   const rows = participacoes.length ? participacoes.map(({ p, num, isVencedor }) => {
-    const statusMap = { pending:'Em instrução', done:'Concluído', blocked:'Bloqueado' };
+    const statusMap = { todo:'Não iniciado', pending:'Em instrução', progress:'Em andamento', done:'Concluído', blocked:'Bloqueado' };
     const st = processStatus(p);
     const badge = isVencedor
       ? `<span style="font-size:.65rem;background:#dcfce7;color:#166534;padding:1px 6px;border-radius:99px;font-weight:700;margin-left:4px">Vencedor</span>`
