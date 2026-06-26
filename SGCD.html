@@ -3950,7 +3950,7 @@ async function gerarRelatorioAuditoria() {
   <thead><tr><th style="width:110pt">Data/Hora</th><th style="width:100pt">Evento</th><th style="width:85pt">Processo</th><th>Detalhe</th><th style="width:120pt">Usuário</th></tr></thead>
   <tbody>${tbody || '<tr><td colspan="5" style="text-align:center;color:#aaa;padding:20pt">Nenhum registro encontrado.</td></tr>'}</tbody>
 </table>
-<div class="footer-line">Documento gerado pelo SGCD — Sistema de Gestão de Contratação Direta &nbsp;·&nbsp; v${SGCD_VERSION} &nbsp;·&nbsp; ${dtGerFmt} &nbsp;·&nbsp; Uso interno</div>
+${_qrFooterReport('Relatório de Auditoria')}
 </body></html>`;
 
   _gerarDocumento(window.open('', '_blank', 'width=1000,height=720'), html, 'Relatório de Auditoria');
@@ -7080,7 +7080,7 @@ function gerarRelatorio() {
   <tbody>${tbody}</tbody>
 </table>
 ${totalGeral ? `<div class="total-row">Total Geral: ${fmtMoney(totalGeral)}</div>` : ''}
-<div class="footer-line">Documento gerado pelo SGCD — Sistema de Gestão de Contratação Direta &nbsp;·&nbsp; v${SGCD_VERSION} &nbsp;·&nbsp; Lei Federal nº 14.133/2021</div>
+${_qrFooterReport('Relatório Geral de Processos')}
 </body></html>`;
   _gerarDocumento(window.open('', '_blank', 'width=900,height=700'), html, 'Relatório Geral de Processos');
 }
@@ -7208,7 +7208,7 @@ async function gerarRelatorioFornecedores() {
   </tr></thead>
   <tbody>${tbody}</tbody>
 </table>
-<div class="footer-line">Documento gerado pelo SGCD — Sistema de Gestão de Contratação Direta &nbsp;·&nbsp; v${SGCD_VERSION} &nbsp;·&nbsp; Lei Federal nº 14.133/2021</div>
+${_qrFooterReport('Relatório de Fornecedores')}
 </body></html>`;
 
   _gerarDocumento(window.open('', '_blank', 'width=900,height=700'), html, 'Relatório de Fornecedores');
@@ -10536,7 +10536,7 @@ ${stalled.length > 0 ? `
 <table><thead><tr><th>Nº</th><th>Objeto</th><th>Unidade</th><th>Status</th><th style="text-align:right">Valor</th></tr></thead>
 <tbody>${procRows}</tbody></table>
 
-<div class="footer">Documento gerado pelo SGCD — Sistema de Gestão de Contratação Direta · ${escHtml(user.orgao||'')} · ${dtGer}</div>
+${_qrFooterReport('Relatório Executivo')}
 </body></html>`;
 
   _gerarDocumento(window.open('', '_blank', 'width=1100,height=780'), html, 'Relatório Executivo');
@@ -11010,6 +11010,30 @@ const _QR = (function () {
 })();
 
 // Gera o bloco HTML de rodapé com QR code para documentos gerados
+// Rodapé com QR para relatórios globais (sem processo específico)
+function _qrFooterReport(label) {
+  const u = getUser();
+  const dtFmt = new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'}) + ' ' + new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  const cod = (() => {
+    const str = [u.orgao, label, Date.now()].join('|');
+    let h = 0;
+    for (let i = 0; i < str.length; i++) { h = Math.imul(31, h) + str.charCodeAt(i) | 0; }
+    const hex = (h >>> 0).toString(16).toUpperCase().padStart(8, '0');
+    return hex.slice(0, 4) + '-' + hex.slice(4);
+  })();
+  const qrText = `SGCD/${SGCD_VERSION}/${u.orgao || ''}/${cod}`;
+  const svg = _QR.svg(qrText, 3);
+  const svgB64 = svg ? 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg))) : null;
+  return `
+<div style="margin-top:28pt;border-top:1px solid #ccc;padding-top:8pt;display:flex;align-items:center;gap:16pt">
+  ${svgB64 ? `<img src="${svgB64}" width="64" height="64" alt="QR" style="flex-shrink:0;border:1px solid #eee">` : ''}
+  <div style="font-size:7.5pt;color:#666;line-height:1.6">
+    Documento gerado pelo <strong>SGCD</strong> — Sistema de Gestão de Contratação Direta &nbsp;·&nbsp; v${SGCD_VERSION}<br>
+    Lei Federal nº 14.133/2021 &nbsp;·&nbsp; ${dtFmt} &nbsp;·&nbsp; Código de autenticidade: <strong>${cod}</strong>
+  </div>
+</div>`;
+}
+
 function _qrFooter(p, extraInfo) {
   const cod  = _docAuthCode(p);
   const qrText = `http://localhost:3000/verificar/${cod}`;
