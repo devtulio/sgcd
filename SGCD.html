@@ -1806,7 +1806,7 @@
       </div>
       <div class="info-field">
         <label>Objeto (descrição resumida) *</label>
-        <input type="text" id="m-obj" placeholder="Ex: Aquisição de material de limpeza">
+        <input type="text" id="m-obj" placeholder="Ex: Aquisição de material de limpeza" maxlength="500">
       </div>
 
       <!-- Grupo 2: Base legal -->
@@ -1847,7 +1847,7 @@
         </div>
         <div class="info-field" style="margin:0">
           <label>Unidade Solicitante</label>
-          <input type="text" id="m-unidade" placeholder="Ex: Sec. de Saúde">
+          <input type="text" id="m-unidade" placeholder="Ex: Sec. de Saúde" maxlength="120">
         </div>
         <div class="info-field" style="margin:0">
           <label>Prazo para conclusão</label>
@@ -1883,7 +1883,7 @@
       </div>
       <div class="info-field">
         <label>Observações iniciais</label>
-        <textarea id="m-obs" placeholder="Contexto, prioridade, prazos…"></textarea>
+        <textarea id="m-obs" placeholder="Contexto, prioridade, prazos…" maxlength="1000"></textarea>
       </div>
     </div>
     <div class="modal-footer">
@@ -2184,9 +2184,35 @@ const ICONS = {
 // DB — IndexedDB wrapper
 // ══════════════════════════════════════════════════════════════
 let db;
-const SGCD_VERSION = '1.14.0';
+const SGCD_VERSION = '1.15.0';
 document.title = `SGCD v${SGCD_VERSION}`;
 const DB_NAME = 'dispensaDB', DB_VER = 3;
+
+// ── Tratamento global de erros JS ──────────────────────────────
+let _globalErrorCount = 0;
+window.onerror = function(msg, src, line, col, err) {
+  _globalErrorCount++;
+  if (_globalErrorCount > 3) return true; // evita spam
+  const detail = err?.stack ? err.stack.split('\n').slice(0,3).join(' | ') : `${src}:${line}`;
+  console.error('[SGCD] Erro não tratado:', msg, detail);
+  // Não exibe toast para erros de extensões do navegador ou scripts externos
+  if (src && !src.includes('localhost') && !src.includes('SGCD')) return false;
+  if (typeof toast === 'function') {
+    toast(`Erro inesperado: ${String(msg).slice(0, 120)}`, 'error');
+  }
+  return false;
+};
+window.addEventListener('unhandledrejection', (e) => {
+  _globalErrorCount++;
+  if (_globalErrorCount > 3) return;
+  const msg = e.reason?.message || String(e.reason) || 'Erro assíncrono desconhecido';
+  console.error('[SGCD] Promise não tratada:', msg, e.reason?.stack || '');
+  // Ignora erros de rede esperados (timeout, servidor local indisponível)
+  if (/fetch|network|timeout|abort/i.test(msg)) return;
+  if (typeof toast === 'function') toast(`Erro: ${msg.slice(0, 120)}`, 'error');
+});
+// Reset do contador a cada 30s para permitir novos alertas após período de estabilidade
+setInterval(() => { _globalErrorCount = 0; }, 30000);
 
 function initDB() {
   return new Promise((res, rej) => {
@@ -2215,60 +2241,73 @@ function initDB() {
   });
 }
 
+const DB_TIMEOUT_MS = 8000;
+
+// Envolve uma Promise de IndexedDB com timeout para evitar travamentos silenciosos
+function _dbWithTimeout(promise, op = 'operação') {
+  return Promise.race([
+    promise,
+    new Promise((_, rej) =>
+      setTimeout(() => rej(new Error(`Timeout no banco de dados (${op}). Tente recarregar a página.`)), DB_TIMEOUT_MS)
+    )
+  ]);
+}
+
 function dbGet(store, key) {
-  return new Promise((res, rej) => {
+  return _dbWithTimeout(new Promise((res, rej) => {
     const tx = db.transaction(store, 'readonly');
     const req = tx.objectStore(store).get(key);
     req.onsuccess = () => res(req.result);
-    req.onerror   = e => rej(e);
-  });
+    req.onerror   = e => rej(e.target.error || e);
+  }), `get:${store}`);
 }
 
 function dbGetAll(store) {
-  return new Promise((res, rej) => {
+  return _dbWithTimeout(new Promise((res, rej) => {
     const tx = db.transaction(store, 'readonly');
     const req = tx.objectStore(store).getAll();
     req.onsuccess = () => res(req.result);
-    req.onerror   = e => rej(e);
-  });
+    req.onerror   = e => rej(e.target.error || e);
+  }), `getAll:${store}`);
 }
 
 function dbPut(store, data) {
-  return new Promise((res, rej) => {
+  return _dbWithTimeout(new Promise((res, rej) => {
     const tx = db.transaction(store, 'readwrite');
     const req = tx.objectStore(store).put(data);
     req.onsuccess = () => res(req.result);
-    req.onerror   = e => rej(e);
-  });
+    req.onerror   = e => rej(e.target.error || e);
+    tx.onerror    = e => rej(e.target.error || e);
+  }), `put:${store}`);
 }
 
 function dbDelete(store, key) {
-  return new Promise((res, rej) => {
+  return _dbWithTimeout(new Promise((res, rej) => {
     const tx = db.transaction(store, 'readwrite');
     const req = tx.objectStore(store).delete(key);
     req.onsuccess = () => res();
-    req.onerror   = e => rej(e);
-  });
+    req.onerror   = e => rej(e.target.error || e);
+  }), `delete:${store}`);
 }
 
 function dbGetByIndex(store, indexName, value) {
-  return new Promise((res, rej) => {
+  return _dbWithTimeout(new Promise((res, rej) => {
     const tx = db.transaction(store, 'readonly');
     const idx = tx.objectStore(store).index(indexName);
     const req = idx.getAll(value);
     req.onsuccess = () => res(req.result);
-    req.onerror   = e => rej(e);
-  });
+    req.onerror   = e => rej(e.target.error || e);
+  }), `getByIndex:${store}`);
 }
 
 function dbGetByIndexPrefix(store, indexName, prefix) {
-  return new Promise((res, rej) => {
+  return _dbWithTimeout(new Promise((res, rej) => {
     const tx = db.transaction(store, 'readonly');
     const idx = tx.objectStore(store).index(indexName);
     const req = idx.getAll(IDBKeyRange.bound(prefix, prefix + '￿'));
     req.onsuccess = () => res(req.result);
-    req.onerror   = e => rej(e);
-  });
+    req.onerror   = e => rej(e.target.error || e);
+  }), `getByIndexPrefix:${store}`);
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -2439,10 +2478,33 @@ async function exportBackup() {
   } catch(e) { toast('Erro ao exportar: ' + e.message, 'error'); }
 }
 
+function _validarEstruturaBackup(b) {
+  if (!b || typeof b !== 'object') return 'Arquivo não é um objeto JSON válido.';
+  if (!b._sgcd) return 'Arquivo não é um backup do SGCD (campo _sgcd ausente).';
+  if (!Array.isArray(b.processes)) return 'Campo "processes" ausente ou inválido.';
+  if (b.fornecedores !== undefined && !Array.isArray(b.fornecedores))
+    return 'Campo "fornecedores" com formato inválido.';
+  if (b.files !== undefined && !Array.isArray(b.files))
+    return 'Campo "files" com formato inválido.';
+  // Verifica amostra dos processos
+  for (const p of b.processes.slice(0, 5)) {
+    if (!p || typeof p !== 'object') return 'Processo com estrutura inválida encontrado.';
+    if (typeof p.id === 'undefined') return 'Processo sem campo "id" encontrado.';
+    if (typeof p.objeto !== 'string') return 'Processo sem campo "objeto" (string) encontrado.';
+    if (!Array.isArray(p.steps)) return `Processo "${p.id}" sem campo "steps" (array).`;
+  }
+  return null; // ok
+}
+
 async function importBackup(file) {
   try {
+    if (file.size > 200 * 1024 * 1024) {
+      toast('Arquivo de backup muito grande (máx. 200 MB). Verifique o arquivo.', 'error');
+      return;
+    }
     const backup = JSON.parse(await file.text());
-    if (!backup._sgcd) { toast('Arquivo inválido — não é um backup do SGCD.', 'error'); return; }
+    const erroEstrutura = _validarEstruturaBackup(backup);
+    if (erroEstrutura) { toast(`Backup inválido: ${erroEstrutura}`, 'error'); return; }
     const hasAudit = (backup.auditGlobal?.length || 0) > 0;
     const ok = await customConfirm(
       `Exportado em ${new Date(backup.exportedAt).toLocaleString('pt-BR')}.\n\nIsso substituirá TODOS os dados atuais por ${backup.processes?.length||0} processos, ${backup.fornecedores?.length||0} fornecedores, ${backup.files?.length||0} arquivos e ${backup.auditGlobal?.length||0} registros de auditoria. Esta ação não pode ser desfeita.`,
@@ -3005,6 +3067,28 @@ async function saveProcess(p) {
 // FORNECEDORES
 // ══════════════════════════════════════════════════════════════
 function cleanCnpj(s) { return (s || '').replace(/\D/g, ''); }
+
+// Valida dígitos verificadores do CNPJ (algoritmo oficial da Receita Federal)
+function validarCnpj(s) {
+  const d = cleanCnpj(s);
+  if (d.length !== 14) return false;
+  if (/^(\d)\1+$/.test(d)) return false; // todos iguais
+  const calc = (n) => {
+    let sum = 0, pos = n - 7;
+    for (let i = 0; i < n; i++) {
+      sum += parseInt(d[i]) * pos--;
+      if (pos < 2) pos = 9;
+    }
+    const r = sum % 11;
+    return r < 2 ? 0 : 11 - r;
+  };
+  return calc(12) === parseInt(d[12]) && calc(13) === parseInt(d[13]);
+}
+
+// Rate limiting: impede múltiplas consultas CNPJ simultâneas
+let _cnpjQueryInProgress = false;
+let _cnpjLastDigits = '';
+
 function formatCnpj(s) {
   const d = cleanCnpj(s);
   if (d.length !== 14) return s;
@@ -3180,6 +3264,10 @@ async function buscarCnpj(stepIdx) {
   const input = document.getElementById(`cnpj-fld-${stepIdx}`);
   const digits = cleanCnpj(input.value);
   if (digits.length !== 14) { toast('CNPJ deve ter 14 dígitos.', 'error'); return; }
+  if (!validarCnpj(digits)) { toast('CNPJ inválido — verifique os dígitos verificadores.', 'error'); return; }
+  if (_cnpjQueryInProgress) { toast('Aguarde a consulta anterior terminar.', ''); return; }
+  if (digits === _cnpjLastDigits) { toast('Este CNPJ já foi consultado. Force a atualização pelo cadastro do fornecedor.', ''); return; }
+  _cnpjQueryInProgress = true; _cnpjLastDigits = digits;
   toast('Consultando Receita Federal…', '');
   try {
     const { data: d, fonte } = await fetchCnpjData(digits);
@@ -3201,6 +3289,9 @@ async function buscarCnpj(stepIdx) {
   } catch (e) {
     toast(e.message || 'Erro ao consultar CNPJ.', 'error');
     playError();
+    _cnpjLastDigits = ''; // permite nova tentativa após erro
+  } finally {
+    _cnpjQueryInProgress = false;
   }
 }
 async function saveFornecedor(forn, processId) {
@@ -5002,6 +5093,9 @@ async function buscarCnpjModal() {
   const input = document.getElementById('forn-modal-cnpj');
   const digits = cleanCnpj(input.value);
   if (digits.length !== 14) { toast('CNPJ deve ter 14 dígitos.', 'error'); return; }
+  if (!validarCnpj(digits)) { toast('CNPJ inválido — verifique os dígitos verificadores.', 'error'); return; }
+  if (_cnpjQueryInProgress) { toast('Aguarde a consulta anterior terminar.', ''); return; }
+  _cnpjQueryInProgress = true;
   toast('Consultando Receita Federal…', '');
   try {
     const { data: d, fonte } = await fetchCnpjData(digits);
@@ -5044,6 +5138,8 @@ async function buscarCnpjModal() {
     toast(e.message || 'Erro ao consultar CNPJ.', 'error');
     playError();
     document.getElementById('forn-modal-save-btn').disabled = true;
+  } finally {
+    _cnpjQueryInProgress = false;
   }
 }
 async function saveFornModal() {
@@ -6233,8 +6329,10 @@ function renderInfoFields() {
       return `<div class="info-field"><label style="display:flex;justify-content:space-between;align-items:center">${f.label}${histBtn}</label>
         <input type="date" value="${escHtml(p[f.key] || '')}" onchange="updateProcessField('${f.key}',this.value||null)"></div>`;
     }
+    const ML = { objeto: 500, num_proc: 40, num_dl: 40, unidade: 120, obs: 1000 };
+    const ml = ML[f.key] ? `maxlength="${ML[f.key]}"` : 'maxlength="200"';
     return `<div class="info-field"><label style="display:flex;justify-content:space-between;align-items:center">${f.label}${histBtn}</label>
-      <input type="text" value="${val}" onchange="updateProcessField('${f.key}',this.value)"></div>`;
+      <input type="text" value="${val}" ${ml} onchange="updateProcessField('${f.key}',this.value)"></div>`;
   }
 
   const groupedHtml = fieldGroups.map(g =>
@@ -6510,9 +6608,16 @@ function handleFiles(stepIdx) {
   input.value = '';
 }
 
+const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB por arquivo
+
 async function processFileList(stepIdx, fileList) {
   const p = currentProcess;
+  const rejeitados = [];
   for (const file of fileList) {
+    if (file.size > MAX_FILE_SIZE) {
+      rejeitados.push(`${file.name} (${fmtSize(file.size)} — máx. 20 MB)`);
+      continue;
+    }
     const buf = await file.arrayBuffer();
     await dbPut('files', {
       processId: p.id + '_' + stepIdx,
@@ -6524,15 +6629,20 @@ async function processFileList(stepIdx, fileList) {
       addedAt: Date.now()
     });
   }
-  const nomesArqs = Array.from(fileList).map(f => f.name).join(', ');
+  if (rejeitados.length) {
+    toast(`Arquivo(s) rejeitado(s) por exceder 20 MB:\n${rejeitados.join('\n')}`, 'error');
+  }
+  const aceitos = Array.from(fileList).filter(f => f.size <= MAX_FILE_SIZE);
+  if (!aceitos.length) { renderSingleStep(stepIdx); return; }
+  const nomesArqs = aceitos.map(f => f.name).join(', ');
   p.timeline.push({
-    action: `${fileList.length} arquivo(s) anexado(s) à etapa ${stepIdx+1}: ${STEPS[stepIdx].name}`,
+    action: `${aceitos.length} arquivo(s) anexado(s) à etapa ${stepIdx+1}: ${STEPS[stepIdx].name}`,
     at: Date.now(), type: '', user: _getAuditor()
   });
   await _auditEvento('ARQUIVO_ANEXADO',
     `Etapa ${stepIdx+1} (${STEPS[stepIdx].name}): ${nomesArqs}`, p.id);
   await saveProcess(p);
-  toast(`${fileList.length} arquivo(s) anexado(s).`, 'success');
+  toast(`${aceitos.length} arquivo(s) anexado(s).`, 'success');
   expandedSteps.add(stepIdx);
   renderSingleStep(stepIdx);
   renderTimeline();
@@ -9538,6 +9648,58 @@ function setEmailTab(tab) {
   document.getElementById('email-tab-int').style.fontWeight  = tab === 'int'  ? '700' : '';
 }
 
+// Remove tags e atributos perigosos do HTML gerado pelo contenteditable
+function _sanitizeEmailHtml(html) {
+  if (!html) return '';
+  const ALLOWED_TAGS = new Set([
+    'p','br','div','span','b','strong','i','em','u','s','strike',
+    'ul','ol','li','h1','h2','h3','h4','blockquote','pre','code',
+    'table','thead','tbody','tr','th','td','a','img',
+    'font','hr','sub','sup'
+  ]);
+  const ALLOWED_ATTRS = new Set([
+    'style','href','src','alt','width','height','align','valign',
+    'border','cellpadding','cellspacing','colspan','rowspan','target',
+    'color','size','face'
+  ]);
+  const DANGEROUS_PROTOCOLS = /^(javascript|vbscript|data(?!:image\/(png|jpeg|gif|webp|svg)))/i;
+
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+
+  function clean(node) {
+    if (node.nodeType === Node.TEXT_NODE) return;
+    if (node.nodeType === Node.COMMENT_NODE) { node.remove(); return; }
+    if (node.nodeType !== Node.ELEMENT_NODE) { node.remove(); return; }
+
+    const tag = node.tagName.toLowerCase();
+    if (!ALLOWED_TAGS.has(tag)) {
+      // Substitui tag não permitida pelo seu conteúdo de texto
+      node.replaceWith(document.createTextNode(node.textContent));
+      return;
+    }
+
+    // Limpa atributos não permitidos ou com valores perigosos
+    for (const attr of [...node.attributes]) {
+      if (!ALLOWED_ATTRS.has(attr.name.toLowerCase())) {
+        node.removeAttribute(attr.name);
+      } else if ((attr.name === 'href' || attr.name === 'src') &&
+                 DANGEROUS_PROTOCOLS.test(attr.value.trim())) {
+        node.removeAttribute(attr.name);
+      }
+    }
+
+    // Remove event handlers (on*)
+    for (const attr of [...node.attributes]) {
+      if (/^on/i.test(attr.name)) node.removeAttribute(attr.name);
+    }
+
+    for (const child of [...node.childNodes]) clean(child);
+  }
+
+  for (const child of [...doc.body.childNodes]) clean(child);
+  return doc.body.innerHTML;
+}
+
 async function enviarNotificacao() {
   const btn = document.getElementById('btn-enviar-email');
   btn.disabled = true; btn.textContent = '⏳ Enviando...';
@@ -9546,11 +9708,11 @@ async function enviarNotificacao() {
     if (!subject) { toast('Preencha o assunto.', 'error'); return; }
     let html, text;
     if (_emailTab === 'forn') {
-      html = `<div style="font-family:Verdana,Arial,sans-serif;font-size:13px;line-height:1.7;max-width:700px">${_emailGetHtml()}</div>`;
+      html = `<div style="font-family:Verdana,Arial,sans-serif;font-size:13px;line-height:1.7;max-width:700px">${_sanitizeEmailHtml(_emailGetHtml())}</div>`;
       text = _emailGetText();
     } else {
       const intDiv = document.getElementById('email-body-int');
-      html = `<div style="font-family:Verdana,Arial,sans-serif;font-size:13px;line-height:1.7;max-width:700px">${intDiv?.innerHTML || ''}</div>`;
+      html = `<div style="font-family:Verdana,Arial,sans-serif;font-size:13px;line-height:1.7;max-width:700px">${_sanitizeEmailHtml(intDiv?.innerHTML || '')}</div>`;
       text = intDiv?.innerText || '';
     }
 
