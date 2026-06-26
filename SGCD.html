@@ -8093,8 +8093,8 @@ function gerarTermoAdjudicacao() {
 <div class="section">
   <div class="section-title">III — Decisão</div>
   <div class="despacho">
-    <p>Com fundamento no art. 18, §1º, da Lei Federal nº 14.133/2021${decRef}, e tendo em vista que a proposta apresentada pela empresa <strong>${blank(fornNome)}</strong>${fornCnpj ? `, CNPJ nº ${escHtml(fornCnpj)},` : ''} mostrou-se compatível com o valor estimado, consoante a pesquisa de preços realizada, e sendo o fornecedor devidamente habilitado nos termos da legislação vigente, <strong><u>ADJUDICO</u></strong> o objeto da presente dispensa de licitação à referida empresa, pelo valor de <strong>${blank(valorAdj ? fmtMoney(valorAdj) : '')}</strong>.</p>
-    <p>Encaminhe-se à autoridade competente para fins de homologação.</p>
+    <p>Com fundamento no art. 71, inciso III, c/c art. 72 da Lei Federal nº 14.133/2021${decRef}, e tendo em vista que a proposta apresentada pela empresa <strong>${blank(fornNome)}</strong>${fornCnpj ? `, CNPJ nº ${escHtml(fornCnpj)},` : ''} mostrou-se compatível com o valor estimado, consoante a pesquisa de preços realizada, e sendo o fornecedor devidamente habilitado nos termos da legislação vigente, <strong><u>ADJUDICO</u></strong> o objeto da presente dispensa de licitação à referida empresa, pelo valor de <strong>${blank(valorAdj ? fmtMoney(valorAdj) : '')}</strong>.</p>
+    <p>Após a adjudicação, os autos serão encaminhados à autoridade competente para fins de homologação.</p>
   </div>
 </div>
 
@@ -8202,8 +8202,8 @@ function gerarTermoHomologacao() {
 <div class="section">
   <div class="section-title">II — Decisão de Homologação</div>
   <div class="despacho">
-    <p>Examinados os autos do presente processo de Dispensa de Licitação, verifico que foram observados as formalidades legais e os princípios que regem a Administração Pública, nos termos da Lei Federal nº 14.133/2021${decRef}.</p>
-    <p>Constata-se que o procedimento foi conduzido com regularidade, tendo sido realizada a pesquisa de preços, elaborado o enquadramento legal, divulgado o Aviso de Dispensa no PNCP, recebidas e analisadas as propostas, e procedida a habilitação e adjudicação do objeto à empresa <strong>${blank(fornNome)}</strong>${fornCnpj ? `, CNPJ nº ${escHtml(fornCnpj)},` : ''} pelo valor de <strong>${blank(valorAdj ? fmtMoney(valorAdj) : '')}</strong>.</p>
+    <p>Examinados os autos do presente processo de Dispensa de Licitação, verifico que foram observadas as formalidades legais e os princípios que regem a Administração Pública, nos termos da Lei Federal nº 14.133/2021${decRef}.</p>
+    <p>Constata-se que o procedimento foi conduzido com regularidade, tendo sido realizada a pesquisa de preços, elaborado o enquadramento legal, divulgado o Aviso de Dispensa no PNCP, recebidas e analisadas as propostas, e realizadas a habilitação e a adjudicação do objeto à empresa <strong>${blank(fornNome)}</strong>${fornCnpj ? `, CNPJ nº ${escHtml(fornCnpj)},` : ''} pelo valor de <strong>${blank(valorAdj ? fmtMoney(valorAdj) : '')}</strong>.</p>
     <p>Diante do exposto, <strong><u>HOMOLOGO</u></strong> o procedimento de Dispensa de Licitação e o resultado da adjudicação, determinando o prosseguimento do processo para a emissão da Nota de Empenho e celebração do respectivo instrumento contratual.</p>
   </div>
 </div>
@@ -8356,15 +8356,14 @@ function gerarAvisoDispensa() {
 
 <div class="section">
   <div class="section-title">Do Critério de Julgamento e da Proposta Mais Vantajosa</div>
-  <p>O julgamento das propostas obedecerá ao critério de <strong>${criterioLabel}</strong>, nos termos do art. 33, inciso ${criterioInciso}, da Lei Federal nº 14.133/2021.</p>
-  <p>Para fins de julgamento, considera-se proposta mais vantajosa para a Administração aquela que apresentar ${criterioVantajosa}.</p>
+  <p>A seleção obedecerá ao critério de <strong>${criterioLabel}</strong>, nos termos do art. 72, parágrafo único, da Lei Federal nº 14.133/2021. Para fins de julgamento, considera-se proposta mais vantajosa para a Administração aquela que apresentar ${criterioVantajosa}.</p>
   <p>O menor preço, por si só, não é critério suficiente para a classificação das propostas. Serão desclassificadas as propostas que: (i) não atendam às especificações técnicas mínimas ou aos padrões de qualidade previstos no Termo de Referência; (ii) apresentem preços inexequíveis ou manifestamente superiores aos praticados no mercado; ou (iii) descumpram quaisquer das condições estabelecidas neste Aviso e no Termo de Referência — nos termos do art. 59 da Lei Federal nº 14.133/2021, que assegura à Administração o direito de recusar propostas em desconformidade com os requisitos do instrumento convocatório.</p>
 </div>
 
 <div class="section">
   <div class="section-title">Do Resultado e Da Habilitação</div>
   <p>Encerrado o prazo para envio de propostas, a Administração realizará a análise das propostas recebidas e identificará a proposta mais vantajosa, nos termos acima estabelecidos.</p>
-  <p>A proponente classificada com a proposta mais vantajosa será convocada para, no prazo de <strong>2 (dois) dias úteis</strong>, encaminhar a documentação necessária à comprovação de que reúne as condições de habilitação exigidas para contratar com a Administração Pública, nos termos do art. 62 da Lei Federal nº 14.133/2021.</p>
+  <p>A proponente classificada com a proposta mais vantajosa será convocada para, no prazo de <strong>2 (dois) dias úteis</strong>, encaminhar a documentação necessária à comprovação de que reúne as condições de habilitação exigidas para contratar com a Administração Pública, nos termos dos arts. 70 e 72 da Lei Federal nº 14.133/2021.</p>
   <p>O resultado do procedimento será divulgado nos meios oficiais de publicidade do Município de ${blank(u.municipio || u.orgao)}${(u.site_oficial || u.diario_url) ? ' (' + [u.site_oficial, u.diario_url].filter(Boolean).map(url => `<a href="${safeUrl(url)}">${escHtml(url)}</a>`).join(' e ') + ')' : ''}.</p>
 </div>
 
@@ -8458,7 +8457,7 @@ function gerarExtratoContrato() {
   <tr><td class="lbl">Dispensa de Licitação nº</td><td>${blank(proc.num_dl || proc.num)}</td></tr>
   <tr><td class="lbl">Data de Assinatura</td><td>${blank(data.data_assinatura)}</td></tr>
   <tr><td class="lbl">Vigência</td><td>${blank(vigencia)}</td></tr>
-  <tr><td class="lbl">Valor</td><td>${blank(data.valor_contrato)}</td></tr>
+  <tr><td class="lbl">Valor</td><td>${data.valor_contrato ? fmtMoney(data.valor_contrato) : blank('')}</td></tr>
   <tr><td class="lbl">Contratante</td><td>${blank(contratante)}${u.cnpj ? ' — CNPJ: ' + escHtml(u.cnpj) : ''}</td></tr>
   <tr><td class="lbl">Contratado</td><td>${blank(contratado)}${cnpjContratado ? ' — CNPJ: ' + escHtml(cnpjContratado) : ''}</td></tr>
   <tr><td class="lbl">Objeto</td><td>${blank(proc.objeto)}</td></tr>
@@ -9061,7 +9060,7 @@ function gerarAta() {
   <h1>${u.orgao || blank('')}</h1>
   <h2>${u.municipio || ''}</h2>
 </div>
-<h3>Ata de Sessão Pública de Dispensa de Licitação</h3>
+<h3>Ata do Procedimento de Dispensa de Licitação</h3>
 <p class="subtitulo">${p.num_proc ? `PA ${blank(p.num_proc)}` : ''} ${p.num_proc && p.num_dl ? '&nbsp;|&nbsp;' : ''} ${p.num_dl ? `DL ${blank(p.num_dl)}` : !p.num_proc ? `Processo nº ${blank(p.num)}` : ''} &nbsp;|&nbsp; ${p.legal ? p.legal.split(' — ')[0] + ' da Lei Federal nº 14.133/2021' : 'Art. 75 da Lei Federal nº 14.133/2021'}</p>
 <hr>
 
@@ -9110,7 +9109,7 @@ function gerarAta() {
 
 <div class="secao">
   <div class="secao-titulo">VI — Habilitação do Fornecedor</div>
-  <p>O(A) Agente de Contratação procedeu à verificação da regularidade fiscal, trabalhista e jurídica do fornecedor com menor preço:</p>
+  <p>O(A) Agente de Contratação procedeu à verificação da regularidade fiscal, trabalhista e jurídica do fornecedor com proposta mais vantajosa:</p>
   <div class="dado"><strong>Fornecedor:</strong> ${blank(v(9,'fornecedor'))}</div>
   <div class="dado"><strong>CNPJ:</strong> ${blank(currentProcess?.fornecedor?.cnpj || v(9,'cnpj'))}</div>
   <br>
@@ -9134,7 +9133,7 @@ function gerarAta() {
 
 <div class="secao">
   <div class="secao-titulo">VIII — Homologação</div>
-  <p>A autoridade competente homologa o procedimento de Dispensa de Licitação nº ${blank(p.num)}, declarando válidos todos os atos praticados.</p>
+  <p>A autoridade competente homologa o procedimento de Dispensa de Licitação nº ${blank(p.num_dl || p.num)}, declarando válidos todos os atos praticados.</p>
   <div class="dado"><strong>Autoridade:</strong> ${blank(v(11,'autoridade'))}</div>
   <div class="dado"><strong>Data:</strong> ${d(v(11,'data_conclusao'))}</div>
   ${v(11,'observacoes') ? `<p><strong>Observações:</strong> ${v(11,'observacoes')}</p>` : ''}
