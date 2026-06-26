@@ -1,3 +1,4 @@
+# SGCD v1.18.0 — Servidor local: proxy CNPJ, e-mail SMTP, verificação de documentos
 import http.server
 import socketserver
 import os
@@ -133,7 +134,6 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
 
   function show(ok, title, p) {{
     const el = document.getElementById('status');
-    el.className = 'ok' if ok else 'err';
     el.className = ok ? 'ok' : 'err';
     el.style.display = '';
     document.getElementById('status-title').textContent = title;
