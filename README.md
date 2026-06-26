@@ -1,6 +1,6 @@
 # SGCD — Sistema de Gestão de Contratação Direta
 
-![Versão](https://img.shields.io/badge/versão-v1.13.0-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-HTML5%20puro-orange) ![Licença](https://img.shields.io/badge/licença-MIT-green)
+![Versão](https://img.shields.io/badge/versão-v1.14.0-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-HTML5%20puro-orange) ![Licença](https://img.shields.io/badge/licença-MIT-green)
 
 ## Descrição
 
@@ -43,6 +43,13 @@ Não requer instalação, servidor ou conexão à internet. Todos os dados ficam
 - **Documento consolidado (PDF único)** — botão "📦 Processo Completo" gera um documento com todas as seções do processo
 - **Visualização Kanban** — agrupa processos em colunas por fase (Instrução / Publicado / Análise / Adjudicação / Contratação / Concluído)
 - **Notificações por e-mail via SMTP** — botão "✉ Notificar" com templates para fornecedor e interno; requer `server.py` local em execução
+- **Editor rich text de e-mail** — toolbar de formatação (negrito, itálico, sublinhado, alinhamento, fonte, tamanho, listas, link) nas abas Fornecedor e Interno da janela de e-mail; conteúdo HTML preservado no envio
+- **Notificações in-app** — sino na barra lateral com badge de contagem; painel lista alertas de prazo vencendo (≤7 dias), processos parados (≥15 dias) e certidões vencendo (≤30 dias); clique no alerta abre o processo diretamente
+- **Templates de processo** — botão "⊞ Modelo" salva os dados de um processo como modelo reutilizável; ao criar novo processo, chips dos modelos aparecem para aplicação com um clique
+- **Importação CSV de fornecedores** — botão "Importar CSV" na tela de Fornecedores; suporta separador `,` ou `;`, consulta CNPJ automaticamente, exibe pré-visualização antes de importar; modelo de arquivo disponível para download com todos os 23 campos do cadastro
+- **Relatório executivo** — botão "Executivo" no dashboard gera documento com KPIs, gráfico de barras por status, alertas de processos parados e lista dos últimos 20 processos; abre em janela separada com botão de impressão
+- **Histórico de edições por campo** — ícone 🕐 ao lado de cada campo editável no painel lateral do processo exibe histórico de alterações com data/hora e valor anterior → novo; baseado na trilha de auditoria
+- **QR Code de autenticidade nos documentos** — todos os documentos gerados incluem QR Code no rodapé apontando para `http://localhost:3000/verificar/{cod}`; ao escanear, o `server.py` serve página de verificação que consulta o IndexedDB local e confirma ou rejeita a autenticidade do documento
 - **Visualização em cards ou tabela** com ordenação por coluna
 - **Tema claro/escuro** configurável
 - **Alertas visuais** para processos parados há mais de 15 dias e prazos vencidos

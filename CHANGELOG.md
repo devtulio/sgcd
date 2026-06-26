@@ -5,6 +5,31 @@
 
 ---
 
+## [1.14.0] — 2026-06-25
+
+### Adicionado
+- **Notificações in-app** — ícone de sino na barra lateral com badge vermelho de contagem; painel dropdown exibe alertas automáticos: prazos vencendo em ≤7 dias, prazos já vencidos, processos parados há ≥15 dias e certidões de fornecedores vencendo em ≤30 dias; clicar em um alerta navega diretamente para o processo correspondente; badge atualizado automaticamente ao carregar dados
+- **Templates de processo** — botão "⊞ Modelo" no cabeçalho do processo salva os campos principais (objeto, base legal, critério, valor, unidade, natureza/categoria) como modelo reutilizável em `localStorage`; ao abrir "Novo Processo", barra de chips aparece com os modelos salvos para aplicação com um clique; chips com botão ✕ para excluir modelo individual
+- **Importação CSV de fornecedores** — botão "Importar CSV" na tela de Fornecedores; aceita separador `,` ou `;`; exibe pré-visualização das primeiras 8 linhas antes de confirmar; opção de consultar CNPJ automaticamente na Receita Federal durante a importação; barra de progresso por registro; modelo padrão disponível para download com todos os 23 campos do cadastro (`cnpj`, `razao_social`, `nome_fantasia`, `email`, `telefone`, `telefone2`, `cep`, `logradouro`, `numero`, `complemento`, `bairro`, `municipio`, `uf`, `natureza_juridica`, `porte`, `abertura`, `capital_social`, `situacao`, `cnae_cod`, `cnae`, `opcao_simples`, `opcao_mei`, `matriz_filial`)
+- **Relatório executivo** — botão "Executivo" no dashboard gera documento com: cabeçalho institucional, 4 KPIs em destaque (total, concluídos, em andamento, valor total estimado), gráfico de barras por status, tabela de alertas para processos parados ≥15 dias e lista dos últimos 20 processos com status colorido e valor; abre em janela separada com botão "🖨 Imprimir / PDF"
+- **Histórico de edições por campo** — ícone 🕐 ao lado do rótulo de cada campo editável no painel lateral do processo; clique exibe painel flutuante com todas as alterações registradas para aquele campo (data/hora + valor anterior → novo valor); alimentado pelos eventos `CAMPO_ALTERADO` da trilha de auditoria global
+- **QR Code de autenticidade nos documentos** — gerador QR puro em JavaScript (sem dependências externas, ~200 linhas), modo byte, ECC nível M, versões 1–10; todos os documentos gerados (Autorização, Ata, Aviso, Extrato de Contrato, Despachos, Termos de Adjudicação/Homologação, Mapa de Preços, Justificativa) incluem QR no rodapé apontando para `http://localhost:3000/verificar/{cod}`
+- **Página de verificação de autenticidade** (`/verificar/{cod}`) — nova rota no `server.py`; ao escanear o QR, o navegador abre uma página que consulta o IndexedDB `dispensaDB` diretamente (mesmo origin) e exibe: ✓ Documento Autêntico com objeto, nº PA/DL, unidade, valor e data de criação; ou ✗ Documento não encontrado com aviso de possível adulteração
+- **Editor rich text de e-mail** — toolbar de formatação completa nas abas Fornecedor e Interno da janela de e-mail: negrito, itálico, sublinhado, alinhamento (esquerda/centro/direita/justificado), seletor de fonte (Verdana/Arial/Times/Calibri), seletor de tamanho (8–36pt), listas ordenada/não-ordenada, inserção de link com texto âncora, desfazer/refazer; conteúdo HTML completo preservado no envio via SMTP
+
+### Melhorado
+- **Janela de e-mail** — largura ampliada; foco retido na janela ao rolar a página com o mouse por fora; `overflow` do body bloqueado enquanto o modal está aberto
+- **Template de e-mail para fornecedor** — personalização automática por destinatário: substitui `Prezado(a) X,` pelo nome do sócio cadastrado no QSA de cada fornecedor; campos `Órgão` e assinatura sem sufixo de município
+- **Barra de progresso do processo** — ocupa 100% da largura do card; dots (etapas) distribuídos com `space-between` para preencher uniformemente o espaço disponível
+- **Painel de alertas** — posicionamento dinâmico à direita da sidebar (`sidebar.getBoundingClientRect().width + 12px`), funcionando corretamente tanto com sidebar colapsada (48px) quanto expandida (110px); fundo sólido corrigido (sem transparência)
+- **Servidor local** — encerramento reduzido para ~6 s após fechar a janela do app (via manipulação do `_last_heartbeat`)
+
+### Corrigido
+- **Erro de inicialização** — `renderNotificacoes()` chamada durante `loadProcesses()` antes de `fornecedores` estar disponível; corrigido tornando a função `async` e lendo diretamente do IndexedDB com `dbGetAll('fornecedores')`
+- **Seletores de fonte/tamanho cortados na toolbar de e-mail** — `height:28px` muito pequeno; corrigido com `height:auto;line-height:1.4` e `width:120px` no seletor de fonte
+
+---
+
 ## [1.13.0] — 2026-06-20
 
 ### Adicionado
