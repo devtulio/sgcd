@@ -7676,7 +7676,7 @@ function gerarDespachoRecusa(stepIdx, pi) {
 
 <div class="section">
   <div class="despacho">
-    <strong>DESPACHO:</strong> O(A) Agente de Contratação <strong>${blank(u.nome)}</strong>${u.matricula ? ', Matrícula ' + u.matricula : ''}, no exercício das atribuições que lhe são conferidas${u.cargo ? ' pelo cargo de ' + u.cargo : ''} e nos termos do art. 59 da Lei Federal nº 14.133, de 1º de abril de 2021${decRef}, após análise das propostas recebidas no âmbito do processo de Dispensa de Licitação em epígrafe, <u><strong>DECIDE</strong></u> pela recusa e desclassificação da proposta apresentada pelo fornecedor abaixo identificado, pelas razões descritas neste despacho.
+    <strong>DESPACHO:</strong> O(A) Agente de Contratação <strong>${blank(u.nome)}</strong>${u.matricula ? ', Matrícula ' + u.matricula : ''}, no exercício das atribuições que lhe são conferidas${u.cargo ? ' pelo cargo de ' + u.cargo : ''} e nos termos do art. 59 da Lei Federal nº 14.133, de 1º de abril de 2021 (aplicação subsidiária por força do art. 72 da mesma Lei)${decRef}, após análise das propostas recebidas no âmbito do processo de Dispensa de Licitação em epígrafe, <u><strong>DECIDE</strong></u> pela recusa e desclassificação da proposta apresentada pelo fornecedor abaixo identificado, pelas razões descritas neste despacho.
   </div>
 </div>
 
@@ -7709,10 +7709,10 @@ function gerarDespachoRecusa(stepIdx, pi) {
 <div class="section">
   <div class="section-title">Do Direito de Manifestação</div>
   <p>Consigna-se que o presente procedimento de Dispensa de Licitação, por sua natureza de contratação direta nos termos do art. 75 da Lei Federal nº 14.133/2021, <strong>não comporta fase recursal</strong> nos moldes dos arts. 165 a 168 do referido diploma legal, os quais são privativos dos procedimentos licitatórios.</p>
-  <p>Não obstante, em observância ao princípio constitucional do contraditório e da ampla defesa (art. 5º, inciso LV, da Constituição Federal) e ao art. 24 da Lei Federal nº 9.784/1999 (aplicação subsidiária), fica assegurado ao fornecedor interessado o direito de:</p>
+  <p>Não obstante, em observância ao princípio constitucional do contraditório e da ampla defesa (art. 5º, inciso LV, da Constituição Federal) e aos arts. 3º, II, e 9º da Lei Federal nº 9.784/1999 (aplicação subsidiária), fica assegurado ao fornecedor interessado o direito de:</p>
   <ul>
     <li>obter vista dos autos do processo administrativo, mediante requerimento dirigido ao Agente de Contratação; e</li>
-    <li>apresentar manifestação escrita perante a autoridade superior — ${blank(u.aut_cargo ? u.aut_cargo + (u.aut_nome ? ', ' + u.aut_nome : '') : null)} —, no prazo de 10 (dez) dias úteis, contados da ciência da presente decisão, nos termos do art. 44 da Lei Federal nº 9.784/1999 (aplicação subsidiária).</li>
+    <li>apresentar manifestação escrita perante a autoridade superior — ${blank(u.aut_nome ? u.aut_nome + (u.aut_cargo ? ', ' + u.aut_cargo : '') : '')} —, no prazo de 10 (dez) dias úteis, contados da ciência da presente decisão, nos termos do art. 44 da Lei Federal nº 9.784/1999 (aplicação subsidiária).</li>
   </ul>
   <p style="margin-top:8pt">A manifestação eventualmente apresentada <strong>não produzirá efeito suspensivo</strong> sobre o prosseguimento do presente processo de contratação direta, cuja tramitação continuará até a conclusão.</p>
 </div>
@@ -7819,7 +7819,7 @@ function gerarDespachoInabilitacao(stepIdx) {
 
 <div class="section">
   <div class="despacho">
-    <strong>DESPACHO:</strong> O(A) Agente de Contratação <strong>${blank(u.nome)}</strong>${u.matricula ? ', Matrícula ' + u.matricula : ''}, no exercício das atribuições que lhe são conferidas${u.cargo ? ' pelo cargo de ' + u.cargo : ''} e nos termos do art. 69 da Lei Federal nº 14.133, de 1º de abril de 2021${decRef}, após análise da documentação de habilitação apresentada no âmbito do processo de Dispensa de Licitação em epígrafe, <u><strong>DECIDE</strong></u> pela inabilitação do fornecedor abaixo identificado, pelas razões descritas neste despacho.
+    <strong>DESPACHO:</strong> O(A) Agente de Contratação <strong>${blank(u.nome)}</strong>${u.matricula ? ', Matrícula ' + u.matricula : ''}, no exercício das atribuições que lhe são conferidas${u.cargo ? ' pelo cargo de ' + u.cargo : ''} e nos termos dos arts. 69 e 70 da Lei Federal nº 14.133, de 1º de abril de 2021, c/c art. 72 da mesma Lei${decRef}, após análise da documentação de habilitação apresentada no âmbito do processo de Dispensa de Licitação em epígrafe, <u><strong>DECIDE</strong></u> pela inabilitação do fornecedor abaixo identificado, pelas razões descritas neste despacho.
   </div>
 </div>
 
@@ -7854,10 +7854,10 @@ function gerarDespachoInabilitacao(stepIdx) {
 <div class="section">
   <div class="section-title">Do Direito de Manifestação</div>
   <p>Consigna-se que o presente procedimento de Dispensa de Licitação, por sua natureza de contratação direta nos termos do art. 75 da Lei Federal nº 14.133/2021, <strong>não comporta fase recursal</strong> nos moldes dos arts. 165 a 168 do referido diploma legal, os quais são privativos dos procedimentos licitatórios.</p>
-  <p>Não obstante, em observância ao princípio constitucional do contraditório e da ampla defesa (art. 5º, inciso LV, da Constituição Federal) e ao art. 24 da Lei Federal nº 9.784/1999 (aplicação subsidiária), fica assegurado ao fornecedor interessado o direito de:</p>
+  <p>Não obstante, em observância ao princípio constitucional do contraditório e da ampla defesa (art. 5º, inciso LV, da Constituição Federal) e aos arts. 3º, II, e 9º da Lei Federal nº 9.784/1999 (aplicação subsidiária), fica assegurado ao fornecedor interessado o direito de:</p>
   <ul>
     <li>obter vista dos autos do processo administrativo, mediante requerimento dirigido ao Agente de Contratação; e</li>
-    <li>apresentar manifestação escrita perante a autoridade superior — ${blank(u.aut_cargo ? u.aut_cargo + (u.aut_nome ? ', ' + u.aut_nome : '') : null)} —, no prazo de 10 (dez) dias úteis, contados da ciência da presente decisão, nos termos do art. 44 da Lei Federal nº 9.784/1999 (aplicação subsidiária).</li>
+    <li>apresentar manifestação escrita perante a autoridade superior — ${blank(u.aut_nome ? u.aut_nome + (u.aut_cargo ? ', ' + u.aut_cargo : '') : '')} —, no prazo de 10 (dez) dias úteis, contados da ciência da presente decisão, nos termos do art. 44 da Lei Federal nº 9.784/1999 (aplicação subsidiária).</li>
   </ul>
   <p style="margin-top:8pt">A manifestação eventualmente apresentada <strong>não produzirá efeito suspensivo</strong> sobre o prosseguimento do presente processo de contratação direta, cuja tramitação continuará até a conclusão.</p>
 </div>
@@ -7980,7 +7980,7 @@ function gerarDespachoHabilitacao(stepIdx) {
 
 <div class="section">
   <div class="section-title">Resultado</div>
-  <p>Com base na análise da documentação apresentada e nos termos do art. 69 da Lei Federal nº 14.133/2021, declara-se o fornecedor <strong>${blank(fornNome)}</strong>${fornCnpj ? ', CNPJ ' + escHtml(fornCnpj) + ',' : ''} <strong>HABILITADO</strong> para prosseguir no presente processo de Dispensa de Licitação, estando apto à eventual contratação.</p>
+  <p>Com base na análise da documentação apresentada e nos termos dos arts. 69 e 70 da Lei Federal nº 14.133/2021, c/c art. 72 da mesma Lei, declara-se o fornecedor <strong>${blank(fornNome)}</strong>${fornCnpj ? ', CNPJ ' + escHtml(fornCnpj) + ',' : ''} <strong>HABILITADO</strong> para prosseguir no presente processo de Dispensa de Licitação, estando apto à eventual contratação.</p>
 </div>
 
 <div class="city-date">${blank(u.municipio)}, ${hoje}</div>
@@ -8349,7 +8349,7 @@ function gerarAvisoDispensa() {
     <li>Identificação completa do fornecedor (razão social e CNPJ);</li>
     <li>Descrição detalhada do objeto ofertado, com especificações técnicas que atendam ao Termo de Referência;</li>
     <li>Valor global ou unitário, conforme o caso, em moeda corrente nacional;</li>
-    <li>Prazo de validade mínima da proposta de 60 (sessenta) dias, contados da data de apresentação.</li>
+    <li>Prazo de validade da proposta de, no mínimo, 60 (sessenta) dias a contar da data de envio, salvo disposição diversa no Termo de Referência.</li>
   </ul>
   <p>O Termo de Referência e os demais documentos pertinentes à presente contratação estão disponíveis para consulta junto ao Departamento de Licitações${u.orgao ? ' da ' + u.orgao : ''}${u.site_oficial ? ' e no site oficial (<a href="' + safeUrl(u.site_oficial) + '">' + escHtml(u.site_oficial) + '</a>)' : ''}. Pedidos de esclarecimento deverão ser encaminhados para o mesmo endereço/e-mail indicado para envio de propostas, até o término do prazo para recebimento de propostas.</p>
 </div>
@@ -8448,7 +8448,7 @@ function gerarExtratoContrato() {
 <div class="doc-title">
   <h3>Extrato de Contrato</h3>
   <div class="num" style="font-size:10pt;color:#555">Para publicação no Diário Oficial / PNCP</div>
-  <div class="num">Fundamento: Art. 94 da Lei Federal nº 14.133/2021</div>
+  <div class="num">Fundamento: Art. 94 c/c Art. 91, §4º, da Lei Federal nº 14.133/2021</div>
 </div>
 
 <table class="field-table">
@@ -8578,7 +8578,7 @@ function gerarEnquadramentoLegal() {
 
   <p>A contratação tem por objeto <strong>${blank(p.objeto)}</strong>, com valor estimado de <strong>${fmtVal(p.valor)}</strong>, atendendo à demanda da unidade requisitante <strong>${blank(p.unidade)}</strong>. O valor apurado por meio de pesquisa de mercado está dentro dos limites estabelecidos pelo ${incisoLabel} da Lei nº 14.133/2021${p.legal && p.legal.includes('65.492') ? ', conforme atualização fixada pelo Decreto Federal nº 11.317/2022' : ''}, razão pela qual a licitação é dispensável.</p>
 
-  <p>A presente contratação atende ao interesse público, está em conformidade com os princípios da legalidade, impessoalidade, moralidade, publicidade e eficiência (Art. 5º da Lei nº 14.133/2021), e a escolha do objeto foi precedida de pesquisa de preços nos termos do Art. 23 da referida Lei, garantindo a compatibilidade do valor com os praticados no mercado.</p>
+  <p>A presente contratação atende ao interesse público, está em conformidade com os princípios da legalidade, impessoalidade, moralidade, publicidade e eficiência previstos no art. 37, caput, da Constituição Federal, e com os princípios específicos das contratações públicas dispostos no art. 5º da Lei Federal nº 14.133/2021, e a escolha do objeto foi precedida de pesquisa de preços nos termos do Art. 23 da referida Lei, garantindo a compatibilidade do valor com os praticados no mercado.</p>
 
   <p>Diante do exposto, declaro o devido enquadramento na hipótese de dispensa de licitação prevista no <strong>${incisoLabel} da Lei Federal nº 14.133/2021</strong>, ficando o processo apto ao prosseguimento de seus trâmites legais.</p>
 </div>
@@ -8586,7 +8586,7 @@ function gerarEnquadramentoLegal() {
 ${observacoes ? `<div class="obs-box"><strong>Observações complementares:</strong><br>${observacoes.replace(/\n/g,'<br>')}</div>` : ''}
 
 <div class="base-legal">
-  <strong>Base legal:</strong> Art. 72, III c/c ${incisoLabel}, todos da Lei Federal nº 14.133/2021 — Justificativa para a contratação direta.
+  <strong>Base legal:</strong> Art. 72, VII c/c ${incisoLabel}, todos da Lei Federal nº 14.133/2021 — Justificativa para a contratação direta.
 </div>
 
 <div class="city-date">${blank(u.municipio)}, ${dataConclusao}</div>
@@ -8698,7 +8698,7 @@ function gerarAutorizacao() {
 
 <div class="signature-block">
   <div class="signature-line">
-    <div><strong>${blank(u.aut_nome)}</strong></div>
+    <div><strong>${blank(u.aut_nome || u.nome)}</strong></div>
     <div style="font-size:9pt;margin-top:2pt">${blank(u.aut_cargo)}</div>
   </div>
 </div>
@@ -8708,7 +8708,7 @@ ${_qrFooter(p)}
 </html>`;
 
   const win = window.open('', '_blank', 'width=900,height=700');
-  _gerarDocumento(win, html, 'Autorização de Abertura');
+  _gerarDocumento(win, html, 'Autorização de Abertura de Processo');
 }
 
 function _getBrasaoB64() {
@@ -9135,6 +9135,7 @@ function gerarAta() {
   <div class="secao-titulo">VIII — Homologação</div>
   <p>A autoridade competente homologa o procedimento de Dispensa de Licitação nº ${blank(p.num_dl || p.num)}, declarando válidos todos os atos praticados.</p>
   <div class="dado"><strong>Autoridade:</strong> ${blank(v(11,'autoridade'))}</div>
+  <div class="dado"><strong>Valor homologado:</strong> ${v(10,'valor_adjudicado') ? fmtMoney(v(10,'valor_adjudicado')) : blank('')}</div>
   <div class="dado"><strong>Data:</strong> ${d(v(11,'data_conclusao'))}</div>
   ${v(11,'observacoes') ? `<p><strong>Observações:</strong> ${v(11,'observacoes')}</p>` : ''}
 </div>
@@ -10504,7 +10505,7 @@ function gerarRelatorioExecutivo() {
   <div>
     <h1>${escHtml(user.orgao||'Órgão não configurado')}</h1>
     <div style="font-size:12px;color:#6b7280">Relatório Executivo de Contratações Diretas · ${dtGer}</div>
-    <div style="font-size:11px;color:#9ca3af;margin-top:2px">Lei Federal nº 14.133/2021 — Art. 75</div>
+    <div style="font-size:11px;color:#9ca3af;margin-top:2px">Lei Federal nº 14.133/2021 — Contratações Diretas por Dispensa de Licitação</div>
   </div>
   <button onclick="window.print()" class="no-print" style="background:#e95220;color:#fff;border:none;border-radius:6px;padding:8px 18px;cursor:pointer;font-size:13px">🖨 Imprimir / PDF</button>
 </div>
@@ -10526,7 +10527,7 @@ function gerarRelatorioExecutivo() {
 </div>
 
 ${stalled.length > 0 ? `
-<h2>⚠ Processos Parados (≥ 15 dias sem atualização)</h2>
+<h2>▲ Processos Parados (≥ 15 dias sem atualização)</h2>
 <table><thead><tr><th>Processo</th><th>Objeto</th><th>Unidade</th><th>Parado há</th></tr></thead>
 <tbody>${alertRows}</tbody></table>` : ''}
 
