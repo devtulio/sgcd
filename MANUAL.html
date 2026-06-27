@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Manual Operacional — SGCD v1.18.0</title>
+<title>Manual Operacional — SGCD v1.19.0</title>
 <style>
   /* Reset e base */
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -89,7 +89,7 @@
       margin: 20mm 20mm 25mm;
       size: A4;
       @top-center {
-        content: "SGCD v1.18.0 — Manual Operacional";
+        content: "SGCD v1.19.0 — Manual Operacional";
         font-family: 'Times New Roman', serif;
         font-size: 9pt;
         color: #666;
@@ -118,7 +118,7 @@
     <div class="cover-title">Manual Operacional</div>
     <div class="cover-subtitle">SGCD — Sistema de Gestão de Contratação Direta</div>
     <div class="cover-system">Gestão de Processos de Dispensa de Licitação</div>
-    <div class="cover-version">Versão v1.18.0</div>
+    <div class="cover-version">Versão v1.19.0</div>
     <br>
     <div style="font-size:11pt; color:#555; line-height:1.8;">
       Aplicação web single-file para agentes de contratação pública<br>
@@ -1522,7 +1522,17 @@
 <!-- ─────────────────────────────────────────────── SEÇÃO 21 -->
 <h2 id="sec21">21. Histórico de Versões</h2>
 
-<h3 id="sec21-0">21.1 v1.18.0 — Junho/2026</h3>
+<h3 id="sec21-new">21.1 v1.19.0 — Junho/2026</h3>
+<ul>
+  <li><strong>Otimizações de desempenho — cache DOM:</strong> função <code>_dom()</code> inicializa lazy um cache de 34 elementos estáticos (filtros, KPIs, containers), eliminando chamadas a <code>getElementById</code> nos hot paths de <code>renderDash()</code>, <code>toast()</code> e indicador de salvamento.</li>
+  <li><strong>Lógica de filtro centralizada:</strong> <code>_getDashFilters()</code> lê os 7 filtros do dashboard de uma só vez; <code>_applyDashFilters()</code> substitui 45 linhas duplicadas em <code>renderDash()</code>, <code>gerarRelatorio()</code> e <code>exportarCSV()</code>; <code>_lastFiltered</code> cacheia o resultado para reutilização imediata.</li>
+  <li><strong>Debounce nos inputs de busca:</strong> utilitário <code>_debounce()</code> aplicado em todas as buscas por texto — 150ms no dashboard e fornecedores, 100ms na busca global (Ctrl+K), 150ms no picker de fornecedor — evitando renderizações a cada tecla digitada.</li>
+  <li><strong>O(n²) → O(1) na lista de fornecedores:</strong> <code>processes.find()</code> dentro de <code>.map()</code> substituído por um <code>Map</code> construído antes do loop, eliminando buscas lineares repetidas por fornecedor.</li>
+  <li><strong>Lazy expand nos cards de fornecedor:</strong> a lista de fornecedores passa a renderizar apenas o cabeçalho de cada card (razão social, CNPJ, situação). O conteúdo completo — certidões, QSA, contato, endereço e processos vinculados — é injetado no DOM somente ao clicar no card, reduzindo o HTML inicial em aproximadamente 65% por card.</li>
+  <li><strong>Redesign do gráfico de processos por mês:</strong> novo visual com card container integrado ao tema, legenda HTML com ícones coloridos, sumário de métricas abaixo do gráfico (total criados, concluídos com percentual e pico mensal), escala Y com inteiros calculados automaticamente, labels de valor sobre as barras, mês atual em destaque e identificação do ano na virada de exercício (Jan '25).</li>
+</ul>
+
+<h3 id="sec21-0">21.2 v1.18.0 — Junho/2026</h3>
 <ul>
   <li><strong>Backup automático por salvamento:</strong> snapshot gravado no <code>localStorage</code> 3 segundos após cada alteração em processo, sem intervenção do usuário (ver Seção 22.1).</li>
   <li><strong>Banner de alerta de backup:</strong> faixa laranja persistente exibida quando o último backup manual foi exportado há mais de 7 dias ou nunca foi exportado, com botão de exportação rápida (ver Seção 22.2).</li>
