@@ -2455,8 +2455,12 @@ async function dbGetAll(store) {
     const r = await API.get('/api/audit?per=2000');
     const d = await API.json(r);
     return (d?.items || []).map(a => ({
-      id: a.id, ts: a.ts, userId: a.user_id, userName: a.user_nome,
-      type: a.type, label: a.label, detail: a.detail,
+      id: a.id, ts: a.ts,
+      at: a.ts ? new Date(a.ts).getTime() : Date.now(),
+      userId: a.user_id, userName: a.user_nome,
+      usuario: a.user_nome,
+      type: a.type, evento: a.type, label: a.label,
+      detail: a.detail, detalhe: a.detail,
       processId: a.process_id,
       processObj: a.process_obj ? JSON.parse(a.process_obj) : null
     }));
