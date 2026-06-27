@@ -1099,8 +1099,11 @@
       <div class="user-nome" id="sidebar-nome">—</div>
       <div class="user-cargo" id="sidebar-cargo">Usuário</div>
     </div>
-    <button class="btn-sair" onclick="_apiLogout()" title="Sair">
+    <button class="btn-sair" onclick="_apiLogout()" title="Sair (trocar usuário)">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    </button>
+    <button class="btn-sair" onclick="fecharSistema()" title="Fechar o sistema" style="color:rgba(255,255,255,.4)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
     </button>
   </div>
 </nav>
@@ -2420,10 +2423,18 @@ const API = {
 };
 
 function _apiLogout() {
+  if (_apiToken) fetch('/api/auth/logout', { method: 'POST', headers: { Authorization: `Bearer ${_apiToken}` } }).catch(() => {});
   _apiToken = null; _apiUser = null;
   localStorage.removeItem('sgcd-token');
   sessionStorage.removeItem('sgcd-session-auth');
   _showLoginOverlay();
+}
+
+async function fecharSistema() {
+  if (!confirm('Deseja encerrar o sistema?')) return;
+  if (_apiToken) await fetch('/api/auth/logout', { method: 'POST', headers: { Authorization: `Bearer ${_apiToken}` } }).catch(() => {});
+  await fetch('/shutdown').catch(() => {});
+  window.close();
 }
 
 // ── Camada de compatibilidade IDB → REST API ──────────────────
@@ -10081,6 +10092,7 @@ async function verificarSenha() {
     _apiToken = d.token;
     _apiUser  = d.user;
     localStorage.setItem('sgcd-token', d.token);
+    localStorage.setItem('sgcd-last-username', username);
     sessionStorage.setItem('sgcd-session-auth', '1');
     document.getElementById('overlay-pin').classList.add('hidden');
     document.getElementById('pin-input').value = '';
@@ -10122,7 +10134,10 @@ function _showLoginOverlay() {
     if (accessEl) accessEl.textContent = 'Nenhum backup registrado';
   }
   document.querySelectorAll('.sgcd-version-badge').forEach(el => el.textContent = SGCD_VERSION);
-  setTimeout(() => (document.getElementById('pin-username') || document.getElementById('pin-input'))?.focus(), 150);
+  const lastUser = localStorage.getItem('sgcd-last-username');
+  const usernameEl = document.getElementById('pin-username');
+  if (usernameEl && lastUser) usernameEl.value = lastUser;
+  setTimeout(() => (lastUser ? document.getElementById('pin-input') : usernameEl)?.focus(), 150);
 }
 
 async function _checkSenhaAcesso() {
