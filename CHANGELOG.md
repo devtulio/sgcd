@@ -9,16 +9,25 @@
 
 ### Adicionado
 - **Nova arquitetura: SQLite + REST API + autenticação server-side** — `server.py` completamente reescrito; dados migrados do IndexedDB para SQLite (`sgcd.db`); cada operação de leitura/escrita é uma chamada REST autenticada com Bearer token; IndexedDB removido do frontend
-- **Autenticação multiusuário** — login com `username` + `senha`; hashing PBKDF2-HMAC-SHA256 com 100.000 iterações e salt aleatório por usuário; sessões gerenciadas no servidor com tokens UUID; logout via `POST /api/auth/logout`
-- **Gestão de usuários (aba Configurações — admin)** — administradores podem criar, editar e desativar usuários; campos: username, senha, nome, cargo, matrícula, admin, ativo; aba visível somente para admins
-- **Upload de arquivos via REST** — arquivos enviados por multipart/form-data para `POST /api/files`; armazenados em disco em `uploads/` com nome aleatório; download via `GET /api/files/:id`; metadados via `GET /api/files/:id/meta`
-- **Backup e restore server-side** — `GET /api/backup` gera ZIP completo (processos, fornecedores, arquivos, auditoria) diretamente no servidor; `POST /api/backup/restore` restaura a partir do JSON de backup
-- **Wipe via API** — `DELETE /api/wipe` apaga todos os dados do servidor (processos, fornecedores, arquivos, auditoria); requer admin
-- **Servidor com suporte a conexões concorrentes** — `ThreadingTCPServer` substitui `TCPServer`; cada requisição processada em thread separada
+- **Autenticação multiusuário** — login com `username` + `senha`; hashing PBKDF2-HMAC-SHA256 com 100.000 iterações e salt aleatório por usuário; sessões em memória com tokens UUID; logout explícito via `POST /api/auth/logout`; fechar o app invalida todos os tokens automaticamente
+- **Gestão de usuários (aba Configurações — admin)** — administradores podem criar, editar e desativar usuários; campos: username, senha, nome, cargo, matrícula, admin, ativo; aba visível somente para admins; proteção no servidor em todos os endpoints `/api/users`
+- **Aba Segurança → Alterar minha senha** — substituiu a senha local por troca de senha server-side; verifica senha atual antes de aceitar a nova; não-admins só podem alterar a própria senha
+- **Sidebar estilo SGDP** — barra lateral redesenhada com 220px fixo, seções "Principal / Contratações / Administração", badge de contagem de processos e alertas de agenda, rodapé com avatar, nome, cargo e botões de sair/fechar sistema
+- **Botão "Fechar Sistema"** — no rodapé do sidebar; faz logout no servidor e encerra o processo Python (`/shutdown`) antes de fechar a janela
+- **Último usuário pré-preenchido no login** — `username` do último login bem-sucedido é salvo em `localStorage` e restaurado automaticamente no overlay; foco vai direto para o campo senha
+- **Upload de arquivos via REST** — arquivos enviados por multipart/form-data para `POST /api/files`; download via `GET /api/files/:id`; metadados via `GET /api/files/:id/meta`
+- **Backup e restore server-side** — `GET /api/backup` exporta todos os dados; `POST /api/backup/restore` restaura; `DELETE /api/wipe` apaga tudo (admin)
+- **Servidor com suporte a conexões concorrentes** — `ThreadingTCPServer` com `allow_reuse_address` correto; cada requisição em thread separada
 
 ### Melhorado
-- **Camada de compatibilidade IDB → API** — funções `dbGet`, `dbGetAll`, `dbPut`, `dbDelete`, `dbGetByIndex` mantidas com assinaturas idênticas; chamadas internas roteadas para a REST API sem alterar centenas de call sites
-- **Overlay de login atualizado** — campo `username` adicionado acima da senha; botão desabilitado durante requisição de autenticação; mensagem de erro retornada pelo servidor exibida diretamente
+- **Camada de compatibilidade IDB → API** — funções `dbGet`, `dbGetAll`, `dbPut`, `dbDelete`, `dbGetByIndex` mantidas com assinaturas idênticas; roteadas para REST API sem alterar call sites existentes
+- **Logout no `_apiLogout()`** — chama `POST /api/auth/logout` para invalidar o token no servidor antes de limpar o estado local
+- **Controle de acesso server-side** — não-admin recebe 403 em `GET/POST /api/users`, `DELETE /api/users/:id` e `PUT /api/users/:id` de outro usuário; só pode alterar a própria senha via `PUT /api/users/:id` com `old_password`
+
+### Corrigido
+- **`SyntaxError` por `let db` duplicado** — declaração duplicada impedia execução de todo o JavaScript; removida a declaração do bloco IDB legado
+- **`allow_reuse_address` aplicado tarde demais** — servidor falhava silenciosamente ao reiniciar na mesma porta; corrigido como atributo de classe antes do `__init__`
+- **`sessionStorage` vs `localStorage` no logout** — flag `sgcd-session-auth` estava sendo removida do storage errado
 
 ---
 

@@ -1,12 +1,12 @@
 # SGCD — Sistema de Gestão de Contratação Direta
 
-![Versão](https://img.shields.io/badge/versão-v1.19.0-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-HTML5%20puro-orange) ![Licença](https://img.shields.io/badge/licença-MIT-green)
+![Versão](https://img.shields.io/badge/versão-v2.0.0-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-SQLite%20%2B%20REST%20API-orange) ![Licença](https://img.shields.io/badge/licença-MIT-green)
 
 ## Descrição
 
-O **SGCD** é uma aplicação web *single-file* (arquivo HTML único) para gestão completa de processos de **Dispensa de Licitação** conforme a **Lei Federal nº 14.133/2021** (Nova Lei de Licitações e Contratos Administrativos). Desenvolvido para agentes de contratação pública, o sistema organiza todas as etapas do processo — da formalização da demanda até a publicação do contrato no PNCP — em um fluxo de trabalho guiado, com geração automática de documentos.
+O **SGCD** é uma aplicação web multiusuário para gestão completa de processos de **Dispensa de Licitação** conforme a **Lei Federal nº 14.133/2021** (Nova Lei de Licitações e Contratos Administrativos). Desenvolvido para agentes de contratação pública, o sistema organiza todas as etapas do processo — da formalização da demanda até a publicação do contrato no PNCP — em um fluxo de trabalho guiado, com geração automática de documentos.
 
-Não requer instalação, servidor ou conexão à internet. Todos os dados ficam armazenados localmente no navegador via **IndexedDB**.
+A partir da versão 2.0, os dados são armazenados em **SQLite** via servidor local (`server.py`) com autenticação multiusuário. Não requer instalação de dependências externas além do Python.
 
 ---
 
@@ -57,7 +57,7 @@ Não requer instalação, servidor ou conexão à internet. Todos os dados ficam
 - **Brasão personalizado** exibido nos documentos gerados
 - **Auto-backup automático** — snapshot gravado no localStorage 3 segundos após cada salvamento; banner de alerta laranja exibido quando o último backup manual tem mais de 7 dias
 - **Validação ao concluir etapa** — ao marcar uma etapa como concluída, o sistema verifica campos obrigatórios e exibe confirmação listando os campos faltantes (não bloqueante)
-- **Controle de acesso por senha** — aba "Segurança" nas Configurações define senha de abertura armazenada como hash SHA-256; tela de login com identidade visual institucional e animação de shake em senha incorreta
+- **Autenticação multiusuário** — login com usuário e senha; hashing PBKDF2-HMAC-SHA256; sessões server-side; admin pode criar, editar e desativar usuários; aba "Segurança" permite alterar a própria senha
 - **Painel de Diagnóstico** — aba "Diagnóstico" nas Configurações analisa todos os processos e fornecedores, classificando inconsistências em Erros críticos, Avisos e Informações
 - **Exportação PNCP** — botão na etapa Aviso de Dispensa gera JSON estruturado no formato da API do Portal Nacional de Contratações Públicas com os dados do processo
 - **Factory Reset / Limpeza total** — apaga todos os dados do sistema com confirmação em 3 etapas de segurança (acessível em Configurações)
@@ -72,10 +72,9 @@ Não requer instalação, servidor ou conexão à internet. Todos os dados ficam
 
 ## Requisitos
 
-- **Navegador moderno** com suporte a IndexedDB e JavaScript ES6+
-- **Recomendado:** Google Chrome (versão 90+) ou Microsoft Edge (versão 90+)
+- **Navegador moderno** com JavaScript ES6+ — Google Chrome (90+) ou Microsoft Edge (90+)
 - **Python 3.7+** para executar o servidor local (`server.py`); usa apenas stdlib, sem dependências externas
-- Não requer instalação adicional, banco de dados externo ou conexão à internet (exceto para consulta de CNPJ)
+- Não requer banco de dados externo ou conexão à internet (exceto para consulta de CNPJ)
 - Configure as credenciais SMTP em Configurações para habilitar o envio de e-mails
 
 > ⚠️ **Importante:** o sistema deve ser aberto exclusivamente pelo `Iniciar SGCD.bat`. Abrir o `SGCD.html` diretamente pelo navegador cria uma base de dados separada e impede o envio de e-mails.
@@ -162,11 +161,11 @@ Consulte o [CHANGELOG.md](CHANGELOG.md) para o histórico completo de versões e
 | **HTML5** | Estrutura e interface da aplicação |
 | **CSS3** | Estilização, temas claro/escuro, layout responsivo |
 | **JavaScript puro (ES6+)** | Toda a lógica de negócio, sem frameworks externos |
-| **IndexedDB** | Armazenamento local dos dados no navegador |
+| **SQLite** | Armazenamento dos dados no servidor local (`sgcd.db`) |
 | **ReceitaWS** | Consulta de CNPJ — fonte primária (via proxy local no server.py) |
 | **BrasilAPI** | Consulta de CNPJ — fallback automático |
 | **ViaCEP** | Preenchimento automático de endereço por CEP |
-| **Python 3 (stdlib)** | Servidor local (`server.py`): proxy CNPJ, envio de e-mail SMTP, heartbeat |
+| **Python 3 (stdlib)** | Servidor local (`server.py`): REST API, SQLite, auth, proxy CNPJ, SMTP, heartbeat |
 
 ---
 
@@ -176,4 +175,4 @@ Distribuído sob a licença **MIT**. Veja [LICENSE](LICENSE) para detalhes.
 
 ---
 
-> **Aviso:** Os dados ficam armazenados exclusivamente no navegador local. Faça backups regulares em **Configurações → Backup de Dados** para evitar perda de informações ao limpar o cache do navegador.
+> **Aviso:** Os dados ficam armazenados no arquivo `sgcd.db` na pasta do sistema. Faça backups regulares em **Configurações → Backup de Dados** e mantenha cópia do `sgcd.db` em local seguro.
