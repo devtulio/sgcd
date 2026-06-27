@@ -8601,33 +8601,80 @@ function exportarPNCP() {
   const u = getUser();
   if (!p) return;
 
-  const stepAviso = STEPS.findIndex(s => s.avisoDispensa);
-  const stepAdj   = STEPS.findIndex(s => s.adjudicacao);
+  const stepAviso  = STEPS.findIndex(s => s.avisoDispensa);
+  const stepAdj    = STEPS.findIndex(s => s.adjudicacao);
+  const stepCot    = STEPS.findIndex(s => s.cotacoes);
+  const stepProp   = STEPS.findIndex(s => s.propostas);
   const fAviso = stepAviso >= 0 ? (p.steps[stepAviso]?.fields || {}) : {};
   const fAdj   = stepAdj   >= 0 ? (p.steps[stepAdj]?.fields   || {}) : {};
+  const fCot   = stepCot   >= 0 ? (p.steps[stepCot]?.fields   || {}) : {};
+
+  // Proposta vencedora (fallback para CNPJ/nome do fornecedor)
+  let propVencedora = null;
+  if (stepProp >= 0) {
+    try { propVencedora = JSON.parse(p.steps[stepProp]?.fields?._propostas || '[]').find(x => x.situacao === 'vencedora') || null; }
+    catch (_) {}
+  }
 
   // Mapa de critérios para código PNCP (criterioJulgamentoId)
   const criterioMap = { menor_preco: 1, maior_desconto: 2, melhor_tecnica: 4, tecnica_preco: 5, maior_retorno: 6 };
   const criterioId = criterioMap[p.criterio_selecao] || 1;
 
-  // Mapa de amparo legal (modalidadeId = 8 para dispensa)
+  // Mapa de amparo legal — todos os incisos Art. 75 Lei 14.133/2021
   const amparoMap = {
-    'Art. 75, I':  { id: 1,  descricao: 'Art. 75, inciso I — Lei nº 14.133/2021' },
-    'Art. 75, II': { id: 2,  descricao: 'Art. 75, inciso II — Lei nº 14.133/2021' },
-    'Art. 75, III':{ id: 3,  descricao: 'Art. 75, inciso III — Lei nº 14.133/2021' },
-    'Art. 75, IV': { id: 4,  descricao: 'Art. 75, inciso IV — Lei nº 14.133/2021' },
+    'Art. 75, I':    { id: 1,  descricao: 'Art. 75, inciso I — Lei nº 14.133/2021' },
+    'Art. 75, II':   { id: 2,  descricao: 'Art. 75, inciso II — Lei nº 14.133/2021' },
+    'Art. 75, III':  { id: 3,  descricao: 'Art. 75, inciso III — Lei nº 14.133/2021' },
+    'Art. 75, IV':   { id: 4,  descricao: 'Art. 75, inciso IV — Lei nº 14.133/2021' },
+    'Art. 75, V':    { id: 5,  descricao: 'Art. 75, inciso V — Lei nº 14.133/2021' },
+    'Art. 75, VI':   { id: 6,  descricao: 'Art. 75, inciso VI — Lei nº 14.133/2021' },
+    'Art. 75, VII':  { id: 7,  descricao: 'Art. 75, inciso VII — Lei nº 14.133/2021' },
+    'Art. 75, VIII': { id: 8,  descricao: 'Art. 75, inciso VIII — Lei nº 14.133/2021' },
+    'Art. 75, IX':   { id: 9,  descricao: 'Art. 75, inciso IX — Lei nº 14.133/2021' },
+    'Art. 75, X':    { id: 10, descricao: 'Art. 75, inciso X — Lei nº 14.133/2021' },
+    'Art. 75, XI':   { id: 11, descricao: 'Art. 75, inciso XI — Lei nº 14.133/2021' },
+    'Art. 75, XII':  { id: 12, descricao: 'Art. 75, inciso XII — Lei nº 14.133/2021' },
+    'Art. 75, XIII': { id: 13, descricao: 'Art. 75, inciso XIII — Lei nº 14.133/2021' },
+    'Art. 75, XIV':  { id: 14, descricao: 'Art. 75, inciso XIV — Lei nº 14.133/2021' },
+    'Art. 75, XV':   { id: 15, descricao: 'Art. 75, inciso XV — Lei nº 14.133/2021' },
+    'Art. 75, XVI':  { id: 16, descricao: 'Art. 75, inciso XVI — Lei nº 14.133/2021' },
   };
   const incisoChave = (p.legal || '').split(' — ')[0].trim();
   const amparo = amparoMap[incisoChave] || { id: null, descricao: p.legal || '' };
 
-  const forn = typeof p.fornecedor === 'object' ? p.fornecedor : null;
-  const valorAdj = parseValor(fAdj.valor_adjudicado || p.valor || 0);
-  const valorEst = parseValor(p.valor || 0);
+  // Fornecedor: objeto vinculado > proposta vencedora > string digitada
+  const fornObj = typeof p.fornecedor === 'object' ? p.fornecedor : null;
+  const fornNome = fornObj?.razao_social || fornObj?.nome_fantasia
+    || propVencedora?.fornecedor
+    || (typeof p.fornecedor === 'string' ? p.fornecedor : null)
+    || null;
+  const fornCnpj = (fornObj?.cnpj || propVencedora?.cnpj || '').replace(/\D/g,'') || null;
+
+  // Valores: prioridade valor adjudicado > valor do processo > valor estimado das cotações
+  const valorAdj = parseValor(fAdj.valor_adjudicado || propVencedora?.valor || 0);
+  const valorEst = parseValor(p.valor || fCot.valor_estimado || 0);
+
+  // Dados do órgão das configurações
+  const cnpjOrgao = (u.cnpj_orgao || '').replace(/\D/g,'') || null;
+  const ibge      = u.codigo_ibge || null;
+  const uf        = u.uf || (u.municipio || '').split('/')[1]?.trim() || null;
+  const municipio = (u.municipio || '').split('/')[0].trim() || null;
+
+  // Aviso de campos ainda null
+  const nullFields = [];
+  if (!cnpjOrgao)               nullFields.push('CNPJ do Órgão (Configurações → Organização)');
+  if (!ibge)                    nullFields.push('Código IBGE do Município (Configurações → Organização)');
+  if (!uf)                      nullFields.push('UF (Configurações → Organização)');
+  if (!amparo.id)               nullFields.push('Amparo Legal — inciso não mapeado no PNCP (preencha manualmente)');
+  if (!fornCnpj)                nullFields.push('CNPJ do fornecedor adjudicado');
+  if (!valorEst)                nullFields.push('Valor estimado');
+  if (!fAviso.data_publicacao)  nullFields.push('Data de publicação do Aviso (Etapa Aviso de Dispensa)');
+  if (!fAviso.data_encerramento)nullFields.push('Data de encerramento de propostas (Etapa Aviso de Dispensa)');
 
   const payload = {
     _sgcd_versao: SGCD_VERSION,
     _gerado_em: new Date().toISOString(),
-    _aviso: 'Verifique e complemente os campos marcados com "null" antes de enviar ao PNCP.',
+    ...(nullFields.length ? { _pendencias: nullFields } : {}),
 
     // Dados da compra
     modalidadeId: 8,
@@ -8656,19 +8703,19 @@ function exportarPNCP() {
     ano: p.createdAt ? new Date(p.createdAt).getFullYear() : new Date().getFullYear(),
 
     // Órgão
-    orgaoEntidade: { cnpj: (u.cnpj_orgao || '').replace(/\D/g,'') || null, razaoSocial: u.orgao || null },
-    unidadeOrgao: { codigoUnidade: u.codigo_ibge || null, nomeUnidade: u.orgao || null, municipio: (u.municipio || '').split('/')[0].trim() || null, ufSigla: u.uf || (u.municipio || '').split('/')[1]?.trim() || null },
+    orgaoEntidade: { cnpj: cnpjOrgao, razaoSocial: u.orgao || null },
+    unidadeOrgao: { codigoUnidade: ibge, nomeUnidade: u.orgao || null, municipio, ufSigla: uf },
     unidadeSubrogada: null,
 
     // Fornecedor adjudicado
-    ...(forn || valorAdj > 0 ? { fornecedores: [{
-      cnpj: forn?.cnpj?.replace(/\D/g,'') || null,
-      razaoSocial: forn?.razao_social || forn?.nome_fantasia || null,
+    ...((fornNome || fornCnpj || valorAdj > 0) ? { fornecedores: [{
+      cnpj: fornCnpj,
+      razaoSocial: fornNome,
       valorTotal: valorAdj > 0 ? valorAdj : null,
       tipoPessoa: 'PJ',
     }] } : {}),
 
-    // Itens (estrutura básica — detalhar conforme necessidade)
+    // Itens
     itens: [{
       numeroItem: 1,
       descricao: p.objeto || '',
@@ -8688,7 +8735,12 @@ function exportarPNCP() {
   a.download = `PNCP_${p.num_dl || p.num_proc || 'dispensa'}_${new Date().toISOString().slice(0,10)}.json`;
   a.click();
   URL.revokeObjectURL(url);
-  toast('JSON PNCP exportado. Revise os campos "null" antes de enviar ao portal.', 'success');
+
+  if (nullFields.length) {
+    toast(`JSON exportado com ${nullFields.length} campo(s) pendente(s) — veja "_pendencias" no arquivo.`, 'warn');
+  } else {
+    toast('JSON PNCP exportado com todos os campos preenchidos.', 'success');
+  }
   _auditEvento('PNCP_EXPORT', `Exportação PNCP — ${p.num_dl || p.num_proc || p.objeto?.slice(0,40)}`, p.id);
 }
 
