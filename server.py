@@ -24,9 +24,12 @@ from email.mime.multipart import MIMEMultipart
 from urllib.parse import urlparse, parse_qs
 
 PORT          = 3000
-DB_PATH       = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sgcd.db')
-UPLOADS_DIR   = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads')
-LOG_PATH      = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sgcd_errors.log')
+_BASE         = os.path.dirname(os.path.abspath(__file__))
+DB_PATH       = os.path.join(_BASE, 'sgcd.db')
+UPLOADS_DIR   = os.path.join(_BASE, 'uploads')
+BACKUP_DIR    = os.path.join(_BASE, 'backups')
+LOG_PATH      = os.path.join(_BASE, 'sgcd_errors.log')
+BACKUP_KEEP   = 7        # número de backups automáticos mantidos
 HEARTBEAT_TIMEOUT = 30
 SESSION_TTL   = 8 * 3600  # 8 horas
 
@@ -342,6 +345,16 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
             if not s['admin']: self._json(403, {'error': 'Acesso negado'}); return
             self._export_backup()
 
+        elif p == '/api/backups/db':
+            if not s['admin']: self._json(403, {'error': 'Acesso negado'}); return
+            files = sorted(
+                (f for f in os.listdir(BACKUP_DIR) if f.startswith('sgcd_') and f.endswith('.db')),
+                reverse=True
+            ) if os.path.isdir(BACKUP_DIR) else []
+            items = [{'name': f, 'size': os.path.getsize(os.path.join(BACKUP_DIR, f)),
+                      'ts': f[5:24].replace('_', 'T').replace('-', ':', 2)} for f in files]
+            self._json(200, {'items': items})
+
         else:
             self._json(404, {'error': 'Rota não encontrada'})
 
@@ -370,6 +383,11 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         elif p == '/api/users':
             if not s['admin']: self._json(403, {'error': 'Acesso negado'}); return
             self._create_user(data)
+
+        elif p == '/api/backups/db/now':
+            if not s['admin']: self._json(403, {'error': 'Acesso negado'}); return
+            name = _do_db_backup()
+            self._json(200, {'ok': bool(name), 'name': name})
 
         elif p == '/api/backup/restore':
             if not s['admin']: self._json(403, {'error': 'Acesso negado'}); return
@@ -1181,10 +1199,38 @@ def _watchdog():
             print(f'\nSem heartbeat há {idle:.0f}s. Encerrando servidor...')
             os._exit(0)
 
+# ── Backup automático do banco ─────────────────────────────────────────────────
+
+def _do_db_backup():
+    import shutil as _shutil
+    os.makedirs(BACKUP_DIR, exist_ok=True)
+    name = time.strftime('sgcd_%Y-%m-%d_%H-%M-%S.db')
+    dst  = os.path.join(BACKUP_DIR, name)
+    try:
+        with sqlite3.connect(DB_PATH) as src, sqlite3.connect(dst) as bk:
+            src.backup(bk)
+        # Rotação: manter apenas os últimos BACKUP_KEEP arquivos
+        files = sorted(f for f in os.listdir(BACKUP_DIR) if f.startswith('sgcd_') and f.endswith('.db'))
+        for old in files[:-BACKUP_KEEP]:
+            try: os.remove(os.path.join(BACKUP_DIR, old))
+            except: pass
+        print(f'Backup automático: {name}')
+        return name
+    except Exception as e:
+        _log.error('Falha no backup automático: %s', e)
+        return None
+
+def _backup_loop():
+    while True:
+        time.sleep(24 * 3600)
+        _do_db_backup()
+
 # ── Inicialização ─────────────────────────────────────────────────────────────
 
 init_db()
-threading.Thread(target=_watchdog, daemon=True).start()
+_do_db_backup()  # backup ao iniciar
+threading.Thread(target=_watchdog,     daemon=True).start()
+threading.Thread(target=_backup_loop,  daemon=True).start()
 
 socketserver.ThreadingTCPServer.allow_reuse_address = True
 with socketserver.ThreadingTCPServer(('', PORT), SGCDHandler) as httpd:

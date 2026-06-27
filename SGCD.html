@@ -1812,13 +1812,11 @@
               <input type="file" accept=".json" style="display:none" onchange="sincronizarBackup(this.files[0]).then(()=>this.value='')">
             </label>
           </div>
-          <div style="border-top:1px solid var(--gray-100);padding-top:12px;display:flex;flex-direction:column;gap:10px">
-            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.82rem">
-              <input type="checkbox" id="s-auto-backup-exit" style="width:15px;height:15px">
-              Salvar snapshot automático ao fechar a aba
-            </label>
-            <p style="font-size:.7rem;color:var(--gray-500);margin-left:23px;line-height:1.5">Salva uma cópia no próprio navegador (sem arquivos anexos). Na próxima abertura, o sistema oferecerá restaurar caso o snapshot seja mais recente que o último backup exportado.</p>
-            <div style="font-size:.7rem;color:var(--gray-500);margin-left:23px" id="s-last-autobackup"></div>
+          <div style="border-top:1px solid var(--gray-100);padding-top:12px;display:flex;flex-direction:column;gap:8px">
+            <div style="font-size:.82rem;font-weight:600;color:var(--gray-700)">Backups automáticos do banco (sgcd.db)</div>
+            <p style="font-size:.7rem;color:var(--gray-500);line-height:1.5">O servidor cria um backup do banco ao iniciar e a cada 24h. Os últimos 7 são mantidos na pasta <code>backups/</code>.</p>
+            <div id="s-db-backups-list" style="font-size:.75rem;color:var(--gray-600)">Carregando…</div>
+            <button class="btn btn-outline btn-sm" onclick="backupDbAgora()" style="align-self:flex-start;margin-top:4px">⬇ Fazer backup agora</button>
           </div>
         </fieldset>
 
@@ -3498,16 +3496,12 @@ function _hideSaveIndicator() {
   _saveIndicatorTimer = setTimeout(() => { el.style.opacity = '0'; }, 1800);
 }
 
-let _autoBackupDebounceTimer = null;
 async function saveProcess(p) {
   _showSaveIndicator();
   p.updatedAt = Date.now();
   await dbPut('processes', p);
   updateAgendaBadge();
   _hideSaveIndicator();
-  // Snapshot automático debounced — salva 3s após o último saveProcess
-  clearTimeout(_autoBackupDebounceTimer);
-  _autoBackupDebounceTimer = setTimeout(() => _autoBackupSnapshot(), 3000);
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -10326,7 +10320,7 @@ function showSettings() {
   const temSenha = !!localStorage.getItem('sgcd-access-hash');
   const btnRem = document.getElementById('btn-remover-senha');
   if (btnRem) btnRem.style.display = temSenha ? '' : 'none';
-  document.getElementById('s-auto-backup-exit').checked = !!u.auto_backup_exit;
+  _loadDbBackupsList();
   document.getElementById('s-dark-mode').value = u.dark_mode || 'light';
   document.getElementById('s-layout-width').value = u.layout_width || 'compacto';
   _applyLayoutWidth(u.layout_width || 'compacto');
@@ -10362,10 +10356,6 @@ function showSettings() {
   if (custom) { img.src = custom; img.style.display = ''; rmBtn.style.display = ''; }
   else { img.src = ''; img.style.display = 'none'; rmBtn.style.display = 'none'; }
 
-  // Last auto-backup info
-  const abAt = localStorage.getItem('sgcd-auto-backup-at');
-  const abEl = document.getElementById('s-last-autobackup');
-  if (abEl) abEl.textContent = abAt ? `Último snapshot: ${new Date(parseInt(abAt)).toLocaleString('pt-BR')}` : '';
 
   _hideAllViews();
   document.getElementById('view-settings').classList.add('active');
@@ -10399,7 +10389,6 @@ async function saveSettings() {
     codigo_ibge:      document.getElementById('s-codigo-ibge').value.trim(),
     uf:               document.getElementById('s-uf').value.trim().toUpperCase(),
     frac_janela:      document.getElementById('s-frac-janela').value,
-    auto_backup_exit: document.getElementById('s-auto-backup-exit').checked,
     dark_mode:        document.getElementById('s-dark-mode').value,
     layout_width:     document.getElementById('s-layout-width').value,
     font_size:        document.getElementById('s-font-size').value,
@@ -12254,95 +12243,47 @@ function _docAuthCode(p) {
 }
 
 // ══════════════════════════════════════════════════════════════
-// AUTO BACKUP (item 9)
+// BACKUP AUTOMÁTICO DO BANCO
 // ══════════════════════════════════════════════════════════════
-async function _autoBackupSnapshot() {
+async function _loadDbBackupsList() {
+  const el = document.getElementById('s-db-backups-list');
+  if (!el) return;
   try {
-    const [procs, forns] = await Promise.all([dbGetAll('processes'), dbGetAll('fornecedores')]);
-    const snap = { _sgcd: true, _auto: true, version: 1, exportedAt: new Date().toISOString(), processes: procs, fornecedores: forns };
-    const MAX = 4 * 1024 * 1024;
-
-    let json;
-    try {
-      const result = await _workerRun('serialize', { snap, maxBytes: MAX });
-      if (!result.ok) {
-        if (result.reason === 'quota') {
-          toast('⚠ Auto-backup: base de dados muito grande para snapshot local. Faça um backup manual em Configurações.', 'error');
-          return;
-        }
-        throw new Error(result.reason);
-      }
-      json = result.json;
-    } catch (workerErr) {
-      // Fallback síncrono
-      console.warn('_autoBackupSnapshot Worker falhou, usando fallback síncrono:', workerErr.message);
-      json = JSON.stringify(snap);
-      if (json.length > MAX) {
-        toast('⚠ Auto-backup: base de dados muito grande para snapshot local. Faça um backup manual em Configurações.', 'error');
-        return;
-      }
-    }
-
-    localStorage.setItem('sgcd-auto-backup', json);
-    localStorage.setItem('sgcd-auto-backup-at', Date.now().toString());
-  } catch(e) {
-    console.warn('Auto-backup falhou:', e);
-    if (e.name === 'QuotaExceededError') {
-      toast('⚠ Auto-backup falhou: espaço insuficiente no navegador. Faça um backup manual em Configurações.', 'error');
-    }
-  }
+    const r = await API.get('/api/backups/db');
+    const d = await API.json(r);
+    const items = d?.items || [];
+    if (!items.length) { el.textContent = 'Nenhum backup encontrado.'; return; }
+    el.innerHTML = items.map(b => {
+      const ts = b.ts ? new Date(b.ts).toLocaleString('pt-BR') : b.name;
+      const mb = (b.size / 1048576).toFixed(2);
+      return `<div style="padding:3px 0;border-bottom:1px solid var(--gray-100)">${ts} — <span style="color:var(--gray-500)">${mb} MB</span></div>`;
+    }).join('');
+  } catch { el.textContent = 'Erro ao carregar lista de backups.'; }
 }
-async function checkAutoBackupRestore() {
-  // ── 1. Verifica se há snapshot automático para restaurar (dados perdidos) ──
-  const snap = localStorage.getItem('sgcd-auto-backup');
-  if (snap) {
-    const at = parseInt(localStorage.getItem('sgcd-auto-backup-at') || '0');
-    const age = Date.now() - at;
-    if (age <= 7 * 86400000) {
-      try {
-        const data = JSON.parse(snap);
-        if (data._auto && data.processes?.length) {
-          const current = await dbGetAll('processes');
-          if (current.length < data.processes.length) {
-            const ok = await customConfirm(
-              `Encontrado snapshot automático de ${new Date(at).toLocaleString('pt-BR')} com ${data.processes.length} processos (atual: ${current.length}).\n\nDeseja restaurar?`,
-              { title: 'Restaurar snapshot automático', icon: '💾', okLabel: 'Restaurar', okClass: 'btn-primary' }
-            );
-            if (ok) {
-              await Promise.all(['processes','fornecedores'].map(s => dbClearStore(s)));
-              for (const p of data.processes   || []) await dbPut('processes',   p);
-              for (const f of data.fornecedores|| []) await dbPut('fornecedores', f);
-              toast(`Snapshot restaurado: ${data.processes.length} processos.`, 'success');
-              await loadProcesses(); renderDash();
-            }
-          }
-        }
-      } catch(e) { console.warn('Erro ao verificar snapshot:', e); }
-    }
-  }
 
-  // ── 2. Alerta se o último backup manual está vencido (> 7 dias) ──
+async function backupDbAgora() {
+  const r = await API.post('/api/backups/db/now', {});
+  const d = await API.json(r);
+  if (d?.ok) { toast(`Backup criado: ${d.name}`, 'success'); _loadDbBackupsList(); }
+  else toast('Erro ao criar backup.', 'error');
+}
+
+async function checkBackupAlert() {
   const lastExport = parseInt(localStorage.getItem('sgcd-last-manual-export') || '0');
-  const ALERTA_DIAS = 7;
-  const diasSemBackup = lastExport
-    ? Math.floor((Date.now() - lastExport) / 86400000)
-    : null;
   const banner = document.getElementById('backup-alert-banner');
   const msg    = document.getElementById('backup-alert-msg');
   if (!banner || !msg) return;
-
+  const dias = lastExport ? Math.floor((Date.now() - lastExport) / 86400000) : null;
   if (!lastExport) {
-    msg.textContent = 'Nenhum backup manual registrado. Exporte um backup para proteger seus dados contra perda por limpeza do navegador.';
+    msg.textContent = 'Nenhum backup JSON exportado. Exporte um backup em Configurações para ter uma cópia portátil dos dados.';
     banner.style.display = 'flex';
-  } else if (diasSemBackup >= ALERTA_DIAS) {
-    msg.textContent = `Último backup exportado há ${diasSemBackup} dias. Recomendamos exportar um novo backup para garantir a segurança dos dados.`;
+  } else if (dias >= 7) {
+    msg.textContent = `Último backup exportado há ${dias} dias. Recomendamos exportar um novo backup.`;
     banner.style.display = 'flex';
   }
 }
 
 window.addEventListener('beforeunload', () => {
-  const u = getUser();
-  if (u.auto_backup_exit) { _autoBackupSnapshot(); }
   // Sessões são invalidadas pelo servidor ao reiniciar (após heartbeat timeout).
   // Não enviamos beacon aqui pois beforeunload não distingue F5 de fechar janela.
 });
@@ -12437,7 +12378,7 @@ function carregarDashboard() {
   document.getElementById('footer-version').textContent = `v${SGCD_VERSION}`;
   loadProcesses()
     .then(() => {
-      checkAutoBackupRestore();
+      checkBackupAlert();
       const u = getUser();
       if (!u.nome) {
         _hideDashSkeletonWhenReady(() => {
