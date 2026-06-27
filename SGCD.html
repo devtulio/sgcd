@@ -2538,6 +2538,16 @@ async function dbGetByIndex(store, indexName, value) {
 }
 
 async function dbGetByIndexPrefix(store, indexName, prefix) {
+  if (store === 'files') {
+    const r = await API.get(`/api/files?process_id=${encodeURIComponent(prefix)}&prefix=1`);
+    const d = await API.json(r);
+    const items = Array.isArray(d) ? d : (d?.items || []);
+    return items.map(f => ({
+      id: f.id, processId: f.process_id, stepIdx: f.step_index,
+      name: f.nome_original, type: f.mime, size: f.tamanho,
+      _serverFile: true
+    }));
+  }
   return dbGetByIndex(store, indexName, prefix);
 }
 
@@ -5859,7 +5869,7 @@ async function openProcess(id) {
         if (!step.fields.cnpj_contratado && fornCnpj){ step.fields.cnpj_contratado = fornCnpj; changed = true; }
       }
     });
-    if (changed) await saveProcess(currentProcess);
+    if (changed) saveProcess(currentProcess); // fire-and-forget: não bloqueia abertura do processo
   }
 
   _hideAllViews();
@@ -6169,12 +6179,8 @@ async function renderChecklist() {
     return !st || st === 'pending';
   });
 
-  let html = '';
-  for (let pos = 0; pos < order.length; pos++) {
-    const si = order[pos];
-    html += await _buildStepCardHtml(si, p, si === nextIdx);
-  }
-  container.innerHTML = html;
+  const cards = await Promise.all(order.map(si => _buildStepCardHtml(si, p, si === nextIdx)));
+  container.innerHTML = cards.join('');
 }
 
 function renderStepFields(i, step, data, certFileMap = {}) {
@@ -7150,7 +7156,7 @@ async function setStepStatus(i, status) {
   await saveProcess(p);
   renderDetail();
   expandedSteps.add(i);
-  renderChecklist();
+  renderSingleStep(i);
 
   // Ao concluir a última etapa, abre automaticamente o painel de conformidade
   if (status === 'done' && processStatus(p) === 'done') {
@@ -7408,13 +7414,8 @@ async function deleteProcess() {
   if (!digitado) return;
   await _auditEvento('PROCESSO_EXCLUIDO',
     `PA: ${p.num_proc || '—'} | DL: ${p.num_dl || '—'} | Objeto: ${p.objeto}`, p.id);
-  const allFiles = await dbGetAll('files');
   const pid = p.id;
-  for (const f of allFiles) {
-    if (typeof f.processId === 'string' && f.processId.startsWith(pid + '_')) {
-      await dbDelete('files', f.id);
-    }
-  }
+  await API.del(`/api/files?process_id=${encodeURIComponent(pid + '_')}`);
   await dbDelete('processes', pid);
   toast('Processo excluído.', '');
   showDash();

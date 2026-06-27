@@ -260,10 +260,14 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
 
         # Arquivos
         elif p == '/api/files':
-            pid = qp('process_id')
-            per = int(qp('per', 200))
+            pid    = qp('process_id')
+            prefix = qp('prefix') == '1'
+            per    = int(qp('per', 200))
             with get_db() as conn:
-                if pid:
+                if pid and prefix:
+                    total = conn.execute('SELECT COUNT(*) FROM files WHERE process_id LIKE ?', (pid + '%',)).fetchone()[0]
+                    rows  = conn.execute('SELECT id,process_id,step_index,nome_original,mime,tamanho,criado_em FROM files WHERE process_id LIKE ? LIMIT ?', (pid + '%', per)).fetchall()
+                elif pid:
                     total = conn.execute('SELECT COUNT(*) FROM files WHERE process_id=?', (pid,)).fetchone()[0]
                     rows  = conn.execute('SELECT id,process_id,step_index,nome_original,mime,tamanho,criado_em FROM files WHERE process_id=? LIMIT ?', (pid, per)).fetchall()
                 else:
@@ -378,6 +382,19 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         elif re.fullmatch(r'/api/fornecedores/[^/]+', p):
             with get_db() as conn:
                 conn.execute('DELETE FROM fornecedores WHERE id=?', (p.split('/')[-1],))
+            self._json(200, {'ok': True})
+
+        elif p == '/api/files' and parse_qs(parsed.query).get('process_id'):
+            pid_prefix = parse_qs(parsed.query)['process_id'][0]
+            with get_db() as conn:
+                rows = conn.execute(
+                    "SELECT nome_disco FROM files WHERE process_id LIKE ?",
+                    (pid_prefix + '%',)
+                ).fetchall()
+                for row in rows:
+                    fp = os.path.join(UPLOADS_DIR, row['nome_disco'])
+                    if os.path.exists(fp): os.remove(fp)
+                conn.execute("DELETE FROM files WHERE process_id LIKE ?", (pid_prefix + '%',))
             self._json(200, {'ok': True})
 
         elif re.fullmatch(r'/api/files/[^/]+', p):
