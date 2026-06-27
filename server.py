@@ -750,6 +750,10 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
             if data.get('password'):
                 if len(data['password']) < 6:
                     self._json(400, {'error': 'Senha mínima: 6 caracteres'}); return
+                if 'old_password' in data:
+                    row = conn.execute('SELECT senha_hash FROM users WHERE id=?', (uid,)).fetchone()
+                    if not row or not _verify_password(data['old_password'], row['senha_hash']):
+                        self._json(403, {'error': 'Senha atual incorreta'}); return
                 fields.append('senha_hash=?'); params.append(_hash_password(data['password']))
             if fields:
                 conn.execute(f'UPDATE users SET {",".join(fields)} WHERE id=?', params + [uid])
