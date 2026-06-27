@@ -3738,15 +3738,10 @@ async function renderFornecedores() {
     </p>`;
     return;
   }
-  // Map O(1) para evitar processes.find() O(n) dentro do loop de fornecedores
+  // Map O(1) para contagem de processos por fornecedor no header
   const _procMap = new Map(processes.map(p => [p.id, p]));
   el.innerHTML = lista.map(f => {
     const sitCls = cnpjSitClass(f.situacao);
-    const procLinks = (f.processos || []).map(pid => {
-      const p = _procMap.get(pid);
-      return p ? `<span class="forn-proc-link" onclick="openProcess('${escHtml(pid)}')">${escHtml(p.num_dl ? `DL ${p.num_dl}` : p.num_proc ? `PA ${p.num_proc}` : p.num || p.objeto.slice(0, 25))}</span>` : '';
-    }).filter(Boolean).join('');
-    const qsaNames = (f.qsa || []).map(s => escHtml(s.nome)).join(', ');
     const nProcs = (f.processos || []).filter(pid => _procMap.has(pid)).length;
     return `<div class="forn-list-item" data-forn-id="${f.id}" onclick="toggleFornCard('${f.id}')">
       <div class="forn-list-header">
@@ -3767,24 +3762,6 @@ async function renderFornecedores() {
           <button class="btn btn-outline btn-sm" style="font-size:.68rem;padding:2px 10px" onclick="event.stopPropagation();toggleFornCard('${f.id}',true)">✏ Editar</button>
         </div>
       </div>
-      ${f.endereco ? `<div class="forn-detail-row">📍 ${escHtml(f.endereco)}</div>` : ''}
-      ${f.abertura ? `<div class="forn-detail-row">📅 Abertura: ${escHtml(f.abertura)}</div>` : ''}
-      ${f.cnae ? `<div class="forn-detail-row">🔧 CNAE: ${escHtml(f.cnae)}</div>` : ''}
-      ${qsaNames ? `<div class="forn-detail-row">👥 QSA: ${qsaNames}</div>` : ''}
-      ${procLinks ? `<div class="forn-proc-list" style="margin-top:6px"><span style="font-size:.68rem;color:var(--gray-500);margin-right:4px">Processos:</span>${procLinks}</div>` : ''}
-      ${(() => {
-        const certs = f.certidoes || [];
-        if (!certs.length) return '';
-        const expired  = certs.filter(c => certStatus(c) === 'expired').length;
-        const expiring = certs.filter(c => certStatus(c) === 'expiring').length;
-        const valid    = certs.filter(c => certStatus(c) === 'valid').length;
-        const badges = [];
-        if (expired)  badges.push(`<span class="forn-cert-summary-badge danger">${expired} vencida${expired>1?'s':''}</span>`);
-        if (expiring) badges.push(`<span class="forn-cert-summary-badge warn">${expiring} a vencer</span>`);
-        if (valid)    badges.push(`<span class="forn-cert-summary-badge ok">${valid} válida${valid>1?'s':''}</span>`);
-        return badges.length ? `<div class="forn-cert-summary" style="margin-top:4px">${badges.join('')}</div>` : '';
-      })()}
-      <div class="forn-detail-row" style="margin-top:6px;font-size:.65rem;color:var(--gray-400)">Atualizado em ${fmt(f.updatedAt || f.addedAt)}</div>
     </div>`;
   }).join('');
 }
