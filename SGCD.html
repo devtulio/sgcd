@@ -1213,12 +1213,19 @@
       </div>
     </div>
 
-    <div id="dash-chart-wrap" style="margin-bottom:12px;display:none">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-        <span style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-500)">Processos por mês — últimos 12 meses</span>
-        <button onclick="document.getElementById('dash-chart-wrap').style.display='none'" style="background:none;border:none;cursor:pointer;font-size:.8rem;color:var(--gray-400)" title="Ocultar gráfico">✕</button>
+    <div id="dash-chart-wrap" style="display:none;background:var(--bg-card);border:1px solid var(--gray-200);border-radius:var(--radius);padding:16px 20px;margin-bottom:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <span style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--gray-500)">Processos por mês — últimos 12 meses</span>
+        <div style="display:flex;align-items:center;gap:16px">
+          <div style="display:flex;align-items:center;gap:12px">
+            <span style="display:flex;align-items:center;gap:5px;font-size:.75rem;color:var(--gray-600)"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#2a78d6;flex-shrink:0"></span>Criados</span>
+            <span style="display:flex;align-items:center;gap:5px;font-size:.75rem;color:var(--gray-600)"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#1baf7a;flex-shrink:0"></span>Concluídos</span>
+          </div>
+          <button onclick="document.getElementById('dash-chart-wrap').style.display='none'" style="background:none;border:none;cursor:pointer;font-size:.85rem;color:var(--gray-400);line-height:1;padding:2px 4px" title="Ocultar gráfico">✕</button>
+        </div>
       </div>
       <div id="dash-chart-svg" style="width:100%;overflow-x:auto"></div>
+      <div id="dash-chart-stats" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px;padding-top:14px;border-top:1px solid var(--gray-100)"></div>
     </div>
 
     <div class="filters" style="flex-wrap:nowrap;align-items:center">
@@ -11110,7 +11117,6 @@ function renderDashChart() {
   const el = document.getElementById('dash-chart-svg');
   if (!el) return;
 
-  // Monta contadores para os últimos 12 meses
   const now = new Date();
   const months = [];
   for (let i = 11; i >= 0; i--) {
@@ -11123,10 +11129,8 @@ function renderDashChart() {
     const idx = months.findIndex(m => m.year === d.getFullYear() && m.month === d.getMonth());
     if (idx >= 0) months[idx].criados++;
     if (processStatus(p) === 'done') {
-      const lastDone = p.steps?.reduce((max, s) => {
-        if (s.status === 'done' && s.completedAt > max) return s.completedAt;
-        return max;
-      }, 0);
+      const lastDone = p.steps?.reduce((max, s) =>
+        (s.status === 'done' && s.completedAt > max) ? s.completedAt : max, 0);
       if (lastDone) {
         const dd = new Date(lastDone);
         const idx2 = months.findIndex(m => m.year === dd.getFullYear() && m.month === dd.getMonth());
@@ -11137,42 +11141,76 @@ function renderDashChart() {
 
   const MESES_PT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
   const maxVal = Math.max(1, ...months.map(m => Math.max(m.criados, m.concluidos)));
-  const W = 700, H = 120, PAD_L = 28, PAD_B = 22, PAD_T = 10;
-  const chartW = W - PAD_L, chartH = H - PAD_B - PAD_T;
-  const barW = Math.floor(chartW / months.length);
-  const groupW = barW - 4;
-  const bW = Math.max(4, Math.floor(groupW / 2) - 1);
 
-  let bars = '', labels = '', legend = '';
+  // Escala Y com inteiros "limpos"
+  const step = maxVal <= 5 ? 1 : maxVal <= 10 ? 2 : maxVal <= 25 ? 5 : maxVal <= 50 ? 10 : 20;
+  const niceMax = Math.ceil(maxVal / step) * step;
+  const nTicks  = niceMax / step;
+
+  const W = 760, H = 190;
+  const PL = 36, PR = 10, PT = 22, PB = 28;
+  const cW = W - PL - PR, cH = H - PT - PB;
+  const slot = cW / 12;
+  const bW   = Math.max(8, Math.floor(slot * 0.36));
+  const gOff = (slot - (bW * 2 + 4)) / 2;
+
+  let grid = '', bars = '', valLbls = '', xLbls = '';
+
+  // Grid horizontal + labels Y
+  for (let t = 0; t <= nTicks; t++) {
+    const val = t * step;
+    const yg  = Math.round(PT + cH - (val / niceMax) * cH);
+    grid += `<line x1="${PL}" y1="${yg}" x2="${W - PR}" y2="${yg}" stroke="#c3c2b7" stroke-width="${t === 0 ? 1 : 0.6}" opacity="${t === 0 ? 0.5 : 0.3}"/>`;
+    grid += `<text x="${PL - 6}" y="${yg + 4}" text-anchor="end" font-size="10" fill="currentColor" opacity="0.45">${val}</text>`;
+  }
+
   months.forEach((m, i) => {
-    const x = PAD_L + i * barW;
-    const hC = m.criados   ? Math.round((m.criados   / maxVal) * chartH) : 0;
-    const hD = m.concluidos ? Math.round((m.concluidos / maxVal) * chartH) : 0;
-    const yC = PAD_T + chartH - hC;
-    const yD = PAD_T + chartH - hD;
-    bars += `<rect x="${x+2}" y="${yC}" width="${bW}" height="${hC}" fill="var(--brand)" rx="2" opacity=".85">
-      <title>Criados: ${m.criados}</title></rect>`;
-    bars += `<rect x="${x+2+bW+1}" y="${yD}" width="${bW}" height="${hD}" fill="#22c55e" rx="2" opacity=".75">
-      <title>Concluídos: ${m.concluidos}</title></rect>`;
-    labels += `<text x="${x + barW/2}" y="${H - 4}" text-anchor="middle" font-size="9" fill="currentColor" opacity=".6">${MESES_PT[m.month]}</text>`;
-    // Y-axis grid lines
-    if (i === 0) {
-      for (let g = 0; g <= 4; g++) {
-        const yg = PAD_T + chartH - Math.round((g/4) * chartH);
-        const val = Math.round((g/4) * maxVal);
-        bars += `<line x1="${PAD_L}" y1="${yg}" x2="${W}" y2="${yg}" stroke="currentColor" stroke-width=".4" opacity=".15"/>`;
-        bars += `<text x="${PAD_L-2}" y="${yg+3}" text-anchor="end" font-size="8" fill="currentColor" opacity=".5">${val}</text>`;
-      }
+    const gx  = PL + i * slot + gOff;
+    const hC  = m.criados    ? Math.round((m.criados    / niceMax) * cH) : 0;
+    const hD  = m.concluidos ? Math.round((m.concluidos / niceMax) * cH) : 0;
+    const yC  = PT + cH - hC;
+    const yD  = PT + cH - hD;
+
+    if (hC > 0) {
+      // Barra arredondada no topo, reta na base
+      bars += `<rect x="${gx}" y="${yC}" width="${bW}" height="${hC}" fill="#2a78d6" rx="3"/>`;
+      bars += `<rect x="${gx}" y="${yC + hC - 3}" width="${bW}" height="3" fill="#2a78d6"/>`;
+      if (hC >= 16) valLbls += `<text x="${gx + bW/2}" y="${yC - 4}" text-anchor="middle" font-size="10" font-weight="600" fill="#2a78d6">${m.criados}</text>`;
+      bars += `<title>Criados: ${m.criados}</title>`;
     }
+    if (hD > 0) {
+      bars += `<rect x="${gx + bW + 4}" y="${yD}" width="${bW}" height="${hD}" fill="#1baf7a" rx="3"/>`;
+      bars += `<rect x="${gx + bW + 4}" y="${yD + hD - 3}" width="${bW}" height="3" fill="#1baf7a"/>`;
+      if (hD >= 16) valLbls += `<text x="${gx + bW + 4 + bW/2}" y="${yD - 4}" text-anchor="middle" font-size="10" font-weight="600" fill="#1baf7a">${m.concluidos}</text>`;
+    }
+
+    const isCur = m.year === now.getFullYear() && m.month === now.getMonth();
+    const lbl   = MESES_PT[m.month] + (m.month === 0 ? ` '${String(m.year).slice(2)}` : '');
+    xLbls += `<text x="${PL + i * slot + slot / 2}" y="${H - 7}" text-anchor="middle"
+      font-size="${isCur ? 11 : 10}" font-weight="${isCur ? '600' : '400'}"
+      fill="currentColor" opacity="${isCur ? '0.85' : '0.45'}">${lbl}</text>`;
   });
 
-  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;color:var(--gray-700)">
-    ${bars}${labels}
-    <rect x="${W-120}" y="4" width="10" height="8" fill="var(--brand)" rx="1" opacity=".85"/>
-    <text x="${W-107}" y="11" font-size="9" fill="currentColor">Criados</text>
-    <rect x="${W-70}" y="4" width="10" height="8" fill="#22c55e" rx="1" opacity=".75"/>
-    <text x="${W-57}" y="11" font-size="9" fill="currentColor">Concluídos</text>
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg"
+    style="width:100%;height:auto;display:block;color:var(--gray-700)">
+    ${grid}${bars}${valLbls}${xLbls}
   </svg>`;
+
+  // Sumário de métricas abaixo do gráfico
+  const statsEl = document.getElementById('dash-chart-stats');
+  if (statsEl) {
+    const totC = months.reduce((s, m) => s + m.criados, 0);
+    const totD = months.reduce((s, m) => s + m.concluidos, 0);
+    const peak = Math.max(0, ...months.map(m => m.criados));
+    const pct  = totC > 0 ? Math.round((totD / totC) * 100) : 0;
+    const stat = (val, lbl) => `<div style="text-align:center">
+      <div style="font-size:1.2rem;font-weight:700;color:var(--gray-900)">${val}</div>
+      <div style="font-size:.68rem;color:var(--gray-500);margin-top:3px">${lbl}</div>
+    </div>`;
+    statsEl.innerHTML = stat(totC, 'Criados no período') +
+                        stat(`${totD} <span style="font-size:.75rem;font-weight:400;color:var(--gray-500)">(${pct}%)</span>`, 'Concluídos') +
+                        stat(peak, 'Pico mensal');
+  }
 }
 
 // ══════════════════════════════════════════════════════════════
