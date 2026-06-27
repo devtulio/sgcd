@@ -5,6 +5,23 @@
 
 ---
 
+## [2.0.0] — 2026-06-27
+
+### Adicionado
+- **Nova arquitetura: SQLite + REST API + autenticação server-side** — `server.py` completamente reescrito; dados migrados do IndexedDB para SQLite (`sgcd.db`); cada operação de leitura/escrita é uma chamada REST autenticada com Bearer token; IndexedDB removido do frontend
+- **Autenticação multiusuário** — login com `username` + `senha`; hashing PBKDF2-HMAC-SHA256 com 100.000 iterações e salt aleatório por usuário; sessões gerenciadas no servidor com tokens UUID; logout via `POST /api/auth/logout`
+- **Gestão de usuários (aba Configurações — admin)** — administradores podem criar, editar e desativar usuários; campos: username, senha, nome, cargo, matrícula, admin, ativo; aba visível somente para admins
+- **Upload de arquivos via REST** — arquivos enviados por multipart/form-data para `POST /api/files`; armazenados em disco em `uploads/` com nome aleatório; download via `GET /api/files/:id`; metadados via `GET /api/files/:id/meta`
+- **Backup e restore server-side** — `GET /api/backup` gera ZIP completo (processos, fornecedores, arquivos, auditoria) diretamente no servidor; `POST /api/backup/restore` restaura a partir do JSON de backup
+- **Wipe via API** — `DELETE /api/wipe` apaga todos os dados do servidor (processos, fornecedores, arquivos, auditoria); requer admin
+- **Servidor com suporte a conexões concorrentes** — `ThreadingTCPServer` substitui `TCPServer`; cada requisição processada em thread separada
+
+### Melhorado
+- **Camada de compatibilidade IDB → API** — funções `dbGet`, `dbGetAll`, `dbPut`, `dbDelete`, `dbGetByIndex` mantidas com assinaturas idênticas; chamadas internas roteadas para a REST API sem alterar centenas de call sites
+- **Overlay de login atualizado** — campo `username` adicionado acima da senha; botão desabilitado durante requisição de autenticação; mensagem de erro retornada pelo servidor exibida diretamente
+
+---
+
 ## [1.19.0] — 2026-06-27
 
 ### Adicionado

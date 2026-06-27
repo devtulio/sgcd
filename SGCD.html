@@ -1579,6 +1579,7 @@
         <button class="cfg-tab" onclick="switchCfgTab('dados',this)">Dados</button>
         <button class="cfg-tab" onclick="switchCfgTab('seguranca',this)">Segurança</button>
         <button class="cfg-tab" onclick="switchCfgTab('diagnostico',this);runDiagnostico()">Diagnóstico</button>
+        <button class="cfg-tab" id="cfg-tab-usuarios" onclick="switchCfgTab('usuarios',this);renderUsuarios()" style="display:none">Usuários</button>
       </div>
 
       <!-- ── Aba: Interface ── -->
@@ -1858,6 +1859,20 @@
         </div>
       </div>
 
+      <!-- ── Aba Usuários (somente admin) ── -->
+      <div class="cfg-panel" id="cfg-usuarios">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+          <div>
+            <div style="font-size:.95rem;font-weight:700;color:var(--gray-900)">Gerenciar Usuários</div>
+            <p style="font-size:.75rem;color:var(--gray-500);margin-top:2px">Crie, edite ou desative contas de usuários do sistema.</p>
+          </div>
+          <button class="btn btn-sm btn-primary" onclick="abrirModalNovoUsuario()">+ Novo usuário</button>
+        </div>
+        <div id="usuarios-lista" style="font-size:.85rem">
+          <p style="color:var(--gray-400);font-style:italic">Carregando…</p>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -1900,6 +1915,14 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
         <span id="pin-erro-text">Senha incorreta. Tente novamente.</span>
       </div>
+
+      <!-- Campo usuário -->
+      <label style="display:block;font-size:11px;font-weight:600;color:#5E2750;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px" for="pin-username">Usuário</label>
+      <input type="text" id="pin-username" placeholder="Nome de usuário" autocomplete="username"
+        style="width:100%;height:44px;border:1.5px solid #d9d9d9;border-radius:8px;padding:0 14px;font-size:15px;color:#1a1a1a;background:#f9f8f8;outline:none;font-family:inherit;transition:border-color .15s,box-shadow .15s;margin-bottom:14px"
+        onkeydown="if(event.key==='Enter')document.getElementById('pin-input').focus()"
+        onfocus="this.style.borderColor='#E95420';this.style.boxShadow='0 0 0 3px rgba(233,84,32,.12)';this.style.background='#fff'"
+        onblur="this.style.borderColor='#d9d9d9';this.style.boxShadow='none';this.style.background='#f9f8f8'">
 
       <!-- Campo senha -->
       <label style="display:block;font-size:11px;font-weight:600;color:#5E2750;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px" for="pin-input">Senha de acesso</label>
@@ -2366,9 +2389,156 @@ const ICONS = {
 // DB — IndexedDB wrapper
 // ══════════════════════════════════════════════════════════════
 let db;
-const SGCD_VERSION = '1.19.0';
+const SGCD_VERSION = '2.0.0';
 document.title = `SGCD v${SGCD_VERSION}`;
-const DB_NAME = 'dispensaDB', DB_VER = 4;
+// ── API wrapper (REST) ────────────────────────────────────────
+let _apiToken = localStorage.getItem('sgcd-token') || null;
+let _apiUser  = null;
+
+const API = {
+  async req(method, path, body, isForm = false) {
+    const headers = {};
+    if (_apiToken) headers['Authorization'] = `Bearer ${_apiToken}`;
+    if (body && !isForm) headers['Content-Type'] = 'application/json';
+    const opts = { method, headers };
+    if (body) opts.body = isForm ? body : JSON.stringify(body);
+    try {
+      const r = await fetch(`http://localhost:3000${path}`, opts);
+      if (r.status === 401) { _apiLogout(); return null; }
+      return r;
+    } catch(e) {
+      console.error('[API]', method, path, e.message);
+      return null;
+    }
+  },
+  get:    (p)       => API.req('GET',    p),
+  post:   (p, b)    => API.req('POST',   p, b),
+  put:    (p, b)    => API.req('PUT',    p, b),
+  del:    (p)       => API.req('DELETE', p),
+  upload: (p, form) => API.req('POST',   p, form, true),
+  async json(r) { try { return r ? await r.json() : null; } catch { return null; } },
+};
+
+function _apiLogout() {
+  _apiToken = null; _apiUser = null;
+  localStorage.removeItem('sgcd-token');
+  localStorage.removeItem('sgcd-session-auth');
+  _showLoginOverlay();
+}
+
+// ── Camada de compatibilidade IDB → REST API ──────────────────
+// Mantém assinaturas idênticas ao código existente.
+
+async function dbGetAll(store) {
+  if (store === 'processes') {
+    const r = await API.get('/api/processes?per=2000');
+    const d = await API.json(r);
+    return d?.items || [];
+  }
+  if (store === 'fornecedores') {
+    const r = await API.get('/api/fornecedores?per=2000');
+    const d = await API.json(r);
+    return d?.items || [];
+  }
+  if (store === 'auditGlobal') {
+    const r = await API.get('/api/audit?per=2000');
+    const d = await API.json(r);
+    return (d?.items || []).map(a => ({
+      id: a.id, ts: a.ts, userId: a.user_id, userName: a.user_nome,
+      type: a.type, label: a.label, detail: a.detail,
+      processId: a.process_id,
+      processObj: a.process_obj ? JSON.parse(a.process_obj) : null
+    }));
+  }
+  if (store === 'files') {
+    return []; // arquivos são buscados por processo via dbGetByIndex
+  }
+  return [];
+}
+
+async function dbGet(store, key) {
+  if (store === 'processes') {
+    const r = await API.get(`/api/processes/${key}`);
+    return r?.ok ? API.json(r) : null;
+  }
+  if (store === 'fornecedores') {
+    const r = await API.get(`/api/fornecedores/${key}`);
+    return r?.ok ? API.json(r) : null;
+  }
+  if (store === 'files') {
+    // Retorna apenas metadados (name/type) — conteúdo é buscado em downloadFile()
+    const r = await API.get(`/api/files/${key}/meta`);
+    if (!r?.ok) return { id: key, name: String(key) };
+    return API.json(r);
+  }
+  return null;
+}
+
+async function dbPut(store, data) {
+  if (store === 'processes') {
+    const r = await API.put(`/api/processes/${data.id}`, data);
+    return r?.ok ? API.json(r) : data;
+  }
+  if (store === 'fornecedores') {
+    const r = await API.put(`/api/fornecedores/${data.id}`, data);
+    return r?.ok ? API.json(r) : data;
+  }
+  if (store === 'auditGlobal') {
+    await API.post('/api/audit', data);
+    return data;
+  }
+  if (store === 'files') {
+    // data.data é ArrayBuffer; faz upload multipart
+    const form = new FormData();
+    const blob = new Blob([data.data], { type: data.type || 'application/octet-stream' });
+    form.append('file', blob, data.name);
+    form.append('process_id', data.processId || '');
+    form.append('step_index', String(data.stepIdx ?? ''));
+    form.append('nome_original', data.name || '');
+    form.append('mime', data.type || 'application/octet-stream');
+    form.append('tamanho', String(data.size || 0));
+    const r = await API.upload('/api/files', form);
+    const d = await API.json(r);
+    return d ? { ...data, id: d.id } : data;
+  }
+  return data;
+}
+
+async function dbDelete(store, key) {
+  if (store === 'processes')    await API.del(`/api/processes/${key}`);
+  if (store === 'fornecedores') await API.del(`/api/fornecedores/${key}`);
+  if (store === 'files')        await API.del(`/api/files/${key}`);
+  if (store === 'auditGlobal')  { /* sem endpoint individual */ }
+}
+
+// dbGetByIndex substituto — usado para buscar arquivos por processo
+async function dbGetByIndex(store, indexName, value) {
+  if (store === 'files' && (indexName === 'processId' || indexName === 'pid')) {
+    const r = await API.get(`/api/files?process_id=${encodeURIComponent(value)}`);
+    const d = await API.json(r);
+    const items = Array.isArray(d) ? d : (d?.items || []);
+    return items.map(f => ({
+      id: f.id, processId: f.process_id, stepIdx: f.step_index,
+      name: f.nome_original, type: f.mime, size: f.tamanho,
+      _serverFile: true
+    }));
+  }
+  return [];
+}
+
+async function dbGetByIndexPrefix(store, indexName, prefix) {
+  return dbGetByIndex(store, indexName, prefix);
+}
+
+async function dbGetByIndexRange(store, indexName, lower, upper) {
+  return [];
+}
+
+// initDB não é mais necessário (SQLite no servidor), mantido como no-op
+async function initDB() { return Promise.resolve(); }
+let db = null; // compatibilidade — não usado
+
+const DB_NAME = '__sgcd_api__', DB_VER = 4; // compat stubs
 
 // ── Tratamento global de erros JS ──────────────────────────────
 let _globalErrorCount = 0;
@@ -2396,126 +2566,6 @@ window.addEventListener('unhandledrejection', (e) => {
 // Reset do contador a cada 30s para permitir novos alertas após período de estabilidade
 setInterval(() => { _globalErrorCount = 0; }, 30000);
 
-function initDB() {
-  return new Promise((res, rej) => {
-    const req = indexedDB.open(DB_NAME, DB_VER);
-    req.onupgradeneeded = e => {
-      const d  = e.target.result;
-      const tx = e.target.transaction;
-
-      // ── Criação inicial dos stores (v1+) ──────────────────────
-      if (!d.objectStoreNames.contains('processes')) {
-        d.createObjectStore('processes', { keyPath: 'id' });
-      }
-      if (!d.objectStoreNames.contains('files')) {
-        const fs = d.createObjectStore('files', { keyPath: 'id', autoIncrement: true });
-        fs.createIndex('processId', 'processId');
-        fs.createIndex('stepIdx', ['processId','stepIdx']);
-      }
-      if (!d.objectStoreNames.contains('fornecedores')) {
-        d.createObjectStore('fornecedores', { keyPath: 'id' });
-      }
-      if (!d.objectStoreNames.contains('auditGlobal')) {
-        const ag = d.createObjectStore('auditGlobal', { keyPath: 'id' });
-        ag.createIndex('at', 'at');
-        ag.createIndex('processId', 'processId');
-      }
-
-      // ── v3 → v4: índices de ordenação/filtro em processes ────
-      if (e.oldVersion < 4) {
-        const ps = tx.objectStore('processes');
-        if (!ps.indexNames.contains('createdAt')) ps.createIndex('createdAt', 'createdAt');
-        if (!ps.indexNames.contains('unidade'))   ps.createIndex('unidade',   'unidade');
-      }
-    };
-    req.onsuccess = e => { db = e.target.result; res(); };
-    req.onerror   = e => rej(e);
-  });
-}
-
-const DB_TIMEOUT_MS = 8000;
-
-// Envolve uma Promise de IndexedDB com timeout para evitar travamentos silenciosos
-function _dbWithTimeout(promise, op = 'operação') {
-  return Promise.race([
-    promise,
-    new Promise((_, rej) =>
-      setTimeout(() => rej(new Error(`Timeout no banco de dados (${op}). Tente recarregar a página.`)), DB_TIMEOUT_MS)
-    )
-  ]);
-}
-
-function dbGet(store, key) {
-  return _dbWithTimeout(new Promise((res, rej) => {
-    const tx = db.transaction(store, 'readonly');
-    const req = tx.objectStore(store).get(key);
-    req.onsuccess = () => res(req.result);
-    req.onerror   = e => rej(e.target.error || e);
-  }), `get:${store}`);
-}
-
-function dbGetAll(store) {
-  return _dbWithTimeout(new Promise((res, rej) => {
-    const tx = db.transaction(store, 'readonly');
-    const req = tx.objectStore(store).getAll();
-    req.onsuccess = () => res(req.result);
-    req.onerror   = e => rej(e.target.error || e);
-  }), `getAll:${store}`);
-}
-
-function dbPut(store, data) {
-  return _dbWithTimeout(new Promise((res, rej) => {
-    const tx = db.transaction(store, 'readwrite');
-    const req = tx.objectStore(store).put(data);
-    req.onsuccess = () => res(req.result);
-    req.onerror   = e => rej(e.target.error || e);
-    tx.onerror    = e => rej(e.target.error || e);
-  }), `put:${store}`);
-}
-
-function dbDelete(store, key) {
-  return _dbWithTimeout(new Promise((res, rej) => {
-    const tx = db.transaction(store, 'readwrite');
-    const req = tx.objectStore(store).delete(key);
-    req.onsuccess = () => res();
-    req.onerror   = e => rej(e.target.error || e);
-  }), `delete:${store}`);
-}
-
-function dbGetByIndex(store, indexName, value) {
-  return _dbWithTimeout(new Promise((res, rej) => {
-    const tx = db.transaction(store, 'readonly');
-    const idx = tx.objectStore(store).index(indexName);
-    const req = idx.getAll(value);
-    req.onsuccess = () => res(req.result);
-    req.onerror   = e => rej(e.target.error || e);
-  }), `getByIndex:${store}`);
-}
-
-function dbGetByIndexPrefix(store, indexName, prefix) {
-  return _dbWithTimeout(new Promise((res, rej) => {
-    const tx = db.transaction(store, 'readonly');
-    const idx = tx.objectStore(store).index(indexName);
-    const req = idx.getAll(IDBKeyRange.bound(prefix, prefix + '￿'));
-    req.onsuccess = () => res(req.result);
-    req.onerror   = e => rej(e.target.error || e);
-  }), `getByIndexPrefix:${store}`);
-}
-
-// Busca por faixa de valores num índice (ex: registros entre dois timestamps)
-function dbGetByIndexRange(store, indexName, lower, upper) {
-  return _dbWithTimeout(new Promise((res, rej) => {
-    const tx  = db.transaction(store, 'readonly');
-    const idx = tx.objectStore(store).index(indexName);
-    const range = lower != null && upper != null ? IDBKeyRange.bound(lower, upper)
-                : lower != null                  ? IDBKeyRange.lowerBound(lower)
-                : upper != null                  ? IDBKeyRange.upperBound(upper)
-                : null;
-    const req = idx.getAll(range);
-    req.onsuccess = () => res(req.result);
-    req.onerror   = e => rej(e.target.error || e);
-  }), `getByIndexRange:${store}`);
-}
 
 // ══════════════════════════════════════════════════════════════
 // SERIALIZE WORKER — offload de JSON.stringify e base64 pesados
@@ -2599,13 +2649,10 @@ function _base64ToBuf(b64) {
   for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
   return bytes.buffer;
 }
-function dbClearStore(store) {
-  return new Promise((res, rej) => {
-    const tx = db.transaction(store, 'readwrite');
-    const req = tx.objectStore(store).clear();
-    req.onsuccess = () => res();
-    req.onerror   = e => rej(e);
-  });
+async function dbClearStore(store) {
+  const storeMap = { processes: 'processes', fornecedores: 'fornecedores', files: 'files', auditGlobal: 'audit' };
+  const endpoint = storeMap[store];
+  if (endpoint) await API.del(`/api/${endpoint}/all`);
 }
 
 async function factoryReset() {
@@ -2657,8 +2704,10 @@ async function factoryReset() {
 
   // — Confirmação 3: contagem regressiva com contagem de dados —
   const [processes, fornecedores, files] = await Promise.all([
-    dbGetAll('processes'), dbGetAll('fornecedores'), dbGetAll('files')
+    dbGetAll('processes'), dbGetAll('fornecedores'),
+    API.json(await API.get('/api/files?per=1')).then(d => d?.total ?? 0).catch(() => 0)
   ]);
+  const fileCount = files; // files é agora o count (número)
   const c3 = await new Promise(resolve => {
     const overlay = document.createElement('div');
     overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center';
@@ -2670,7 +2719,7 @@ async function factoryReset() {
           Serão apagados permanentemente:<br>
           <strong>${processes.length}</strong> processo(s) &nbsp;·&nbsp;
           <strong>${fornecedores.length}</strong> fornecedor(es) &nbsp;·&nbsp;
-          <strong>${files.length}</strong> arquivo(s)
+          <strong>${fileCount}</strong> arquivo(s)
         </p>
         <p style="font-size:.8rem;color:${sub};margin-bottom:22px">Um backup completo será exportado automaticamente antes do wipe.</p>
         <button id="_wipe-final" class="btn btn-sm" style="background:#dc2626;color:#fff;border:none;min-width:180px;opacity:.5;cursor:not-allowed" disabled>
@@ -2704,20 +2753,20 @@ async function factoryReset() {
 
   // — Backup automático antes do wipe —
   try {
-    const backupFiles = files.map(f => ({ ...f, data: f.data ? _bufToBase64(f.data) : null, _enc: 'base64' }));
-    const backup = { _sgcd: true, version: 1, exportedAt: new Date().toISOString(), processes, fornecedores, files: backupFiles };
-    const blob = new Blob([JSON.stringify(backup)], { type: 'application/json' });
-    const url  = URL.createObjectURL(blob);
-    const a    = Object.assign(document.createElement('a'), {
-      href: url,
-      download: `SGCD_wipe_backup_${new Date().toISOString().slice(0,10)}.json`
-    });
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    const rb = await API.get('/api/backup');
+    if (rb?.ok) {
+      const blob = await rb.blob();
+      const url  = URL.createObjectURL(blob);
+      const a    = Object.assign(document.createElement('a'), {
+        href: url, download: `SGCD_wipe_backup_${new Date().toISOString().slice(0,10)}.json`
+      });
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
   } catch(e) { /* continua mesmo se o backup falhar */ }
 
   // — Wipe —
-  await Promise.all(['processes','fornecedores','files','auditGlobal'].map(s => dbClearStore(s)));
+  await API.del('/api/wipe');
   Object.keys(localStorage).filter(k => k.startsWith('sgcd-')).forEach(k => localStorage.removeItem(k));
   window._BRASAO_CACHE = null;
   currentProcess = null;
@@ -2728,40 +2777,19 @@ async function factoryReset() {
 
 async function exportBackup() {
   try {
-    const [processes, fornecedores, rawFiles, auditGlobal] = await Promise.all([
-      dbGetAll('processes'), dbGetAll('fornecedores'), dbGetAll('files'), dbGetAll('auditGlobal')
+    // Obtém contagem prévia para informar o usuário
+    const [processes, fornecedores] = await Promise.all([
+      dbGetAll('processes'), dbGetAll('fornecedores')
     ]);
-    const settings = localStorage.getItem('sgcd-user') || null;
-    const brasao   = localStorage.getItem('sgcd-brasao-dataurl') || null;
-    const smtp     = localStorage.getItem('sgcd-smtp') || null;
-
-    // Transfere os ArrayBuffers dos arquivos para o Worker (cópia zero)
-    // Após a transferência os buffers ficam neutered na main thread — não são mais necessários aqui
-    const transferables = rawFiles.flatMap(f => f.data instanceof ArrayBuffer ? [f.data] : []);
-    let json;
-    try {
-      const result = await _workerRun(
-        'exportBackup',
-        { processes, fornecedores, rawFiles, auditGlobal, settings, brasao, smtp },
-        transferables
-      );
-      if (!result.ok) throw new Error(result.reason || 'Falha na serialização');
-      json = result.json;
-    } catch (workerErr) {
-      // Fallback síncrono (Worker não suportado ou timeout)
-      console.warn('exportBackup Worker falhou, usando fallback síncrono:', workerErr.message);
-      const files = rawFiles.map(f => ({ ...f, data: f.data ? _bufToBase64(f.data) : null, _enc: 'base64' }));
-      json = JSON.stringify({ _sgcd: true, version: 3, exportedAt: new Date().toISOString(),
-        processes, fornecedores, files, auditGlobal, settings, brasao, smtp });
-    }
-
     const confirmed = await customConfirm(
       `Prestes a salvar ${processes.length} processo(s) e ${fornecedores.length} fornecedor(es).\n\n💡 Guarde o arquivo em local externo à máquina — pasta de rede, servidor municipal, OneDrive/Google Drive institucional ou repositório do POP — para garantir recuperação em caso de formatação ou falha do equipamento.`,
       { title: 'Exportar Backup', icon: '💾', okLabel: 'Salvar arquivo', okClass: 'btn-primary', cancelLabel: 'Cancelar' }
     );
     if (!confirmed) return;
 
-    const blob = new Blob([json], { type: 'application/json' });
+    const r = await API.get('/api/backup');
+    if (!r?.ok) { toast('Erro ao gerar backup no servidor.', 'error'); return; }
+    const blob = await r.blob();
     const url  = URL.createObjectURL(blob);
     const a    = Object.assign(document.createElement('a'), {
       href: url,
@@ -2771,7 +2799,7 @@ async function exportBackup() {
     URL.revokeObjectURL(url);
     localStorage.setItem('sgcd-last-manual-export', Date.now().toString());
     document.getElementById('backup-alert-banner').style.display = 'none';
-    toast(`Backup exportado — ${processes.length} processos, ${fornecedores.length} fornecedores, ${rawFiles.length} arquivos.`, 'success');
+    toast(`Backup exportado — ${processes.length} processos, ${fornecedores.length} fornecedores.`, 'success');
   } catch(e) { toast('Erro ao exportar: ' + e.message, 'error'); }
 }
 
@@ -2808,16 +2836,14 @@ async function importBackup(file) {
       { title: 'Restaurar Backup', icon: '⚠️', okLabel: 'Restaurar', okClass: 'btn-danger' }
     );
     if (!ok) return;
-    await Promise.all(['processes','fornecedores','files','auditGlobal'].map(s => dbClearStore(s)));
-    for (const p of backup.processes   || []) await dbPut('processes',   p);
-    for (const f of backup.fornecedores|| []) await dbPut('fornecedores', f);
-    for (const f of backup.files       || []) {
-      const rec = { ...f };
-      if (rec._enc === 'base64' && rec.data) { rec.data = _base64ToBuf(rec.data); delete rec._enc; }
-      await dbPut('files', rec);
+    toast('Restaurando backup no servidor…', '');
+    const r = await API.post('/api/backup/restore', backup);
+    if (!r?.ok) {
+      const d = await API.json(r);
+      toast('Erro ao restaurar: ' + (d?.error || 'falha no servidor'), 'error');
+      return;
     }
-    for (const e of backup.auditGlobal || []) await dbPut('auditGlobal', e);
-    // Restaura configurações e brasão (versão 3+)
+    // Restaura configurações e brasão locais
     if (backup.settings) localStorage.setItem('sgcd-user', backup.settings);
     if (backup.brasao)   localStorage.setItem('sgcd-brasao-dataurl', backup.brasao);
     if (backup.smtp)     localStorage.setItem('sgcd-smtp', backup.smtp);
@@ -7279,12 +7305,15 @@ async function processFileList(stepIdx, fileList) {
 }
 
 async function downloadFile(fileId) {
-  const f = await dbGet('files', fileId);
-  if (!f) return;
-  const blob = new Blob([f.data], { type: f.type || 'application/octet-stream' });
+  const r = await API.get(`/api/files/${fileId}`);
+  if (!r?.ok) { toast('Erro ao baixar arquivo.', 'error'); return; }
+  const disp = r.headers.get('Content-Disposition') || '';
+  const match = disp.match(/filename\*?=(?:UTF-8'')?([^;]+)/i);
+  const filename = match ? decodeURIComponent(match[1].replace(/"/g,'')) : `arquivo_${fileId}`;
+  const blob = await r.blob();
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
-  a.href = url; a.download = f.name;
+  a.href = url; a.download = filename;
   document.body.appendChild(a); a.click();
   document.body.removeChild(a);
   setTimeout(() => URL.revokeObjectURL(url), 1000);
@@ -10060,17 +10089,28 @@ function _pinToggleOlho() {
 }
 
 async function verificarSenha() {
-  const input = document.getElementById('pin-input').value;
-  const hash  = localStorage.getItem('sgcd-access-hash');
-  if (!hash) { document.getElementById('overlay-pin').classList.add('hidden'); return; }
-  const erroEl = document.getElementById('pin-erro');
-  if (await _verificarSenhaComMigracao(input)) {
+  const username = (document.getElementById('pin-username')?.value || '').trim();
+  const password = document.getElementById('pin-input').value;
+  const erroEl   = document.getElementById('pin-erro');
+  const btn = document.querySelector('#overlay-pin button[onclick="verificarSenha()"]');
+  if (btn) { btn.disabled = true; btn.style.opacity = '.7'; }
+
+  const r = await API.post('/api/auth/login', { username, password });
+  if (btn) { btn.disabled = false; btn.style.opacity = ''; }
+
+  if (r?.ok) {
+    const d = await r.json();
+    _apiToken = d.token;
+    _apiUser  = d.user;
+    localStorage.setItem('sgcd-token', d.token);
     sessionStorage.setItem('sgcd-session-auth', '1');
     document.getElementById('overlay-pin').classList.add('hidden');
     document.getElementById('pin-input').value = '';
     erroEl.style.display = 'none';
+    _onLoginSuccess();
   } else {
-    document.getElementById('pin-erro-text').textContent = 'Senha incorreta. Tente novamente.';
+    const msg = r ? ((await r.json().catch(() => ({}))).error || 'Usuário ou senha incorretos.') : 'Servidor indisponível.';
+    document.getElementById('pin-erro-text').textContent = msg;
     erroEl.style.display = 'flex';
     document.getElementById('pin-input').value = '';
     const card = document.getElementById('pin-card');
@@ -10081,15 +10121,13 @@ async function verificarSenha() {
   }
 }
 
-function _checkSenhaAcesso() {
-  if (!localStorage.getItem('sgcd-access-hash')) return;
-  if (sessionStorage.getItem('sgcd-session-auth') === '1') return;
+function _showLoginOverlay() {
   const overlay = document.getElementById('overlay-pin');
   overlay.classList.remove('hidden');
-
-  // Preenche dados do órgão e último acesso
-  const u = getUser();
-  if (u.orgao) {
+  document.getElementById('pin-erro').style.display = 'none';
+  document.getElementById('pin-input').value = '';
+  const u = (typeof getUser === 'function') ? getUser() : {};
+  if (u?.orgao) {
     document.getElementById('pin-orgao-nome').textContent = u.orgao;
     const sigla = u.orgao.split(' ').filter(w => w.length > 3).map(w => w[0]).join('').slice(0,2).toUpperCase() || 'OR';
     document.getElementById('pin-orgao-avatar').textContent = sigla;
@@ -10099,17 +10137,35 @@ function _checkSenhaAcesso() {
   const daysEl   = document.getElementById('pin-days-ago');
   if (lastExport) {
     const d = new Date(parseInt(lastExport));
-    accessEl.textContent = d.toLocaleString('pt-BR');
+    if (accessEl) accessEl.textContent = d.toLocaleString('pt-BR');
     const dias = Math.floor((Date.now() - parseInt(lastExport)) / 86400000);
-    daysEl.textContent = dias === 0 ? 'Hoje' : dias === 1 ? 'Ontem' : `${dias}d atrás`;
+    if (daysEl) daysEl.textContent = dias === 0 ? 'Hoje' : dias === 1 ? 'Ontem' : `${dias}d atrás`;
   } else {
-    accessEl.textContent = 'Nenhum backup registrado';
+    if (accessEl) accessEl.textContent = 'Nenhum backup registrado';
   }
-
-  // Versão
   document.querySelectorAll('.sgcd-version-badge').forEach(el => el.textContent = SGCD_VERSION);
+  setTimeout(() => (document.getElementById('pin-username') || document.getElementById('pin-input'))?.focus(), 150);
+}
 
-  setTimeout(() => document.getElementById('pin-input').focus(), 150);
+async function _checkSenhaAcesso() {
+  if (_apiToken) {
+    const r = await API.get('/api/auth/me');
+    if (r?.ok) {
+      _apiUser = await r.json();
+      sessionStorage.setItem('sgcd-session-auth', '1');
+      _onLoginSuccess();
+      return;
+    }
+    _apiToken = null;
+    localStorage.removeItem('sgcd-token');
+  }
+  _showLoginOverlay();
+}
+
+function _onLoginSuccess() {
+  const tabUsuarios = document.getElementById('cfg-tab-usuarios');
+  if (tabUsuarios) tabUsuarios.style.display = _apiUser?.admin ? '' : 'none';
+  if (typeof carregarDashboard === 'function') carregarDashboard();
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -10386,6 +10442,129 @@ function switchCfgTab(id, btn) {
   document.querySelectorAll('.cfg-panel').forEach(p => p.classList.remove('active'));
   btn.classList.add('active');
   document.getElementById('cfg-' + id).classList.add('active');
+}
+
+// ── Gestão de usuários (admin) ────────────────────────────────
+async function renderUsuarios() {
+  const el = document.getElementById('usuarios-lista');
+  if (!el) return;
+  el.innerHTML = '<p style="color:var(--gray-400);font-style:italic">Carregando…</p>';
+  const r = await API.get('/api/users');
+  const users = await API.json(r);
+  if (!users) { el.innerHTML = '<p style="color:var(--danger)">Erro ao carregar usuários.</p>'; return; }
+  if (!users.length) { el.innerHTML = '<p style="color:var(--gray-400)">Nenhum usuário cadastrado.</p>'; return; }
+
+  el.innerHTML = `
+    <table style="width:100%;border-collapse:collapse">
+      <thead>
+        <tr style="font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:var(--gray-500);border-bottom:1px solid var(--gray-200)">
+          <th style="text-align:left;padding:6px 8px">Usuário</th>
+          <th style="text-align:left;padding:6px 8px">Nome</th>
+          <th style="text-align:left;padding:6px 8px">Cargo/Matrícula</th>
+          <th style="text-align:center;padding:6px 8px">Admin</th>
+          <th style="text-align:center;padding:6px 8px">Ativo</th>
+          <th style="text-align:right;padding:6px 8px">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${users.map(u => `
+        <tr style="border-bottom:1px solid var(--gray-100);${!u.ativo ? 'opacity:.5' : ''}">
+          <td style="padding:8px"><code style="font-size:.82rem;background:var(--gray-100);padding:2px 6px;border-radius:4px">${escHtml(u.username)}</code></td>
+          <td style="padding:8px">${escHtml(u.nome || '—')}</td>
+          <td style="padding:8px;font-size:.8rem;color:var(--gray-500)">${escHtml([u.cargo,u.matricula].filter(Boolean).join(' · ') || '—')}</td>
+          <td style="padding:8px;text-align:center">${u.admin ? '✓' : '—'}</td>
+          <td style="padding:8px;text-align:center">
+            <span style="font-size:.78rem;font-weight:600;color:${u.ativo ? 'var(--success)' : 'var(--gray-400)'}">${u.ativo ? 'Sim' : 'Não'}</span>
+          </td>
+          <td style="padding:8px;text-align:right">
+            <button class="btn btn-outline btn-sm" style="font-size:.75rem;padding:3px 10px" onclick="abrirModalEditarUsuario(${u.id})">Editar</button>
+          </td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+function abrirModalNovoUsuario() {
+  _abrirModalUsuario(null);
+}
+async function abrirModalEditarUsuario(id) {
+  const r = await API.get('/api/users');
+  const users = await API.json(r);
+  const u = users?.find(x => x.id === id);
+  if (u) _abrirModalUsuario(u);
+}
+
+function _abrirModalUsuario(u) {
+  const isNew = !u;
+  const dark = document.body.classList.contains('dark');
+  const bg = dark ? '#1e1e1e' : '#fff', txt = dark ? '#f5f5f5' : '#1a1a1a';
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center';
+  overlay.innerHTML = `
+    <div style="background:${bg};color:${txt};border-radius:12px;padding:28px 32px;width:420px;max-width:95vw;box-shadow:0 8px 40px rgba(0,0,0,.3)">
+      <div style="font-size:1rem;font-weight:700;margin-bottom:20px">${isNew ? 'Novo Usuário' : 'Editar Usuário'}</div>
+      <label style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--gray-500)">Username *</label>
+      <input id="_u-username" type="text" value="${escHtml(u?.username||'')}" placeholder="login" autocomplete="off"
+        style="width:100%;height:38px;border:1.5px solid var(--gray-200);border-radius:7px;padding:0 10px;font-size:.9rem;background:transparent;color:inherit;margin-bottom:12px;${u && !isNew ? 'opacity:.6' : ''}"
+        ${u && !isNew ? 'readonly' : ''}>
+      ${isNew ? `
+      <label style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--gray-500)">Senha *</label>
+      <input id="_u-senha" type="password" placeholder="senha inicial" autocomplete="new-password"
+        style="width:100%;height:38px;border:1.5px solid var(--gray-200);border-radius:7px;padding:0 10px;font-size:.9rem;background:transparent;color:inherit;margin-bottom:12px">
+      ` : `
+      <label style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--gray-500)">Nova senha (deixe em branco para manter)</label>
+      <input id="_u-senha" type="password" placeholder="(inalterada)" autocomplete="new-password"
+        style="width:100%;height:38px;border:1.5px solid var(--gray-200);border-radius:7px;padding:0 10px;font-size:.9rem;background:transparent;color:inherit;margin-bottom:12px">
+      `}
+      <label style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--gray-500)">Nome completo</label>
+      <input id="_u-nome" type="text" value="${escHtml(u?.nome||'')}" placeholder="Nome do usuário"
+        style="width:100%;height:38px;border:1.5px solid var(--gray-200);border-radius:7px;padding:0 10px;font-size:.9rem;background:transparent;color:inherit;margin-bottom:12px">
+      <label style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--gray-500)">Cargo</label>
+      <input id="_u-cargo" type="text" value="${escHtml(u?.cargo||'')}" placeholder="ex: Agente de Contratação"
+        style="width:100%;height:38px;border:1.5px solid var(--gray-200);border-radius:7px;padding:0 10px;font-size:.9rem;background:transparent;color:inherit;margin-bottom:12px">
+      <label style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--gray-500)">Matrícula</label>
+      <input id="_u-matricula" type="text" value="${escHtml(u?.matricula||'')}" placeholder="Matrícula funcional"
+        style="width:100%;height:38px;border:1.5px solid var(--gray-200);border-radius:7px;padding:0 10px;font-size:.9rem;background:transparent;color:inherit;margin-bottom:14px">
+      <div style="display:flex;gap:16px;margin-bottom:20px">
+        <label style="display:flex;align-items:center;gap:6px;font-size:.85rem;cursor:pointer">
+          <input type="checkbox" id="_u-admin" ${u?.admin ? 'checked' : ''}> Administrador
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:.85rem;cursor:pointer">
+          <input type="checkbox" id="_u-ativo" ${isNew || u?.ativo ? 'checked' : ''}> Ativo
+        </label>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button id="_u-cancel" class="btn btn-outline btn-sm">Cancelar</button>
+        <button id="_u-save" class="btn btn-primary btn-sm">Salvar</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.querySelector('#_u-cancel').onclick = () => document.body.removeChild(overlay);
+  overlay.querySelector('#_u-save').onclick = async () => {
+    const payload = {
+      username:  overlay.querySelector('#_u-username').value.trim(),
+      nome:      overlay.querySelector('#_u-nome').value.trim(),
+      cargo:     overlay.querySelector('#_u-cargo').value.trim(),
+      matricula: overlay.querySelector('#_u-matricula').value.trim(),
+      admin:     overlay.querySelector('#_u-admin').checked,
+      ativo:     overlay.querySelector('#_u-ativo').checked,
+    };
+    const senha = overlay.querySelector('#_u-senha').value;
+    if (senha) payload.password = senha;
+    if (!payload.username) { toast('Informe o username.', 'error'); return; }
+    if (isNew && !senha)   { toast('Informe a senha inicial.', 'error'); return; }
+    const r = isNew
+      ? await API.post('/api/users', payload)
+      : await API.put(`/api/users/${u.id}`, payload);
+    if (r?.ok) {
+      toast(isNew ? 'Usuário criado!' : 'Usuário atualizado!', 'success');
+      document.body.removeChild(overlay);
+      renderUsuarios();
+    } else {
+      const d = await API.json(r);
+      toast('Erro: ' + (d?.error || 'falha ao salvar'), 'error');
+    }
+  };
 }
 
 function _applyLayoutWidth(val) {
@@ -12243,26 +12422,27 @@ function _hideDashSkeletonWhenReady(fn) {
   }, delay);
 }
 
-initDB()
-  .then(() => _checkSenhaAcesso())
-  .then(() => _migrarStepsParecer().catch(console.error))
-  .then(() => _migrarFusaoAvisoPublicacao().catch(console.error))
-  .then(() => _migrarCertidoesFornecedores().catch(console.error))
-  .then(() => loadProcesses())
-  .then(() => {
-    document.getElementById('footer-version').textContent = `v${SGCD_VERSION}`;
-    checkAutoBackupRestore();
-    const u = getUser();
-    if (!u.nome) {
-      _hideDashSkeletonWhenReady(() => {
-        showSettings();
-        setTimeout(() => toast('👋 Bem-vindo ao SGCD! Configure seus dados antes de começar.', 'success'), 400);
-      });
-    } else {
-      _hideDashSkeletonWhenReady(() => renderDash());
-    }
-  })
-  .catch(err => { console.error('Erro ao inicializar SGCD:', err); alert('Erro ao inicializar o sistema. Recarregue a página.'); });
+// Inicialização: verifica token e mostra login se necessário.
+// Após login bem-sucedido, _onLoginSuccess() dispara carregarDashboard().
+function carregarDashboard() {
+  document.getElementById('footer-version').textContent = `v${SGCD_VERSION}`;
+  loadProcesses()
+    .then(() => {
+      checkAutoBackupRestore();
+      const u = getUser();
+      if (!u.nome) {
+        _hideDashSkeletonWhenReady(() => {
+          showSettings();
+          setTimeout(() => toast('Bem-vindo ao SGCD! Configure seus dados antes de começar.', 'success'), 400);
+        });
+      } else {
+        _hideDashSkeletonWhenReady(() => renderDash());
+      }
+    })
+    .catch(err => console.error('Erro ao carregar dashboard:', err));
+}
+
+_checkSenhaAcesso().catch(err => { console.error('Erro ao inicializar SGCD:', err); });
 
 // O encerramento do servidor é feito exclusivamente pelo watchdog de heartbeat
 // no server.py. Não enviamos /shutdown via pagehide/beforeunload porque esses
