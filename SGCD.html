@@ -10677,7 +10677,7 @@ async function testSmtp() {
   try {
     const res = await fetch('http://localhost:3000/send-email', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${_apiToken}` },
       body: JSON.stringify({
         smtp,
         from: smtp.from,
@@ -10703,7 +10703,7 @@ async function smtpSend({ to, subject, html, text }) {
   if (!smtp.host || !smtp.auth?.user) throw new Error('SMTP não configurado em Configurações.');
   const res = await fetch('http://localhost:3000/send-email', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${_apiToken}` },
     body: JSON.stringify({ smtp, from: smtp.from, to, subject, html, text }),
     signal: AbortSignal.timeout(15000),
   });
