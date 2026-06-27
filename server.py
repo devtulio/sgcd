@@ -350,8 +350,13 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         elif p in ('/api/settings', '/api/settings/'):
             self._save_settings(data)
         elif re.fullmatch(r'/api/users/[^/]+', p):
-            if not s['admin']: self._json(403, {'error': 'Acesso negado'}); return
-            self._update_user(int(p.split('/')[-1]), data, s)
+            uid = int(p.split('/')[-1])
+            if not s['admin']:
+                if uid != s['user_id']:
+                    self._json(403, {'error': 'Acesso negado'}); return
+                # ponytail: não-admin só pode trocar a própria senha
+                data = {k: data[k] for k in ('password', 'old_password') if k in data}
+            self._update_user(uid, data, s)
         else:
             self._json(404, {'error': 'Rota não encontrada'})
 
