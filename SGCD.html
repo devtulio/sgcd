@@ -1832,29 +1832,24 @@
       <!-- ── Aba: Segurança ── -->
       <div class="cfg-panel" id="cfg-seguranca">
         <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
-          <legend style="font-size:.72rem;font-weight:700;color:var(--aubergine-mid);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Senha de Acesso</legend>
-          <p style="font-size:.72rem;color:var(--gray-500);margin-bottom:12px;line-height:1.5">Proteja o sistema com uma senha de abertura. Na próxima vez que o sistema for carregado, será solicitada a senha antes de exibir os dados. Útil em computadores compartilhados.</p>
+          <legend style="font-size:.72rem;font-weight:700;color:var(--aubergine-mid);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Alterar Minha Senha</legend>
           <div class="info-field">
-            <label>Senha atual (deixe em branco se não tiver senha)</label>
+            <label>Senha atual</label>
             <input type="password" id="s-senha-atual" placeholder="••••••••" autocomplete="current-password">
           </div>
           <div class="info-field">
             <label>Nova senha</label>
-            <input type="password" id="s-senha-nova" placeholder="••••••••" autocomplete="new-password">
+            <input type="password" id="s-senha-nova" placeholder="mínimo 6 caracteres" autocomplete="new-password">
           </div>
           <div class="info-field">
             <label>Confirmar nova senha</label>
             <input type="password" id="s-senha-confirmar" placeholder="••••••••" autocomplete="new-password">
           </div>
-          <div style="display:flex;gap:8px;margin-top:6px">
-            <button class="btn btn-outline btn-sm" onclick="alterarSenha()">🔒 Definir Senha</button>
-            <button class="btn btn-outline btn-sm" onclick="removerSenha()" id="btn-remover-senha" style="display:none;color:#dc2626;border-color:#dc2626">✕ Remover Senha</button>
+          <div style="margin-top:6px">
+            <button class="btn btn-primary btn-sm" onclick="alterarMinhaSenha()">Salvar nova senha</button>
           </div>
-          <p id="senha-status" style="font-size:.72rem;margin-top:8px;display:none"></p>
+          <p id="senha-status" style="font-size:.75rem;margin-top:10px;display:none"></p>
         </fieldset>
-        <div class="nota" style="font-size:.72rem">
-          <strong>Limitação:</strong> Esta proteção impede acesso acidental, mas não é criptografia. Os dados no navegador podem ser acessados por um administrador local. Para proteger dados sensíveis, use o computador com senha de sistema operacional.
-        </div>
       </div>
 
       <!-- ── Aba: Diagnóstico ── -->
@@ -10040,47 +10035,23 @@ async function _verificarSenhaComMigracao(input) {
   return false;
 }
 
-async function alterarSenha() {
+async function alterarMinhaSenha() {
   const atual    = document.getElementById('s-senha-atual').value;
   const nova     = document.getElementById('s-senha-nova').value;
   const confirma = document.getElementById('s-senha-confirmar').value;
   const statusEl = document.getElementById('senha-status');
   const show = (msg, ok) => { statusEl.textContent = msg; statusEl.style.color = ok ? '#166534' : '#dc2626'; statusEl.style.display = ''; };
 
-  const hashAtual = localStorage.getItem('sgcd-access-hash');
-  if (hashAtual) {
-    if (!await _verificarSenhaComMigracao(atual)) { show('Senha atual incorreta.', false); return; }
-  }
-  if (!nova) { show('Digite a nova senha.', false); return; }
-  if (nova.length < 4) { show('Senha muito curta — mínimo 4 caracteres.', false); return; }
+  if (!atual) { show('Digite a senha atual.', false); return; }
+  if (!nova)  { show('Digite a nova senha.', false); return; }
   if (nova !== confirma) { show('As senhas não coincidem.', false); return; }
 
-  const hash = await _hashSenha(nova);
-  localStorage.setItem('sgcd-access-hash', hash);
+  const r = await API.req('PUT', `/api/users/${_apiUser.id}`, { old_password: atual, password: nova });
+  if (!r.ok) { show((await r.json()).error || 'Erro ao alterar senha.', false); return; }
   document.getElementById('s-senha-atual').value = '';
   document.getElementById('s-senha-nova').value = '';
   document.getElementById('s-senha-confirmar').value = '';
-  document.getElementById('btn-remover-senha').style.display = '';
-  show('Senha definida com sucesso!', true);
-}
-
-async function removerSenha() {
-  const hashAtual = localStorage.getItem('sgcd-access-hash');
-  if (!hashAtual) { toast('Nenhuma senha configurada.', 'error'); return; }
-  const atual = document.getElementById('s-senha-atual').value;
-  const statusEl = document.getElementById('senha-status');
-  if (!await _verificarSenhaComMigracao(atual)) {
-    statusEl.textContent = 'Senha atual incorreta.';
-    statusEl.style.color = '#dc2626';
-    statusEl.style.display = '';
-    return;
-  }
-  localStorage.removeItem('sgcd-access-hash');
-  document.getElementById('btn-remover-senha').style.display = 'none';
-  document.getElementById('s-senha-atual').value = '';
-  statusEl.textContent = 'Senha removida. O sistema ficará sem proteção de acesso.';
-  statusEl.style.color = '#166534';
-  statusEl.style.display = '';
+  show('Senha alterada com sucesso!', true);
 }
 
 function _pinToggleOlho() {
