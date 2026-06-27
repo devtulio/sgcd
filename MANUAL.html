@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Manual Operacional — SGCD v1.19.0</title>
+<title>Manual Operacional — SGCD v2.0.0</title>
 <style>
   /* Reset e base */
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -89,7 +89,7 @@
       margin: 20mm 20mm 25mm;
       size: A4;
       @top-center {
-        content: "SGCD v1.19.0 — Manual Operacional";
+        content: "SGCD v2.0.0 — Manual Operacional";
         font-family: 'Times New Roman', serif;
         font-size: 9pt;
         color: #666;
@@ -121,8 +121,8 @@
     <div class="cover-version">Versão v1.19.0</div>
     <br>
     <div style="font-size:11pt; color:#555; line-height:1.8;">
-      Aplicação web single-file para agentes de contratação pública<br>
-      Armazenamento local via IndexedDB · Sem instalação necessária
+      Aplicação web multiusuário para agentes de contratação pública<br>
+      Armazenamento local via SQLite · Autenticação server-side · Sem instalação necessária
     </div>
     <div class="cover-legal">
       Elaborado em conformidade com a<br>
@@ -227,7 +227,7 @@
 
 <h3 id="sec1-1">1.1 O que é o SGCD</h3>
 <p>O <strong>SGCD — Sistema de Gestão de Contratação Direta</strong> é uma aplicação web desenvolvida para organizar, acompanhar e documentar processos de <strong>Dispensa de Licitação</strong> conforme a Lei Federal nº 14.133/2021 (Nova Lei de Licitações e Contratos Administrativos).</p>
-<p>O sistema funciona como uma aplicação local iniciada pelo arquivo <strong>Iniciar SGCD.bat</strong>, sem necessidade de instalação adicional. Todos os dados são armazenados localmente no próprio computador do usuário.</p>
+<p>O sistema funciona como uma aplicação local iniciada pelo arquivo <strong>Iniciar SGCD.bat</strong>, sem necessidade de instalação adicional. A partir da versão 2.0, os dados são armazenados em um banco de dados SQLite (<code>sgcd.db</code>) gerenciado por um servidor local, com suporte a múltiplos usuários autenticados simultaneamente.</p>
 <p>O SGCD guia o agente de contratação por meio de um <strong>checklist com 15 etapas</strong>, cada uma com fundamento legal, orientações de preenchimento e possibilidade de anexar documentos. Ao final de cada etapa — ou a qualquer momento —, o sistema gera automaticamente os documentos necessários para o processo.</p>
 
 <h3 id="sec1-2">1.2 Para quem é destinado</h3>
@@ -255,11 +255,11 @@
   <strong>Nota:</strong> Ao abrir o SGCD diretamente pelo arquivo HTML, o sistema exibe automaticamente uma tela de bloqueio informando o procedimento correto, evitando o uso acidental da base errada.
 </div>
 
-<h3 id="sec1-4">1.4 Aviso sobre armazenamento de dados</h3>
+<h3 id="sec1-4">1.4 Armazenamento de dados</h3>
 <div class="aviso">
-  <strong>Importante:</strong> Todos os dados do SGCD (processos, fornecedores, configurações e anexos) ficam armazenados exclusivamente no <strong>navegador local</strong> do computador, utilizando a tecnologia IndexedDB. Os dados <strong>não são enviados para nenhum servidor</strong> e não ficam disponíveis em outros computadores ou outros navegadores.<br><br>
-  O sistema opera em <code>http://localhost:3000</code> (iniciado pelo <strong>Iniciar SGCD.bat</strong>). Os dados armazenados nessa origem são <strong>diferentes</strong> dos dados armazenados ao abrir o arquivo HTML diretamente (<code>file://</code>). Nunca misture as duas formas de abertura.<br><br>
-  <strong>Atenção:</strong> Se você limpar os dados de navegação ou o cache do navegador, os dados do SGCD serão perdidos permanentemente. Faça <strong>backups regulares</strong> em Configurações → Backup de Dados.
+  <strong>Importante:</strong> A partir da versão 2.0, todos os dados do SGCD (processos, fornecedores, configurações e anexos) são armazenados no arquivo <strong><code>sgcd.db</code></strong> (SQLite), localizado na mesma pasta do sistema. Os dados <strong>não dependem do navegador</strong> e não serão perdidos ao limpar o cache ou trocar de navegador.<br><br>
+  O sistema opera em <code>http://localhost:3000</code> (iniciado pelo <strong>Iniciar SGCD.bat</strong>). Nunca abra o arquivo <code>SGCD.html</code> diretamente pelo navegador — sem o servidor, o sistema não funciona.<br><br>
+  <strong>Atenção:</strong> Faça <strong>backups regulares</strong> do arquivo <code>sgcd.db</code> ou use a função de exportação em Configurações → Backup de Dados. A perda ou exclusão do arquivo <code>sgcd.db</code> implica perda permanente dos dados.
 </div>
 
 <hr class="section-divider">
@@ -364,14 +364,16 @@
 </ul>
 
 <h3 id="sec3-2">3.2 Barra lateral (sidebar)</h3>
-<p>A barra lateral, localizada no lado esquerdo da tela, oferece acesso às principais funções do sistema:</p>
+<p>A barra lateral (220px, fixa à esquerda) organiza a navegação em seções e exibe informações do usuário logado no rodapé:</p>
 <ul>
-  <li><strong>Ícone de pasta / lista:</strong> retorna ao dashboard de processos</li>
-  <li><strong>Ícone de prédio / empresa:</strong> acessa o cadastro de fornecedores</li>
-  <li><strong>Ícone de calendário:</strong> abre a Agenda de Vencimentos — lista de encerramentos de propostas, vencimentos de contratos, prazos e processos parados, agrupados por proximidade temporal</li>
-  <li><strong>Ícone de trilha (histórico):</strong> abre a Trilha de Auditoria Global — registro de todas as ações realizadas no sistema</li>
-  <li><strong>Ícone de engrenagem (⚙):</strong> abre as configurações do sistema</li>
-  <li><strong>Ícone de lua / sol:</strong> alterna entre o tema claro e o tema escuro</li>
+  <li><strong>Cabeçalho:</strong> exibe "SGCD", o subtítulo "Contratação Direta" e o nome do órgão configurado</li>
+  <li><strong>Seção Principal — Dashboard:</strong> retorna ao dashboard de processos; exibe badge com o total de processos cadastrados</li>
+  <li><strong>Seção Contratações — Fornecedores:</strong> acessa o cadastro de fornecedores</li>
+  <li><strong>Seção Contratações — Agenda:</strong> abre a Agenda de Vencimentos; exibe badge vermelho com a contagem de alertas ativos</li>
+  <li><strong>Seção Administração — Auditoria:</strong> abre a Trilha de Auditoria Global</li>
+  <li><strong>Seção Administração — Notificações:</strong> abre o painel de alertas e pendências</li>
+  <li><strong>Seção Administração — Configurações:</strong> abre as configurações do sistema</li>
+  <li><strong>Rodapé do sidebar:</strong> exibe avatar com iniciais, nome e cargo do usuário logado; botão de <em>Sair</em> (volta à tela de login sem encerrar o servidor) e botão de <em>Fechar Sistema</em> (faz logout e encerra o servidor)</li>
 </ul>
 
 <h3 id="sec3-3">3.3 Dashboard</h3>
