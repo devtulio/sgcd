@@ -2492,6 +2492,73 @@ function dbGetByIndexRange(store, indexName, lower, upper) {
 }
 
 // ══════════════════════════════════════════════════════════════
+// SERIALIZE WORKER — offload de JSON.stringify e base64 pesados
+// ══════════════════════════════════════════════════════════════
+const _WORKER_CODE = `
+self.onmessage = function(e) {
+  const { type, payload } = e.data;
+
+  if (type === 'serialize') {
+    // JSON.stringify de snapshot de auto-backup
+    try {
+      const json = JSON.stringify(payload.snap);
+      self.postMessage(json.length > payload.maxBytes
+        ? { ok: false, reason: 'quota', size: json.length }
+        : { ok: true, json });
+    } catch(err) { self.postMessage({ ok: false, reason: err.message }); }
+    return;
+  }
+
+  if (type === 'exportBackup') {
+    // Conversão ArrayBuffer→base64 + JSON.stringify do backup completo
+    try {
+      const { processes, fornecedores, rawFiles, auditGlobal, settings, brasao, smtp } = payload;
+      const files = rawFiles.map(f => {
+        if (!f.data) return { ...f, _enc: 'base64' };
+        const bytes = new Uint8Array(f.data);
+        let bin = '';
+        // Chunk para evitar stack overflow em arquivos grandes
+        const CHUNK = 8192;
+        for (let i = 0; i < bytes.byteLength; i += CHUNK) {
+          bin += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
+        }
+        return { ...f, data: btoa(bin), _enc: 'base64' };
+      });
+      const backup = { _sgcd: true, version: 3,
+        exportedAt: new Date().toISOString(),
+        processes, fornecedores, files, auditGlobal, settings, brasao, smtp };
+      self.postMessage({ ok: true, json: JSON.stringify(backup) });
+    } catch(err) { self.postMessage({ ok: false, reason: err.message }); }
+    return;
+  }
+};
+`;
+
+let _sgcdWorkerUrl = null;
+
+// Cria e retorna o Worker compartilhado (lazy init, recria se morreu)
+function _getSerializeWorker() {
+  if (!_sgcdWorkerUrl) {
+    _sgcdWorkerUrl = URL.createObjectURL(
+      new Blob([_WORKER_CODE], { type: 'application/javascript' })
+    );
+  }
+  return new Worker(_sgcdWorkerUrl);
+}
+
+// Executa uma tarefa no Worker e retorna Promise com o resultado
+function _workerRun(type, payload, transferables = []) {
+  return new Promise((res, rej) => {
+    let w;
+    try { w = _getSerializeWorker(); } catch (_) { rej(new Error('Worker não suportado')); return; }
+    const timeout = setTimeout(() => { w.terminate(); rej(new Error('Worker timeout')); }, 30000);
+    w.onmessage = e => { clearTimeout(timeout); w.terminate(); res(e.data); };
+    w.onerror   = e => { clearTimeout(timeout); w.terminate(); rej(new Error(e.message || 'Worker error')); };
+    w.postMessage({ type, payload }, transferables);
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
 // BACKUP / RESTORE
 // ══════════════════════════════════════════════════════════════
 function _bufToBase64(buf) {
@@ -2638,16 +2705,31 @@ async function exportBackup() {
     const [processes, fornecedores, rawFiles, auditGlobal] = await Promise.all([
       dbGetAll('processes'), dbGetAll('fornecedores'), dbGetAll('files'), dbGetAll('auditGlobal')
     ]);
-    const files = rawFiles.map(f => ({
-      ...f,
-      data: f.data ? _bufToBase64(f.data) : null,
-      _enc: 'base64'
-    }));
     const settings = localStorage.getItem('sgcd-user') || null;
     const brasao   = localStorage.getItem('sgcd-brasao-dataurl') || null;
     const smtp     = localStorage.getItem('sgcd-smtp') || null;
-    const backup = { _sgcd: true, version: 3, exportedAt: new Date().toISOString(), processes, fornecedores, files, auditGlobal, settings, brasao, smtp };
-    const blob = new Blob([JSON.stringify(backup)], { type: 'application/json' });
+
+    // Transfere os ArrayBuffers dos arquivos para o Worker (cópia zero)
+    // Após a transferência os buffers ficam neutered na main thread — não são mais necessários aqui
+    const transferables = rawFiles.flatMap(f => f.data instanceof ArrayBuffer ? [f.data] : []);
+    let json;
+    try {
+      const result = await _workerRun(
+        'exportBackup',
+        { processes, fornecedores, rawFiles, auditGlobal, settings, brasao, smtp },
+        transferables
+      );
+      if (!result.ok) throw new Error(result.reason || 'Falha na serialização');
+      json = result.json;
+    } catch (workerErr) {
+      // Fallback síncrono (Worker não suportado ou timeout)
+      console.warn('exportBackup Worker falhou, usando fallback síncrono:', workerErr.message);
+      const files = rawFiles.map(f => ({ ...f, data: f.data ? _bufToBase64(f.data) : null, _enc: 'base64' }));
+      json = JSON.stringify({ _sgcd: true, version: 3, exportedAt: new Date().toISOString(),
+        processes, fornecedores, files, auditGlobal, settings, brasao, smtp });
+    }
+
+    const blob = new Blob([json], { type: 'application/json' });
     const url  = URL.createObjectURL(blob);
     const a    = Object.assign(document.createElement('a'), {
       href: url,
@@ -2657,7 +2739,7 @@ async function exportBackup() {
     URL.revokeObjectURL(url);
     localStorage.setItem('sgcd-last-manual-export', Date.now().toString());
     document.getElementById('backup-alert-banner').style.display = 'none';
-    toast(`Backup exportado — ${processes.length} processos, ${fornecedores.length} fornecedores, ${files.length} arquivos, ${auditGlobal.length} registros de auditoria.`, 'success');
+    toast(`Backup exportado — ${processes.length} processos, ${fornecedores.length} fornecedores, ${rawFiles.length} arquivos, ${auditGlobal.length} registros de auditoria.`, 'success');
   } catch(e) { toast('Erro ao exportar: ' + e.message, 'error'); }
 }
 
@@ -11766,12 +11848,29 @@ async function _autoBackupSnapshot() {
   try {
     const [procs, forns] = await Promise.all([dbGetAll('processes'), dbGetAll('fornecedores')]);
     const snap = { _sgcd: true, _auto: true, version: 1, exportedAt: new Date().toISOString(), processes: procs, fornecedores: forns };
-    const json = JSON.stringify(snap);
-    // Verifica tamanho antes de salvar (~5 MB é o limite típico do localStorage)
-    if (json.length > 4 * 1024 * 1024) {
-      toast('⚠ Auto-backup: base de dados muito grande para snapshot local. Faça um backup manual em Configurações.', 'error');
-      return;
+    const MAX = 4 * 1024 * 1024;
+
+    let json;
+    try {
+      const result = await _workerRun('serialize', { snap, maxBytes: MAX });
+      if (!result.ok) {
+        if (result.reason === 'quota') {
+          toast('⚠ Auto-backup: base de dados muito grande para snapshot local. Faça um backup manual em Configurações.', 'error');
+          return;
+        }
+        throw new Error(result.reason);
+      }
+      json = result.json;
+    } catch (workerErr) {
+      // Fallback síncrono
+      console.warn('_autoBackupSnapshot Worker falhou, usando fallback síncrono:', workerErr.message);
+      json = JSON.stringify(snap);
+      if (json.length > MAX) {
+        toast('⚠ Auto-backup: base de dados muito grande para snapshot local. Faça um backup manual em Configurações.', 'error');
+        return;
+      }
     }
+
     localStorage.setItem('sgcd-auto-backup', json);
     localStorage.setItem('sgcd-auto-backup-at', Date.now().toString());
   } catch(e) {
