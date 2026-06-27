@@ -12339,6 +12339,10 @@ async function checkAutoBackupRestore() {
 window.addEventListener('beforeunload', () => {
   const u = getUser();
   if (u.auto_backup_exit) { _autoBackupSnapshot(); }
+  if (_apiToken) {
+    navigator.sendBeacon('/api/auth/logout?token=' + encodeURIComponent(_apiToken));
+    navigator.sendBeacon('/shutdown?token=' + encodeURIComponent(_apiToken));
+  }
 });
 
 // ══════════════════════════════════════════════════════════════
