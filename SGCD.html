@@ -3283,7 +3283,7 @@ function toast(msg, type = '') {
   const el = document.createElement('div');
   el.className = 'toast-msg ' + type;
   el.textContent = msg;
-  document.getElementById('toast').appendChild(el);
+  (_domCache?.toast || document.getElementById('toast')).appendChild(el);
   setTimeout(() => el.remove(), 3000);
   if (type === 'success') playSuccess();
   else if (type === 'error') playError();
@@ -3322,14 +3322,14 @@ async function loadProcesses() {
 
 let _saveIndicatorTimer = null;
 function _showSaveIndicator() {
-  let el = document.getElementById('save-indicator');
+  const el = _domCache?.saveIndicator || document.getElementById('save-indicator');
   if (!el) return;
   el.textContent = '💾 Salvando…';
   el.style.opacity = '1';
   clearTimeout(_saveIndicatorTimer);
 }
 function _hideSaveIndicator() {
-  let el = document.getElementById('save-indicator');
+  const el = _domCache?.saveIndicator || document.getElementById('save-indicator');
   if (!el) return;
   el.textContent = '✓ Salvo';
   _saveIndicatorTimer = setTimeout(() => { el.style.opacity = '0'; }, 1800);
@@ -3738,14 +3738,16 @@ async function renderFornecedores() {
     </p>`;
     return;
   }
+  // Map O(1) para evitar processes.find() O(n) dentro do loop de fornecedores
+  const _procMap = new Map(processes.map(p => [p.id, p]));
   el.innerHTML = lista.map(f => {
     const sitCls = cnpjSitClass(f.situacao);
     const procLinks = (f.processos || []).map(pid => {
-      const p = processes.find(x => x.id === pid);
+      const p = _procMap.get(pid);
       return p ? `<span class="forn-proc-link" onclick="openProcess('${escHtml(pid)}')">${escHtml(p.num_dl ? `DL ${p.num_dl}` : p.num_proc ? `PA ${p.num_proc}` : p.num || p.objeto.slice(0, 25))}</span>` : '';
     }).filter(Boolean).join('');
     const qsaNames = (f.qsa || []).map(s => escHtml(s.nome)).join(', ');
-    const nProcs = (f.processos || []).filter(pid => processes.find(x => x.id === pid)).length;
+    const nProcs = (f.processos || []).filter(pid => _procMap.has(pid)).length;
     return `<div class="forn-list-item" data-forn-id="${f.id}" onclick="toggleFornCard('${f.id}')">
       <div class="forn-list-header">
         <div>
@@ -4309,28 +4311,83 @@ function filtrarPorStat(card, status) {
   renderDash();
 }
 
+// ── Cache de elementos DOM estáticos ────────────────────────────
+// Inicializado na primeira chamada para evitar getElementById em hot paths
+let _domCache = null;
+function _dom() {
+  if (_domCache) return _domCache;
+  _domCache = {
+    toast:         document.getElementById('toast'),
+    saveIndicator: document.getElementById('save-indicator'),
+    // Filtros dashboard
+    search:        document.getElementById('search'),
+    filterStatus:  document.getElementById('filter-status'),
+    filterUnidade: document.getElementById('filter-unidade'),
+    filterDe:      document.getElementById('filter-de'),
+    filterAte:     document.getElementById('filter-ate'),
+    filterVmin:    document.getElementById('filter-vmin'),
+    filterVmax:    document.getElementById('filter-vmax'),
+    sortBy:        document.getElementById('sort-by'),
+    // Dashboard UI
+    processList:   document.getElementById('process-list'),
+    btnToggleView: document.getElementById('btn-toggle-view'),
+    btnLimpar:     document.getElementById('btn-limpar-filtros'),
+    filtrosBadge:  document.getElementById('filtros-count-badge'),
+    dashInfo:      document.getElementById('dash-results-info'),
+    // KPIs
+    stTotal:      document.getElementById('st-total'),
+    stTotalBadge: document.getElementById('st-total-badge'),
+    stTotalSub:   document.getElementById('st-total-sub'),
+    stProg:       document.getElementById('st-prog'),
+    stProgBadge:  document.getElementById('st-prog-badge'),
+    stProgSub:    document.getElementById('st-prog-sub'),
+    stDone:       document.getElementById('st-done'),
+    stDoneBadge:  document.getElementById('st-done-badge'),
+    stDoneSub:    document.getElementById('st-done-sub'),
+    stPend:       document.getElementById('st-pend'),
+    stPendBadge:  document.getElementById('st-pend-badge'),
+    stPendSub:    document.getElementById('st-pend-sub'),
+    stBlock:      document.getElementById('st-block'),
+    stBlockBadge: document.getElementById('st-block-badge'),
+    stBlockSub:   document.getElementById('st-block-sub'),
+    stValor:      document.getElementById('st-valor'),
+    stValorBadge: document.getElementById('st-valor-badge'),
+    stValorSub:   document.getElementById('st-valor-sub'),
+  };
+  return _domCache;
+}
+
+// Lê todos os valores dos filtros do dashboard de uma vez
+function _getDashFilters() {
+  const d = _dom();
+  return {
+    q:     (d.search?.value || '').toLowerCase(),
+    fSt:   d.filterStatus?.value  || '',
+    fUn:   d.filterUnidade?.value || '',
+    fDe:   d.filterDe?.value      || '',
+    fAte:  d.filterAte?.value     || '',
+    fVmin: parseFloat(d.filterVmin?.value) || null,
+    fVmax: parseFloat(d.filterVmax?.value) || null,
+    sortBy: d.sortBy?.value || 'date-desc',
+  };
+}
+
 let _lastDashFilters = '';
 function renderDash() {
-  const q     = document.getElementById('search').value.toLowerCase();
-  const fSt   = document.getElementById('filter-status').value;
-  const fUn   = document.getElementById('filter-unidade').value;
-  const fDe   = document.getElementById('filter-de').value;
-  const fAte  = document.getElementById('filter-ate').value;
-  const fVmin = parseFloat(document.getElementById('filter-vmin').value) || null;
-  const fVmax = parseFloat(document.getElementById('filter-vmax').value) || null;
+  const d = _dom();
+  const { q, fSt, fUn, fDe, fAte, fVmin, fVmax, sortBy } = _getDashFilters();
 
   // Reseta paginação ao mudar filtros
-  const filtersKey = [q, fSt, fUn, fDe, fAte, fVmin, fVmax, document.getElementById('sort-by')?.value].join('|');
+  const filtersKey = [q, fSt, fUn, fDe, fAte, fVmin, fVmax, sortBy].join('|');
   if (filtersKey !== _lastDashFilters) { window._dashPage = 1; _lastDashFilters = filtersKey; }
 
   // Populate unidade dropdown
-  const unidadeSel = document.getElementById('filter-unidade');
+  const unidadeSel = d.filterUnidade;
   const unidades = [...new Set(processes.map(p => p.unidade).filter(Boolean))].sort();
   const curUn = unidadeSel.value;
   unidadeSel.innerHTML = '<option value="">Todas as unidades</option>' +
     unidades.map(u => `<option value="${escHtml(u)}"${u === curUn ? ' selected' : ''}>${escHtml(u)}</option>`).join('');
 
-  const sortBy = document.getElementById('sort-by')?.value || 'date-desc';
   const hasFilters = q || fSt || fUn || fDe || fAte || fVmin || fVmax;
 
   // Sincroniza visual dos cards KPI com o filtro de status atual
@@ -4338,15 +4395,13 @@ function renderDash() {
     const match = el.dataset.filter === fSt;
     el.classList.toggle('stat-active', match);
   });
-  const btnLimpar = document.getElementById('btn-limpar-filtros');
-  if (btnLimpar) btnLimpar.style.display = hasFilters ? '' : 'none';
+  if (d.btnLimpar) d.btnLimpar.style.display = hasFilters ? '' : 'none';
 
   // Contador de filtros avançados ativos (exclui busca textual)
   const nFiltrosAtivos = [fSt, fUn, fDe, fAte, fVmin, fVmax].filter(Boolean).length;
-  const badge = document.getElementById('filtros-count-badge');
-  if (badge) {
-    badge.textContent = nFiltrosAtivos;
-    badge.style.display = nFiltrosAtivos > 0 ? '' : 'none';
+  if (d.filtrosBadge) {
+    d.filtrosBadge.textContent = nFiltrosAtivos;
+    d.filtrosBadge.style.display = nFiltrosAtivos > 0 ? '' : 'none';
   }
 
   const filtered = processes.filter(p => {
@@ -4398,48 +4453,47 @@ function renderDash() {
     ? v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })
     : '—';
 
-  const totalLabel = document.getElementById('st-total');
-  totalLabel.textContent = total;
-  totalLabel.title = hasFilters ? `${processes.length} processos no total (${total} com filtros ativos)` : '';
-  document.getElementById('st-total-badge').textContent = hasFilters ? 'Filtrado' : 'Todos';
-  document.getElementById('st-total-sub').textContent   = `${pctDone}% concluídos`;
+  if (d.stTotal) {
+    d.stTotal.textContent = total;
+    d.stTotal.title = hasFilters ? `${processes.length} processos no total (${total} com filtros ativos)` : '';
+    d.stTotalBadge.textContent = hasFilters ? 'Filtrado' : 'Todos';
+    d.stTotalSub.textContent   = `${pctDone}% concluídos`;
 
-  document.getElementById('st-prog').textContent       = stProg;
-  document.getElementById('st-prog-badge').textContent = _pct(stProg);
-  document.getElementById('st-prog-sub').textContent   = stProg > 0 ? 'Aguardando conclusão' : 'Nenhum em andamento';
+    d.stProg.textContent      = stProg;
+    d.stProgBadge.textContent = _pct(stProg);
+    d.stProgSub.textContent   = stProg > 0 ? 'Aguardando conclusão' : 'Nenhum em andamento';
 
-  document.getElementById('st-done').textContent       = stDone;
-  document.getElementById('st-done-badge').textContent = _pct(stDone);
-  document.getElementById('st-done-sub').textContent   = stDone > 0 ? `${pctDone}% de aproveitamento` : 'Nenhum concluído';
+    d.stDone.textContent      = stDone;
+    d.stDoneBadge.textContent = _pct(stDone);
+    d.stDoneSub.textContent   = stDone > 0 ? `${pctDone}% de aproveitamento` : 'Nenhum concluído';
 
-  document.getElementById('st-pend').textContent       = stPend;
-  document.getElementById('st-pend-badge').textContent = _pct(stPend);
-  document.getElementById('st-pend-sub').textContent   = stPend > 0 ? 'Aguardando início' : 'Todos iniciados';
+    d.stPend.textContent      = stPend;
+    d.stPendBadge.textContent = _pct(stPend);
+    d.stPendSub.textContent   = stPend > 0 ? 'Aguardando início' : 'Todos iniciados';
 
-  document.getElementById('st-block').textContent       = stBlock;
-  document.getElementById('st-block-badge').textContent = stBlock > 0 ? 'Atenção' : 'OK';
-  document.getElementById('st-block-sub').textContent   = stBlock > 0 ? 'Requer intervenção' : 'Sem bloqueios';
+    d.stBlock.textContent      = stBlock;
+    d.stBlockBadge.textContent = stBlock > 0 ? 'Atenção' : 'OK';
+    d.stBlockSub.textContent   = stBlock > 0 ? 'Requer intervenção' : 'Sem bloqueios';
 
-  document.getElementById('st-valor').textContent       = _fmtVal(stValorTotal);
-  document.getElementById('st-valor-badge').textContent = stValorCom > 0 ? `${stValorCom} proc.` : '—';
-  document.getElementById('st-valor-sub').textContent   = stValorCom > 0
-    ? `Média: ${_fmtVal(Math.round(stValorTotal / stValorCom))}`
-    : 'Sem valores informados';
+    d.stValor.textContent      = _fmtVal(stValorTotal);
+    d.stValorBadge.textContent = stValorCom > 0 ? `${stValorCom} proc.` : '—';
+    d.stValorSub.textContent   = stValorCom > 0
+      ? `Média: ${_fmtVal(Math.round(stValorTotal / stValorCom))}`
+      : 'Sem valores informados';
+  }
 
-  const list = document.getElementById('process-list');
-  const btnV = document.getElementById('btn-toggle-view');
-  if (btnV) btnV.textContent = _dashView === 'cards' ? '⊞' : '▤';
+  const list = d.processList;
+  if (d.btnToggleView) d.btnToggleView.textContent = _dashView === 'cards' ? '⊞' : '▤';
 
   // Linha de contagem de resultados
-  const resultsInfo = document.getElementById('dash-results-info');
-  if (resultsInfo) {
+  if (d.dashInfo) {
     if (hasFilters && processes.length > 0) {
-      resultsInfo.style.display = '';
-      resultsInfo.textContent = filtered.length === processes.length
+      d.dashInfo.style.display = '';
+      d.dashInfo.textContent = filtered.length === processes.length
         ? `${filtered.length} processo${filtered.length !== 1 ? 's' : ''}`
         : `${filtered.length} de ${processes.length} processo${processes.length !== 1 ? 's' : ''}`;
     } else {
-      resultsInfo.style.display = 'none';
+      d.dashInfo.style.display = 'none';
     }
   }
 
@@ -7298,13 +7352,7 @@ function gerarRelatorio() {
   const dtGer = now.toLocaleDateString('pt-BR') + ' às ' + now.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
 
   // Apply current dashboard filters to report scope
-  const fSt  = document.getElementById('filter-status')?.value || '';
-  const fUn  = document.getElementById('filter-unidade')?.value || '';
-  const fDe  = document.getElementById('filter-de')?.value || '';
-  const fAte = document.getElementById('filter-ate')?.value || '';
-  const fVmin = parseFloat(document.getElementById('filter-vmin')?.value) || null;
-  const fVmax = parseFloat(document.getElementById('filter-vmax')?.value) || null;
-  const q = (document.getElementById('search')?.value || '').toLowerCase();
+  const { q, fSt, fUn, fDe, fAte, fVmin, fVmax } = _getDashFilters();
 
   const lista = processes.filter(p => {
     const st = processStatus(p);
@@ -7890,13 +7938,7 @@ function renderDashTable(lista) {
 // EXPORTAR CSV
 // ══════════════════════════════════════════════════════════════
 function exportarCSV() {
-  const q    = (document.getElementById('search')?.value||'').toLowerCase();
-  const fSt  = document.getElementById('filter-status')?.value||'';
-  const fUn  = document.getElementById('filter-unidade')?.value||'';
-  const fDe  = document.getElementById('filter-de')?.value||'';
-  const fAte = document.getElementById('filter-ate')?.value||'';
-  const fVmin = parseFloat(document.getElementById('filter-vmin')?.value)||null;
-  const fVmax = parseFloat(document.getElementById('filter-vmax')?.value)||null;
+  const { q, fSt, fUn, fDe, fAte, fVmin, fVmax } = _getDashFilters();
 
   const lista = processes.filter(p => {
     const st = processStatus(p);
