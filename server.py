@@ -225,6 +225,13 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
             self._login(self._body())
             return
 
+        # Logout via beacon (sem Authorization header — lê token do query string)
+        if p == '/api/auth/logout':
+            qs_tok = parse_qs(parsed.query).get('token', [None])[0]
+            delete_session(qs_tok or self._token())
+            self._json(200, {'ok': True})
+            return
+
         if p == '/send-email':
             if not get_session(self._token()):
                 self._json(401, {'error': 'Não autenticado'}); return
