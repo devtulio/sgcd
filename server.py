@@ -249,20 +249,28 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         pw   = smtp['auth']['pass']
 
         ctx = ssl.create_default_context()
-        ctx.check_hostname = False
-        ctx.verify_mode = ssl.CERT_NONE
+        if smtp.get('ignoreSSL'):
+            ctx.check_hostname = False
+            ctx.verify_mode = ssl.CERT_NONE
 
-        if smtp.get('secure'):
-            with smtplib.SMTP_SSL(host, port, context=ctx) as s:
-                s.login(user, pw)
-                s.send_message(msg)
-        else:
-            with smtplib.SMTP(host, port) as s:
-                s.ehlo()
-                if smtp.get('requireTLS', True):
-                    s.starttls(context=ctx)
-                s.login(user, pw)
-                s.send_message(msg)
+        try:
+            if smtp.get('secure'):
+                with smtplib.SMTP_SSL(host, port, context=ctx) as s:
+                    s.login(user, pw)
+                    s.send_message(msg)
+            else:
+                with smtplib.SMTP(host, port) as s:
+                    s.ehlo()
+                    if smtp.get('requireTLS', True):
+                        s.starttls(context=ctx)
+                    s.login(user, pw)
+                    s.send_message(msg)
+        except ssl.SSLCertVerificationError as e:
+            raise RuntimeError(
+                f"Falha na verificação do certificado SSL do servidor SMTP ({host}). "
+                f"Ative a opção 'Ignorar verificação de certificado SSL' nas configurações SMTP. "
+                f"Detalhes técnicos: {e}"
+            ) from e
 
     def handle_error(self, request, client_address):
         pass  # suprime erros de conexão abortada

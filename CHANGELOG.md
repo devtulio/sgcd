@@ -7,6 +7,13 @@
 
 ## [1.19.0] — 2026-06-27
 
+### Adicionado
+- **Sincronização de backup entre agentes** — botão "Sincronizar Backup" importa arquivo exportado por outro agente; processos e fornecedores são mesclados por ID usando `updatedAt` como critério de conflito (registro mais recente vence); configurações do sistema não são sobrescritas
+- **Criptografia AES-GCM das credenciais SMTP** — senha nunca armazenada em texto claro; chave de 256 bits gerada aleatoriamente por instalação em `sgcd-enc-key` (localStorage); campo de senha exibe placeholder "••••••••  (senha salva — deixe em branco para manter)" quando já há credencial; ao importar backup de outra máquina, toast orienta a reinformar a senha
+- **Opção "Ignorar verificação SSL" no SMTP** — checkbox nas configurações SMTP para servidores com certificado autoassinado (ex: webmail institucional); quando desmarcado, verificação segura é exigida por padrão; mensagem de erro descritiva orienta o usuário em caso de falha SSL
+- **Hash de senha com salt por instalação** — `_hashSenha()` agora usa salt aleatório gerado uma vez em `sgcd-passwd-salt` (localStorage), eliminando o salt fixo anterior; migração automática: na primeira autenticação com hash antigo, o sistema re-salva com o novo salt sem interromper o acesso
+- **Sessão autenticada persiste após F5** — flag `sgcd-session-auth` em `sessionStorage` evita que o overlay de login seja exibido novamente após recarregamento de página; ao fechar o navegador a sessão é encerrada normalmente
+
 ### Melhorado
 - **Cache de elementos DOM (`_dom()`)** — 34 elementos estáticos cacheados em inicialização lazy; elimina `getElementById` nos hot paths de `renderDash()`, `toast()`, `_showSaveIndicator()` e `_hideSaveIndicator()`
 - **`_getDashFilters()`** — leitura única dos 7 filtros do dashboard por chamada a `renderDash()`, substituindo 21 chamadas individuais a `getElementById` distribuídas em três funções
@@ -16,6 +23,11 @@
 - **O(n²) → O(1) em `renderFornecedores()`** — `processes.find()` dentro de `.map()` substituído por `Map` construído uma vez antes do loop
 - **Lazy expand nos cards de fornecedor** — render inicial limitado ao header (razão social, CNPJ, situação, porte, botão); conteúdo completo (certidões, QSA, contato, endereço, processos) injetado no DOM apenas ao abrir o card; reduz HTML inicial em ~65% por card
 - **Redesign do gráfico de processos por mês** — card container com borda e padding; legenda HTML fora do SVG; sumário de métricas abaixo (total criados, concluídos com %, pico mensal); escala Y com inteiros calculados por `step` (1/2/5/10/20); labels de valor sobre barras quando há espaço; mês atual destacado em negrito; Janeiro exibe ano abreviado (Jan '25) para identificar virada de exercício; cores #2a78d6 (criados) e #1baf7a (concluídos); barras com canto superior arredondado (rx=3) e base reta
+- **Exportar Backup — diálogo antes do download** — ao clicar em "Exportar Backup", o sistema exibe diálogo com aviso de armazenamento externo antes de iniciar o download; usuário deve confirmar "Salvar arquivo" para prosseguir; cancelar descarta sem salvar
+- **Configurações — layout responsivo** — página de configurações passa a respeitar o modo compacto/expandido do usuário; largura dos cards alinhada à largura das abas de navegação; conteúdo do painel preenche a altura disponível da tela
+
+### Corrigido
+- **Verificação SSL habilitada por padrão no server.py** — `ctx.check_hostname = False` e `ctx.verify_mode = ssl.CERT_NONE` removidos; verificação de certificado agora segue o comportamento padrão do Python; servidores com certificado autoassinado devem usar a nova opção "Ignorar verificação SSL" nas configurações
 
 ---
 

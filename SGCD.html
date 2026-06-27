@@ -148,10 +148,11 @@
   #app.layout-expanded #audit-inner   { max-width: none !important; padding: 0 0 16px !important; }
   #app.layout-expanded #settings-inner { max-width: none !important; }
 
-  /* Modo compacto: limita largura do dashboard, detalhe e fornecedores */
+  /* Modo compacto: limita largura do dashboard, detalhe, fornecedores e configurações */
   #app:not(.layout-expanded) #view-dash,
   #app:not(.layout-expanded) #view-detail,
-  #app:not(.layout-expanded) #view-fornecedores { max-width: 960px; margin: 0 auto; }
+  #app:not(.layout-expanded) #view-fornecedores,
+  #app:not(.layout-expanded) #view-settings { max-width: 960px; margin: 0 auto; }
 
   /* ── Views ───────────────────────────────────────── */
   .view { display: none; }
@@ -168,7 +169,9 @@
   .cfg-tab:hover { color:var(--gray-700); }
   .cfg-tab.active { color:var(--brand); border-bottom-color:var(--brand); }
   .cfg-panel { display:none; }
-  .cfg-panel.active { display:block; }
+  .cfg-panel.active { display:block; min-height:calc(100vh - 56px - 48px - 130px); }
+  #view-settings.active { display:block; }
+  #settings-inner { width:100%; }
   #btn-save-settings.has-changes { animation: cfg-pulse 1.8s ease-in-out infinite; box-shadow: 0 0 0 3px rgba(233,84,32,.25); }
   @keyframes cfg-pulse { 0%,100% { box-shadow:0 0 0 3px rgba(233,84,32,.25); } 50% { box-shadow:0 0 0 6px rgba(233,84,32,.08); } }
 
@@ -1566,7 +1569,7 @@
         <button class="btn btn-primary" onclick="saveSettings()" id="btn-save-settings">Salvar</button>
       </div>
     </div>
-    <div id="settings-inner" style="max-width:620px;padding:0 0 40px;margin:0 auto">
+    <div id="settings-inner" style="padding:0 0 40px">
 
       <!-- Abas -->
       <div class="cfg-tabs">
@@ -1752,6 +1755,12 @@
           <div style="display:flex;gap:20px;margin:8px 0">
             <label style="display:flex;align-items:center;gap:6px;font-size:.82rem;cursor:pointer"><input type="checkbox" id="s-smtp-tls" style="width:15px;height:15px"> Usar STARTTLS (porta 587)</label>
             <label style="display:flex;align-items:center;gap:6px;font-size:.82rem;cursor:pointer"><input type="checkbox" id="s-smtp-ssl" style="width:15px;height:15px"> Usar SSL direto (porta 465)</label>
+          </div>
+          <div style="margin-top:6px">
+            <label style="display:flex;align-items:center;gap:6px;font-size:.82rem;cursor:pointer;color:var(--text-secondary)">
+              <input type="checkbox" id="s-smtp-ignore-ssl" style="width:15px;height:15px">
+              Ignorar verificação de certificado SSL <span style="font-size:.75rem;color:var(--warning,#b45309)">(apenas para servidores internos / autoassinados)</span>
+            </label>
           </div>
           <div class="info-field"><label>Usuário (e-mail de envio)</label><input type="email" id="s-smtp-user" placeholder="ex: licitacao@municipio.sp.gov.br"></div>
           <div class="info-field"><label>Senha</label><input type="password" id="s-smtp-pass" autocomplete="new-password"></div>
@@ -2746,6 +2755,12 @@ async function exportBackup() {
         processes, fornecedores, files, auditGlobal, settings, brasao, smtp });
     }
 
+    const confirmed = await customConfirm(
+      `Prestes a salvar ${processes.length} processo(s) e ${fornecedores.length} fornecedor(es).\n\n💡 Guarde o arquivo em local externo à máquina — pasta de rede, servidor municipal, OneDrive/Google Drive institucional ou repositório do POP — para garantir recuperação em caso de formatação ou falha do equipamento.`,
+      { title: 'Exportar Backup', icon: '💾', okLabel: 'Salvar arquivo', okClass: 'btn-primary', cancelLabel: 'Cancelar' }
+    );
+    if (!confirmed) return;
+
     const blob = new Blob([json], { type: 'application/json' });
     const url  = URL.createObjectURL(blob);
     const a    = Object.assign(document.createElement('a'), {
@@ -2757,10 +2772,6 @@ async function exportBackup() {
     localStorage.setItem('sgcd-last-manual-export', Date.now().toString());
     document.getElementById('backup-alert-banner').style.display = 'none';
     toast(`Backup exportado — ${processes.length} processos, ${fornecedores.length} fornecedores, ${rawFiles.length} arquivos.`, 'success');
-    customConfirm(
-      `Arquivo salvo com ${processes.length} processo(s) e ${fornecedores.length} fornecedor(es).\n\n💡 Guarde este arquivo em local externo à máquina — pasta de rede, servidor municipal, OneDrive/Google Drive institucional ou repositório do POP — para garantir recuperação em caso de formatação ou falha do equipamento.`,
-      { title: 'Backup exportado com sucesso', icon: '✅', okLabel: 'Entendido', okClass: 'btn-primary', cancelLabel: 'Fechar' }
-    );
   } catch(e) { toast('Erro ao exportar: ' + e.message, 'error'); }
 }
 
@@ -2812,7 +2823,8 @@ async function importBackup(file) {
     if (backup.smtp)     localStorage.setItem('sgcd-smtp', backup.smtp);
     const auditMsg = hasAudit ? ` e ${backup.auditGlobal.length} registros de auditoria` : '';
     const cfgMsg = backup.settings ? ' Configurações e brasão restaurados.' : '';
-    toast(`Backup restaurado! ${backup.processes?.length||0} processos${auditMsg} importados.${cfgMsg}`, 'success');
+    const smtpMsg = backup.smtp ? ' ⚠ Re-informe a senha SMTP em Configurações (não é transferida entre instalações).' : '';
+    toast(`Backup restaurado! ${backup.processes?.length||0} processos${auditMsg} importados.${cfgMsg}${smtpMsg}`, 'success');
     showDash();
   } catch(e) { toast('Erro ao importar: ' + e.message, 'error'); }
 }
@@ -9889,8 +9901,57 @@ function getUser() {
 function getSmtp() {
   try { return JSON.parse(localStorage.getItem('sgcd-smtp') || '{}'); } catch { return {}; }
 }
-function saveSmtp(cfg) {
-  localStorage.setItem('sgcd-smtp', JSON.stringify(cfg));
+
+// ── Criptografia AES-GCM para credenciais SMTP ───────────────
+let _smtpKey = null;
+async function _getSmtpCryptoKey() {
+  if (_smtpKey) return _smtpKey;
+  let raw = localStorage.getItem('sgcd-enc-key');
+  if (!raw) {
+    const bytes = crypto.getRandomValues(new Uint8Array(32));
+    raw = btoa(String.fromCharCode(...bytes));
+    localStorage.setItem('sgcd-enc-key', raw);
+  }
+  const keyBytes = Uint8Array.from(atob(raw), c => c.charCodeAt(0));
+  _smtpKey = await crypto.subtle.importKey('raw', keyBytes, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']);
+  return _smtpKey;
+}
+async function _encryptText(text) {
+  const key = await _getSmtpCryptoKey();
+  const iv  = crypto.getRandomValues(new Uint8Array(12));
+  const enc = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, new TextEncoder().encode(text));
+  const out = new Uint8Array(12 + enc.byteLength);
+  out.set(iv); out.set(new Uint8Array(enc), 12);
+  return btoa(String.fromCharCode(...out));
+}
+async function _decryptText(b64) {
+  try {
+    const key = await _getSmtpCryptoKey();
+    const buf = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+    const dec = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: buf.slice(0, 12) }, key, buf.slice(12));
+    return new TextDecoder().decode(dec);
+  } catch { return ''; }
+}
+async function saveSmtp(cfg) {
+  const stored = { ...cfg, auth: { ...cfg.auth } };
+  if (stored.auth.pass) {
+    stored.auth.pass_enc = await _encryptText(stored.auth.pass);
+    delete stored.auth.pass;
+  } else {
+    // Campo vazio → mantém a senha já criptografada, se houver
+    const existing = getSmtp();
+    if (existing.auth?.pass_enc) stored.auth.pass_enc = existing.auth.pass_enc;
+    delete stored.auth.pass;
+  }
+  localStorage.setItem('sgcd-smtp', JSON.stringify(stored));
+}
+async function _getSmtpForSend() {
+  const cfg = { ...getSmtp(), auth: { ...getSmtp().auth } };
+  if (cfg.auth?.pass_enc) {
+    cfg.auth.pass = await _decryptText(cfg.auth.pass_enc);
+    delete cfg.auth.pass_enc;
+  }
+  return cfg;
 }
 
 function _getAuditor() {
@@ -9915,9 +9976,32 @@ async function _auditEvento(evento, detalhe, processId) {
 // ══════════════════════════════════════════════════════════════
 // SEGURANÇA — SENHA DE ACESSO
 // ══════════════════════════════════════════════════════════════
-async function _hashSenha(senha) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('sgcd:' + senha));
+function _getPassSalt() {
+  let salt = localStorage.getItem('sgcd-passwd-salt');
+  if (!salt) {
+    salt = (crypto.randomUUID ? crypto.randomUUID() :
+      Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b => b.toString(16).padStart(2,'0')).join(''));
+    localStorage.setItem('sgcd-passwd-salt', salt);
+  }
+  return salt;
+}
+async function _hashSenha(senha, salt) {
+  const s = salt !== undefined ? salt : _getPassSalt();
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s + ':' + senha));
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+async function _verificarSenhaComMigracao(input) {
+  const stored = localStorage.getItem('sgcd-access-hash');
+  if (!stored) return true;
+  const newHash = await _hashSenha(input);
+  if (newHash === stored) return true;
+  // Migração: hashes antigos usavam salt fixo 'sgcd' → 'sgcd:senha'
+  const oldHash = await _hashSenha(input, 'sgcd');
+  if (oldHash === stored) {
+    localStorage.setItem('sgcd-access-hash', newHash); // promove para novo salt
+    return true;
+  }
+  return false;
 }
 
 async function alterarSenha() {
@@ -9929,8 +10013,7 @@ async function alterarSenha() {
 
   const hashAtual = localStorage.getItem('sgcd-access-hash');
   if (hashAtual) {
-    const inputHash = await _hashSenha(atual);
-    if (inputHash !== hashAtual) { show('Senha atual incorreta.', false); return; }
+    if (!await _verificarSenhaComMigracao(atual)) { show('Senha atual incorreta.', false); return; }
   }
   if (!nova) { show('Digite a nova senha.', false); return; }
   if (nova.length < 4) { show('Senha muito curta — mínimo 4 caracteres.', false); return; }
@@ -9949,9 +10032,8 @@ async function removerSenha() {
   const hashAtual = localStorage.getItem('sgcd-access-hash');
   if (!hashAtual) { toast('Nenhuma senha configurada.', 'error'); return; }
   const atual = document.getElementById('s-senha-atual').value;
-  const inputHash = await _hashSenha(atual);
   const statusEl = document.getElementById('senha-status');
-  if (inputHash !== hashAtual) {
+  if (!await _verificarSenhaComMigracao(atual)) {
     statusEl.textContent = 'Senha atual incorreta.';
     statusEl.style.color = '#dc2626';
     statusEl.style.display = '';
@@ -9981,9 +10063,9 @@ async function verificarSenha() {
   const input = document.getElementById('pin-input').value;
   const hash  = localStorage.getItem('sgcd-access-hash');
   if (!hash) { document.getElementById('overlay-pin').classList.add('hidden'); return; }
-  const inputHash = await _hashSenha(input);
   const erroEl = document.getElementById('pin-erro');
-  if (inputHash === hash) {
+  if (await _verificarSenhaComMigracao(input)) {
+    sessionStorage.setItem('sgcd-session-auth', '1');
     document.getElementById('overlay-pin').classList.add('hidden');
     document.getElementById('pin-input').value = '';
     erroEl.style.display = 'none';
@@ -10001,6 +10083,7 @@ async function verificarSenha() {
 
 function _checkSenhaAcesso() {
   if (!localStorage.getItem('sgcd-access-hash')) return;
+  if (sessionStorage.getItem('sgcd-session-auth') === '1') return;
   const overlay = document.getElementById('overlay-pin');
   overlay.classList.remove('hidden');
 
@@ -10194,10 +10277,13 @@ function showSettings() {
   const smtp = getSmtp();
   document.getElementById('s-smtp-host').value      = smtp.host        || '';
   document.getElementById('s-smtp-port').value      = smtp.port        || '587';
-  document.getElementById('s-smtp-tls').checked     = smtp.requireTLS !== false;
-  document.getElementById('s-smtp-ssl').checked     = !!smtp.secure;
+  document.getElementById('s-smtp-tls').checked          = smtp.requireTLS !== false;
+  document.getElementById('s-smtp-ssl').checked          = !!smtp.secure;
+  document.getElementById('s-smtp-ignore-ssl').checked  = !!smtp.ignoreSSL;
   document.getElementById('s-smtp-user').value      = smtp.auth?.user  || '';
-  document.getElementById('s-smtp-pass').value      = smtp.auth?.pass  || '';
+  const passEl = document.getElementById('s-smtp-pass');
+  passEl.value       = '';
+  passEl.placeholder = smtp.auth?.pass_enc ? '••••••••  (senha salva — deixe em branco para manter)' : 'Senha';
   document.getElementById('s-smtp-from-name').value = smtp.from?.name  || '';
   document.getElementById('s-smtp-to').value        = smtp.to?.email   || '';
 
@@ -10228,7 +10314,7 @@ function showSettings() {
     settingsInner.addEventListener('change', () => btnSave.classList.add('has-changes'), { once: true });
   }
 }
-function saveSettings() {
+async function saveSettings() {
   const nome = document.getElementById('s-nome').value.trim();
   if (!nome) { toast('Informe seu nome completo.', 'error'); return; }
   const u = {
@@ -10280,11 +10366,12 @@ function saveSettings() {
 
   // Save SMTP config
   const smtpUser = document.getElementById('s-smtp-user').value.trim();
-  saveSmtp({
+  await saveSmtp({
     host:       document.getElementById('s-smtp-host').value.trim(),
     port:       parseInt(document.getElementById('s-smtp-port').value) || 587,
     secure:     document.getElementById('s-smtp-ssl').checked,
     requireTLS: document.getElementById('s-smtp-tls').checked,
+    ignoreSSL:  document.getElementById('s-smtp-ignore-ssl').checked,
     auth: { user: smtpUser, pass: document.getElementById('s-smtp-pass').value },
     from: { name: document.getElementById('s-smtp-from-name').value.trim() || 'SGCD', email: smtpUser },
     to:   { email: document.getElementById('s-smtp-to').value.trim() },
@@ -10401,7 +10488,8 @@ async function testSmtp() {
     port:       parseInt(document.getElementById('s-smtp-port').value) || 587,
     secure:     document.getElementById('s-smtp-ssl').checked,
     requireTLS: document.getElementById('s-smtp-tls').checked,
-    auth: { user: smtpUser, pass: document.getElementById('s-smtp-pass').value },
+    ignoreSSL:  document.getElementById('s-smtp-ignore-ssl').checked,
+    auth: { user: smtpUser, pass: document.getElementById('s-smtp-pass').value || (await _getSmtpForSend()).auth?.pass || '' },
     from: { name: document.getElementById('s-smtp-from-name').value.trim() || 'SGCD', email: smtpUser },
   };
 
@@ -10430,7 +10518,7 @@ async function testSmtp() {
 }
 
 async function smtpSend({ to, subject, html, text }) {
-  const smtp = getSmtp();
+  const smtp = await _getSmtpForSend();
   if (!smtp.host || !smtp.auth?.user) throw new Error('SMTP não configurado em Configurações.');
   const res = await fetch('http://localhost:3000/send-email', {
     method: 'POST',
