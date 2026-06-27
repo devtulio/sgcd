@@ -1222,7 +1222,7 @@
     </div>
 
     <div class="filters" style="flex-wrap:nowrap;align-items:center">
-      <input type="text" id="search" placeholder="Buscar por objeto, nº ou fornecedor…" oninput="renderDash()" style="flex:1;min-width:180px">
+      <input type="text" id="search" placeholder="Buscar por objeto, nº ou fornecedor…" oninput="_debouncedRenderDash()" style="flex:1;min-width:180px">
       <button class="btn btn-outline btn-sm" id="btn-toggle-filters" onclick="toggleFiltrosAvancados()" title="Mostrar/ocultar filtros avançados" style="white-space:nowrap;flex-shrink:0;display:flex;align-items:center;gap:6px">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
         Filtros<span id="filtros-count-badge" style="display:none;background:rgba(255,255,255,.3);color:inherit;border-radius:99px;font-size:.65rem;font-weight:700;padding:0 6px;line-height:1.6"></span>
@@ -1281,7 +1281,7 @@
     </div>
     <div class="filters" style="flex-wrap:nowrap;align-items:center">
       <div style="position:relative;flex:1;min-width:180px">
-        <input type="text" id="forn-search" placeholder="Buscar por CNPJ, razão social…" oninput="renderFornecedores()" style="width:100%;padding-right:28px">
+        <input type="text" id="forn-search" placeholder="Buscar por CNPJ, razão social…" oninput="_debouncedRenderForn()" style="width:100%;padding-right:28px">
         <button onclick="limparBuscaForn()" id="forn-search-clear" title="Limpar busca" style="display:none;position:absolute;right:7px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--gray-400);font-size:.85rem;padding:0;line-height:1">✕</button>
       </div>
       <select id="forn-sort" onchange="renderFornecedores()" title="Ordenar fornecedores" style="flex:0 0 auto;width:170px">
@@ -4311,6 +4311,12 @@ function filtrarPorStat(card, status) {
   renderDash();
 }
 
+// ── Utilitário debounce ─────────────────────────────────────────
+function _debounce(fn, ms) {
+  let t;
+  return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+}
+
 // ── Cache de elementos DOM estáticos ────────────────────────────
 // Inicializado na primeira chamada para evitar getElementById em hot paths
 let _domCache = null;
@@ -4371,6 +4377,10 @@ function _getDashFilters() {
     sortBy: d.sortBy?.value || 'date-desc',
   };
 }
+
+// Versões debounced para inputs de busca (evita renderDash a cada tecla)
+const _debouncedRenderDash = _debounce(renderDash, 150);
+const _debouncedRenderForn = _debounce(renderFornecedores, 150);
 
 let _lastDashFilters = '';
 function renderDash() {
