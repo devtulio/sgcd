@@ -5,6 +5,20 @@
 
 ---
 
+## [1.19.0] — 2026-06-27
+
+### Melhorado
+- **Cache de elementos DOM (`_dom()`)** — 34 elementos estáticos cacheados em inicialização lazy; elimina `getElementById` nos hot paths de `renderDash()`, `toast()`, `_showSaveIndicator()` e `_hideSaveIndicator()`
+- **`_getDashFilters()`** — leitura única dos 7 filtros do dashboard por chamada a `renderDash()`, substituindo 21 chamadas individuais a `getElementById` distribuídas em três funções
+- **`_applyDashFilters()`** — lógica de filtro centralizada; elimina 45 linhas duplicadas entre `renderDash()`, `gerarRelatorio()` e `exportarCSV()`
+- **`_lastFiltered`** — cache do último array filtrado de `renderDash()`; `gerarRelatorio()` e `exportarCSV()` reutilizam o resultado sem refazer O(n) de filtro
+- **Debounce nos inputs de busca** — `_debounce()` genérico aplicado: 150ms em `#search` e `#forn-search`, 100ms na busca global (Ctrl+K), 150ms no picker de fornecedor em propostas
+- **O(n²) → O(1) em `renderFornecedores()`** — `processes.find()` dentro de `.map()` substituído por `Map` construído uma vez antes do loop
+- **Lazy expand nos cards de fornecedor** — render inicial limitado ao header (razão social, CNPJ, situação, porte, botão); conteúdo completo (certidões, QSA, contato, endereço, processos) injetado no DOM apenas ao abrir o card; reduz HTML inicial em ~65% por card
+- **Redesign do gráfico de processos por mês** — card container com borda e padding; legenda HTML fora do SVG; sumário de métricas abaixo (total criados, concluídos com %, pico mensal); escala Y com inteiros calculados por `step` (1/2/5/10/20); labels de valor sobre barras quando há espaço; mês atual destacado em negrito; Janeiro exibe ano abreviado (Jan '25) para identificar virada de exercício; cores #2a78d6 (criados) e #1baf7a (concluídos); barras com canto superior arredondado (rx=3) e base reta
+
+---
+
 ## [1.18.0] — 2026-06-26
 
 ### Adicionado

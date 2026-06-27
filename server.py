@@ -1,4 +1,4 @@
-# SGCD v1.18.0 — Servidor local: proxy CNPJ, e-mail SMTP, verificação de documentos
+# SGCD v1.19.0 — Servidor local: proxy CNPJ, e-mail SMTP, verificação de documentos
 import http.server
 import socketserver
 import os
