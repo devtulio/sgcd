@@ -123,6 +123,8 @@ def init_db():
             CREATE INDEX IF NOT EXISTS idx_forn_cnpj     ON fornecedores(cnpj);
             CREATE INDEX IF NOT EXISTS idx_audit_ts      ON audit_global(ts);
         ''')
+        # Sessões são descartadas a cada início do servidor (logout automático ao fechar janela)
+        conn.execute('DELETE FROM sessions')
         # Cria admin padrão se não houver usuários
         if conn.execute('SELECT COUNT(*) FROM users').fetchone()[0] == 0:
             conn.execute(

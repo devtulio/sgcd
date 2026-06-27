@@ -12340,20 +12340,11 @@ async function checkAutoBackupRestore() {
   }
 }
 
-let _sgcdRefreshing = false;
-document.addEventListener('keydown', e => {
-  if (e.key === 'F5' || (e.ctrlKey && e.key === 'r') || (e.metaKey && e.key === 'r')) {
-    _sgcdRefreshing = true;
-  }
-});
 window.addEventListener('beforeunload', () => {
   const u = getUser();
   if (u.auto_backup_exit) { _autoBackupSnapshot(); }
-  if (_apiToken && !_sgcdRefreshing) {
-    // Janela fechada (X): invalida sessão; servidor para via heartbeat timeout
-    navigator.sendBeacon('/api/auth/logout?token=' + encodeURIComponent(_apiToken));
-  }
-  _sgcdRefreshing = false;
+  // Sessões são invalidadas pelo servidor ao reiniciar (após heartbeat timeout).
+  // Não enviamos beacon aqui pois beforeunload não distingue F5 de fechar janela.
 });
 
 // ══════════════════════════════════════════════════════════════
