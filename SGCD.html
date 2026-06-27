@@ -2342,7 +2342,7 @@ const ICONS = {
 let db;
 const SGCD_VERSION = '1.18.0';
 document.title = `SGCD v${SGCD_VERSION}`;
-const DB_NAME = 'dispensaDB', DB_VER = 3;
+const DB_NAME = 'dispensaDB', DB_VER = 4;
 
 // ── Tratamento global de erros JS ──────────────────────────────
 let _globalErrorCount = 0;
@@ -2374,7 +2374,10 @@ function initDB() {
   return new Promise((res, rej) => {
     const req = indexedDB.open(DB_NAME, DB_VER);
     req.onupgradeneeded = e => {
-      const d = e.target.result;
+      const d  = e.target.result;
+      const tx = e.target.transaction;
+
+      // ── Criação inicial dos stores (v1+) ──────────────────────
       if (!d.objectStoreNames.contains('processes')) {
         d.createObjectStore('processes', { keyPath: 'id' });
       }
@@ -2390,6 +2393,13 @@ function initDB() {
         const ag = d.createObjectStore('auditGlobal', { keyPath: 'id' });
         ag.createIndex('at', 'at');
         ag.createIndex('processId', 'processId');
+      }
+
+      // ── v3 → v4: índices de ordenação/filtro em processes ────
+      if (e.oldVersion < 4) {
+        const ps = tx.objectStore('processes');
+        if (!ps.indexNames.contains('createdAt')) ps.createIndex('createdAt', 'createdAt');
+        if (!ps.indexNames.contains('unidade'))   ps.createIndex('unidade',   'unidade');
       }
     };
     req.onsuccess = e => { db = e.target.result; res(); };
@@ -2464,6 +2474,21 @@ function dbGetByIndexPrefix(store, indexName, prefix) {
     req.onsuccess = () => res(req.result);
     req.onerror   = e => rej(e.target.error || e);
   }), `getByIndexPrefix:${store}`);
+}
+
+// Busca por faixa de valores num índice (ex: registros entre dois timestamps)
+function dbGetByIndexRange(store, indexName, lower, upper) {
+  return _dbWithTimeout(new Promise((res, rej) => {
+    const tx  = db.transaction(store, 'readonly');
+    const idx = tx.objectStore(store).index(indexName);
+    const range = lower != null && upper != null ? IDBKeyRange.bound(lower, upper)
+                : lower != null                  ? IDBKeyRange.lowerBound(lower)
+                : upper != null                  ? IDBKeyRange.upperBound(upper)
+                : null;
+    const req = idx.getAll(range);
+    req.onsuccess = () => res(req.result);
+    req.onerror   = e => rej(e.target.error || e);
+  }), `getByIndexRange:${store}`);
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -3903,16 +3928,24 @@ function renderAuditDebounced() {
 
 async function renderAudit(loadMore = false) {
   if (!loadMore) { _auditPage = 0; _auditLastDay = null; }
-  const todos = (await dbGetAll('auditGlobal')).sort((a, b) => b.at - a.at);
   const fTipo = document.getElementById('audit-filter-tipo')?.value || '';
   const fDe   = document.getElementById('audit-filter-de')?.value;
   const fAte  = document.getElementById('audit-filter-ate')?.value;
   const fUser = (document.getElementById('audit-filter-user')?.value || '').toLowerCase();
 
+  // Usa índice 'at' com IDBKeyRange quando há filtro de período — evita carregar todo o store
+  let todos;
+  if (fDe || fAte) {
+    const tsFrom = fDe ? new Date(fDe + 'T00:00:00').getTime() : null;
+    const tsTo   = fAte ? new Date(fAte + 'T23:59:59').getTime() : null;
+    todos = await dbGetByIndexRange('auditGlobal', 'at', tsFrom, tsTo);
+    todos.sort((a, b) => b.at - a.at);
+  } else {
+    todos = (await dbGetAll('auditGlobal')).sort((a, b) => b.at - a.at);
+  }
+
   const filtered = todos.filter(e => {
     if (fTipo && e.evento !== fTipo) return false;
-    if (fDe  && e.at < new Date(fDe  + 'T00:00:00').getTime()) return false;
-    if (fAte && e.at > new Date(fAte + 'T23:59:59').getTime()) return false;
     if (fUser && !(e.usuario || '').toLowerCase().includes(fUser)) return false;
     return true;
   });
@@ -4021,16 +4054,23 @@ async function renderAudit(loadMore = false) {
 }
 
 async function gerarRelatorioAuditoria() {
-  const todos = (await dbGetAll('auditGlobal')).sort((a, b) => b.at - a.at);
   const fTipo = document.getElementById('audit-filter-tipo')?.value || '';
   const fDe   = document.getElementById('audit-filter-de')?.value;
   const fAte  = document.getElementById('audit-filter-ate')?.value;
   const fUser = (document.getElementById('audit-filter-user')?.value || '').toLowerCase();
 
+  let todos;
+  if (fDe || fAte) {
+    const tsFrom = fDe ? new Date(fDe + 'T00:00:00').getTime() : null;
+    const tsTo   = fAte ? new Date(fAte + 'T23:59:59').getTime() : null;
+    todos = await dbGetByIndexRange('auditGlobal', 'at', tsFrom, tsTo);
+    todos.sort((a, b) => b.at - a.at);
+  } else {
+    todos = (await dbGetAll('auditGlobal')).sort((a, b) => b.at - a.at);
+  }
+
   const lista = todos.filter(e => {
     if (fTipo && e.evento !== fTipo) return false;
-    if (fDe  && e.at < new Date(fDe  + 'T00:00:00').getTime()) return false;
-    if (fAte && e.at > new Date(fAte + 'T23:59:59').getTime()) return false;
     if (fUser && !(e.usuario || '').toLowerCase().includes(fUser)) return false;
     return true;
   });
@@ -11158,16 +11198,18 @@ ${_qrFooterReport('Relatório Executivo')}
 // ══════════════════════════════════════════════════════════════
 // FEATURE 6 — HISTÓRICO DE EDIÇÕES POR CAMPO
 // ══════════════════════════════════════════════════════════════
-let _fieldHistAudit = [];
+// Cache por processo: evita hit repetido ao abrir histórico de campos diferentes no mesmo processo
+let _fieldHistCache = { pid: null, data: [] };
 
 async function abrirFieldHist(campoNome, labelExibido, anchorEl) {
-  if (!_fieldHistAudit.length) {
-    _fieldHistAudit = await dbGetAll('auditGlobal');
-  }
   const pid = currentProcess?.id;
-  const eventos = _fieldHistAudit.filter(e =>
+  // Usa índice processId — busca apenas eventos deste processo em vez de todo auditGlobal
+  if (_fieldHistCache.pid !== pid) {
+    _fieldHistCache.pid  = pid;
+    _fieldHistCache.data = pid ? await dbGetByIndex('auditGlobal', 'processId', pid) : [];
+  }
+  const eventos = _fieldHistCache.data.filter(e =>
     e.evento === 'CAMPO_ALTERADO' &&
-    e.processId === pid &&
     e.detalhe?.startsWith(campoNome + ':')
   ).sort((a, b) => b.at - a.at);
 
@@ -11203,7 +11245,7 @@ async function abrirFieldHist(campoNome, labelExibido, anchorEl) {
 function fecharFieldHist() {
   const panel = document.getElementById('field-hist-panel');
   if (panel) panel.style.display = 'none';
-  _fieldHistAudit = [];
+  _fieldHistCache = { pid: null, data: [] };
 }
 
 function _closeFieldHist(e) {
