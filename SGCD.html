@@ -61,52 +61,53 @@
   }
 
   /* ── Sidebar ─────────────────────────────────────── */
+  /* ── Sidebar (estilo SGDP) ───────────────────────────── */
   #sidebar {
-    position: fixed;
-    left: 0; top: 56px; bottom: 0;
-    width: 48px;
-    background: var(--aubergine);
-    display: flex; flex-direction: column;
-    align-items: center;
-    padding: 8px 0;
-    z-index: 90;
-    gap: 2px;
+    position: fixed; left: 0; top: 56px; bottom: 0; width: 220px;
+    background: var(--aubergine); color: #fff;
+    display: flex; flex-direction: column; overflow-y: auto; z-index: 90;
   }
-  .nav-btn {
-    width: 36px; height: 36px; border-radius: 8px;
-    border: none; background: transparent;
-    color: rgba(255,255,255,.55); cursor: pointer;
+  .sidebar-logo {
+    padding: 16px 18px 14px; border-bottom: 1px solid rgba(255,255,255,.12);
+  }
+  .sidebar-logo .s-title { font-size: 20px; font-weight: 800; letter-spacing: -.5px; }
+  .sidebar-logo .s-sub   { font-size: 10px; opacity: .7; text-transform: uppercase; letter-spacing: .5px; margin-top: 2px; }
+  .sidebar-logo .s-muni  { font-size: 11px; opacity: .85; margin-top: 6px; line-height: 1.3; }
+  .sidebar-nav { flex: 1; padding: 8px 0; }
+  .nav-section { font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .8px; opacity: .5; padding: 14px 18px 6px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px; padding: 9px 18px;
+    font-size: 13px; font-weight: 500; color: rgba(255,255,255,.8);
+    cursor: pointer; transition: all .15s; border-left: 3px solid transparent;
+    border: none; background: none; width: 100%; text-align: left;
+    border-left: 3px solid transparent;
+  }
+  .nav-item:hover { background: rgba(255,255,255,.08); color: #fff; }
+  .nav-item.active { background: rgba(255,255,255,.14); color: #fff;
+    border-left-color: var(--brand); font-weight: 600; }
+  .nav-item .nav-ico { width: 18px; text-align: center; flex-shrink: 0; opacity: .85;
+    display: flex; align-items: center; justify-content: center; }
+  .nav-badge { margin-left: auto; background: rgba(255,255,255,.2);
+    border-radius: 10px; padding: 1px 7px; font-size: 11px; font-weight: 700; }
+  .nav-badge.danger { background: var(--danger); }
+  .sidebar-user {
+    padding: 14px 18px; border-top: 1px solid rgba(255,255,255,.12);
+    display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+  }
+  .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,.2);
     display: flex; align-items: center; justify-content: center;
-    font-size: 1.1rem; transition: background .15s, color .15s, width .2s, height .2s;
-    position: relative; flex-shrink: 0;
-  }
-  .nav-btn:hover { background: rgba(255,255,255,.12); color: #fff; }
-  .nav-btn.active { background: var(--brand); color: #fff; }
-  .nav-btn .nav-tooltip {
-    position: absolute; left: 44px; top: 50%; transform: translateY(-50%);
-    background: #1a1a1a; color: #f5f5f5; font-size: .72rem; font-weight: 500;
-    padding: 4px 8px; border-radius: 4px; white-space: nowrap; pointer-events: none;
-    opacity: 0; transition: opacity .15s; z-index: 200;
-    text-transform: none; letter-spacing: 0;
-  }
-  .nav-btn:hover .nav-tooltip { opacity: 1; }
-  .nav-btn .nav-label {
-    display: none; font-size: 9px; font-weight: 600; margin-top: 3px;
-    text-transform: uppercase; letter-spacing: .3px; line-height: 1;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
-  }
-  .nav-spacer { flex: 1; }
-  .nav-divider { width: 28px; height: 1px; background: rgba(255,255,255,.12); margin: 4px 0; transition: width .2s; }
+    font-weight: 700; font-size: 13px; flex-shrink: 0; }
+  .user-info { flex: 1; min-width: 0; }
+  .user-nome  { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .user-cargo { font-size: 10px; opacity: .6; }
+  .btn-sair { background: none; border: none; color: rgba(255,255,255,.6);
+    padding: 4px; border-radius: 4px; cursor: pointer; transition: color .15s; }
+  .btn-sair:hover { color: #fff; }
 
-  /* Sidebar expandida */
-  #sidebar.sidebar-expanded { width: 110px; align-items: center; }
-  #sidebar.sidebar-expanded .nav-btn {
-    width: 98px; height: 3.4rem; flex-direction: column; border-radius: 10px;
-  }
-  #sidebar.sidebar-expanded .nav-btn .nav-tooltip { display: none; }
-  #sidebar.sidebar-expanded .nav-btn .nav-label { display: block; }
-  #sidebar.sidebar-expanded .nav-divider { width: 86px; }
-  #app.sidebar-expanded-app { padding-left: calc(110px + 16px); }
+  /* compat stubs — removidos do HTML mas podem ser referenciados por JS */
+  .nav-btn { display: none; }
+  #app.sidebar-expanded-app { padding-left: calc(220px + 24px); }
 
   /* ── Header ─────────────────────────────────────── */
   header {
@@ -137,13 +138,9 @@
   header span { font-size: .75rem; opacity: .65; font-weight: 300; }
 
   /* ── Layout ──────────────────────────────────────── */
-  #app { padding: 24px 32px 24px calc(48px + 24px); }
-  #app.sidebar-expanded-app { padding-left: calc(110px + 16px); }
-  @media (max-width: 760px) { #sidebar { display: none; } }
-
-  /* Modo expandido: remove max-width das telas internas */
-  #app.layout-expanded { padding: 24px 24px 24px calc(48px + 24px); }
-  #app.layout-expanded.sidebar-expanded-app { padding-left: calc(110px + 16px); }
+  #app { padding: 24px 32px 24px calc(220px + 24px); }
+  @media (max-width: 760px) { #sidebar { display: none; } #app { padding-left: 16px; } }
+  #app.layout-expanded { padding: 24px 24px 24px calc(220px + 24px); }
   #app.layout-expanded #agenda-body   { max-width: none !important; padding: 0 0 32px !important; }
   #app.layout-expanded #audit-inner   { max-width: none !important; padding: 0 0 16px !important; }
   #app.layout-expanded #settings-inner { max-width: none !important; }
@@ -536,7 +533,7 @@
   .notif-sub { font-size:.72rem;color:var(--gray-500);margin-top:2px }
   .notif-empty { padding:24px 16px;text-align:center;font-size:.82rem;color:var(--gray-500) }
   #btn-notif { position:relative }
-  #notif-count { display:none;position:absolute;top:4px;right:4px;min-width:16px;height:16px;background:var(--danger);color:#fff;border-radius:8px;font-size:10px;font-weight:700;line-height:16px;text-align:center;padding:0 3px;pointer-events:none }
+  #notif-count { display:none }
 
   /* ── Templates de processo ── */
   .template-chip { display:inline-flex;align-items:center;gap:6px;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:99px;padding:3px 10px;font-size:.75rem;cursor:pointer;transition:background .12s;max-width:100%;overflow:hidden }
@@ -1055,45 +1052,57 @@
 </header>
 
 <nav id="sidebar" aria-label="Navegação principal">
-  <button class="nav-btn active" id="nav-dash" onclick="showDash()" aria-label="Processos">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-    <span class="nav-tooltip">Processos</span>
-    <span class="nav-label">Processos</span>
-  </button>
-  <button class="nav-btn" id="nav-forn" onclick="showFornecedores()" aria-label="Fornecedores">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 0-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></svg>
-    <span class="nav-tooltip">Fornecedores</span>
-    <span class="nav-label">Fornecedores</span>
-  </button>
-  <button class="nav-btn" id="nav-agenda" onclick="showAgenda()" aria-label="Agenda de Vencimentos" style="position:relative">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-    <span id="agenda-badge" style="display:none;position:absolute;top:4px;right:4px;min-width:16px;height:16px;background:var(--danger);color:#fff;border-radius:8px;font-size:10px;font-weight:700;line-height:16px;text-align:center;padding:0 3px;pointer-events:none"></span>
-    <span class="nav-tooltip">Agenda</span>
-    <span class="nav-label">Agenda</span>
-  </button>
-  <button class="nav-btn" id="nav-audit" onclick="showAudit()" aria-label="Auditoria">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-    <span class="nav-tooltip">Auditoria</span>
-    <span class="nav-label">Auditoria</span>
-  </button>
-  <button class="nav-btn" id="btn-notif" onclick="toggleNotificacoes()" aria-label="Notificações">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-    <span id="notif-count"></span>
-    <span class="nav-tooltip">Notificações</span>
-    <span class="nav-label">Alertas</span>
-  </button>
-  <div class="nav-spacer"></div>
-  <div class="nav-divider"></div>
-  <button class="nav-btn" id="nav-settings" onclick="showSettings()" aria-label="Configurações">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
-    <span class="nav-tooltip">Configurações</span>
-    <span class="nav-label">Config.</span>
-  </button>
-  <button class="nav-btn" onclick="toggleTheme()" id="theme-btn" aria-label="Alternar tema claro/escuro">
-    <span id="theme-lbl"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span>
-    <span class="nav-tooltip">Alternar tema</span>
-    <span class="nav-label">Tema</span>
-  </button>
+  <div class="sidebar-logo">
+    <div class="s-title">SGCD</div>
+    <div class="s-sub">Contratação Direta</div>
+    <div class="s-muni" id="sidebar-orgao">—</div>
+  </div>
+
+  <div class="sidebar-nav">
+    <div class="nav-section">Principal</div>
+    <button class="nav-item active" id="nav-dash" onclick="showDash()">
+      <span class="nav-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></span>
+      Dashboard
+      <span class="nav-badge" id="badge-processos">—</span>
+    </button>
+
+    <div class="nav-section">Contratações</div>
+    <button class="nav-item" id="nav-forn" onclick="showFornecedores()">
+      <span class="nav-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 0-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></svg></span>
+      Fornecedores
+    </button>
+    <button class="nav-item" id="nav-agenda" onclick="showAgenda()">
+      <span class="nav-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
+      Agenda
+      <span class="nav-badge" id="agenda-badge" style="display:none"></span>
+    </button>
+
+    <div class="nav-section">Administração</div>
+    <button class="nav-item" id="nav-audit" onclick="showAudit()">
+      <span class="nav-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>
+      Auditoria
+    </button>
+    <button class="nav-item" id="btn-notif" onclick="toggleNotificacoes()">
+      <span class="nav-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>
+      Notificações
+      <span class="nav-badge" id="notif-count" style="display:none"></span>
+    </button>
+    <button class="nav-item" id="nav-settings" onclick="showSettings()">
+      <span class="nav-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></span>
+      Configurações
+    </button>
+  </div>
+
+  <div class="sidebar-user">
+    <div class="user-avatar" id="sidebar-avatar">?</div>
+    <div class="user-info">
+      <div class="user-nome" id="sidebar-nome">—</div>
+      <div class="user-cargo" id="sidebar-cargo">Usuário</div>
+    </div>
+    <button class="btn-sair" onclick="_apiLogout()" title="Sair">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    </button>
+  </div>
 </nav>
 
 <div id="app">
@@ -3450,6 +3459,8 @@ async function loadProcesses() {
   fracResultado = analisarFracionamento(processes);
   updateAgendaBadge();
   try { renderNotificacoes(); } catch {}
+  const bp = document.getElementById('badge-processos');
+  if (bp) bp.textContent = processes.length;
 }
 
 let _saveIndicatorTimer = null;
@@ -10161,7 +10172,21 @@ async function _checkSenhaAcesso() {
 function _onLoginSuccess() {
   const tabUsuarios = document.getElementById('cfg-tab-usuarios');
   if (tabUsuarios) tabUsuarios.style.display = _apiUser?.admin ? '' : 'none';
+  _atualizarSidebarUsuario();
   if (typeof carregarDashboard === 'function') carregarDashboard();
+}
+
+function _atualizarSidebarUsuario() {
+  const u = getUser();
+  const nome  = _apiUser?.nome  || u.nome  || '—';
+  const cargo = _apiUser?.cargo || u.cargo || 'Usuário';
+  const orgao = u.orgao || '—';
+  const inicial = nome.trim().split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || '?';
+  const el = id => document.getElementById(id);
+  if (el('sidebar-nome'))   el('sidebar-nome').textContent   = nome;
+  if (el('sidebar-cargo'))  el('sidebar-cargo').textContent  = cargo;
+  if (el('sidebar-avatar')) el('sidebar-avatar').textContent = inicial;
+  if (el('sidebar-orgao'))  el('sidebar-orgao').textContent  = orgao;
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -10411,6 +10436,7 @@ async function saveSettings() {
     playSuccess();
   }
   localStorage.setItem('sgcd-user', JSON.stringify(u));
+  _atualizarSidebarUsuario();
 
   // Atualiza nome do órgão no header
   const hdrInst = document.getElementById('hdr-instituicao');
@@ -10578,13 +10604,7 @@ function _applyTemaCor(val) {
   if (val && val !== 'laranja') document.documentElement.classList.add('tema-' + val);
 }
 
-function _applySidebarMode(val) {
-  const sidebar = document.getElementById('sidebar');
-  const app = document.getElementById('app');
-  const expanded = val === 'expandida';
-  sidebar.classList.toggle('sidebar-expanded', expanded);
-  app.classList.toggle('sidebar-expanded-app', expanded);
-}
+function _applySidebarMode() { /* ponytail: sidebar agora é sempre 220px */ }
 
 function toggleMoreActions(e) {
   e.stopPropagation();
