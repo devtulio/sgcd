@@ -1305,7 +1305,7 @@
         <button class="btn btn-ghost btn-icon" onclick="fecharPickForn()">✕</button>
       </div>
       <div class="modal-body" style="padding-top:8px">
-        <input type="text" id="forn-pick-search" placeholder="Buscar por razão social ou CNPJ…" oninput="renderPickFornList()" style="width:100%;margin-bottom:10px">
+        <input type="text" id="forn-pick-search" placeholder="Buscar por razão social ou CNPJ…" oninput="_debouncedRenderPickForn()" style="width:100%;margin-bottom:10px">
         <div id="forn-pick-list" style="max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:6px"></div>
       </div>
     </div>
@@ -2048,7 +2048,7 @@
   <div class="gsearch-box">
     <div class="gsearch-input-wrap">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--gray-500);flex-shrink:0"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input type="text" id="global-search-input" placeholder="Buscar por PA, DL, objeto, fornecedor, unidade…" oninput="renderGlobalSearch(this.value)">
+      <input type="text" id="global-search-input" placeholder="Buscar por PA, DL, objeto, fornecedor, unidade…" oninput="_debouncedGlobalSearch(this.value)">
       <kbd style="font-size:.7rem;color:var(--gray-500);background:var(--gray-100);padding:2px 6px;border-radius:4px;flex-shrink:0">Esc</kbd>
     </div>
     <div class="gsearch-results" id="global-search-results"></div>
@@ -4378,9 +4378,32 @@ function _getDashFilters() {
   };
 }
 
-// Versões debounced para inputs de busca (evita renderDash a cada tecla)
-const _debouncedRenderDash = _debounce(renderDash, 150);
-const _debouncedRenderForn = _debounce(renderFornecedores, 150);
+// Aplica os filtros do dashboard a uma lista de processos e retorna o subset filtrado
+function _applyDashFilters(list, f) {
+  return list.filter(p => {
+    const st = processStatus(p);
+    if (f.fSt && st !== f.fSt) return false;
+    if (f.fUn && p.unidade !== f.fUn) return false;
+    if (f.fDe && p.createdAt < new Date(f.fDe + 'T00:00:00').getTime()) return false;
+    if (f.fAte && p.createdAt > new Date(f.fAte + 'T23:59:59').getTime()) return false;
+    if (f.fVmin !== null && parseValor(p.valor) < f.fVmin) return false;
+    if (f.fVmax !== null && parseValor(p.valor) > f.fVmax) return false;
+    if (f.q) {
+      const fn = typeof p.fornecedor === 'object' ? (p.fornecedor?.razao_social || '') : (p.fornecedor || '');
+      if (![p.num, p.num_proc, p.num_dl, p.objeto, fn, p.unidade].join(' ').toLowerCase().includes(f.q)) return false;
+    }
+    return true;
+  });
+}
+
+// Versões debounced para inputs de busca (evita renderizações a cada tecla)
+const _debouncedRenderDash        = _debounce(renderDash, 150);
+const _debouncedRenderForn        = _debounce(renderFornecedores, 150);
+const _debouncedGlobalSearch      = _debounce(renderGlobalSearch, 100);
+const _debouncedRenderPickForn    = _debounce(renderPickFornList, 150);
+
+// Cache do último resultado filtrado de renderDash() — reutilizado por gerarRelatorio() e exportarCSV()
+let _lastFiltered = null;
 
 let _lastDashFilters = '';
 function renderDash() {
@@ -4414,21 +4437,8 @@ function renderDash() {
     d.filtrosBadge.style.display = nFiltrosAtivos > 0 ? '' : 'none';
   }
 
-  const filtered = processes.filter(p => {
-    const st = processStatus(p);
-    if (fSt && st !== fSt) return false;
-    if (fUn && p.unidade !== fUn) return false;
-    if (fDe && p.createdAt < new Date(fDe + 'T00:00:00').getTime()) return false;
-    if (fAte && p.createdAt > new Date(fAte + 'T23:59:59').getTime()) return false;
-    if (fVmin !== null && parseValor(p.valor) < fVmin) return false;
-    if (fVmax !== null && parseValor(p.valor) > fVmax) return false;
-    if (q) {
-      const fornNome = typeof p.fornecedor === 'object' ? (p.fornecedor?.razao_social || '') : (p.fornecedor || '');
-      const hay = [p.num, p.num_proc, p.num_dl, p.objeto, fornNome, p.unidade].join(' ').toLowerCase();
-      if (!hay.includes(q)) return false;
-    }
-    return true;
-  });
+  _lastFiltered = _applyDashFilters(processes, { q, fSt, fUn, fDe, fAte, fVmin, fVmax });
+  const filtered = _lastFiltered;
 
   // sort
   filtered.sort((a, b) => {
@@ -7361,23 +7371,8 @@ function gerarRelatorio() {
   const now = new Date();
   const dtGer = now.toLocaleDateString('pt-BR') + ' às ' + now.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
 
-  // Apply current dashboard filters to report scope
-  const { q, fSt, fUn, fDe, fAte, fVmin, fVmax } = _getDashFilters();
-
-  const lista = processes.filter(p => {
-    const st = processStatus(p);
-    if (fSt && st !== fSt) return false;
-    if (fUn && p.unidade !== fUn) return false;
-    if (fDe && p.createdAt < new Date(fDe + 'T00:00:00').getTime()) return false;
-    if (fAte && p.createdAt > new Date(fAte + 'T23:59:59').getTime()) return false;
-    if (fVmin !== null && parseValor(p.valor) < fVmin) return false;
-    if (fVmax !== null && parseValor(p.valor) > fVmax) return false;
-    if (q) {
-      const fn = typeof p.fornecedor === 'object' ? (p.fornecedor?.razao_social || '') : (p.fornecedor || '');
-      if (![p.num, p.num_proc, p.num_dl, p.objeto, fn, p.unidade].join(' ').toLowerCase().includes(q)) return false;
-    }
-    return true;
-  });
+  // Reutiliza o resultado já filtrado de renderDash(); refaz só se necessário
+  const lista = _lastFiltered ?? _applyDashFilters(processes, _getDashFilters());
 
   const stLabels = { todo:'Não iniciado', progress:'Em andamento', done:'Concluído', blocked:'Bloqueado' };
   const groups = {};
@@ -7948,22 +7943,7 @@ function renderDashTable(lista) {
 // EXPORTAR CSV
 // ══════════════════════════════════════════════════════════════
 function exportarCSV() {
-  const { q, fSt, fUn, fDe, fAte, fVmin, fVmax } = _getDashFilters();
-
-  const lista = processes.filter(p => {
-    const st = processStatus(p);
-    if (fSt && st !== fSt) return false;
-    if (fUn && p.unidade !== fUn) return false;
-    if (fDe && p.createdAt < new Date(fDe + 'T00:00:00').getTime()) return false;
-    if (fAte && p.createdAt > new Date(fAte+'T23:59:59').getTime()) return false;
-    if (fVmin !== null && parseValor(p.valor) < fVmin) return false;
-    if (fVmax !== null && parseValor(p.valor) > fVmax) return false;
-    if (q) {
-      const fn = typeof p.fornecedor==='object'?(p.fornecedor?.razao_social||''):(p.fornecedor||'');
-      if (![p.num,p.num_proc,p.num_dl,p.objeto,fn,p.unidade].join(' ').toLowerCase().includes(q)) return false;
-    }
-    return true;
-  });
+  const lista = _lastFiltered ?? _applyDashFilters(processes, _getDashFilters());
 
   const stLabels = { todo:'Não iniciado', progress:'Em andamento', done:'Concluído', blocked:'Bloqueado' };
   const esc = v => `"${String(v||'').replace(/"/g,'""')}"`;
