@@ -197,8 +197,8 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         p = parsed.path.rstrip('/')
 
         if p == '/shutdown':
-            tok = self._token()
-            if not tok or tok not in sessions or not sessions[tok].get('admin'):
+            s = get_session(self._token())
+            if not s or not s.get('admin'):
                 try: self._json(403, {'error': 'Acesso negado'})
                 except: pass
                 return
@@ -211,8 +211,7 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
             return
 
         if p == '/send-email':
-            tok = self._token()
-            if not tok or tok not in sessions:
+            if not get_session(self._token()):
                 self._json(401, {'error': 'Não autenticado'}); return
             try:
                 self._send_email(json.loads(self._body()))
@@ -266,13 +265,13 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
             with get_db() as conn:
                 if pid and prefix:
                     total = conn.execute('SELECT COUNT(*) FROM files WHERE process_id LIKE ?', (pid + '%',)).fetchone()[0]
-                    rows  = conn.execute('SELECT id,process_id,step_index,nome_original,mime,tamanho,criado_em FROM files WHERE process_id LIKE ? LIMIT ?', (pid + '%', per)).fetchall()
+                    rows  = conn.execute('SELECT id,process_id,step_index,nome_original,mime,tamanho,uploaded_em FROM files WHERE process_id LIKE ? LIMIT ?', (pid + '%', per)).fetchall()
                 elif pid:
                     total = conn.execute('SELECT COUNT(*) FROM files WHERE process_id=?', (pid,)).fetchone()[0]
-                    rows  = conn.execute('SELECT id,process_id,step_index,nome_original,mime,tamanho,criado_em FROM files WHERE process_id=? LIMIT ?', (pid, per)).fetchall()
+                    rows  = conn.execute('SELECT id,process_id,step_index,nome_original,mime,tamanho,uploaded_em FROM files WHERE process_id=? LIMIT ?', (pid, per)).fetchall()
                 else:
                     total = conn.execute('SELECT COUNT(*) FROM files').fetchone()[0]
-                    rows  = conn.execute('SELECT id,process_id,step_index,nome_original,mime,tamanho,criado_em FROM files LIMIT ?', (per,)).fetchall()
+                    rows  = conn.execute('SELECT id,process_id,step_index,nome_original,mime,tamanho,uploaded_em FROM files LIMIT ?', (per,)).fetchall()
             self._json(200, {'total': total, 'items': [dict(r) for r in rows]})
         elif re.fullmatch(r'/api/files/[^/]+/meta', p):
             fid = p.split('/')[3]
