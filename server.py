@@ -197,7 +197,8 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         p = parsed.path.rstrip('/')
 
         if p == '/shutdown':
-            s = get_session(self._token())
+            qs_tok = parse_qs(parsed.query).get('token', [None])[0]
+            s = get_session(qs_tok or self._token())
             if not s or not s.get('admin'):
                 try: self._json(403, {'error': 'Acesso negado'})
                 except: pass
@@ -242,7 +243,12 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         def qp(k, d=None): v = qs.get(k); return v[0] if v else d
 
         # Auth
-        if p == '/api/auth/me':
+        if p == '/api/auth/logout':
+            tok = qs.get('token', [None])[0] or self._token()
+            delete_session(tok)
+            self._json(200, {'ok': True})
+
+        elif p == '/api/auth/me':
             self._json(200, self._user_dict(s))
 
         # Processos
