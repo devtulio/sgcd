@@ -17,6 +17,7 @@ import urllib.error
 import uuid
 import re
 import base64
+import html as html_mod
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from urllib.parse import urlparse, parse_qs
@@ -196,6 +197,11 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         p = parsed.path.rstrip('/')
 
         if p == '/shutdown':
+            tok = self._token()
+            if not tok or tok not in sessions or not sessions[tok].get('admin'):
+                try: self._json(403, {'error': 'Acesso negado'})
+                except: pass
+                return
             try: self.send_response(200); self.end_headers()
             except: pass
             os._exit(0)
@@ -205,6 +211,9 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
             return
 
         if p == '/send-email':
+            tok = self._token()
+            if not tok or tok not in sessions:
+                self._json(401, {'error': 'Não autenticado'}); return
             try:
                 self._send_email(json.loads(self._body()))
                 self._json(200, {'ok': True})
@@ -855,7 +864,7 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
                 if not b64: continue
                 try:
                     binary    = base64.b64decode(b64)
-                    safe_name = fd.get('nome_disco') or (secrets.token_hex(16) + '.bin')
+                    safe_name = secrets.token_hex(16) + '.bin'
                     with open(os.path.join(UPLOADS_DIR, safe_name), 'wb') as fh:
                         fh.write(binary)
                     conn.execute(
@@ -899,6 +908,7 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
     # ── Verificar documento ───────────────────────────────────────────────────
 
     def _serve_verificar(self, cod):
+        cod_safe = html_mod.escape(cod)
         html = f"""<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -925,7 +935,7 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
   <div class="logo">SGCD — Sistema de Gestão de Contratação Direta</div>
   <h1>Verificação de Autenticidade</h1>
   <p style="font-size:13px;color:#6b7280;margin-bottom:14px">Código informado:</p>
-  <div class="cod">{cod}</div>
+  <div class="cod">{cod_safe}</div>
   <div id="status" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:16px 20px;margin-bottom:20px">
     <p style="font-size:13px;color:#6b7280">Consultando base de dados local…</p>
   </div>
