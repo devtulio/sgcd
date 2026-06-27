@@ -1111,8 +1111,8 @@ def _watchdog():
 init_db()
 threading.Thread(target=_watchdog, daemon=True).start()
 
+socketserver.ThreadingTCPServer.allow_reuse_address = True
 with socketserver.ThreadingTCPServer(('', PORT), SGCDHandler) as httpd:
-    httpd.allow_reuse_address = True
     print(f'SGCD v2.0 Server — http://localhost:{PORT}')
 
     browser = _find_browser()
