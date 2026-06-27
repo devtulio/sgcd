@@ -13,6 +13,7 @@ import time
 import subprocess
 import sys
 import urllib.request
+import logging
 import urllib.error
 import uuid
 import re
@@ -25,8 +26,16 @@ from urllib.parse import urlparse, parse_qs
 PORT          = 3000
 DB_PATH       = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sgcd.db')
 UPLOADS_DIR   = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads')
+LOG_PATH      = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sgcd_errors.log')
 HEARTBEAT_TIMEOUT = 30
 SESSION_TTL   = 8 * 3600  # 8 horas
+
+logging.basicConfig(
+    filename=LOG_PATH, level=logging.ERROR,
+    format='%(asctime)s %(levelname)s %(message)s',
+    datefmt='%Y-%m-%dT%H:%M:%S'
+)
+_log = logging.getLogger('sgcd')
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 os.makedirs(UPLOADS_DIR, exist_ok=True)
@@ -181,6 +190,11 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
 
         if p in ('/health', '/heartbeat'):
             _last_heartbeat = time.time()
+            self._json(200, {'ok': True})
+        elif p == '/api/auth/logout':
+            # Aceita token via query string para suportar sendBeacon
+            tok = qs.get('token', [None])[0] or self._token()
+            delete_session(tok)
             self._json(200, {'ok': True})
         elif p.startswith('/cnpj/'):
             self._proxy_cnpj(p[6:].strip('/'))
@@ -729,15 +743,23 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
 
     def _add_audit(self, data):
         aid = data.get('id') or str(uuid.uuid4())
+        # Compatibilidade com campos antigos do JS (at/ms, evento, usuario, detalhe)
+        ts_raw = data.get('ts') or data.get('at')
+        if isinstance(ts_raw, (int, float)):
+            ts = time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime(ts_raw / 1000))
+        else:
+            ts = ts_raw or _now()
+        tipo   = data.get('type')   or data.get('evento')
+        detail = data.get('detail') or data.get('detalhe')
+        label  = data.get('label')  or data.get('evento')
+        user_nome = data.get('userName') or data.get('user_nome') or data.get('usuario')
+        user_id   = data.get('userId')   or data.get('user_id')
         with get_db() as conn:
             conn.execute(
                 '''INSERT OR REPLACE INTO audit_global
                    (id,ts,user_id,user_nome,type,label,detail,process_id,process_obj)
                    VALUES (?,?,?,?,?,?,?,?,?)''',
-                (aid, data.get('ts') or _now(),
-                 data.get('userId') or data.get('user_id'),
-                 data.get('userName') or data.get('user_nome'),
-                 data.get('type'), data.get('label'), data.get('detail'),
+                (aid, ts, user_id, user_nome, tipo, label, detail,
                  data.get('processId') or data.get('process_id'),
                  json.dumps(data['processObj']) if data.get('processObj') else data.get('process_obj'))
             )
@@ -1071,7 +1093,10 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(payload)
 
-    def handle_error(self, request, client_address): pass
+    def handle_error(self, request, client_address):
+        import traceback
+        _log.error('Erro na requisição de %s:\n%s', client_address, traceback.format_exc())
+
     def log_message(self, fmt, *args): pass
 
 # ── Utilitários ───────────────────────────────────────────────────────────────
