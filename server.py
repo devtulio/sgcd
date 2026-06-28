@@ -1430,19 +1430,11 @@ def _do_db_backup(cfg=None):
         _log.error('Falha no backup automático: %s', e)
         return None
 
-def _backup_loop():
-    while True:
-        time.sleep(24 * 3600)
-        cfg = _get_backup_cfg()
-        _do_db_backup(cfg)
-        _rotate_backups(cfg)
-
 # ── Inicialização ─────────────────────────────────────────────────────────────
 
 init_db()
 _rotate_backups(_get_backup_cfg())  # limpa excedentes dos backups da sessão anterior
-threading.Thread(target=_watchdog,     daemon=True).start()
-threading.Thread(target=_backup_loop,  daemon=True).start()
+threading.Thread(target=_watchdog, daemon=True).start()
 
 socketserver.ThreadingTCPServer.allow_reuse_address = True
 with socketserver.ThreadingTCPServer(('', PORT), SGCDHandler) as httpd:
