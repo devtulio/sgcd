@@ -2419,7 +2419,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.2.0';
+const SGCD_VERSION = '2.3.0';
 document.title = `SGCD v${SGCD_VERSION}`;
 // ── API wrapper (REST) ────────────────────────────────────────
 let _apiToken = localStorage.getItem('sgcd-token') || null;
@@ -3008,6 +3008,11 @@ const STEPS = [
     sub: 'Registro de cotações e definição do preço de referência — IN SEGES nº 65/2021',
     fields: ['responsavel','data_conclusao','valor_estimado','observacoes'],
     cotacoes: true
+  },
+  {
+    name: 'Indicação de Dotação Orçamentária',
+    sub: 'Verificação de disponibilidade orçamentária — Art. 12, VII',
+    fields: ['responsavel','data_conclusao','observacoes']
   },
   {
     name: 'Enquadramento Legal',
@@ -5869,6 +5874,16 @@ async function openProcess(id) {
     const forn = currentProcess.fornecedor;
     const fornRazao = typeof forn === 'object' ? (forn?.razao_social || forn?.nome_fantasia || '') : (forn || '');
     const fornCnpj  = typeof forn === 'object' ? (forn?.cnpj || '') : '';
+
+    // v2.3.0: Dotação Orçamentária inserida na posição 4 — splice para processos antigos
+    if (currentProcess.steps.length === 15) {
+      const sd = STEPS[4];
+      const fields = {};
+      if (u.nome     && sd.fields.includes('responsavel')) fields.responsavel = u.nome;
+      if (u.aut_nome && sd.fields.includes('autoridade'))  fields.autoridade  = u.aut_nome;
+      currentProcess.steps.splice(4, 0, { status: 'pending', fields, completedAt: null });
+      changed = true;
+    }
 
     // Migra steps ausentes (processo criado com versão anterior com menos etapas)
     while (currentProcess.steps.length < STEPS.length) {

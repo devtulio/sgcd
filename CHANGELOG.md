@@ -5,6 +5,14 @@
 
 ---
 
+## [2.3.0] — 2026-06-28
+
+### Adicionado
+- **Etapa "Indicação de Dotação Orçamentária"** inserida entre a Pesquisa de Preços (etapa 4) e o Enquadramento Legal (agora etapa 6) — Art. 12, inciso VII da Lei 14.133/2021
+- **Migração automática de processos existentes** — ao abrir um processo criado antes da v2.3.0, o sistema insere a nova etapa na posição correta (splice em índice 4) sem perda de dados das demais etapas
+
+---
+
 ## [2.2.0] — 2026-06-28
 
 ### Adicionado
