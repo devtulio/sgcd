@@ -1688,16 +1688,6 @@
         <p style="font-size:.75rem;color:var(--gray-500);margin-bottom:20px">Estas informações serão usadas para pré-preencher os campos de responsável e para subsidiar a geração da Ata.</p>
 
         <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
-          <legend style="font-size:.72rem;font-weight:700;color:var(--brand);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Agente de Contratação</legend>
-          <div class="info-field"><label>Nome Completo *</label>
-            <input type="text" id="s-nome" placeholder="Ex: João da Silva"></div>
-          <div class="info-field"><label>Cargo / Função</label>
-            <input type="text" id="s-cargo" placeholder="Ex: Agente de Contratação"></div>
-          <div class="info-field"><label>Matrícula</label>
-            <input type="text" id="s-matricula" placeholder="Ex: 12345"></div>
-        </fieldset>
-
-        <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
           <legend style="font-size:.72rem;font-weight:700;color:var(--aubergine-mid);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Órgão</legend>
           <div class="info-field"><label>Nome do Órgão</label>
             <input type="text" id="s-orgao" placeholder="Ex: Prefeitura Municipal de Orindiúva"></div>
@@ -9984,7 +9974,16 @@ function applyTheme(dark) {
 // USER SETTINGS
 // ══════════════════════════════════════════════════════════════
 function getUser() {
-  try { return JSON.parse(localStorage.getItem('sgcd-user') || '{}'); } catch { return {}; }
+  try {
+    const settings = JSON.parse(localStorage.getItem('sgcd-user') || '{}');
+    // nome/cargo/matricula vêm sempre do usuário logado, não das settings
+    if (_apiUser) {
+      settings.nome      = _apiUser.nome      || settings.nome      || '';
+      settings.cargo     = _apiUser.cargo     || settings.cargo     || '';
+      settings.matricula = _apiUser.matricula || settings.matricula || '';
+    }
+    return settings;
+  } catch { return {}; }
 }
 function getSmtp() {
   try { return JSON.parse(localStorage.getItem('sgcd-smtp') || '{}'); } catch { return {}; }
@@ -10363,9 +10362,6 @@ function updateHeaderUser() {
 }
 function showSettings() {
   const u = getUser();
-  document.getElementById('s-nome').value        = u.nome        || '';
-  document.getElementById('s-cargo').value       = u.cargo       || '';
-  document.getElementById('s-matricula').value   = u.matricula   || '';
   document.getElementById('s-orgao').value       = u.orgao       || '';
   document.getElementById('s-municipio').value   = u.municipio   || '';
   document.getElementById('s-aut-nome').value      = u.aut_nome      || '';
@@ -10424,7 +10420,7 @@ function showSettings() {
   _hideAllViews();
   document.getElementById('view-settings').classList.add('active');
   setNavActive('nav-settings');
-  document.getElementById('s-nome').focus();
+  document.getElementById('s-orgao').focus();
   playClick();
 
   // Detecta mudanças nos campos para ativar indicador de "não salvo"
@@ -10437,12 +10433,7 @@ function showSettings() {
   }
 }
 async function saveSettings() {
-  const nome = document.getElementById('s-nome').value.trim();
-  if (!nome) { toast('Informe seu nome completo.', 'error'); return; }
   const u = {
-    nome,
-    cargo:            document.getElementById('s-cargo').value.trim(),
-    matricula:        document.getElementById('s-matricula').value.trim(),
     orgao:            document.getElementById('s-orgao').value.trim(),
     municipio:        document.getElementById('s-municipio').value.trim(),
     aut_nome:         document.getElementById('s-aut-nome').value.trim(),
