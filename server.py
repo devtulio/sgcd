@@ -1,4 +1,4 @@
-# SGCD v2.0.0 — Servidor local: SQLite, autenticação, REST API, proxy CNPJ, e-mail SMTP
+# SGCD v2.1.0 — Servidor local: SQLite, autenticação, REST API, proxy CNPJ, e-mail SMTP, backup automático
 import http.server
 import socketserver
 import os
@@ -44,6 +44,8 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 os.makedirs(UPLOADS_DIR, exist_ok=True)
 
 _last_heartbeat = time.time()
+_watchdog_paused = False   # pausa o watchdog durante diálogos bloqueantes (ex: FolderBrowser)
+_session_active  = False   # True após primeiro heartbeat autenticado; backup só ocorre se houve sessão real
 
 # ── Banco de dados ────────────────────────────────────────────────────────────
 
@@ -194,8 +196,17 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         qs = parse_qs(parsed.query)
 
         if p in ('/health', '/heartbeat'):
+            global _last_heartbeat, _session_active
             _last_heartbeat = time.time()
+            _session_active  = True
             self._json(200, {'ok': True})
+        elif p == '/api/public/last-backup':
+            try:
+                with get_db() as conn:
+                    row = conn.execute("SELECT value FROM sys_settings WHERE key='auto_backup_last'").fetchone()
+                self._json(200, {'ts': row['value'] if row else None})
+            except Exception:
+                self._json(200, {'ts': None})
         elif p == '/api/auth/logout':
             # Aceita token via query string para suportar sendBeacon
             tok = qs.get('token', [None])[0] or self._token()
@@ -224,6 +235,12 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
                 return
             try: self.send_response(200); self.end_headers()
             except: pass
+            cfg = _get_backup_cfg()
+            if cfg['enabled']:
+                _do_json_backup(cfg)
+                _do_db_backup(cfg)
+                # Rotação adiada para o próximo startup: arquivos recém-criados
+                # podem estar bloqueados pelo OneDrive durante a sincronização.
             os._exit(0)
 
         if p == '/api/auth/login':
@@ -345,15 +362,86 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
             if not s['admin']: self._json(403, {'error': 'Acesso negado'}); return
             self._export_backup()
 
+        elif p == '/api/backup/db':
+            if not s['admin']: self._json(403, {'error': 'Acesso negado'}); return
+            import tempfile as _tf
+            tmp = _tf.NamedTemporaryFile(suffix='.db', delete=False)
+            tmp.close()
+            try:
+                with sqlite3.connect(DB_PATH) as src, sqlite3.connect(tmp.name) as bk:
+                    src.backup(bk)
+                with open(tmp.name, 'rb') as f:
+                    data_bytes = f.read()
+                name = time.strftime('DB_SGCD_BACKUP_%Y-%m-%d_%H-%M-%S.db')
+                self.send_response(200); self._cors()
+                self.send_header('Content-Type', 'application/octet-stream')
+                self.send_header('Content-Length', str(len(data_bytes)))
+                self.send_header('Content-Disposition', f'attachment; filename="{name}"')
+                self.end_headers()
+                self.wfile.write(data_bytes)
+            finally:
+                try: os.remove(tmp.name)
+                except: pass
+
+        elif p == '/api/backups/cfg':
+            if not s['admin']: self._json(403, {'error': 'Acesso negado'}); return
+            self._json(200, _get_backup_cfg())
+
+        elif p == '/api/dialog/folder':
+            if not s['admin']: self._json(403, {'error': 'Acesso negado'}); return
+            global _watchdog_paused
+            _watchdog_paused = True
+            try:
+                import subprocess as _sp
+                ps_cmd = (
+                    'Add-Type -AssemblyName System.Windows.Forms;'
+                    '$d=New-Object System.Windows.Forms.FolderBrowserDialog;'
+                    '$d.Description="Selecione a pasta de backup do SGCD";'
+                    '$d.ShowNewFolderButton=$true;'
+                    'if($d.ShowDialog()-eq"OK"){Write-Output $d.SelectedPath}'
+                )
+                r = _sp.run(['powershell', '-Sta', '-WindowStyle', 'Hidden', '-Command', ps_cmd],
+                            capture_output=True, text=True, timeout=120)
+                path = r.stdout.strip()
+                self._json(200, {'path': path or None})
+            except Exception as e:
+                self._json(500, {'error': str(e)})
+            finally:
+                _watchdog_paused = False
+
         elif p == '/api/backups/db':
             if not s['admin']: self._json(403, {'error': 'Acesso negado'}); return
+            cfg = _get_backup_cfg()
+            bdir = cfg['path']
             files = sorted(
-                (f for f in os.listdir(BACKUP_DIR) if f.startswith('sgcd_') and f.endswith('.db')),
+                (f for f in os.listdir(bdir) if f.startswith('DB_SGCD_BACKUP_') and f.endswith('.db')),
                 reverse=True
-            ) if os.path.isdir(BACKUP_DIR) else []
-            items = [{'name': f, 'size': os.path.getsize(os.path.join(BACKUP_DIR, f)),
-                      'ts': f[5:24].replace('_', 'T').replace('-', ':', 2)} for f in files]
-            self._json(200, {'items': items})
+            ) if os.path.isdir(bdir) else []
+            def _parse_ts(f):
+                # DB_SGCD_BACKUP_2026-06-27_20-35-41.db → 2026-06-27T20:35:41
+                d = f[15:25]; t = f[26:34].replace('-', ':')
+                return f'{d}T{t}'
+            items = [{'name': f, 'size': os.path.getsize(os.path.join(bdir, f)),
+                      'ts': _parse_ts(f)} for f in files]
+            with get_db() as conn:
+                last_row = conn.execute("SELECT value FROM sys_settings WHERE key='auto_backup_last'").fetchone()
+            last_backup = last_row['value'] if last_row else None
+            self._json(200, {'items': items, 'path': bdir, 'cfg': cfg, 'last_backup': last_backup})
+
+        elif p.startswith('/api/backups/db/download'):
+            if not s['admin']: self._json(403, {'error': 'Acesso negado'}); return
+            name = parse_qs(parsed.query).get('name', [None])[0]
+            if not name or not name.startswith('DB_SGCD_BACKUP_') or not name.endswith('.db') or '/' in name or '\\' in name:
+                self._json(400, {'error': 'Nome inválido'}); return
+            cfg = _get_backup_cfg()
+            fp = os.path.join(cfg['path'], name)
+            if not os.path.exists(fp): self._json(404, {'error': 'Arquivo não encontrado'}); return
+            with open(fp, 'rb') as f: data_bytes = f.read()
+            self.send_response(200); self._cors()
+            self.send_header('Content-Type', 'application/octet-stream')
+            self.send_header('Content-Length', str(len(data_bytes)))
+            self.send_header('Content-Disposition', f'attachment; filename="{name}"')
+            self.end_headers(); self.wfile.write(data_bytes)
 
         else:
             self._json(404, {'error': 'Rota não encontrada'})
@@ -392,6 +480,10 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         elif p == '/api/backup/restore':
             if not s['admin']: self._json(403, {'error': 'Acesso negado'}); return
             self._restore_backup(data)
+
+        elif p == '/api/backups/db/restore':
+            if not s['admin']: self._json(403, {'error': 'Acesso negado'}); return
+            self._restore_db_backup(body)
 
         elif p == '/api/files':
             self._upload_file_direct(s)
@@ -510,7 +602,9 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
 
     def _token(self):
         auth = self.headers.get('Authorization', '')
-        return auth[7:] if auth.startswith('Bearer ') else None
+        if auth.startswith('Bearer '): return auth[7:]
+        qs_tok = parse_qs(urlparse(self.path).query).get('token', [None])[0]
+        return qs_tok
 
     def _auth(self):
         s = get_session(self._token())
@@ -799,6 +893,8 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
             for key, value in data.items():
                 v = value if isinstance(value, str) else json.dumps(value, ensure_ascii=False)
                 conn.execute('INSERT OR REPLACE INTO sys_settings (key,value) VALUES (?,?)', (key, v))
+        if 'auto_backup_keep' in data or 'backup_path' in data:
+            _rotate_backups()
         self._json(200, {'ok': True})
 
     # ── Usuários ──────────────────────────────────────────────────────────────
@@ -878,7 +974,7 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         self.send_header('Content-Type', 'application/json')
         self.send_header('Content-Length', str(len(payload)))
         self.send_header('Content-Disposition',
-                         f'attachment; filename="SGCD_backup_{time.strftime("%Y-%m-%d")}.json"')
+                         f'attachment; filename="SIS_SGCD_BACKUP_{time.strftime("%Y-%m-%d_%H-%M-%S")}.json"')
         self.end_headers()
         self.wfile.write(payload)
 
@@ -950,6 +1046,33 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
                     pass
 
         self._json(200, {'ok': True})
+
+    def _restore_db_backup(self, raw_bytes):
+        # raw_bytes é o conteúdo bruto do arquivo .db enviado via multipart ou binário
+        if len(raw_bytes) < 16 or raw_bytes[:16] != b'SQLite format 3\x00':
+            self._json(400, {'error': 'Arquivo não é um banco SQLite válido'}); return
+        import tempfile
+        tmp = tempfile.NamedTemporaryFile(suffix='.db', delete=False)
+        try:
+            tmp.write(raw_bytes); tmp.close()
+            # Valida que o arquivo tem as tabelas esperadas
+            with sqlite3.connect(tmp.name) as test_conn:
+                tables = {r[0] for r in test_conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
+            required = {'processes', 'fornecedores', 'sys_settings'}
+            if not required.issubset(tables):
+                self._json(400, {'error': 'Banco inválido: tabelas obrigatórias ausentes'}); return
+            # Backup do atual antes de restaurar
+            _do_db_backup()
+            # Substitui o banco atual com o backup via API de backup SQLite (seguro)
+            with sqlite3.connect(tmp.name) as src, get_db() as dst:
+                src.backup(dst)
+            self._json(200, {'ok': True})
+        except Exception as e:
+            _log.error('Erro ao restaurar banco: %s', e)
+            self._json(500, {'error': str(e)})
+        finally:
+            try: os.remove(tmp.name)
+            except: pass
 
     # ── CNPJ Proxy ────────────────────────────────────────────────────────────
 
@@ -1194,26 +1317,107 @@ def _find_browser():
 def _watchdog():
     while True:
         time.sleep(5)
+        if _watchdog_paused:
+            continue
         idle = time.time() - _last_heartbeat
         if idle > HEARTBEAT_TIMEOUT:
             print(f'\nSem heartbeat há {idle:.0f}s. Encerrando servidor...')
+            cfg = _get_backup_cfg()
+            if cfg['enabled'] and _session_active:
+                print('Executando backup automático antes de encerrar...')
+                _do_json_backup(cfg)
+                _do_db_backup(cfg)
             os._exit(0)
 
 # ── Backup automático do banco ─────────────────────────────────────────────────
 
-def _do_db_backup():
-    import shutil as _shutil
-    os.makedirs(BACKUP_DIR, exist_ok=True)
-    name = time.strftime('sgcd_%Y-%m-%d_%H-%M-%S.db')
-    dst  = os.path.join(BACKUP_DIR, name)
+def _do_json_backup(cfg=None):
+    if cfg is None: cfg = _get_backup_cfg()
+    bdir = cfg['path']
+    keep = cfg['keep']
+    os.makedirs(bdir, exist_ok=True)
+    name = time.strftime('SIS_SGCD_BACKUP_%Y-%m-%d_%H-%M-%S.json')
+    dst  = os.path.join(bdir, name)
+    try:
+        with get_db() as conn:
+            processes    = [json.loads(r['data']) for r in conn.execute('SELECT data FROM processes').fetchall()]
+            fornecedores = [json.loads(r['data']) for r in conn.execute('SELECT data FROM fornecedores').fetchall()]
+            audit        = [dict(r) for r in conn.execute('SELECT * FROM audit_global').fetchall()]
+            settings     = {r['key']: r['value'] for r in conn.execute('SELECT key,value FROM sys_settings').fetchall()}
+            file_rows    = conn.execute('SELECT * FROM files').fetchall()
+        files_out = []
+        for fr in file_rows:
+            fp = os.path.join(UPLOADS_DIR, fr['nome_disco'])
+            b64 = ''
+            if os.path.exists(fp):
+                with open(fp, 'rb') as f:
+                    b64 = base64.b64encode(f.read()).decode()
+            files_out.append({**dict(fr), 'data_b64': b64})
+        backup = {
+            '_sgcd': True, 'version': 4, 'exportedAt': _now(),
+            'processes': processes, 'fornecedores': fornecedores,
+            'auditGlobal': audit, 'settings': settings, 'files': files_out,
+        }
+        with open(dst, 'w', encoding='utf-8') as f:
+            json.dump(backup, f, ensure_ascii=False)
+        print(f'Backup JSON automático: {name}')
+        return name
+    except Exception as e:
+        _log.error('Falha no backup JSON automático: %s', e)
+        return None
+
+def _rotate_backups(cfg=None):
+    if cfg is None: cfg = _get_backup_cfg()
+    bdir = cfg['path']
+    keep = cfg['keep']
+    if not os.path.isdir(bdir): return
+    for prefix, ext in [('DB_SGCD_BACKUP_', '.db'), ('SIS_SGCD_BACKUP_', '.json')]:
+        files = sorted(f for f in os.listdir(bdir) if f.startswith(prefix) and f.endswith(ext))
+        to_delete = files[:-keep] if keep else files
+        for old in to_delete:
+            fp = os.path.join(bdir, old)
+            for attempt in range(6):  # tenta por até ~10s (OneDrive pode manter o arquivo aberto)
+                try:
+                    os.remove(fp)
+                    print(f'Rotação: removido {old}')
+                    break
+                except PermissionError:
+                    if attempt < 5:
+                        time.sleep(2)
+                    else:
+                        _log.error('Falha ao remover backup %s: arquivo bloqueado (OneDrive/antivírus). Remova manualmente.', old)
+                except Exception as e:
+                    _log.error('Falha ao remover backup %s: %s', old, e)
+                    break
+
+def _get_backup_cfg():
+    try:
+        with get_db() as conn:
+            rows = conn.execute(
+                "SELECT key,value FROM sys_settings WHERE key IN ('backup_path','auto_backup_enabled','auto_backup_keep')"
+            ).fetchall()
+        cfg = {r['key']: r['value'] for r in rows}
+    except Exception:
+        cfg = {}
+    return {
+        'path':    cfg.get('backup_path') or BACKUP_DIR,
+        'enabled': cfg.get('auto_backup_enabled', '1') != '0',
+        'keep':    max(1, int(cfg.get('auto_backup_keep') or BACKUP_KEEP)),
+    }
+
+def _do_db_backup(cfg=None):
+    if cfg is None: cfg = _get_backup_cfg()
+    bdir = cfg['path']
+    keep = cfg['keep']
+    os.makedirs(bdir, exist_ok=True)
+    name = time.strftime('DB_SGCD_BACKUP_%Y-%m-%d_%H-%M-%S.db')
+    dst  = os.path.join(bdir, name)
     try:
         with sqlite3.connect(DB_PATH) as src, sqlite3.connect(dst) as bk:
             src.backup(bk)
-        # Rotação: manter apenas os últimos BACKUP_KEEP arquivos
-        files = sorted(f for f in os.listdir(BACKUP_DIR) if f.startswith('sgcd_') and f.endswith('.db'))
-        for old in files[:-BACKUP_KEEP]:
-            try: os.remove(os.path.join(BACKUP_DIR, old))
-            except: pass
+        # Registra timestamp do último backup
+        with get_db() as conn:
+            conn.execute("INSERT OR REPLACE INTO sys_settings (key,value) VALUES ('auto_backup_last',?)", (_now(),))
         print(f'Backup automático: {name}')
         return name
     except Exception as e:
@@ -1223,18 +1427,20 @@ def _do_db_backup():
 def _backup_loop():
     while True:
         time.sleep(24 * 3600)
-        _do_db_backup()
+        cfg = _get_backup_cfg()
+        _do_db_backup(cfg)
+        _rotate_backups(cfg)
 
 # ── Inicialização ─────────────────────────────────────────────────────────────
 
 init_db()
-_do_db_backup()  # backup ao iniciar
+_rotate_backups(_get_backup_cfg())  # limpa excedentes dos backups da sessão anterior
 threading.Thread(target=_watchdog,     daemon=True).start()
 threading.Thread(target=_backup_loop,  daemon=True).start()
 
 socketserver.ThreadingTCPServer.allow_reuse_address = True
 with socketserver.ThreadingTCPServer(('', PORT), SGCDHandler) as httpd:
-    print(f'SGCD v2.0 Server — http://localhost:{PORT}')
+    print(f'SGCD v2.1 Server — http://localhost:{PORT}')
 
     browser = _find_browser()
     if browser:

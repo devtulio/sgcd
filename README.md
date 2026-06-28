@@ -1,6 +1,6 @@
 # SGCD — Sistema de Gestão de Contratação Direta
 
-![Versão](https://img.shields.io/badge/versão-v2.0.0-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-SQLite%20%2B%20REST%20API-orange) ![Licença](https://img.shields.io/badge/licença-MIT-green)
+![Versão](https://img.shields.io/badge/versão-v2.1.0-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-SQLite%20%2B%20REST%20API-orange) ![Licença](https://img.shields.io/badge/licença-MIT-green)
 
 ## Descrição
 
@@ -55,7 +55,7 @@ A partir da versão 2.0, os dados são armazenados em **SQLite** via servidor lo
 - **Alertas visuais** para processos parados há mais de 15 dias e prazos vencidos
 - **Alertas de validade de certidões** — badges visuais indicando certidões vencidas (borda vermelha) ou próximas do vencimento em 30 dias (borda amarela) diretamente na lista de certidões
 - **Brasão personalizado** exibido nos documentos gerados
-- **Auto-backup automático** — snapshot gravado no localStorage 3 segundos após cada salvamento; banner de alerta laranja exibido quando o último backup manual tem mais de 7 dias
+- **Backup automático ao fechar** — cria `SIS_SGCD_BACKUP_*.json` e `DB_SGCD_BACKUP_*.db` ao encerrar o sistema (botão Fechar Sistema ou fechamento da janela); pasta, quantidade de arquivos mantidos e toggle configuráveis em Configurações → Backup de Dados; rotação aplicada na próxima inicialização
 - **Validação ao concluir etapa** — ao marcar uma etapa como concluída, o sistema verifica campos obrigatórios e exibe confirmação listando os campos faltantes (não bloqueante)
 - **Autenticação multiusuário** — login com usuário e senha; hashing PBKDF2-HMAC-SHA256; sessões server-side; admin pode criar, editar e desativar usuários; aba "Segurança" permite alterar a própria senha
 - **Painel de Diagnóstico** — aba "Diagnóstico" nas Configurações analisa todos os processos e fornecedores, classificando inconsistências em Erros críticos, Avisos e Informações
