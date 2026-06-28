@@ -5,6 +5,17 @@
 
 ---
 
+## [2.5.0] — 2026-06-28
+
+### Adicionado
+- **Certidão do dashboard abre fornecedor** — clicar num card de "Certidões que precisam de atenção" navega para a tela de Fornecedores e abre o cadastro diretamente na aba Certidões
+
+### Corrigido
+- **Opção de tema "Laranja" renomeada para "Institucional"** — o sistema usa navy `#1a3a6b` como padrão desde a migração visual; o rótulo agora reflete a cor real exibida
+- **Tema "Azul" diferenciado** — antes duplicava o institucional (`#1a3a6b`); agora usa `#0066CC` (azul distinto)
+
+---
+
 ## [2.4.0] — 2026-06-28
 
 ### Segurança
