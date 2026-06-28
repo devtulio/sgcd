@@ -30,7 +30,7 @@ UPLOADS_DIR   = os.path.join(_BASE, 'uploads')
 BACKUP_DIR    = os.path.join(_BASE, 'backups')
 LOG_PATH      = os.path.join(_BASE, 'sgcd_errors.log')
 BACKUP_KEEP   = 7        # número de backups automáticos mantidos
-SESSION_TTL   = 8 * 3600  # 8 horas
+SESSION_TTL   = 120  # 2 min — renovado pelo ping a cada 30s; expira rápido se browser fechar
 
 logging.basicConfig(
     filename=LOG_PATH, level=logging.ERROR,
@@ -178,6 +178,11 @@ def delete_session(token):
     with get_db() as conn:
         conn.execute('DELETE FROM sessions WHERE token=?', (token,))
 
+def renew_session(token):
+    with get_db() as conn:
+        conn.execute('UPDATE sessions SET expires=? WHERE token=?',
+                     (time.time() + SESSION_TTL, token))
+
 def active_sessions():
     with get_db() as conn:
         return conn.execute('SELECT COUNT(*) FROM sessions WHERE expires>?', (time.time(),)).fetchone()[0]
@@ -287,6 +292,10 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
             delete_session(tok)
             self._json(200, {'ok': True})
             threading.Thread(target=_check_shutdown, daemon=True).start()
+
+        elif p == '/api/auth/ping':
+            renew_session(self._token())
+            self._json(200, {'ok': True})
 
         elif p == '/api/auth/me':
             self._json(200, self._user_dict(s))
@@ -1315,10 +1324,11 @@ def _find_browser():
     return None
 
 def _watchdog():
-    # Limpa sessões expiradas a cada 5 minutos e verifica encerramento
-    # (cobre browsers fechados sem logout explícito — expiram em SESSION_TTL)
+    # Limpa sessões expiradas a cada 30s e verifica encerramento.
+    # Com SESSION_TTL=120s e ping a cada 30s, um browser fechado sem logout
+    # causa encerramento do servidor em no máximo ~2 minutos.
     while True:
-        time.sleep(300)
+        time.sleep(30)
         if _watchdog_paused:
             continue
         with get_db() as conn:
