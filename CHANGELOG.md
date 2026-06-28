@@ -5,6 +5,19 @@
 
 ---
 
+## [2.2.0] — 2026-06-28
+
+### Adicionado
+- **Brasão municipal na sidebar** — `brasao.png` exibido centralizado no topo da sidebar acima do título SGCD; some silenciosamente se o arquivo não estiver presente (`onerror`)
+- **Data e busca na sidebar** — data atual e botão de busca global (Ctrl+K) movidos para a sidebar, abaixo do logo e acima da navegação
+
+### Melhorado
+- **Barra superior removida** — header fixo eliminado; sidebar agora ocupa toda a altura da tela (`top: 0`); layout mais limpo e alinhado ao visual do SGDP
+- **Tema do login totalmente institucional** — fundo `#0d1b35` (navy escuro) substituindo o `#1a0e14` legado Ubuntu/Canonical; glow azul no lugar do laranja; ícone e badge da Lei 14.133/2021 com tinta branca translúcida
+- **Encerramento do servidor mais rápido** — `SESSION_TTL` reduzido de 30s para 15s, watchdog de 10s para 5s e ping do browser de 10s para 5s; servidor encerra em ~20s após o último browser fechar (antes ~40s)
+
+---
+
 ## [2.1.0] — 2026-06-28
 
 ### Adicionado
