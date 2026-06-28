@@ -3012,7 +3012,8 @@ const STEPS = [
   {
     name: 'Indicação de Dotação Orçamentária',
     sub: 'Verificação de disponibilidade orçamentária — Art. 12, VII',
-    fields: ['responsavel','data_conclusao','observacoes']
+    fields: ['responsavel','data_conclusao','observacoes'],
+    dotacaoOrcamentaria: true
   },
   {
     name: 'Enquadramento Legal',
@@ -3100,6 +3101,10 @@ const FIELD_LABELS = {
   valor_adjudicado: 'Valor adjudicado (R$)',
   num_empenho: 'Nº da nota de empenho',
   dotacao: 'Dotação orçamentária',
+  programa_acao: 'Programa/Ação',
+  elemento_despesa: 'Elemento de Despesa',
+  fonte_recursos: 'Fonte de Recursos',
+  dotacao_completa: 'Dotação Completa',
   num_contrato: 'Nº do instrumento contratual',
   vigencia: 'Vigência',
   prazo_propostas: 'Prazo para recebimento de propostas',
@@ -6282,6 +6287,9 @@ function renderStepFields(i, step, data, certFileMap = {}) {
   if (step.cotacoes) {
     html += renderCotacoesSection(i, data);
   }
+  if (step.dotacaoOrcamentaria) {
+    html += renderDotacaoSection(i, data);
+  }
   if (step.enquadramentoLegal) {
     html += `<div style="margin-top:12px"><button class="btn btn-outline btn-sm" onclick="gerarEnquadramentoLegal()">📄 Gerar Justificativa de Enquadramento Legal</button></div>`;
   }
@@ -6748,6 +6756,46 @@ async function _autoFillValorEstimado(stepIdx) {
   currentProcess.valor = val;
   await saveProcess(currentProcess);
   renderInfoFields();
+}
+
+function renderDotacaoSection(stepIdx, data) {
+  const f = data.fields || {};
+  const v = k => escHtml(f[k] || '');
+  return `
+  <div style="margin-top:12px;padding:12px 14px;background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--radius)">
+    <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-500);margin-bottom:10px">Dotação Orçamentária</div>
+    <label>Programa/Ação</label>
+    <input type="text" value="${v('programa_acao')}" placeholder="ex: 04.122.0045.2004.0000"
+      oninput="updateDotacaoField(${stepIdx},'programa_acao',this.value)">
+    <label style="margin-top:8px">Elemento de Despesa</label>
+    <input type="text" value="${v('elemento_despesa')}" placeholder="ex: 3.90.39.00 Outros Serviços de Terceiros"
+      oninput="updateDotacaoField(${stepIdx},'elemento_despesa',this.value)">
+    <label style="margin-top:8px">Fonte de Recursos</label>
+    <input type="text" value="${v('fonte_recursos')}" placeholder="ex: 01 - Tesouro"
+      oninput="updateDotacaoField(${stepIdx},'fonte_recursos',this.value)">
+    <label style="margin-top:8px">Dotação Completa</label>
+    <input type="text" id="dotacao-completa-${stepIdx}" value="${v('dotacao_completa')}" placeholder="Preenchida automaticamente ou manualmente"
+      onchange="updateField(${stepIdx},'dotacao_completa',this.value)">
+  </div>`;
+}
+
+async function updateDotacaoField(stepIdx, field, value) {
+  await updateField(stepIdx, field, value);
+  // Auto-monta dotação completa se os 3 campos estiverem preenchidos
+  const fields = currentProcess.steps[stepIdx].fields;
+  const prog = (fields.programa_acao || '').trim();
+  const elem = (fields.elemento_despesa || '').trim();
+  const fonte = (fields.fonte_recursos || '').trim();
+  if (prog && elem && fonte) {
+    // Extrai só a parte numérica da fonte (ex: "01 - Tesouro" → "01")
+    const fonteNum = fonte.split(/[\s\-–]/)[0].trim();
+    // Extrai só a parte numérica do elemento (ex: "3.90.39.00 Outros..." → "3.90.39.00")
+    const elemNum = elem.split(/\s/)[0].trim();
+    const completa = `${prog}.${elemNum}.${fonteNum}`;
+    const el = document.getElementById(`dotacao-completa-${stepIdx}`);
+    if (el && !fields.dotacao_completa) el.value = completa;
+    if (!fields.dotacao_completa) await updateField(stepIdx, 'dotacao_completa', completa);
+  }
 }
 
 function renderCotacoesSection(stepIdx, data) {
