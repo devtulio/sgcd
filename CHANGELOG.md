@@ -5,6 +5,38 @@
 
 ---
 
+## [2.1.0] — 2026-06-28
+
+### Adicionado
+- **Sistema de backup completo redesenhado** — aba "Backup de Dados" com seleção de pasta via diálogo nativo do Windows (FolderBrowserDialog via PowerShell), dois grupos de backup manual (Sistema JSON e Banco .db), backup automático ao fechar o sistema com campo de quantidade de arquivos mantidos e exibição do último backup
+- **Backup automático ao fechar** — ao encerrar o sistema (botão "Fechar Sistema" ou timeout de heartbeat), cria automaticamente `SIS_SGCD_BACKUP_YYYY-MM-DD_HH-MM-SS.json` e `DB_SGCD_BACKUP_YYYY-MM-DD_HH-MM-SS.db` se a opção estiver habilitada
+- **Rotação de backups** — executada na inicialização do servidor, remove arquivos excedentes da sessão anterior (compatível com pastas no OneDrive, onde arquivos recém-criados ficam bloqueados durante sincronização)
+- **Backup manual do banco de dados** — `GET /api/backup/db` cria cópia SQLite via `src.backup()` e envia diretamente ao browser (mesmo padrão do export JSON, abre diálogo "Salvar como")
+- **Restauração do banco de dados** — `POST /api/backups/db/restore` valida magic bytes SQLite, cria backup de segurança e restaura via API de backup do SQLite sem encerrar o servidor
+- **Nomenclatura padronizada de backups** — sistema: `SIS_SGCD_BACKUP_*`, banco: `DB_SGCD_BACKUP_*`; endpoint `GET /api/backups/db/download?name=xxx` para download de backup específico
+- **Diálogo de seleção de pasta** — `GET /api/dialog/folder` abre FolderBrowserDialog nativo do Windows via PowerShell; watchdog pausado durante abertura do diálogo para evitar timeout
+- **Log de erros persistente** — `sgcd_errors.log` captura todas as exceções do servidor com traceback completo via módulo `logging`; erros de remoção de backup logados com nome do arquivo e motivo
+- **Aviso de CapsLock no login** — banner amarelo exibido abaixo do campo senha quando CapsLock está ativo; detectado via `getModifierState` nos eventos `keydown`, `keyup` e `focus`
+- **Endpoint público `/api/public/last-backup`** — retorna timestamp do último backup automático sem autenticação; usado na tela de login para exibir data real do último backup
+
+### Melhorado
+- **Backup na tela de login** — widget "Último backup exportado" agora exibe o mais recente entre export manual (localStorage) e backup automático (servidor); reflete corretamente os backups feitos ao fechar o sistema
+- **Heartbeat apenas quando autenticado** — JS só envia `/heartbeat` quando `_apiToken` está definido; servidor não considera sessão ativa durante tela de login; watchdog respeita sessão real de uso
+- **Backup automático só após sessão autenticada** — flag `_session_active` marcada no primeiro heartbeat; backup do watchdog não roda se nenhum login foi feito na sessão
+- **Diálogo de confirmação no export do banco** — `exportarBackupDB()` exibe o mesmo modal de confirmação do export do sistema antes de prosseguir
+- **Configurações de backup salvas em `sys_settings`** — `backup_path`, `auto_backup_enabled` e `auto_backup_keep` persistidos no banco; rotação aplicada imediatamente ao salvar nova quantidade de arquivos mantidos
+- **Token via query string em todos os endpoints** — `_token()` aceita `?token=xxx` além do header `Authorization: Bearer`; necessário para upload multipart e operações de restore
+
+### Corrigido
+- **Servidor encerrava ao selecionar pasta de backup** — watchdog pausado (`_watchdog_paused`) enquanto FolderBrowserDialog está aberto; timeout aumentado para 120s
+- **Erro `NameError: sessions`** em `/shutdown` e `/send-email` — substituído dict inexistente por `get_session()`
+- **Erro `OperationalError: no such column: criado_em`** — coluna renomeada para `uploaded_em` em todos os SELECTs de `/api/files`
+- **Datas "Invalid Date" na auditoria** — `_add_audit` aceita campos tanto no formato novo (`ts`, `type`, `user_nome`) quanto no legado (`at`, `evento`, `usuario`); mapeamento reverso adicionado no `dbGetAll('auditGlobal')`
+- **Rotação de backups falhava silenciosamente no OneDrive** — `os.remove` com retry de até 6 tentativas (2s entre cada) e log de erro em caso de falha persistente; rotação movida para startup (quando arquivos da sessão anterior já estão sincronizados)
+- **F5 encerrava o servidor** — `beforeunload` esvaziado; sessões invalidadas automaticamente pelo servidor ao reiniciar; F5 mantém o servidor ativo
+
+---
+
 ## [2.0.0] — 2026-06-27
 
 ### Adicionado

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Manual Operacional — SGCD v2.0.0</title>
+<title>Manual Operacional — SGCD v2.1.0</title>
 <style>
   /* Reset e base */
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -89,7 +89,7 @@
       margin: 20mm 20mm 25mm;
       size: A4;
       @top-center {
-        content: "SGCD v2.0.0 — Manual Operacional";
+        content: "SGCD v2.1.0 — Manual Operacional";
         font-family: 'Times New Roman', serif;
         font-size: 9pt;
         color: #666;
@@ -1065,32 +1065,54 @@
 
 <!-- ─────────────────────────────────────────────── SEÇÃO 12 -->
 <h2 id="sec12">12. Backup e Restauração</h2>
-<p>Como os dados do SGCD ficam armazenados exclusivamente no navegador, é fundamental realizar backups regulares para evitar perda de informações.</p>
+<p>Os dados do SGCD ficam armazenados no banco SQLite <code>sgcd.db</code> gerenciado pelo servidor local. Realize backups regulares para proteger as informações contra falhas de hardware ou exclusão acidental.</p>
 
-<h3>Como fazer backup</h3>
+<h3>Configurar a pasta de backup</h3>
 <ol>
   <li>Clique no ícone de <strong>engrenagem (⚙)</strong> para abrir as Configurações</li>
-  <li>Localize a seção <strong>"Backup de Dados"</strong></li>
-  <li>Clique em <strong>"Exportar Backup"</strong></li>
-  <li>Um arquivo JSON será baixado automaticamente pelo navegador com o nome <code>sgcd-backup-[data].json</code></li>
-  <li>Salve o arquivo em local seguro (pasta local, nuvem, pen drive)</li>
+  <li>Selecione a aba <strong>"Dados"</strong> e localize a seção <strong>"Backup de Dados"</strong></li>
+  <li>Clique em <strong>"Selecionar Pasta"</strong> — o diálogo nativo do Windows abrirá</li>
+  <li>Escolha a pasta onde os arquivos de backup serão salvos (ex.: OneDrive, pasta local)</li>
+  <li>O campo "Manter últimos" define quantos backups automáticos são conservados (padrão: 7)</li>
+  <li>Marque <strong>"Backup automático ao fechar"</strong> para ativar o backup ao encerrar o sistema</li>
 </ol>
 <div class="dica">
-  <strong>Dica:</strong> Faça backup ao menos uma vez por semana, ou sempre antes de limpar o cache do navegador, atualizar o sistema ou formatar o computador.
+  <strong>Dica:</strong> Use uma pasta sincronizada com a nuvem (OneDrive, Google Drive) para garantir cópias externas sem esforço adicional.
 </div>
 
-<h3>Como restaurar um backup</h3>
+<h3>Backup manual — Sistema (JSON)</h3>
 <ol>
-  <li>Nas Configurações, seção "Backup de Dados", clique em <strong>"Restaurar Backup"</strong></li>
-  <li>Selecione o arquivo JSON do backup salvo anteriormente</li>
-  <li>Confirme a operação — todos os dados atuais serão substituídos pelos dados do backup</li>
+  <li>Na seção "Backup de Dados", clique em <strong>"Exportar Sistema"</strong></li>
+  <li>Confirme a operação na janela de diálogo</li>
+  <li>O arquivo <code>SIS_SGCD_BACKUP_YYYY-MM-DD_HH-MM-SS.json</code> será baixado pelo navegador</li>
+  <li>Salve em local seguro — este arquivo contém todos os processos, fornecedores e configurações</li>
+</ol>
+
+<h3>Backup manual — Banco de dados (.db)</h3>
+<ol>
+  <li>Clique em <strong>"Exportar Banco"</strong></li>
+  <li>Confirme a operação</li>
+  <li>O arquivo <code>DB_SGCD_BACKUP_YYYY-MM-DD_HH-MM-SS.db</code> será baixado (cópia SQLite fiel)</li>
+</ol>
+<div class="dica">
+  <strong>Dica:</strong> O backup do banco (.db) é mais completo e pode ser restaurado diretamente. O backup JSON é útil para inspeção e migração de dados.
+</div>
+
+<h3>Backup automático ao fechar</h3>
+<p>Quando a opção <strong>"Backup automático ao fechar"</strong> estiver ativada, o sistema cria automaticamente <code>SIS_SGCD_BACKUP_*.json</code> e <code>DB_SGCD_BACKUP_*.db</code> na pasta configurada ao encerrar — seja pelo botão "Fechar Sistema" ou por fechar a janela após login. A <strong>rotação</strong> (remoção dos arquivos mais antigos além do limite configurado) é executada na próxima inicialização, garantindo compatibilidade com pastas sincronizadas pelo OneDrive.</p>
+<div class="aviso">
+  <strong>Atenção:</strong> Backups automáticos só são criados quando um usuário fez login na sessão. Abrir a janela do sistema sem efetuar login e fechá-la não gera backup.
+</div>
+
+<h3>Como restaurar um backup JSON</h3>
+<ol>
+  <li>Na seção "Backup de Dados", clique em <strong>"Restaurar Backup"</strong></li>
+  <li>Selecione o arquivo <code>SIS_SGCD_BACKUP_*.json</code> salvo anteriormente</li>
+  <li>Confirme a operação — todos os dados atuais serão substituídos pelos dados do arquivo</li>
 </ol>
 <div class="aviso">
-  <strong>Atenção:</strong> A restauração substitui completamente todos os dados atuais (processos, fornecedores e configurações) pelos dados do arquivo de backup. Essa operação não pode ser desfeita. Faça um backup do estado atual antes de restaurar, se necessário.
+  <strong>Atenção:</strong> A restauração substitui completamente todos os dados. Essa operação não pode ser desfeita. Exporte um backup do estado atual antes de restaurar, se necessário.
 </div>
-
-<h3>Auto-backup automático</h3>
-<p>O sistema realiza um <strong>auto-backup automático</strong> no localStorage sempre que um processo é salvo. Essa cópia serve como proteção emergencial contra perda acidental de dados, mas não substitui o backup em arquivo JSON. O auto-backup respeita limites de tamanho: se a base de dados ultrapassar 4 MB, o sistema exibe um aviso e não tenta salvar, evitando erros de quota do navegador.</p>
 
 <h3>Factory Reset — Limpeza total de dados</h3>
 <p>A função <strong>Factory Reset</strong> apaga permanentemente <em>todos</em> os dados do sistema: processos, fornecedores, certidões, configurações e brasão. Para evitar exclusões acidentais, o processo exige <strong>três confirmações sucessivas</strong>:</p>

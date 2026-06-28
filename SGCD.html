@@ -1790,33 +1790,72 @@
       <div class="cfg-panel" id="cfg-dados">
         <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
           <legend style="font-size:.72rem;font-weight:700;color:var(--aubergine-mid);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Backup de Dados</legend>
-          <p style="font-size:.72rem;color:var(--gray-500);margin-bottom:12px;line-height:1.5">Os dados ficam armazenados neste navegador. Faça backups periódicos para evitar perda em caso de limpeza do cache ou troca de dispositivo.</p>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">
-            <button class="btn btn-outline btn-sm" onclick="exportBackup()">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              Exportar Backup
+
+          <!-- Pasta de backup -->
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+            <label style="font-size:.8rem;color:var(--gray-600);white-space:nowrap;min-width:120px">Pasta de backup</label>
+            <input id="s-backup-path" type="text" class="input" style="flex:1;font-size:.8rem;background:var(--gray-50)" readonly placeholder="Nenhuma pasta selecionada">
+            <button class="btn btn-outline btn-sm" onclick="selecionarPastaBackup()" style="white-space:nowrap">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+              Selecionar pasta
             </button>
-            <label class="btn btn-outline btn-sm" style="cursor:pointer">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-              Restaurar Backup
-              <input type="file" accept=".json" style="display:none" onchange="importBackup(this.files[0]).then(()=>this.value='')">
-            </label>
           </div>
-          <div style="border-top:1px solid var(--gray-100);padding-top:10px;margin-bottom:14px">
-            <p style="font-size:.7rem;color:var(--gray-500);margin-bottom:8px;line-height:1.5">
-              <strong style="color:var(--gray-700)">Sincronização entre agentes:</strong> se outro agente exportar o backup dele, importe aqui para mesclar os processos de ambos sem apagar nenhum dado desta instalação.
-            </p>
-            <label class="btn btn-outline btn-sm" style="cursor:pointer;border-color:var(--brand);color:var(--brand)">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
-              Sincronizar com outro agente
-              <input type="file" accept=".json" style="display:none" onchange="sincronizarBackup(this.files[0]).then(()=>this.value='')">
-            </label>
+          <p style="font-size:.7rem;color:var(--gray-500);margin-bottom:12px;line-height:1.5">Backups automáticos e manuais do banco são salvos nesta pasta.</p>
+
+          <hr style="border:none;border-top:1px solid var(--gray-100);margin:4px 0 12px">
+
+          <!-- Backup manual -->
+          <div style="font-size:.8rem;font-weight:600;color:var(--gray-700);margin-bottom:8px">Backup manual</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+            <div style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:10px 12px;display:flex;flex-direction:column;gap:6px">
+              <div style="font-size:.7rem;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:.4px">Sistema (JSON)</div>
+              <button class="btn btn-outline btn-sm" onclick="exportBackup()" style="justify-content:flex-start">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Exportar backup
+              </button>
+              <label class="btn btn-outline btn-sm" style="cursor:pointer;justify-content:flex-start">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Restaurar backup
+                <input type="file" accept=".json" style="display:none" onchange="importBackup(this.files[0]).then(()=>this.value='')">
+              </label>
+            </div>
+            <div style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:10px 12px;display:flex;flex-direction:column;gap:6px">
+              <div style="font-size:.7rem;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:.4px">Banco de dados (.db)</div>
+              <button class="btn btn-outline btn-sm" onclick="exportarBackupDB()" style="justify-content:flex-start">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Exportar backup
+              </button>
+              <label class="btn btn-outline btn-sm" style="cursor:pointer;justify-content:flex-start">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Restaurar backup
+                <input type="file" accept=".db" style="display:none" onchange="restaurarBackupDB(this.files[0]).then(()=>this.value='')">
+              </label>
+            </div>
           </div>
-          <div style="border-top:1px solid var(--gray-100);padding-top:12px;display:flex;flex-direction:column;gap:8px">
-            <div style="font-size:.82rem;font-weight:600;color:var(--gray-700)">Backups automáticos do banco (sgcd.db)</div>
-            <p style="font-size:.7rem;color:var(--gray-500);line-height:1.5">O servidor cria um backup do banco ao iniciar e a cada 24h. Os últimos 7 são mantidos na pasta <code>backups/</code>.</p>
-            <div id="s-db-backups-list" style="font-size:.75rem;color:var(--gray-600)">Carregando…</div>
-            <button class="btn btn-outline btn-sm" onclick="backupDbAgora()" style="align-self:flex-start;margin-top:4px">⬇ Fazer backup agora</button>
+
+          <hr style="border:none;border-top:1px solid var(--gray-100);margin:4px 0 12px">
+
+          <!-- Backup automático -->
+          <div style="display:flex;align-items:flex-start;gap:10px">
+            <label style="display:flex;align-items:center;gap:0;cursor:pointer;flex-shrink:0;margin-top:1px">
+              <input type="checkbox" id="s-auto-backup-enabled" style="margin:0;width:16px;height:16px;cursor:pointer" onchange="document.getElementById('s-auto-backup-sub').style.opacity=this.checked?'1':'.45'">
+            </label>
+            <div style="flex:1">
+              <div style="font-size:.82rem;font-weight:600;color:var(--gray-700)">Backup automático ao fechar o sistema</div>
+              <p style="font-size:.7rem;color:var(--gray-500);margin:3px 0 8px;line-height:1.5">Cria um backup do banco (sgcd.db) sempre que o sistema for encerrado pelo botão Fechar Sistema ou pelo X da janela.</p>
+              <div id="s-auto-backup-sub" style="display:flex;flex-direction:column;gap:8px;padding:10px 12px;background:var(--gray-50);border-radius:var(--radius);border:1px solid var(--gray-100);transition:opacity .15s">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <label style="font-size:.78rem;color:var(--gray-600);white-space:nowrap">Backups mantidos</label>
+                  <input id="s-auto-backup-keep" type="number" class="input" style="width:64px;font-size:.8rem" value="7" min="1" max="99">
+                  <span style="font-size:.75rem;color:var(--gray-500)">arquivos mais recentes</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span style="font-size:.78rem;color:var(--gray-600)">Último backup</span>
+                  <span id="s-auto-backup-last" style="font-size:.78rem;color:var(--gray-700)">—</span>
+                </div>
+                <p style="font-size:.7rem;color:var(--gray-500);margin:0;line-height:1.5">Os arquivos mais antigos são apagados automaticamente ao atingir o limite.</p>
+              </div>
+            </div>
           </div>
         </fieldset>
 
@@ -1934,13 +1973,18 @@
       <div style="position:relative;margin-bottom:20px">
         <input type="password" id="pin-input" placeholder="Digite sua senha" autocomplete="current-password"
           style="width:100%;height:44px;border:1.5px solid #d9d9d9;border-radius:8px;padding:0 44px 0 14px;font-size:15px;color:#1a1a1a;background:#f9f8f8;outline:none;font-family:inherit;letter-spacing:.15em;transition:border-color .15s,box-shadow .15s"
-          onkeydown="if(event.key==='Enter')verificarSenha()"
-          onfocus="this.style.borderColor='#E95420';this.style.boxShadow='0 0 0 3px rgba(233,84,32,.12)';this.style.background='#fff'"
-          onblur="this.style.borderColor='#d9d9d9';this.style.boxShadow='none';this.style.background='#f9f8f8'">
+          onkeydown="if(event.key==='Enter')verificarSenha();_pinCheckCaps(event)"
+          onkeyup="_pinCheckCaps(event)"
+          onfocus="_pinCheckCaps(event);this.style.borderColor='#E95420';this.style.boxShadow='0 0 0 3px rgba(233,84,32,.12)';this.style.background='#fff'"
+          onblur="document.getElementById('pin-caps-warn').style.display='none';this.style.borderColor='#d9d9d9';this.style.boxShadow='none';this.style.background='#f9f8f8'">
         <button onclick="_pinToggleOlho()" tabindex="-1" aria-label="Mostrar ou ocultar senha"
           style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#aea79f;padding:4px;line-height:1;font-size:0">
           <svg id="pin-eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
         </button>
+      </div>
+      <div id="pin-caps-warn" style="display:none;align-items:center;gap:6px;font-size:12px;color:#92400e;background:#fef3c7;border:1px solid #fcd34d;border-radius:6px;padding:6px 10px;margin-top:-12px;margin-bottom:14px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Caps Lock ativo — as letras estão sendo digitadas em maiúsculas
       </div>
 
       <!-- Botão entrar -->
@@ -2390,7 +2434,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.0.0';
+const SGCD_VERSION = '2.1.0';
 document.title = `SGCD v${SGCD_VERSION}`;
 // ── API wrapper (REST) ────────────────────────────────────────
 let _apiToken = localStorage.getItem('sgcd-token') || null;
@@ -2816,7 +2860,7 @@ async function exportBackup() {
     const url  = URL.createObjectURL(blob);
     const a    = Object.assign(document.createElement('a'), {
       href: url,
-      download: `SGCD_backup_${new Date().toISOString().slice(0,10)}.json`
+      download: `SIS_SGCD_BACKUP_${new Date().toISOString().slice(0,10).replace(/-/g,'')}_${new Date().toTimeString().slice(0,8).replace(/:/g,'-')}.json`
     });
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     URL.revokeObjectURL(url);
@@ -10064,6 +10108,14 @@ async function alterarMinhaSenha() {
   show('Senha alterada com sucesso!', true);
 }
 
+function _pinCheckCaps(e) {
+  const warn = document.getElementById('pin-caps-warn');
+  if (!warn) return;
+  // getModifierState funciona em keydown/keyup/focus com teclado
+  const caps = e.getModifierState && e.getModifierState('CapsLock');
+  warn.style.display = caps ? 'flex' : 'none';
+}
+
 function _pinToggleOlho() {
   const inp = document.getElementById('pin-input');
   const ico = document.getElementById('pin-eye-icon');
@@ -10121,17 +10173,26 @@ function _showLoginOverlay() {
     const sigla = u.orgao.split(' ').filter(w => w.length > 3).map(w => w[0]).join('').slice(0,2).toUpperCase() || 'OR';
     document.getElementById('pin-orgao-avatar').textContent = sigla;
   }
-  const lastExport = localStorage.getItem('sgcd-last-manual-export');
   const accessEl = document.getElementById('pin-last-access');
   const daysEl   = document.getElementById('pin-days-ago');
-  if (lastExport) {
-    const d = new Date(parseInt(lastExport));
-    if (accessEl) accessEl.textContent = d.toLocaleString('pt-BR');
-    const dias = Math.floor((Date.now() - parseInt(lastExport)) / 86400000);
-    if (daysEl) daysEl.textContent = dias === 0 ? 'Hoje' : dias === 1 ? 'Ontem' : `${dias}d atrás`;
-  } else {
-    if (accessEl) accessEl.textContent = 'Nenhum backup registrado';
-  }
+  (async () => {
+    const manualTs  = parseInt(localStorage.getItem('sgcd-last-manual-export') || '0') || 0;
+    let autoTs = 0;
+    try {
+      const r = await fetch('http://localhost:3000/api/public/last-backup');
+      const d = await r.json();
+      if (d?.ts) autoTs = new Date(d.ts).getTime();
+    } catch {}
+    const ts = Math.max(manualTs, autoTs);
+    if (ts) {
+      const d = new Date(ts);
+      if (accessEl) accessEl.textContent = d.toLocaleString('pt-BR');
+      const dias = Math.floor((Date.now() - ts) / 86400000);
+      if (daysEl) daysEl.textContent = dias === 0 ? 'Hoje' : dias === 1 ? 'Ontem' : `${dias}d atrás`;
+    } else {
+      if (accessEl) accessEl.textContent = 'Nenhum backup registrado';
+    }
+  })();
   document.querySelectorAll('.sgcd-version-badge').forEach(el => el.textContent = SGCD_VERSION);
   const lastUser = localStorage.getItem('sgcd-last-username');
   const usernameEl = document.getElementById('pin-username');
@@ -10320,7 +10381,7 @@ function showSettings() {
   const temSenha = !!localStorage.getItem('sgcd-access-hash');
   const btnRem = document.getElementById('btn-remover-senha');
   if (btnRem) btnRem.style.display = temSenha ? '' : 'none';
-  _loadDbBackupsList();
+  _loadBackupSettings();
   document.getElementById('s-dark-mode').value = u.dark_mode || 'light';
   document.getElementById('s-layout-width').value = u.layout_width || 'compacto';
   _applyLayoutWidth(u.layout_width || 'compacto');
@@ -10421,6 +10482,13 @@ async function saveSettings() {
   // Atualiza nome do órgão no header
   const hdrInst = document.getElementById('hdr-instituicao');
   if (hdrInst && u.orgao) hdrInst.textContent = u.orgao;
+
+  // Save backup config
+  await API.put('/api/settings', {
+    backup_path:          (document.getElementById('s-backup-path').value.trim() || 'backups'),
+    auto_backup_enabled:  document.getElementById('s-auto-backup-enabled').checked ? '1' : '0',
+    auto_backup_keep:     String(parseInt(document.getElementById('s-auto-backup-keep').value) || 7),
+  });
 
   // Save SMTP config
   const smtpUser = document.getElementById('s-smtp-user').value.trim();
@@ -12245,42 +12313,83 @@ function _docAuthCode(p) {
 // ══════════════════════════════════════════════════════════════
 // BACKUP AUTOMÁTICO DO BANCO
 // ══════════════════════════════════════════════════════════════
-async function _loadDbBackupsList() {
-  const el = document.getElementById('s-db-backups-list');
-  if (!el) return;
+async function _loadBackupSettings() {
   try {
     const r = await API.get('/api/backups/db');
     const d = await API.json(r);
-    const items = d?.items || [];
-    if (!items.length) { el.textContent = 'Nenhum backup encontrado.'; return; }
-    el.innerHTML = items.map(b => {
-      const ts = b.ts ? new Date(b.ts).toLocaleString('pt-BR') : b.name;
-      const mb = (b.size / 1048576).toFixed(2);
-      return `<div style="padding:3px 0;border-bottom:1px solid var(--gray-100)">${ts} — <span style="color:var(--gray-500)">${mb} MB</span></div>`;
-    }).join('');
-  } catch { el.textContent = 'Erro ao carregar lista de backups.'; }
+    const cfg = d?.cfg || {};
+    const pathEl = document.getElementById('s-backup-path');
+    if (pathEl) pathEl.value = d?.path || cfg.path || 'backups';
+    const chk = document.getElementById('s-auto-backup-enabled');
+    if (chk) {
+      chk.checked = cfg.enabled !== false;
+      const sub = document.getElementById('s-auto-backup-sub');
+      if (sub) sub.style.opacity = chk.checked ? '1' : '.45';
+    }
+    const keepEl = document.getElementById('s-auto-backup-keep');
+    if (keepEl) keepEl.value = cfg.keep || 7;
+    const lastEl = document.getElementById('s-auto-backup-last');
+    if (lastEl && d?.last_backup) {
+      lastEl.textContent = new Date(d.last_backup).toLocaleString('pt-BR');
+    }
+  } catch { /* servidor offline */ }
 }
 
-async function backupDbAgora() {
-  const r = await API.post('/api/backups/db/now', {});
-  const d = await API.json(r);
-  if (d?.ok) { toast(`Backup criado: ${d.name}`, 'success'); _loadDbBackupsList(); }
-  else toast('Erro ao criar backup.', 'error');
+async function selecionarPastaBackup() {
+  const btn = document.querySelector('[onclick="selecionarPastaBackup()"]');
+  const orig = btn?.innerHTML;
+  if (btn) btn.innerHTML = 'Aguardando…';
+  try {
+    const r = await API.get('/api/dialog/folder');
+    const d = await API.json(r);
+    if (d?.path) {
+      document.getElementById('s-backup-path').value = d.path;
+      await API.put('/api/settings', { backup_path: d.path });
+      toast('Pasta de backup atualizada!', 'success');
+    }
+  } finally {
+    if (btn && orig) btn.innerHTML = orig;
+  }
+}
+
+async function exportarBackupDB() {
+  const confirmed = await customConfirm(
+    '💡 Guarde o arquivo em local externo à máquina — pasta de rede, servidor municipal, OneDrive/Google Drive institucional — para garantir recuperação em caso de formatação ou falha do equipamento.',
+    { title: 'Exportar Backup do Banco', icon: '🗄️', okLabel: 'Salvar arquivo', okClass: 'btn-primary', cancelLabel: 'Cancelar' }
+  );
+  if (!confirmed) return;
+  const r = await API.get('/api/backup/db');
+  if (!r?.ok) { toast('Erro ao gerar backup do banco.', 'error'); return; }
+  const blob = await r.blob();
+  const url  = URL.createObjectURL(blob);
+  const a    = Object.assign(document.createElement('a'), { href: url,
+    download: `DB_SGCD_BACKUP_${new Date().toISOString().slice(0,10)}_${new Date().toTimeString().slice(0,8).replace(/:/g,'-')}.db`
+  });
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('Backup do banco exportado!', 'success');
+}
+
+async function restaurarBackupDB(file) {
+  if (!file) return;
+  const ok = await customConfirm(
+    `Restaurar banco de dados a partir de <strong>${file.name}</strong>?<br><br>O sistema criará um backup automático do banco atual antes de restaurar. Esta ação substituirá <strong>todos</strong> os dados do banco de dados atual.`,
+    { title: 'Restaurar Banco de Dados', icon: '⚠️', okLabel: 'Restaurar', okClass: 'btn-danger' }
+  );
+  if (!ok) return;
+  const bytes = await file.arrayBuffer();
+  const tok = localStorage.getItem('sgcd-token') || '';
+  const r = await fetch(`http://localhost:3000/api/backups/db/restore?token=${tok}`, {
+    method: 'POST', body: bytes,
+    headers: { 'Content-Type': 'application/octet-stream' }
+  });
+  const d = await r.json().catch(() => ({}));
+  if (d?.ok) toast('Banco restaurado com sucesso! Recarregue a página para ver os dados atualizados.', 'success');
+  else toast(`Erro ao restaurar: ${d?.error || 'falha desconhecida'}`, 'error');
 }
 
 async function checkBackupAlert() {
-  const lastExport = parseInt(localStorage.getItem('sgcd-last-manual-export') || '0');
-  const banner = document.getElementById('backup-alert-banner');
-  const msg    = document.getElementById('backup-alert-msg');
-  if (!banner || !msg) return;
-  const dias = lastExport ? Math.floor((Date.now() - lastExport) / 86400000) : null;
-  if (!lastExport) {
-    msg.textContent = 'Nenhum backup JSON exportado. Exporte um backup em Configurações para ter uma cópia portátil dos dados.';
-    banner.style.display = 'flex';
-  } else if (dias >= 7) {
-    msg.textContent = `Último backup exportado há ${dias} dias. Recomendamos exportar um novo backup.`;
-    banner.style.display = 'flex';
-  }
+  // Nenhum alerta necessário — backups automáticos gerenciados pelo servidor
 }
 
 window.addEventListener('beforeunload', () => {
@@ -12401,9 +12510,9 @@ _checkSenhaAcesso().catch(err => { console.error('Erro ao inicializar SGCD:', er
 // Heartbeat — fallback caso o beacon não chegue (ex: crash do navegador).
 (function _startHeartbeat() {
   async function beat() {
+    if (!_apiToken) return; // só bate quando logado
     try { await fetch('http://localhost:3000/heartbeat', { signal: AbortSignal.timeout(2000) }); } catch {}
   }
-  beat();
   setInterval(beat, 2000);
 })();
 </script>
