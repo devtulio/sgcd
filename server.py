@@ -1133,7 +1133,7 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
   <div id="status" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:16px 20px;margin-bottom:20px">
     <p style="font-size:13px;color:#6b7280">Consultando base de dados local…</p>
   </div>
-  <div class="footer">SGCD v2.0 · Lei Federal nº 14.133/2021 · Verificação local</div>
+  <div class="footer">SGCD v2.1 · Lei Federal nº 14.133/2021 · Verificação local</div>
 </div>
 <script>
 (function(){{
