@@ -44,9 +44,10 @@ _log = logging.getLogger('sgcd')
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 os.makedirs(UPLOADS_DIR, exist_ok=True)
 
-_watchdog_paused = False   # pausa o watchdog durante diálogos bloqueantes (ex: FolderBrowser)
-_had_session     = False   # True após primeiro login; evita encerramento antes de qualquer usuário logar
-_modo_servidor   = False   # True = modo servidor contínuo (sem encerramento automático)
+_watchdog_paused  = False   # pausa o watchdog durante diálogos bloqueantes (ex: FolderBrowser)
+_had_session      = False   # True após primeiro login; evita encerramento antes de qualquer usuário logar
+_modo_servidor    = False   # True = modo servidor contínuo (sem encerramento automático)
+_backup_pos_sess  = False   # True = backup pós-sessão já executado; aguarda nova sessão para resetar
 
 # ── Banco de dados ────────────────────────────────────────────────────────────
 
@@ -193,9 +194,11 @@ def active_sessions():
 def _check_shutdown():
     """Encerra o servidor quando não há mais sessões ativas (último logout).
     No modo servidor contínuo (_modo_servidor=True), apenas faz backup sem encerrar."""
+    global _backup_pos_sess
     if _modo_servidor:
-        # Modo servidor: executa backup ao último logout, mas não encerra
-        if _had_session and active_sessions() == 0:
+        # Modo servidor: backup uma única vez após última sessão encerrada
+        if _had_session and active_sessions() == 0 and not _backup_pos_sess:
+            _backup_pos_sess = True
             cfg = _get_backup_cfg()
             if cfg['enabled']:
                 print('\nÚltima sessão encerrada. Executando backup automático...')
@@ -657,8 +660,9 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         if not row or not _verify_password(password, row['senha_hash']):
             self._json(401, {'error': 'Usuário ou senha incorretos'}); return
 
-        global _had_session
+        global _had_session, _backup_pos_sess
         _had_session = True
+        _backup_pos_sess = False  # nova sessão — permite backup ao próximo logout
         token = create_session(row['id'])
         self._json(200, {
             'token': token,
