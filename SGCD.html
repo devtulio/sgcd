@@ -2848,7 +2848,7 @@ async function exportBackup() {
     const url  = URL.createObjectURL(blob);
     const a    = Object.assign(document.createElement('a'), {
       href: url,
-      download: `SIS_SGCD_BACKUP_${new Date().toISOString().slice(0,10).replace(/-/g,'')}_${new Date().toTimeString().slice(0,8).replace(/:/g,'-')}.json`
+      download: `SIS_SGCD_BACKUP_${new Date().toISOString().slice(0,10)}_${new Date().toTimeString().slice(0,8).replace(/:/g,'-')}.json`
     });
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     URL.revokeObjectURL(url);
