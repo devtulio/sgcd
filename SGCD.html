@@ -12503,18 +12503,6 @@ function carregarDashboard() {
 
 _checkSenhaAcesso().catch(err => { console.error('Erro ao inicializar SGCD:', err); });
 
-// O encerramento do servidor é feito exclusivamente pelo watchdog de heartbeat
-// no server.py. Não enviamos /shutdown via pagehide/beforeunload porque esses
-// eventos também disparam no F5 (reload), o que encerraria o servidor indevidamente.
-
-// Heartbeat — fallback caso o beacon não chegue (ex: crash do navegador).
-(function _startHeartbeat() {
-  async function beat() {
-    if (!_apiToken) return; // só bate quando logado
-    try { await fetch('http://localhost:3000/heartbeat', { signal: AbortSignal.timeout(2000) }); } catch {}
-  }
-  setInterval(beat, 2000);
-})();
 </script>
 <footer style="text-align:center;padding:18px 16px 14px;font-size:.72rem;color:var(--gray-400);border-top:1px solid var(--gray-100);margin-top:32px">
   SGCD — Sistema de Gestão de Contratação Direta &nbsp;·&nbsp; <strong id="footer-version"></strong> &nbsp;·&nbsp; Lei Federal nº 14.133/2021
