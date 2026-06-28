@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Manual Operacional — SGCD v2.1.0</title>
+<title>Manual Operacional — SGCD v2.0.0</title>
 <style>
   /* Reset e base */
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -89,7 +89,7 @@
       margin: 20mm 20mm 25mm;
       size: A4;
       @top-center {
-        content: "SGCD v2.1.0 — Manual Operacional";
+        content: "SGCD v2.0.0 — Manual Operacional";
         font-family: 'Times New Roman', serif;
         font-size: 9pt;
         color: #666;
@@ -118,7 +118,7 @@
     <div class="cover-title">Manual Operacional</div>
     <div class="cover-subtitle">SGCD — Sistema de Gestão de Contratação Direta</div>
     <div class="cover-system">Gestão de Processos de Dispensa de Licitação</div>
-    <div class="cover-version">Versão v1.19.0</div>
+    <div class="cover-version">Versão v2.1.0</div>
     <br>
     <div style="font-size:11pt; color:#555; line-height:1.8;">
       Aplicação web multiusuário para agentes de contratação pública<br>
@@ -745,7 +745,7 @@
   <li>Localize a seção <strong>"Documentos"</strong> ou o botão de clipe/anexo</li>
   <li>Clique em <strong>"Anexar Arquivo"</strong> e selecione o arquivo no computador</li>
   <li>Formatos aceitos: PDF, DOCX, DOC, PNG, JPG</li>
-  <li>O arquivo será armazenado no banco de dados do servidor (<code>sgcd.db</code>) junto com o processo</li>
+  <li>O arquivo será armazenado no IndexedDB junto com o processo</li>
 </ol>
 <div class="aviso">
   <strong>Atenção:</strong> Arquivos anexados ficam armazenados no navegador. Arquivos muito grandes podem afetar o desempenho do sistema. Recomenda-se compactar PDFs antes de anexar.
@@ -1065,54 +1065,32 @@
 
 <!-- ─────────────────────────────────────────────── SEÇÃO 12 -->
 <h2 id="sec12">12. Backup e Restauração</h2>
-<p>Os dados do SGCD ficam armazenados no banco SQLite <code>sgcd.db</code> gerenciado pelo servidor local. Realize backups regulares para proteger as informações contra falhas de hardware ou exclusão acidental.</p>
+<p>Como os dados do SGCD ficam armazenados exclusivamente no navegador, é fundamental realizar backups regulares para evitar perda de informações.</p>
 
-<h3>Configurar a pasta de backup</h3>
+<h3>Como fazer backup</h3>
 <ol>
   <li>Clique no ícone de <strong>engrenagem (⚙)</strong> para abrir as Configurações</li>
-  <li>Selecione a aba <strong>"Dados"</strong> e localize a seção <strong>"Backup de Dados"</strong></li>
-  <li>Clique em <strong>"Selecionar Pasta"</strong> — o diálogo nativo do Windows abrirá</li>
-  <li>Escolha a pasta onde os arquivos de backup serão salvos (ex.: OneDrive, pasta local)</li>
-  <li>O campo "Manter últimos" define quantos backups automáticos são conservados (padrão: 7)</li>
-  <li>Marque <strong>"Backup automático ao fechar"</strong> para ativar o backup ao encerrar o sistema</li>
+  <li>Localize a seção <strong>"Backup de Dados"</strong></li>
+  <li>Clique em <strong>"Exportar Backup"</strong></li>
+  <li>Um arquivo JSON será baixado automaticamente pelo navegador com o nome <code>sgcd-backup-[data].json</code></li>
+  <li>Salve o arquivo em local seguro (pasta local, nuvem, pen drive)</li>
 </ol>
 <div class="dica">
-  <strong>Dica:</strong> Use uma pasta sincronizada com a nuvem (OneDrive, Google Drive) para garantir cópias externas sem esforço adicional.
+  <strong>Dica:</strong> Faça backup ao menos uma vez por semana, ou sempre antes de limpar o cache do navegador, atualizar o sistema ou formatar o computador.
 </div>
 
-<h3>Backup manual — Sistema (JSON)</h3>
+<h3>Como restaurar um backup</h3>
 <ol>
-  <li>Na seção "Backup de Dados", clique em <strong>"Exportar Sistema"</strong></li>
-  <li>Confirme a operação na janela de diálogo</li>
-  <li>O arquivo <code>SIS_SGCD_BACKUP_YYYY-MM-DD_HH-MM-SS.json</code> será baixado pelo navegador</li>
-  <li>Salve em local seguro — este arquivo contém todos os processos, fornecedores e configurações</li>
-</ol>
-
-<h3>Backup manual — Banco de dados (.db)</h3>
-<ol>
-  <li>Clique em <strong>"Exportar Banco"</strong></li>
-  <li>Confirme a operação</li>
-  <li>O arquivo <code>DB_SGCD_BACKUP_YYYY-MM-DD_HH-MM-SS.db</code> será baixado (cópia SQLite fiel)</li>
-</ol>
-<div class="dica">
-  <strong>Dica:</strong> O backup do banco (.db) é mais completo e pode ser restaurado diretamente. O backup JSON é útil para inspeção e migração de dados.
-</div>
-
-<h3>Backup automático ao fechar</h3>
-<p>Quando a opção <strong>"Backup automático ao fechar"</strong> estiver ativada, o sistema cria automaticamente <code>SIS_SGCD_BACKUP_*.json</code> e <code>DB_SGCD_BACKUP_*.db</code> na pasta configurada ao encerrar — seja pelo botão "Fechar Sistema" ou por fechar a janela após login. A <strong>rotação</strong> (remoção dos arquivos mais antigos além do limite configurado) é executada na próxima inicialização, garantindo compatibilidade com pastas sincronizadas pelo OneDrive.</p>
-<div class="aviso">
-  <strong>Atenção:</strong> Backups automáticos só são criados quando um usuário fez login na sessão. Abrir a janela do sistema sem efetuar login e fechá-la não gera backup.
-</div>
-
-<h3>Como restaurar um backup JSON</h3>
-<ol>
-  <li>Na seção "Backup de Dados", clique em <strong>"Restaurar Backup"</strong></li>
-  <li>Selecione o arquivo <code>SIS_SGCD_BACKUP_*.json</code> salvo anteriormente</li>
-  <li>Confirme a operação — todos os dados atuais serão substituídos pelos dados do arquivo</li>
+  <li>Nas Configurações, seção "Backup de Dados", clique em <strong>"Restaurar Backup"</strong></li>
+  <li>Selecione o arquivo JSON do backup salvo anteriormente</li>
+  <li>Confirme a operação — todos os dados atuais serão substituídos pelos dados do backup</li>
 </ol>
 <div class="aviso">
-  <strong>Atenção:</strong> A restauração substitui completamente todos os dados. Essa operação não pode ser desfeita. Exporte um backup do estado atual antes de restaurar, se necessário.
+  <strong>Atenção:</strong> A restauração substitui completamente todos os dados atuais (processos, fornecedores e configurações) pelos dados do arquivo de backup. Essa operação não pode ser desfeita. Faça um backup do estado atual antes de restaurar, se necessário.
 </div>
+
+<h3>Auto-backup automático</h3>
+<p>O sistema realiza um <strong>auto-backup automático</strong> no localStorage sempre que um processo é salvo. Essa cópia serve como proteção emergencial contra perda acidental de dados, mas não substitui o backup em arquivo JSON. O auto-backup respeita limites de tamanho: se a base de dados ultrapassar 4 MB, o sistema exibe um aviso e não tenta salvar, evitando erros de quota do navegador.</p>
 
 <h3>Factory Reset — Limpeza total de dados</h3>
 <p>A função <strong>Factory Reset</strong> apaga permanentemente <em>todos</em> os dados do sistema: processos, fornecedores, certidões, configurações e brasão. Para evitar exclusões acidentais, o processo exige <strong>três confirmações sucessivas</strong>:</p>
@@ -1292,7 +1270,7 @@
 </ol>
 <p>Os seguintes campos são salvos no modelo: objeto, base legal, critério de seleção, valor estimado, unidade solicitante, natureza de despesa, categoria e subcategoria.</p>
 <div class="nota">
-  <strong>Nota:</strong> Os modelos são armazenados no banco de dados do servidor e persistem entre sessões. São incluídos no backup do sistema (JSON).
+  <strong>Nota:</strong> Os modelos são armazenados localmente no <code>localStorage</code> do navegador e persistem entre sessões. Não são afetados pelo backup/restauração do IndexedDB.
 </div>
 
 <h3 id="sec17-2">17.2 Aplicando um modelo</h3>
@@ -1413,36 +1391,25 @@
 
 <!-- ─────────────────────────────────────────────── SEÇÃO 22 -->
 <h2 id="sec22">22. Backup Automático e Proteção de Dados</h2>
-<p>A partir da versão 2.0.0, os dados do SGCD são armazenados no banco SQLite <code>sgcd.db</code> gerenciado pelo servidor local. O sistema oferece backup automático ao fechar e exportação manual de dois formatos.</p>
+<p>A partir da versão 1.18.0, o SGCD protege os dados do usuário de forma automática, sem necessidade de ação manual a cada alteração.</p>
 
-<h3 id="sec22-1">22.1 Backup automático ao fechar</h3>
-<p>Quando a opção <strong>"Backup automático ao fechar"</strong> estiver ativada em Configurações → Dados → Backup de Dados, o sistema cria automaticamente dois arquivos na pasta configurada ao encerrar:</p>
-<ul>
-  <li><code>SIS_SGCD_BACKUP_YYYY-MM-DD_HH-MM-SS.json</code> — exportação completa do sistema</li>
-  <li><code>DB_SGCD_BACKUP_YYYY-MM-DD_HH-MM-SS.db</code> — cópia fiel do banco SQLite</li>
-</ul>
-<p>A rotação (remoção dos arquivos mais antigos além do limite "Manter últimos") é executada na próxima inicialização do servidor, garantindo compatibilidade com pastas sincronizadas pelo OneDrive.</p>
+<h3 id="sec22-1">22.1 Snapshot automático</h3>
+<p>Toda vez que um processo é salvo, o sistema aguarda 3 segundos e grava automaticamente um <strong>snapshot compactado</strong> no armazenamento local do navegador (<code>localStorage</code>). Esse snapshot contém todos os processos e fornecedores cadastrados, exceto anexos de arquivo (para não exceder o limite de espaço do navegador).</p>
 <div class="nota">
-  <strong>Requisito de sessão:</strong> O backup automático só é criado quando um usuário fez login durante a sessão. Abrir a janela sem efetuar login e fechá-la não gera backup.
+  <strong>Limite de tamanho:</strong> O <code>localStorage</code> comporta aproximadamente 5 MB. Se a base de dados exceder esse limite, o sistema exibirá um aviso solicitando a exportação de um backup manual.
 </div>
+<p>O snapshot automático também é gravado quando o usuário fecha ou recarrega a aba do navegador, desde que a opção <strong>"Snapshot ao fechar"</strong> esteja ativa nas Configurações → Dados.</p>
 
-<h3 id="sec22-2">22.2 Exportação manual</h3>
-<p>Acesse <strong>Configurações → Dados → Backup de Dados</strong> e use os botões:</p>
+<h3 id="sec22-2">22.2 Banner de alerta de backup</h3>
+<p>Uma faixa de alerta laranja é exibida na parte inferior da tela quando:</p>
 <ul>
-  <li><strong>"Exportar Sistema"</strong> — baixa <code>SIS_SGCD_BACKUP_*.json</code> com todos os processos, fornecedores, configurações e brasão</li>
-  <li><strong>"Exportar Banco"</strong> — baixa <code>DB_SGCD_BACKUP_*.db</code>, cópia SQLite que pode ser restaurada diretamente</li>
+  <li>Nenhum backup manual foi exportado ainda (primeiro uso do sistema); ou</li>
+  <li>O último backup manual foi exportado há <strong>mais de 7 dias</strong>.</li>
 </ul>
+<p>O banner exibe o número de dias sem backup e um botão de exportação rápida. Ao exportar o backup, o banner é dispensado automaticamente. Clicar em <strong>"Lembrar depois"</strong> oculta o banner até o próximo carregamento.</p>
 
-<h3 id="sec22-3">22.3 Configuração de backup</h3>
-<p>Em <strong>Configurações → Dados → Backup de Dados</strong>:</p>
-<ol>
-  <li>Clique em <strong>"Selecionar Pasta"</strong> para escolher onde os backups automáticos serão salvos</li>
-  <li>Defina <strong>"Manter últimos"</strong> — quantidade de arquivos de backup a conservar (padrão: 7)</li>
-  <li>Marque <strong>"Backup automático ao fechar"</strong> para ativar o backup ao encerrar o sistema</li>
-</ol>
-<div class="dica">
-  <strong>Dica:</strong> Use uma pasta no OneDrive ou Google Drive para manter cópias externas automaticamente.
-</div>
+<h3 id="sec22-3">22.3 Exportação manual recomendada</h3>
+<p>O backup manual (<strong>Configurações → Dados → Exportar Backup</strong>) gera um arquivo <code>.json</code> completo com processos, fornecedores, arquivos anexados, configurações e brasão. Este é o único formato que inclui anexos e que pode ser importado para restaurar o sistema em outro computador ou navegador.</p>
 <div class="aviso">
   <strong>Atenção:</strong> O snapshot automático é um mecanismo de proteção contra falhas imediatas — não substitui o backup manual. Guarde os arquivos de backup exportados em local seguro (pasta de rede, nuvem ou mídia externa).
 </div>
@@ -1484,22 +1451,28 @@
 </ol>
 <p>Clique em <strong>"Definir Senha"</strong> para salvar. Para remover a proteção, informe a senha atual e clique em <strong>"Remover Senha"</strong>.</p>
 
-<h3 id="sec23-2">23.2 Tela de login</h3>
-<p>Ao abrir o sistema, a tela de login exibe:</p>
+<h3 id="sec23-2">23.2 Tela de acesso restrito</h3>
+<p>Quando uma senha está configurada, o sistema exibe uma tela de acesso ao ser carregado. Essa tela apresenta:</p>
 <ul>
   <li>O nome do órgão configurado nas Configurações → Organização.</li>
-  <li>A data do último backup (automático ou manual exportado).</li>
-  <li>Campos de usuário e senha com aviso visual de CapsLock ativo.</li>
+  <li>A data do último backup exportado.</li>
+  <li>Um campo de senha com opção de visualizar os caracteres digitados.</li>
 </ul>
-<p>Em caso de credenciais incorretas, o formulário exibe mensagem de erro. O último usuário que fez login é pré-preenchido automaticamente. Pressionar <kbd>Enter</kbd> no campo de senha aciona o botão de entrar.</p>
+<p>Em caso de senha incorreta, o formulário exibe uma mensagem de erro com animação visual e limpa o campo para nova tentativa. Pressionar <kbd>Enter</kbd> no campo de senha aciona o botão de entrar.</p>
 <div class="nota">
-  <strong>Segurança:</strong> As senhas são armazenadas com hash PBKDF2-HMAC-SHA256 (100.000 iterações, salt aleatório por usuário) no banco <code>sgcd.db</code>. Sessões são mantidas em memória pelo servidor e invalidadas automaticamente ao encerrar o sistema.
+  <strong>Limitação técnica:</strong> A senha é armazenada como hash SHA-256 no <code>localStorage</code> do navegador. Essa proteção impede acesso acidental, mas não é equivalente a criptografia do banco de dados. Um administrador com acesso às ferramentas de desenvolvedor do navegador pode, em tese, limpar o hash e remover a proteção. Para ambientes que exijam segurança elevada, combine o uso do SGCD com senha de login do sistema operacional.
 </div>
 
 <h3 id="sec23-3">23.3 Recuperação de acesso</h3>
-<p>Se a senha do único administrador for esquecida, um administrador com acesso ao servidor pode redefinir diretamente no banco de dados. Em último caso, contate o responsável técnico do sistema para reset via <code>sgcd.db</code>.</p>
+<p>Se a senha for esquecida, é possível removê-la manualmente pelo console do navegador:</p>
+<ol>
+  <li>Abra as ferramentas de desenvolvedor (F12).</li>
+  <li>Acesse a aba <strong>Console</strong>.</li>
+  <li>Execute: <code>localStorage.removeItem('sgcd-access-hash')</code></li>
+  <li>Recarregue a página.</li>
+</ol>
 <div class="aviso">
-  <strong>Atenção:</strong> Mantenha ao menos dois usuários com perfil de administrador para evitar bloqueio total de acesso. Anote as senhas em local seguro.
+  <strong>Atenção:</strong> Este procedimento deve ser realizado apenas pelo administrador do sistema. Mantenha a senha anotada em local seguro.
 </div>
 
 <hr class="section-divider">
