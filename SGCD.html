@@ -12507,7 +12507,7 @@ _checkSenhaAcesso().catch(err => { console.error('Erro ao inicializar SGCD:', er
 // Se o browser fechar sem logout, o ping para e o servidor encerra em ~40s.
 setInterval(() => {
   if (!_apiToken) return;
-  fetch(`${API_BASE}/api/auth/ping`, { headers: { Authorization: `Bearer ${_apiToken}` } }).catch(() => {});
+  fetch('http://localhost:3000/api/auth/ping', { headers: { Authorization: `Bearer ${_apiToken}` } }).catch(() => {});
 }, 10000);
 
 </script>
