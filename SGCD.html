@@ -7184,6 +7184,9 @@ async function setStepStatus(i, status) {
   const prev = p.steps[i].status;
   p.steps[i].status = status;
   p.steps[i].completedAt = status === 'done' ? Date.now() : null;
+  if (status === 'pending' && p.steps[i].data?.fields) {
+    p.steps[i].data.fields.data_conclusao = '';
+  }
 
   const labels = { done: 'Etapa concluída', blocked: 'Etapa bloqueada', pending: 'Etapa reaberta' };
   p.timeline.push({
