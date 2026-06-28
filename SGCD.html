@@ -5042,6 +5042,11 @@ async function toggleFornCard(id, editMode = false, tab = 'dados') {
   else _renderFornCardView();
 }
 async function openFornDetail(id, editMode = false, tab = 'dados') {
+  // Se não estiver na view de fornecedores, navega primeiro e abre depois
+  const listEl = document.querySelector(`.forn-list-item[data-forn-id="${id}"]`);
+  if (!listEl) {
+    await showFornecedores();
+  }
   await toggleFornCard(id, editMode, tab);
 }
 function closeFornDetail() {
