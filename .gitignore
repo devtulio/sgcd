@@ -3,3 +3,21 @@
 
 # Planos e specs internos
 docs/superpowers/
+
+# Runtime — banco de dados
+sgcd.db
+sgcd.db-wal
+sgcd.db-shm
+
+# Runtime — logs e cache
+sgcd_errors.log
+__pycache__/
+
+# Runtime — pastas de dados
+backups/
+uploads/
+
+# Arquivos temporários
+_tmp_check.js
+nul
+*.log
