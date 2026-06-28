@@ -12503,12 +12503,12 @@ function carregarDashboard() {
 
 _checkSenhaAcesso().catch(err => { console.error('Erro ao inicializar SGCD:', err); });
 
-// Ping a cada 30s para renovar sessão — mantém servidor ativo enquanto logado.
-// Se o browser fechar sem logout, o ping para e o servidor encerra em ~2 min.
+// Ping a cada 10s para renovar sessão — mantém servidor ativo enquanto logado.
+// Se o browser fechar sem logout, o ping para e o servidor encerra em ~40s.
 setInterval(() => {
   if (!_apiToken) return;
   fetch(`${API_BASE}/api/auth/ping`, { headers: { Authorization: `Bearer ${_apiToken}` } }).catch(() => {});
-}, 30000);
+}, 10000);
 
 </script>
 <footer style="text-align:center;padding:18px 16px 14px;font-size:.72rem;color:var(--gray-400);border-top:1px solid var(--gray-100);margin-top:32px">
