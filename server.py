@@ -31,6 +31,8 @@ BACKUP_DIR    = os.path.join(_BASE, 'backups')
 LOG_PATH      = os.path.join(_BASE, 'sgcd_errors.log')
 BACKUP_KEEP   = 7        # número de backups automáticos mantidos
 SESSION_TTL   = 15   # 15s — renovado pelo ping a cada 5s; expira rápido se browser fechar
+MAX_UPLOAD    = 50 * 1024 * 1024   # 50 MB — limite de tamanho por upload
+ALLOWED_EXTS  = {'.pdf','.docx','.doc','.xlsx','.xls','.odt','.ods','.png','.jpg','.jpeg','.gif','.webp','.txt','.csv','.zip'}
 
 logging.basicConfig(
     filename=LOG_PATH, level=logging.ERROR,
@@ -316,7 +318,7 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         elif p == '/api/files':
             pid    = qp('process_id')
             prefix = qp('prefix') == '1'
-            per    = int(qp('per', 200))
+            per    = min(int(qp('per', 200)), 1000)
             with get_db() as conn:
                 if pid and prefix:
                     total = conn.execute('SELECT COUNT(*) FROM files WHERE process_id LIKE ?', (pid + '%',)).fetchone()[0]
@@ -339,7 +341,7 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
 
         # Auditoria
         elif p == '/api/audit':
-            page = int(qp('page', 1)); per = int(qp('per', 200))
+            page = int(qp('page', 1)); per    = min(int(qp('per', 200)), 1000)
             with get_db() as conn:
                 total = conn.execute('SELECT COUNT(*) FROM audit_global').fetchone()[0]
                 rows  = conn.execute(
@@ -470,9 +472,10 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
             self._create_fornecedor(data)
 
         elif p == '/api/audit':
-            self._add_audit(data)
+            self._add_audit(data, s)
 
         elif p in ('/api/settings', '/api/settings/'):
+            if not s['admin']: self._json(403, {'error': 'Acesso negado'}); return
             self._save_settings(data)
 
         elif p == '/api/users':
@@ -506,6 +509,7 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         elif re.fullmatch(r'/api/fornecedores/[^/]+', p):
             self._update_fornecedor(p.split('/')[-1], data)
         elif p in ('/api/settings', '/api/settings/'):
+            if not s['admin']: self._json(403, {'error': 'Acesso negado'}); return
             self._save_settings(data)
         elif re.fullmatch(r'/api/users/[^/]+', p):
             uid = int(p.split('/')[-1])
@@ -529,8 +533,8 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
                 conn.execute('DELETE FROM fornecedores WHERE id=?', (p.split('/')[-1],))
             self._json(200, {'ok': True})
 
-        elif p == '/api/files' and parse_qs(parsed.query).get('process_id'):
-            pid_prefix = parse_qs(parsed.query)['process_id'][0]
+        elif p == '/api/files' and parse_qs(urlparse(self.path).query).get('process_id'):
+            pid_prefix = parse_qs(urlparse(self.path).query)['process_id'][0]
             with get_db() as conn:
                 rows = conn.execute(
                     "SELECT nome_disco FROM files WHERE process_id LIKE ?",
@@ -661,7 +665,7 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         status  = qp('status', '')
         unidade = qp('unidade', '')
         page    = int(qp('page', 1))
-        per     = int(qp('per', 500))
+        per     = min(int(qp('per', 500)), 2000)
 
         where, params = [], []
         if q:
@@ -731,7 +735,7 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         def qp(k, d=None): v = qs.get(k); return v[0] if v else d
         q    = qp('q', '')
         page = int(qp('page', 1))
-        per  = int(qp('per', 500))
+        per     = min(int(qp('per', 500)), 2000)
 
         where, params = [], []
         if q:
@@ -790,6 +794,8 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
 
         boundary = ct.split('boundary=')[-1].strip().encode()
         length   = int(self.headers.get('Content-Length', 0))
+        if length > MAX_UPLOAD:
+            self._json(413, {'error': f'Arquivo muito grande (máximo {MAX_UPLOAD//1024//1024} MB)'}); return
         body     = self.rfile.read(length)
 
         filename, file_bytes, step_index = _parse_multipart(body, boundary)
@@ -797,6 +803,8 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
             self._json(400, {'error': 'Arquivo não encontrado no upload'}); return
 
         ext       = os.path.splitext(filename)[1].lower()
+        if ext not in ALLOWED_EXTS:
+            self._json(400, {'error': f'Extensão não permitida: {ext}'}); return
         safe_name = secrets.token_hex(16) + ext
         with open(os.path.join(UPLOADS_DIR, safe_name), 'wb') as f:
             f.write(file_bytes)
@@ -822,6 +830,8 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
 
         boundary = ct.split('boundary=')[-1].strip().encode()
         length   = int(self.headers.get('Content-Length', 0))
+        if length > MAX_UPLOAD:
+            self._json(413, {'error': f'Arquivo muito grande (máximo {MAX_UPLOAD//1024//1024} MB)'}); return
         body     = self.rfile.read(length)
 
         parts = _parse_multipart_all(body, boundary)
@@ -835,6 +845,8 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
             self._json(400, {'error': 'Arquivo não encontrado no upload'}); return
 
         ext       = os.path.splitext(filename)[1].lower()
+        if ext not in ALLOWED_EXTS:
+            self._json(400, {'error': f'Extensão não permitida: {ext}'}); return
         safe_name = secrets.token_hex(16) + ext
         with open(os.path.join(UPLOADS_DIR, safe_name), 'wb') as f:
             f.write(file_bytes)
@@ -865,13 +877,14 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         self._cors()
         self.send_header('Content-Type', row['mime'] or 'application/octet-stream')
         self.send_header('Content-Length', str(len(data)))
-        self.send_header('Content-Disposition', f'inline; filename="{row["nome_original"]}"')
+        safe_fn = row['nome_original'].replace('"', '_').replace('\n', '_').replace('\r', '_')
+        self.send_header('Content-Disposition', f'inline; filename="{safe_fn}"')
         self.end_headers()
         self.wfile.write(data)
 
     # ── Auditoria ─────────────────────────────────────────────────────────────
 
-    def _add_audit(self, data):
+    def _add_audit(self, data, s=None):
         aid = data.get('id') or str(uuid.uuid4())
         # Compatibilidade com campos antigos do JS (at/ms, evento, usuario, detalhe)
         ts_raw = data.get('ts') or data.get('at')
@@ -882,8 +895,9 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         tipo   = data.get('type')   or data.get('evento')
         detail = data.get('detail') or data.get('detalhe')
         label  = data.get('label')  or data.get('evento')
-        user_nome = data.get('userName') or data.get('user_nome') or data.get('usuario')
-        user_id   = data.get('userId')   or data.get('user_id')
+        # Sempre usa dados da sessão autenticada — ignora user_id/user_nome do body
+        user_nome = s['nome']    if s else (data.get('userName') or data.get('user_nome') or data.get('usuario'))
+        user_id   = s['user_id'] if s else (data.get('userId')   or data.get('user_id'))
         with get_db() as conn:
             conn.execute(
                 '''INSERT OR REPLACE INTO audit_global
@@ -1155,7 +1169,7 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
   const token=localStorage.getItem('sgcd-token')||'';
   fetch('http://localhost:3000/api/processes?per=2000',{{headers:{{'Authorization':'Bearer '+token}}}})
     .then(r=>r.json()).then(d=>{{
-      const cod='{cod}';
+      const cod={json.dumps(cod_safe)};
       const match=(d.items||[]).find(p=>authCode(p)===cod);
       const el=document.getElementById('status');
       if(match){{
