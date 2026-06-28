@@ -2419,7 +2419,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.3.0';
+const SGCD_VERSION = '2.4.0';
 document.title = `SGCD v${SGCD_VERSION}`;
 // ── API wrapper (REST) ────────────────────────────────────────
 let _apiToken = localStorage.getItem('sgcd-token') || null;
@@ -3538,9 +3538,15 @@ function _hideSaveIndicator() {
 async function saveProcess(p) {
   _showSaveIndicator();
   p.updatedAt = Date.now();
-  await dbPut('processes', p);
-  updateAgendaBadge();
-  _hideSaveIndicator();
+  try {
+    await dbPut('processes', p);
+    updateAgendaBadge();
+  } catch (e) {
+    toast('Erro ao salvar. Verifique a conexão com o servidor.', 'error');
+    throw e;
+  } finally {
+    _hideSaveIndicator();
+  }
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -7058,17 +7064,17 @@ function renderInfoFields() {
   document.getElementById('info-fields').innerHTML = groupedHtml + dotacaoHtml + vinculosHtml + classHtml;
 }
 
-function infoNaturezaChange(val) {
+async function infoNaturezaChange(val) {
   currentProcess.natureza = val;
   currentProcess.categoria = '';
   currentProcess.subcategoria = '';
-  saveProcess(currentProcess);
+  await saveProcess(currentProcess);
   renderInfoFields();
 }
-function infoCategoriaChange(val) {
+async function infoCategoriaChange(val) {
   currentProcess.categoria = val;
   currentProcess.subcategoria = '';
-  saveProcess(currentProcess);
+  await saveProcess(currentProcess);
   renderInfoFields();
 }
 
@@ -7483,7 +7489,7 @@ async function deleteProcess() {
         <h3 style="font-size:1rem;font-weight:700;margin-bottom:10px;color:#dc2626">Confirmação obrigatória</h3>
         <p style="font-size:.85rem;color:${sub};line-height:1.6;margin-bottom:16px">
           Para confirmar a exclusão, digite o número do processo:<br>
-          <strong style="color:${txt};font-family:monospace;letter-spacing:1px">${frase}</strong>
+          <strong style="color:${txt};font-family:monospace;letter-spacing:1px">${escHtml(frase)}</strong>
         </p>
         <input id="_del-confirm-input" type="text" placeholder="Digite aqui..."
           style="width:100%;padding:10px 12px;border:2px solid #dc2626;border-radius:6px;font-size:.9rem;background:${inpBg};color:${txt};outline:none;margin-bottom:16px">
@@ -10979,8 +10985,9 @@ function _emailInsertLinkInt() {
   const url = prompt('URL do link:');
   if (!url) return;
   const text = prompt('Texto do link (deixe em branco para usar a URL):') || url;
+  const safeUrl2 = /^https?:\/\//i.test(url) ? escHtml(url) : '#';
   document.getElementById('email-body-int').focus();
-  document.execCommand('insertHTML', false, `<a href="${url}" target="_blank">${text}</a>`);
+  document.execCommand('insertHTML', false, `<a href="${safeUrl2}" target="_blank">${escHtml(text)}</a>`);
 }
 
 function _emailSetContentInt(text) {
@@ -11001,8 +11008,9 @@ function _emailInsertLink() {
   const url = prompt('URL do link:');
   if (!url) return;
   const text = prompt('Texto do link (deixe em branco para usar a URL):') || url;
+  const safeUrl3 = /^https?:\/\//i.test(url) ? escHtml(url) : '#';
   document.getElementById('email-body-forn').focus();
-  document.execCommand('insertHTML', false, `<a href="${url}" target="_blank">${text}</a>`);
+  document.execCommand('insertHTML', false, `<a href="${safeUrl3}" target="_blank">${escHtml(text)}</a>`);
 }
 
 function _emailGetHtml() {
@@ -11362,8 +11370,8 @@ async function renderNotificacoes() {
     <div class="notif-item" onclick="toggleNotificacoes();${it.p ? `openProcess('${it.p.id}')` : ''}">
       <div class="notif-icon" style="background:${_bg[it.tipo]}">${_icon[it.tipo]}</div>
       <div class="notif-body">
-        <div class="notif-title">${it.titulo}</div>
-        <div class="notif-sub">${it.sub}</div>
+        <div class="notif-title">${escHtml(it.titulo)}</div>
+        <div class="notif-sub">${escHtml(it.sub)}</div>
       </div>
     </div>`).join('');
 }
@@ -12545,7 +12553,7 @@ function carregarDashboard() {
 _checkSenhaAcesso().catch(err => { console.error('Erro ao inicializar SGCD:', err); });
 
 // Ping a cada 10s para renovar sessão — mantém servidor ativo enquanto logado.
-// Se o browser fechar sem logout, o ping para e o servidor encerra em ~20s.
+// Ping a cada 5s para renovar sessão. Se o browser fechar sem logout, servidor encerra em ~20s.
 setInterval(() => {
   if (!_apiToken) return;
   fetch('http://localhost:3000/api/auth/ping', { headers: { Authorization: `Bearer ${_apiToken}` } }).catch(() => {});

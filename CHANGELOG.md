@@ -5,6 +5,28 @@
 
 ---
 
+## [2.4.0] — 2026-06-28
+
+### Segurança
+- **XSS `/verificar/`** — código do documento agora escapado via `json.dumps()` antes de ser emitido no JS gerado pelo servidor (era injetado raw na string JS)
+- **XSS notificações** — `it.titulo` e `it.sub` passam por `escHtml()` antes de ir para `innerHTML`
+- **XSS editor de e-mail** — URL validada (`https?://` apenas) e texto do link escapado com `escHtml()` antes de `execCommand('insertHTML')`
+- **XSS modal de exclusão** — `frase` (num_proc) escapada com `escHtml()` antes de ir para `innerHTML`
+- **Falsificação de auditoria** — `_add_audit` ignora `user_id`/`user_nome` do body e usa sempre os dados da sessão autenticada (`s['user_id']`, `s['nome']`)
+- **Settings sem auth** — `POST /api/settings` e `PUT /api/settings` agora exigem `admin`; não-admins recebem 403
+- **Whitelist de extensões no upload** — extensões não permitidas retornam 400; bloqueia `.exe`, `.bat`, `.ps1` e similares
+- **Limite de tamanho de upload** — `Content-Length > 50 MB` retorna 413 antes de ler o body
+- **`Content-Disposition` sanitizado** — `nome_original` tem `"`, `\n`, `\r` substituídos por `_` para não quebrar headers HTTP
+
+### Corrigido
+- **`NameError` em `_route_delete`** — `parsed` não estava definido no escopo; corrigido para `urlparse(self.path).query`
+- **`saveProcess` sem tratamento de erro** — adicionado `try/catch` com toast de erro e `finally` para garantir que o indicador de salvamento some mesmo em caso de falha
+- **Race condition em `infoNaturezaChange`/`infoCategoriaChange`** — funções convertidas para `async/await` para evitar salvamento no processo errado ao navegar rapidamente
+- **Limite de `per` nos endpoints de listagem** — `per` limitado a 1000 (arquivos/auditoria) e 2000 (processos/fornecedores) para evitar carga excessiva de memória
+- **Comentário de intervalo de ping** — atualizado para refletir 5s correto
+
+---
+
 ## [2.3.0] — 2026-06-28
 
 ### Adicionado
