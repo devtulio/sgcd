@@ -30,7 +30,6 @@ UPLOADS_DIR   = os.path.join(_BASE, 'uploads')
 BACKUP_DIR    = os.path.join(_BASE, 'backups')
 LOG_PATH      = os.path.join(_BASE, 'sgcd_errors.log')
 BACKUP_KEEP   = 7        # número de backups automáticos mantidos
-HEARTBEAT_TIMEOUT = 30
 SESSION_TTL   = 8 * 3600  # 8 horas
 
 logging.basicConfig(
@@ -43,9 +42,8 @@ _log = logging.getLogger('sgcd')
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 os.makedirs(UPLOADS_DIR, exist_ok=True)
 
-_last_heartbeat = time.time()
 _watchdog_paused = False   # pausa o watchdog durante diálogos bloqueantes (ex: FolderBrowser)
-_session_active  = False   # True após primeiro heartbeat autenticado; backup só ocorre se houve sessão real
+_had_session     = False   # True após primeiro login; evita encerramento antes de qualquer usuário logar
 
 # ── Banco de dados ────────────────────────────────────────────────────────────
 
@@ -180,6 +178,23 @@ def delete_session(token):
     with get_db() as conn:
         conn.execute('DELETE FROM sessions WHERE token=?', (token,))
 
+def active_sessions():
+    with get_db() as conn:
+        return conn.execute('SELECT COUNT(*) FROM sessions WHERE expires>?', (time.time(),)).fetchone()[0]
+
+def _check_shutdown():
+    """Encerra o servidor quando não há mais sessões ativas (último logout)."""
+    if not _had_session:
+        return
+    if active_sessions() > 0:
+        return
+    print('\nÚltima sessão encerrada. Executando backup e encerrando servidor...')
+    cfg = _get_backup_cfg()
+    if cfg['enabled']:
+        _do_json_backup(cfg)
+        _do_db_backup(cfg)
+    os._exit(0)
+
 # ── HTTP Handler ──────────────────────────────────────────────────────────────
 
 class SGCDHandler(http.server.SimpleHTTPRequestHandler):
@@ -190,15 +205,11 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
-        global _last_heartbeat
         parsed = urlparse(self.path)
         p  = parsed.path.rstrip('/')
         qs = parse_qs(parsed.query)
 
-        if p in ('/health', '/heartbeat'):
-            global _last_heartbeat, _session_active
-            _last_heartbeat = time.time()
-            _session_active  = True
+        if p == '/health':
             self._json(200, {'ok': True})
         elif p == '/api/public/last-backup':
             try:
@@ -212,6 +223,7 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
             tok = qs.get('token', [None])[0] or self._token()
             delete_session(tok)
             self._json(200, {'ok': True})
+            threading.Thread(target=_check_shutdown, daemon=True).start()
         elif p.startswith('/cnpj/'):
             self._proxy_cnpj(p[6:].strip('/'))
         elif p.startswith('/verificar/'):
@@ -226,23 +238,6 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         parsed = urlparse(self.path)
         p = parsed.path.rstrip('/')
 
-        if p == '/shutdown':
-            qs_tok = parse_qs(parsed.query).get('token', [None])[0]
-            s = get_session(qs_tok or self._token())
-            if not s or not s.get('admin'):
-                try: self._json(403, {'error': 'Acesso negado'})
-                except: pass
-                return
-            try: self.send_response(200); self.end_headers()
-            except: pass
-            cfg = _get_backup_cfg()
-            if cfg['enabled']:
-                _do_json_backup(cfg)
-                _do_db_backup(cfg)
-                # Rotação adiada para o próximo startup: arquivos recém-criados
-                # podem estar bloqueados pelo OneDrive durante a sincronização.
-            os._exit(0)
-
         if p == '/api/auth/login':
             self._login(self._body())
             return
@@ -252,6 +247,7 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
             qs_tok = parse_qs(parsed.query).get('token', [None])[0]
             delete_session(qs_tok or self._token())
             self._json(200, {'ok': True})
+            threading.Thread(target=_check_shutdown, daemon=True).start()
             return
 
         if p == '/send-email':
@@ -290,6 +286,7 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
             tok = qs.get('token', [None])[0] or self._token()
             delete_session(tok)
             self._json(200, {'ok': True})
+            threading.Thread(target=_check_shutdown, daemon=True).start()
 
         elif p == '/api/auth/me':
             self._json(200, self._user_dict(s))
@@ -452,6 +449,7 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         if p == '/api/auth/logout':
             delete_session(self._token())
             self._json(200, {'ok': True})
+            threading.Thread(target=_check_shutdown, daemon=True).start()
 
         elif p == '/api/processes':
             self._create_process(data, s)
@@ -635,6 +633,8 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         if not row or not _verify_password(password, row['senha_hash']):
             self._json(401, {'error': 'Usuário ou senha incorretos'}); return
 
+        global _had_session
+        _had_session = True
         token = create_session(row['id'])
         self._json(200, {
             'token': token,
@@ -1315,19 +1315,15 @@ def _find_browser():
     return None
 
 def _watchdog():
+    # Limpa sessões expiradas a cada 5 minutos e verifica encerramento
+    # (cobre browsers fechados sem logout explícito — expiram em SESSION_TTL)
     while True:
-        time.sleep(5)
+        time.sleep(300)
         if _watchdog_paused:
             continue
-        idle = time.time() - _last_heartbeat
-        if idle > HEARTBEAT_TIMEOUT:
-            print(f'\nSem heartbeat há {idle:.0f}s. Encerrando servidor...')
-            cfg = _get_backup_cfg()
-            if cfg['enabled'] and _session_active:
-                print('Executando backup automático antes de encerrar...')
-                _do_json_backup(cfg)
-                _do_db_backup(cfg)
-            os._exit(0)
+        with get_db() as conn:
+            conn.execute('DELETE FROM sessions WHERE expires<?', (time.time(),))
+        _check_shutdown()
 
 # ── Backup automático do banco ─────────────────────────────────────────────────
 
@@ -1457,7 +1453,6 @@ with socketserver.ThreadingTCPServer(('', PORT), SGCDHandler) as httpd:
         print('App aberto. Feche a janela do SGCD para encerrar.')
         proc.wait()
         print('Encerrando servidor...')
-        _last_heartbeat = time.time() - (HEARTBEAT_TIMEOUT - 6)
         while True: time.sleep(1)
     else:
         print('Chrome/Edge não encontrado. Abra: http://localhost:3000/SGCD.html')
