@@ -30,7 +30,7 @@ UPLOADS_DIR   = os.path.join(_BASE, 'uploads')
 BACKUP_DIR    = os.path.join(_BASE, 'backups')
 LOG_PATH      = os.path.join(_BASE, 'sgcd_errors.log')
 BACKUP_KEEP   = 7        # número de backups automáticos mantidos
-SESSION_TTL   = 120  # 2 min — renovado pelo ping a cada 30s; expira rápido se browser fechar
+SESSION_TTL   = 30   # 30s — renovado pelo ping a cada 10s; expira rápido se browser fechar
 
 logging.basicConfig(
     filename=LOG_PATH, level=logging.ERROR,
@@ -1324,11 +1324,11 @@ def _find_browser():
     return None
 
 def _watchdog():
-    # Limpa sessões expiradas a cada 30s e verifica encerramento.
-    # Com SESSION_TTL=120s e ping a cada 30s, um browser fechado sem logout
-    # causa encerramento do servidor em no máximo ~2 minutos.
+    # Limpa sessões expiradas a cada 10s e verifica encerramento.
+    # Com SESSION_TTL=30s e ping a cada 10s, um browser fechado sem logout
+    # causa encerramento do servidor em no máximo ~40 segundos.
     while True:
-        time.sleep(30)
+        time.sleep(10)
         if _watchdog_paused:
             continue
         with get_db() as conn:
