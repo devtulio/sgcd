@@ -11,4 +11,4 @@ if errorlevel 1 (
     exit /b 1
 )
 
-start /min "SGCD - Servidor local" python "%~dp0server.py"
+start "SGCD - Servidor local" python "%~dp0server.py"

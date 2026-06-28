@@ -2420,6 +2420,9 @@ const ICONS = {
 };
 
 const SGCD_VERSION = '2.5.0';
+const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+  ? 'http://localhost:3000'
+  : window.location.origin;
 document.title = `SGCD v${SGCD_VERSION}`;
 // ── API wrapper (REST) ────────────────────────────────────────
 let _apiToken = localStorage.getItem('sgcd-token') || null;
@@ -2433,7 +2436,7 @@ const API = {
     const opts = { method, headers };
     if (body) opts.body = isForm ? body : JSON.stringify(body);
     try {
-      const r = await fetch(`http://localhost:3000${path}`, opts);
+      const r = await fetch(`${API_BASE}${path}`, opts);
       if (r.status === 401) { _apiLogout(); return null; }
       return r;
     } catch(e) {
@@ -3709,7 +3712,7 @@ function _normBrasilAPI(d) {
 async function fetchCnpjData(digits) {
   // Tenta proxy local (server.py → ReceitaWS sem restrição de CORS)
   try {
-    const r = await fetch(`http://localhost:3000/cnpj/${digits}`, { signal: AbortSignal.timeout(10000) });
+    const r = await fetch(`${API_BASE}/cnpj/${digits}`, { signal: AbortSignal.timeout(10000) });
     if (r.ok) {
       const d = await r.json();
       if (d.status === 'OK') return { data: _normReceitaWS(d, digits), fonte: 'ReceitaWS' };
@@ -10250,7 +10253,7 @@ function _showLoginOverlay() {
     const manualTs  = parseInt(localStorage.getItem('sgcd-last-manual-export') || '0') || 0;
     let autoTs = 0;
     try {
-      const r = await fetch('http://localhost:3000/api/public/last-backup');
+      const r = await fetch(`${API_BASE}/api/public/last-backup`);
       const d = await r.json();
       if (d?.ts) autoTs = new Date(d.ts).getTime();
     } catch {}
@@ -10767,7 +10770,7 @@ async function testSmtp() {
 
   // 1. Verifica se o servidor local está ativo
   try {
-    const r = await fetch('http://localhost:3000/health', { signal: AbortSignal.timeout(3000) });
+    const r = await fetch(`${API_BASE}/health`, { signal: AbortSignal.timeout(3000) });
     const j = await r.json();
     if (!j.ok) throw new Error('Servidor retornou erro');
   } catch {
@@ -10797,7 +10800,7 @@ async function testSmtp() {
   };
 
   try {
-    const res = await fetch('http://localhost:3000/send-email', {
+    const res = await fetch(`${API_BASE}/send-email`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${_apiToken}` },
       body: JSON.stringify({
@@ -10823,7 +10826,7 @@ async function testSmtp() {
 async function smtpSend({ to, subject, html, text }) {
   const smtp = await _getSmtpForSend();
   if (!smtp.host || !smtp.auth?.user) throw new Error('SMTP não configurado em Configurações.');
-  const res = await fetch('http://localhost:3000/send-email', {
+  const res = await fetch(`${API_BASE}/send-email`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${_apiToken}` },
     body: JSON.stringify({ smtp, from: smtp.from, to, subject, html, text }),
@@ -10844,7 +10847,7 @@ async function abrirEmailModal() {
   // Status do servidor
   const statusEl = document.getElementById('email-server-status');
   try {
-    const r = await fetch('http://localhost:3000/health', { signal: AbortSignal.timeout(2000) });
+    const r = await fetch(`${API_BASE}/health`, { signal: AbortSignal.timeout(2000) });
     const j = await r.json();
     statusEl.innerHTML = j.ok
       ? '<span style="color:var(--success)">✅ Servidor local ativo — e-mail será enviado via SMTP</span>'
@@ -11557,7 +11560,7 @@ async function importarCsv() {
 
       if (consultarCnpj && forn.cnpj.length === 14) {
         try {
-          const resp = await fetch(`http://localhost:3000/cnpj/${forn.cnpj}`, { signal: AbortSignal.timeout(8000) });
+          const resp = await fetch(`${API_BASE}/cnpj/${forn.cnpj}`, { signal: AbortSignal.timeout(8000) });
           if (resp.ok) {
             const d = await resp.json();
             if (d.status !== 'ERROR') {
@@ -12304,7 +12307,7 @@ function _qrFooterReport(label) {
 
 function _qrFooter(p, extraInfo) {
   const cod  = _docAuthCode(p);
-  const qrText = `http://localhost:3000/verificar/${cod}`;
+  const qrText = `${API_BASE}/verificar/${cod}`;
   const svg  = _QR.svg(qrText, 3);
   const svgB64 = svg ? 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg))) : null;
   const dtFmt = new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'}) + ' ' + new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
@@ -12441,7 +12444,7 @@ async function restaurarBackupDB(file) {
   if (!ok) return;
   const bytes = await file.arrayBuffer();
   const tok = localStorage.getItem('sgcd-token') || '';
-  const r = await fetch(`http://localhost:3000/api/backups/db/restore?token=${tok}`, {
+  const r = await fetch(`${API_BASE}/api/backups/db/restore?token=${tok}`, {
     method: 'POST', body: bytes,
     headers: { 'Content-Type': 'application/octet-stream' }
   });
@@ -12561,7 +12564,7 @@ _checkSenhaAcesso().catch(err => { console.error('Erro ao inicializar SGCD:', er
 // Ping a cada 5s para renovar sessão. Se o browser fechar sem logout, servidor encerra em ~20s.
 setInterval(() => {
   if (!_apiToken) return;
-  fetch('http://localhost:3000/api/auth/ping', { headers: { Authorization: `Bearer ${_apiToken}` } }).catch(() => {});
+  fetch(`${API_BASE}/api/auth/ping`, { headers: { Authorization: `Bearer ${_apiToken}` } }).catch(() => {});
 }, 5000);
 
 </script>

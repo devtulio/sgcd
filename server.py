@@ -46,6 +46,7 @@ os.makedirs(UPLOADS_DIR, exist_ok=True)
 
 _watchdog_paused = False   # pausa o watchdog durante diálogos bloqueantes (ex: FolderBrowser)
 _had_session     = False   # True após primeiro login; evita encerramento antes de qualquer usuário logar
+_modo_servidor   = False   # True = modo servidor contínuo (sem encerramento automático)
 
 # ── Banco de dados ────────────────────────────────────────────────────────────
 
@@ -190,7 +191,17 @@ def active_sessions():
         return conn.execute('SELECT COUNT(*) FROM sessions WHERE expires>?', (time.time(),)).fetchone()[0]
 
 def _check_shutdown():
-    """Encerra o servidor quando não há mais sessões ativas (último logout)."""
+    """Encerra o servidor quando não há mais sessões ativas (último logout).
+    No modo servidor contínuo (_modo_servidor=True), apenas faz backup sem encerrar."""
+    if _modo_servidor:
+        # Modo servidor: executa backup ao último logout, mas não encerra
+        if _had_session and active_sessions() == 0:
+            cfg = _get_backup_cfg()
+            if cfg['enabled']:
+                print('\nÚltima sessão encerrada. Executando backup automático...')
+                _do_json_backup(cfg)
+                _do_db_backup(cfg)
+        return
     if not _had_session:
         return
     if active_sessions() > 0:
@@ -1461,30 +1472,80 @@ def _check_db_integrity():
     except Exception as e:
         _log.error('Erro ao verificar integridade do banco: %s', e)
 
+# ── Seleção de modo ───────────────────────────────────────────────────────────
+
+def _selecionar_modo():
+    global _modo_servidor
+    print()
+    print('  ╔══════════════════════════════════════════════════╗')
+    print('  ║   SGCD — Sistema de Gestão de Contratação Direta ║')
+    print('  ╚══════════════════════════════════════════════════╝')
+    print()
+    print('  Selecione o modo de operação:')
+    print()
+    print('  [1] Pessoal   — Uso individual no próprio computador')
+    print('                  Abre o app automaticamente no navegador')
+    print('                  Encerra quando o último usuário sair')
+    print()
+    print('  [2] Servidor  — Máquina central / acesso pela rede')
+    print('                  Não abre navegador automaticamente')
+    print('                  Fica rodando continuamente (Ctrl+C para parar)')
+    print()
+    while True:
+        try:
+            op = input('  Opção [1/2]: ').strip()
+        except (EOFError, KeyboardInterrupt):
+            op = '1'
+        if op in ('1', '2'):
+            break
+        print('  Digite 1 ou 2.')
+    _modo_servidor = (op == '2')
+    modo_label = 'SERVIDOR CONTÍNUO' if _modo_servidor else 'PESSOAL'
+    print()
+    print(f'  Modo: {modo_label}')
+    print('  ─────────────────────────────────────────────────')
+
+_selecionar_modo()
 _check_db_integrity()
 _rotate_backups(_get_backup_cfg())  # limpa excedentes dos backups da sessão anterior
 threading.Thread(target=_watchdog, daemon=True).start()
 
 socketserver.ThreadingTCPServer.allow_reuse_address = True
 with socketserver.ThreadingTCPServer(('', PORT), SGCDHandler) as httpd:
-    print(f'SGCD v2.1 Server — http://localhost:{PORT}')
+    print(f'  Servidor: http://localhost:{PORT}')
 
-    browser = _find_browser()
-    if browser:
-        threading.Thread(target=httpd.serve_forever, daemon=True).start()
-        time.sleep(1)
-        profile_dir = os.path.join(os.environ.get('TEMP', os.path.expanduser('~')), 'SGCD-Profile')
-        proc = subprocess.Popen([
-            browser,
-            f'--app=http://localhost:{PORT}/SGCD.html',
-            '--start-maximized',
-            '--disable-background-mode',
-            f'--user-data-dir={profile_dir}',
-        ])
-        print('App aberto. Feche a janela do SGCD para encerrar.')
-        proc.wait()
-        print('Encerrando servidor...')
-        while True: time.sleep(1)
+    if _modo_servidor:
+        # Modo servidor: exibe IP da rede e fica rodando sem abrir browser
+        import socket as _socket
+        try:
+            ip_local = _socket.gethostbyname(_socket.gethostname())
+        except Exception:
+            ip_local = 'desconhecido'
+        print(f'  Rede:     http://{ip_local}:{PORT}/SGCD.html')
+        print()
+        print('  Aguardando conexões... (Ctrl+C para encerrar)')
+        try:
+            httpd.serve_forever()
+        except KeyboardInterrupt:
+            print('\n  Encerrando servidor...')
     else:
-        print('Chrome/Edge não encontrado. Abra: http://localhost:3000/SGCD.html')
-        httpd.serve_forever()
+        # Modo pessoal: abre o app no navegador
+        browser = _find_browser()
+        if browser:
+            threading.Thread(target=httpd.serve_forever, daemon=True).start()
+            time.sleep(1)
+            profile_dir = os.path.join(os.environ.get('TEMP', os.path.expanduser('~')), 'SGCD-Profile')
+            proc = subprocess.Popen([
+                browser,
+                f'--app=http://localhost:{PORT}/SGCD.html',
+                '--start-maximized',
+                '--disable-background-mode',
+                f'--user-data-dir={profile_dir}',
+            ])
+            print('  App aberto. Feche a janela do SGCD para encerrar.')
+            proc.wait()
+            print('  Encerrando servidor...')
+            while True: time.sleep(1)
+        else:
+            print(f'  Chrome/Edge não encontrado. Abra manualmente: http://localhost:{PORT}/SGCD.html')
+            httpd.serve_forever()
