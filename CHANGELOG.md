@@ -5,6 +5,20 @@
 
 ---
 
+## [2.6.0] — 2026-06-28
+
+### Adicionado
+- **Modo de operação na inicialização** — ao abrir o `Iniciar SGCD.bat`, a janela do servidor exibe um menu de seleção:
+  - **[1] Pessoal** — abre o app automaticamente no navegador, encerra quando o último usuário sair
+  - **[2] Servidor** — modo contínuo para máquina central/rede, exibe o IP da rede, não encerra automaticamente
+
+### Corrigido
+- **Loop de backup no modo Servidor** — ao fechar a última sessão, o backup era executado repetidamente a cada 5 segundos; agora roda uma única vez e aguarda novo login para resetar
+- **Nome do arquivo de backup manual** — data gerada sem hifens (`20260628`); corrigido para o formato padrão (`2026-06-28`)
+- **Acesso por rede** — `SGCD.html` usava `localhost:3000` fixo; substituído por `API_BASE` dinâmico que detecta automaticamente o host correto ao ser acessado por outro computador na rede
+
+---
+
 ## [2.5.0] — 2026-06-28
 
 ### Adicionado
