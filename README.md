@@ -1,6 +1,6 @@
 # SGCD — Sistema de Gestão de Contratação Direta
 
-![Versão](https://img.shields.io/badge/versão-v2.4.0-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-SQLite%20%2B%20REST%20API-orange) ![Licença](https://img.shields.io/badge/licença-MIT-green)
+![Versão](https://img.shields.io/badge/versão-v2.5.0-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-SQLite%20%2B%20REST%20API-orange) ![Licença](https://img.shields.io/badge/licença-MIT-green)
 
 ## Descrição
 
