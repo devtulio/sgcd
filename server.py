@@ -1433,6 +1433,21 @@ def _do_db_backup(cfg=None):
 # ── Inicialização ─────────────────────────────────────────────────────────────
 
 init_db()
+
+# Verifica integridade do banco na inicialização
+def _check_db_integrity():
+    try:
+        with get_db() as conn:
+            result = conn.execute('PRAGMA integrity_check').fetchone()[0]
+            if result != 'ok':
+                _log.error('INTEGRITY CHECK FALHOU: %s', result)
+                print(f'[AVISO] Banco de dados com problema de integridade: {result}')
+            else:
+                print('[DB] Integridade verificada: ok')
+    except Exception as e:
+        _log.error('Erro ao verificar integridade do banco: %s', e)
+
+_check_db_integrity()
 _rotate_backups(_get_backup_cfg())  # limpa excedentes dos backups da sessão anterior
 threading.Thread(target=_watchdog, daemon=True).start()
 
