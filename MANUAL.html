@@ -162,7 +162,7 @@
     <div class="toc-item h3"><a href="#sec5-1">5.1 Campos do processo</a></div>
     <div class="toc-item h3"><a href="#sec5-2">5.2 Natureza, categoria e subcategoria</a></div>
 
-    <div class="toc-item h2"><a href="#sec6">6. Checklist das 15 Etapas</a></div>
+    <div class="toc-item h2"><a href="#sec6">6. Checklist das 17 etapas</a></div>
 
     <div class="toc-item h2"><a href="#sec7">7. Trabalhando com o Processo</a></div>
     <div class="toc-item h3"><a href="#sec7-1">7.1 Expandir e recolher etapas</a></div>
@@ -172,11 +172,11 @@
     <div class="toc-item h3"><a href="#sec7-5">7.5 Reordenar etapas</a></div>
     <div class="toc-item h3"><a href="#sec7-6">7.6 Histórico e log de auditoria</a></div>
 
-    <div class="toc-item h2"><a href="#sec8">8. Gerenciamento de Propostas (Etapa 9)</a></div>
+    <div class="toc-item h2"><a href="#sec8">8. Gerenciamento de Propostas (Etapa 10)</a></div>
     <div class="toc-item h3"><a href="#sec8-1">8.1 Situações de proposta</a></div>
     <div class="toc-item h3"><a href="#sec8-2">8.2 Despacho de Recusa / Desclassificação</a></div>
 
-    <div class="toc-item h2"><a href="#sec8b">8B. Habilitação do Fornecedor (Etapa 10)</a></div>
+    <div class="toc-item h2"><a href="#sec8b">8B. Habilitação do Fornecedor (Etapa 11)</a></div>
     <div class="toc-item h3"><a href="#sec8b-1">8B.1 Certidões e consultas oficiais</a></div>
     <div class="toc-item h3"><a href="#sec8b-2">8B.2 Sincronização com o cadastro de fornecedores</a></div>
     <div class="toc-item h3"><a href="#sec8b-3">8B.3 Despacho de Inabilitação</a></div>
@@ -228,7 +228,7 @@
 <h3 id="sec1-1">1.1 O que é o SGCD</h3>
 <p>O <strong>SGCD — Sistema de Gestão de Contratação Direta</strong> é uma aplicação web desenvolvida para organizar, acompanhar e documentar processos de <strong>Dispensa de Licitação</strong> conforme a Lei Federal nº 14.133/2021 (Nova Lei de Licitações e Contratos Administrativos).</p>
 <p>O sistema funciona como uma aplicação local iniciada pelo arquivo <strong>Iniciar SGCD.bat</strong>, sem necessidade de instalação adicional. A partir da versão 2.0, os dados são armazenados em um banco de dados SQLite (<code>sgcd.db</code>) gerenciado por um servidor local, com suporte a múltiplos usuários autenticados simultaneamente.</p>
-<p>O SGCD guia o agente de contratação por meio de um <strong>checklist com 15 etapas</strong>, cada uma com fundamento legal, orientações de preenchimento e possibilidade de anexar documentos. Ao final de cada etapa — ou a qualquer momento —, o sistema gera automaticamente os documentos necessários para o processo.</p>
+<p>O SGCD guia o agente de contratação por meio de um <strong>checklist com 17 etapas</strong>, cada uma com fundamento legal, orientações de preenchimento e possibilidade de anexar documentos. Ao final de cada etapa — ou a qualquer momento —, o sistema gera automaticamente os documentos necessários para o processo.</p>
 
 <h3 id="sec1-2">1.2 Para quem é destinado</h3>
 <p>O SGCD é destinado a <strong>agentes de contratação pública</strong>, pregoeiros, comissões de contratação e servidores responsáveis pela condução de processos de Dispensa de Licitação em órgãos e entidades da Administração Pública Federal, Estadual ou Municipal que adotam a Lei nº 14.133/2021.</p>
@@ -421,7 +421,7 @@
   <li><strong>Situação:</strong> Regular, Irregular ou Vencida</li>
   <li><strong>Data de emissão</strong> e <strong>data de vencimento</strong></li>
 </ul>
-<p>O formulário de certidão abre diretamente dentro do card, sem modal separado. Ao salvar ou cancelar, o sistema volta para a lista de certidões do fornecedor. O sistema exibe alertas quando certidões estão próximas do vencimento ou já vencidas, auxiliando na etapa de habilitação (Etapa 10).</p>
+<p>O formulário de certidão abre diretamente dentro do card, sem modal separado. Ao salvar ou cancelar, o sistema volta para a lista de certidões do fornecedor. O sistema exibe alertas quando certidões estão próximas do vencimento ou já vencidas, auxiliando na etapa de habilitação (Etapa 11).</p>
 
 <h3 id="sec4-3">4.3 Verificação de impedimento</h3>
 <p>No card do fornecedor (aba "Dados"), há links diretos para consulta nos portais de transparência:</p>
@@ -502,8 +502,8 @@
 <hr class="section-divider">
 
 <!-- ─────────────────────────────────────────────── SEÇÃO 6 -->
-<h2 id="sec6">6. Checklist das 15 Etapas</h2>
-<p>O coração do SGCD é o checklist estruturado com as 15 etapas do processo de Dispensa de Licitação. Cada etapa apresenta o fundamento legal, uma orientação sobre o que deve ser feito e campos para registro. A seguir, a descrição completa de cada etapa:</p>
+<h2 id="sec6">6. Checklist das 17 etapas</h2>
+<p>O coração do SGCD é o checklist estruturado com as 17 etapas do processo de Dispensa de Licitação. Cada etapa apresenta o fundamento legal, uma orientação sobre o que deve ser feito e campos para registro. A seguir, a descrição completa de cada etapa:</p>
 
 <div class="step-box">
   <div class="step-num">Etapa 1</div>
@@ -579,23 +579,35 @@
 
 <div class="step-box">
   <div class="step-num">Etapa 6</div>
+  <div class="step-name">Parecer do Controle Interno</div>
+  <div class="step-legal">Fundamento: Art. 8º da Lei 14.133/2021</div>
+  <p><strong>O que fazer:</strong> Encaminhar o processo ao Controle Interno Municipal para análise prévia da regularidade e conformidade da contratação antes de seguir para a Procuradoria-Geral. O Controle Interno verifica a adequação orçamentária, o enquadramento legal e a regularidade formal do processo.</p>
+  <ul>
+    <li>Encaminhe o processo instruído ao setor de Controle Interno</li>
+    <li>Aguarde a emissão do parecer e registre seu número no campo <strong>"Nº do Parecer do Controle Interno"</strong></li>
+    <li>Digitalize e anexe o parecer assinado ao processo nesta etapa</li>
+  </ul>
+</div>
+
+<div class="step-box">
+  <div class="step-num">Etapa 7</div>
   <div class="step-name">Parecer Jurídico da Procuradoria-Geral</div>
   <div class="step-legal">Fundamento: Art. 53 da Lei 14.133/2021</div>
   <p><strong>O que fazer:</strong> Encaminhar o processo à Procuradoria-Geral (ou assessoria jurídica competente) para emissão de Parecer Jurídico sobre a legalidade e adequação da contratação. O parecer analisa o enquadramento legal, a regularidade do processo e pode apontar ressalvas ou condicionantes.</p>
   <ul>
     <li>Encaminhe o processo instruído até esta etapa à assessoria jurídica</li>
     <li>Aguarde a emissão do parecer e registre seu número no campo <strong>"Nº do Parecer Jurídico"</strong></li>
-    <li>O número do parecer será referenciado automaticamente no despacho da Autorização de Abertura (Etapa 7)</li>
+    <li>O número do parecer será referenciado automaticamente no despacho da Autorização de Abertura (Etapa 8)</li>
     <li>Digitalize e anexe o parecer assinado ao processo nesta etapa</li>
   </ul>
-  <div class="nota" style="margin-top:8pt;"><strong>Nota:</strong> O número do Parecer Jurídico registrado nesta etapa é usado automaticamente no texto da Autorização de Abertura gerada na Etapa 7, garantindo a rastreabilidade documental do processo.</div>
+  <div class="nota" style="margin-top:8pt;"><strong>Nota:</strong> O número do Parecer Jurídico registrado nesta etapa é usado automaticamente no texto da Autorização de Abertura gerada na Etapa 8, garantindo a rastreabilidade documental do processo.</div>
 </div>
 
 <div class="step-box">
-  <div class="step-num">Etapa 7</div>
+  <div class="step-num">Etapa 8</div>
   <div class="step-name">Autorização da Autoridade Competente</div>
   <div class="step-legal">Fundamento: Art. 72 da Lei 14.133/2021</div>
-  <p><strong>O que fazer:</strong> Submeter o processo à autoridade competente (ordenador de despesa) para autorização formal do início do processo de Dispensa de Licitação. Use o botão <strong>"Gerar Autorização"</strong> para gerar o despacho preenchido com os dados do processo — incluindo, automaticamente, a referência ao Parecer Jurídico registrado na Etapa 6.</p>
+  <p><strong>O que fazer:</strong> Submeter o processo à autoridade competente (ordenador de despesa) para autorização formal do início do processo de Dispensa de Licitação. Use o botão <strong>"Gerar Autorização"</strong> para gerar o despacho preenchido com os dados do processo — incluindo, automaticamente, a referência ao Parecer Jurídico registrado na Etapa 7.</p>
   <ul>
     <li>Clique em <strong>"Gerar Autorização"</strong> no painel da etapa</li>
     <li>Imprima o documento ou salve como PDF</li>
@@ -605,7 +617,7 @@
 </div>
 
 <div class="step-box">
-  <div class="step-num">Etapa 8</div>
+  <div class="step-num">Etapa 9</div>
   <div class="step-name">Elaboração e Publicação do Aviso de Dispensa</div>
   <div class="step-legal">Fundamento: Art. 75, §3º e Art. 54, §1º da Lei 14.133/2021 — prazo mínimo 3 dias úteis</div>
   <p><strong>O que fazer:</strong> Elaborar o Aviso de Dispensa e publicá-lo no PNCP e no Diário Oficial. Use o botão <strong>"Gerar Aviso de Dispensa"</strong> para gerar o documento completo, preenchido com os dados do processo e o Critério de Seleção definido na Etapa 5. O aviso contém: identificação do órgão, objeto, valor estimado, critério de julgamento, condições de participação, seção sobre a proposta mais vantajosa (Art. 59), data limite e canais de divulgação do resultado.</p>
@@ -622,7 +634,7 @@
 </div>
 
 <div class="step-box">
-  <div class="step-num">Etapa 9</div>
+  <div class="step-num">Etapa 10</div>
   <div class="step-name">Recebimento e Análise de Propostas</div>
   <div class="step-legal">Fundamento: Art. 75, §3º da Lei 14.133/2021</div>
   <p><strong>O que fazer:</strong> Registrar as propostas recebidas dos fornecedores e realizar a análise comparativa. O SGCD possui uma seção específica para gerenciamento de propostas nesta etapa.</p>
@@ -636,7 +648,7 @@
 </div>
 
 <div class="step-box">
-  <div class="step-num">Etapa 10</div>
+  <div class="step-num">Etapa 11</div>
   <div class="step-name">Habilitação do Fornecedor</div>
   <div class="step-legal">Fundamento: Art. 62 a 70 da Lei 14.133/2021</div>
   <p><strong>O que fazer:</strong> Verificar a regularidade fiscal, trabalhista, previdenciária e jurídica do fornecedor vencedor. A habilitação é etapa obrigatória antes da adjudicação.</p>
@@ -650,7 +662,7 @@
 </div>
 
 <div class="step-box">
-  <div class="step-num">Etapa 11</div>
+  <div class="step-num">Etapa 12</div>
   <div class="step-name">Adjudicação</div>
   <div class="step-legal">Fundamento: Art. 71 da Lei 14.133/2021</div>
   <p><strong>O que fazer:</strong> Declarar formalmente o vencedor do processo. A adjudicação é o ato pelo qual o agente de contratação declara o vencedor e o objeto da contratação a ele atribuído, após a habilitação.</p>
@@ -663,7 +675,7 @@
 </div>
 
 <div class="step-box">
-  <div class="step-num">Etapa 12</div>
+  <div class="step-num">Etapa 13</div>
   <div class="step-name">Homologação</div>
   <div class="step-legal">Fundamento: Art. 71 da Lei 14.133/2021</div>
   <p><strong>O que fazer:</strong> Submeter o processo à autoridade competente para homologação. A homologação é o ato da autoridade superior que ratifica o processo, conferindo-lhe validade. Após a homologação, o processo está apto para a emissão da Nota de Empenho e celebração do instrumento contratual.</p>
@@ -676,7 +688,7 @@
 </div>
 
 <div class="step-box">
-  <div class="step-num">Etapa 13</div>
+  <div class="step-num">Etapa 14</div>
   <div class="step-name">Nota de Empenho</div>
   <div class="step-legal">Fundamento: Art. 58 da Lei 4.320/1964</div>
   <p><strong>O que fazer:</strong> Após a homologação, acionar o setor financeiro/orçamentário para emissão da <strong>Nota de Empenho (NE)</strong>, que reserva o crédito orçamentário para a despesa. A NE é emitida no sistema de execução orçamentária do órgão (ex.: SIAFEM, SIAFEWEB, sistema municipal).</p>
@@ -689,7 +701,7 @@
 </div>
 
 <div class="step-box">
-  <div class="step-num">Etapa 14</div>
+  <div class="step-num">Etapa 15</div>
   <div class="step-name">Instrumento Contratual</div>
   <div class="step-legal">Fundamento: Art. 95 da Lei 14.133/2021</div>
   <p><strong>O que fazer:</strong> Formalizar o instrumento contratual com o fornecedor vencedor. A lei permite diferentes instrumentos conforme o valor e a natureza:</p>
@@ -707,7 +719,7 @@
 </div>
 
 <div class="step-box">
-  <div class="step-num">Etapa 15</div>
+  <div class="step-num">Etapa 16</div>
   <div class="step-name">Publicação do Contrato no PNCP</div>
   <div class="step-legal">Fundamento: Art. 94 da Lei 14.133/2021 — obrigatória em até 20 dias úteis</div>
   <p><strong>O que fazer:</strong> Publicar o instrumento contratual (contrato, ARP ou NE) no PNCP. O Art. 94 da Lei 14.133/2021 exige a publicação em até <strong>20 dias úteis</strong> a partir da assinatura do instrumento.</p>
@@ -755,7 +767,7 @@
 <p>Para editar as informações gerais do processo (objeto, valor, fundamentação, unidade etc.), localize o <strong>painel lateral direito</strong> quando o processo está aberto, ou clique no botão <strong>"Editar"</strong> no cabeçalho do processo. Altere os campos desejados e clique em <strong>"Salvar"</strong>.</p>
 
 <h3 id="sec7-5">7.5 Reordenar etapas</h3>
-<p>Embora as 15 etapas sigam uma ordem lógica sugerida, é possível reordená-las conforme as necessidades específicas do processo. Para reordenar:</p>
+<p>Embora as 17 etapas sigam uma ordem lógica sugerida, é possível reordená-las conforme as necessidades específicas do processo. Para reordenar:</p>
 <ol>
   <li>Localize a alça de arrastar <strong>⠿</strong> no lado esquerdo do cabeçalho da etapa</li>
   <li>Clique e mantenha pressionado sobre a alça</li>
@@ -787,14 +799,14 @@
 <hr class="section-divider">
 
 <!-- ─────────────────────────────────────────────── SEÇÃO 8 -->
-<h2 id="sec8">8. Gerenciamento de Propostas (Etapa 9)</h2>
-<p>A Etapa 9 conta com uma seção dedicada ao gerenciamento de propostas recebidas, que permite registrar, comparar e selecionar a proposta vencedora de forma organizada e com documentação automática.</p>
+<h2 id="sec8">8. Gerenciamento de Propostas (Etapa 10)</h2>
+<p>A Etapa 10 conta com uma seção dedicada ao gerenciamento de propostas recebidas, que permite registrar, comparar e selecionar a proposta vencedora de forma organizada e com documentação automática.</p>
 
 <h3 id="sec8-1">8.1 Situações de proposta</h3>
 
 <h3>Como adicionar uma proposta</h3>
 <ol>
-  <li>Expanda a Etapa 9 no checklist do processo</li>
+  <li>Expanda a Etapa 10 no checklist do processo</li>
   <li>Clique em <strong>"+ Adicionar Proposta"</strong></li>
   <li>Preencha os campos:</li>
 </ol>
@@ -824,7 +836,7 @@
 <h3>Mapa de Preços</h3>
 <p>O <strong>Mapa de Preços</strong> é um documento comparativo das propostas recebidas, exigido pela IN SEGES 65/2021. Para gerá-lo:</p>
 <ol>
-  <li>Registre todas as propostas na Etapa 9</li>
+  <li>Registre todas as propostas na Etapa 10</li>
   <li>Clique em <strong>"Gerar Mapa de Preços"</strong></li>
   <li>O documento será aberto em nova janela, pronto para impressão ou salvamento como PDF</li>
 </ol>
@@ -849,8 +861,8 @@
 <hr class="section-divider">
 
 <!-- ─────────────────────────────────────────────── SEÇÃO 8B -->
-<h2 id="sec8b">8B. Habilitação do Fornecedor (Etapa 10)</h2>
-<p>A Etapa 10 trata da habilitação jurídica, fiscal, trabalhista e técnica do fornecedor vencedor, conforme Art. 69 da Lei Federal nº 14.133/2021. O sistema oferece uma lista estruturada de 21 certidões e consultas oficiais para controle completo da regularidade do fornecedor.</p>
+<h2 id="sec8b">8B. Habilitação do Fornecedor (Etapa 11)</h2>
+<p>A Etapa 11 trata da habilitação jurídica, fiscal, trabalhista e técnica do fornecedor vencedor, conforme Art. 69 da Lei Federal nº 14.133/2021. O sistema oferece uma lista estruturada de 21 certidões e consultas oficiais para controle completo da regularidade do fornecedor.</p>
 
 <h3 id="sec8b-1">8B.1 Certidões e consultas oficiais</h3>
 <p>As certidões estão organizadas em três grupos:</p>
@@ -875,11 +887,11 @@
 <p>Esses alertas ajudam a identificar certidões que precisam ser renovadas antes da formalização do contrato.</p>
 
 <h3 id="sec8b-2">8B.2 Sincronização com o cadastro de fornecedores</h3>
-<p>As datas de emissão e validade preenchidas na Etapa 10 são <strong>automaticamente sincronizadas</strong> com o cadastro do fornecedor vinculado ao processo. Certidões sincronizáveis são identificadas pelo indicador <strong>"⇄ fornecedor"</strong> ao lado dos campos de data.</p>
+<p>As datas de emissão e validade preenchidas na Etapa 11 são <strong>automaticamente sincronizadas</strong> com o cadastro do fornecedor vinculado ao processo. Certidões sincronizáveis são identificadas pelo indicador <strong>"⇄ fornecedor"</strong> ao lado dos campos de data.</p>
 <p>A sincronização funciona nos dois sentidos:</p>
 <ul>
-  <li>Ao preencher datas na Etapa 10, o cadastro do fornecedor é atualizado</li>
-  <li>Ao abrir a Etapa 10 com um fornecedor vinculado, datas já cadastradas no fornecedor são pré-preenchidas automaticamente</li>
+  <li>Ao preencher datas na Etapa 11, o cadastro do fornecedor é atualizado</li>
+  <li>Ao abrir a Etapa 11 com um fornecedor vinculado, datas já cadastradas no fornecedor são pré-preenchidas automaticamente</li>
 </ul>
 <div class="nota">
   <strong>Nota:</strong> Apenas certidões com prazo de validade definido são sincronizadas (ex.: CND Federal, FGTS, CNDT). Consultas sem validade fixa (CNPJ, QSA, TCU) não geram entrada no cadastro do fornecedor.
@@ -935,37 +947,37 @@
   <tr>
     <td><strong>Mapa de Preços</strong></td>
     <td>Tabela comparativa de todas as propostas recebidas, com identificação do vencedor</td>
-    <td>Botão "Mapa de Preços" na Etapa 9</td>
+    <td>Botão "Mapa de Preços" na Etapa 10</td>
   </tr>
   <tr>
     <td><strong>Despacho de Recusa / Desclassificação</strong></td>
     <td>Decisão fundamentada de recusa de proposta (Art. 59 Lei 14.133/2021), com direito de manifestação</td>
-    <td>Botão "📄 Despacho de Recusa" no card da proposta recusada (Etapa 9)</td>
+    <td>Botão "📄 $110)</td>
   </tr>
   <tr>
     <td><strong>Despacho de Habilitação</strong></td>
     <td>Decisão formal de habilitação do fornecedor com lista das certidões verificadas (Art. 69 Lei 14.133/2021)</td>
-    <td>Botão "📄 Despacho de Habilitação" na Etapa 10</td>
+    <td>Botão "📄 Despacho de Habilitação" na Etapa 11</td>
   </tr>
   <tr>
     <td><strong>Despacho de Inabilitação</strong></td>
     <td>Decisão fundamentada de inabilitação do fornecedor (Art. 69 e 72 Lei 14.133/2021), com lista de certidões pendentes</td>
-    <td>Botão "📄 Despacho de Inabilitação" na Etapa 10</td>
+    <td>Botão "📄 Despacho de Inabilitação" na Etapa 11</td>
   </tr>
   <tr>
     <td><strong>Termo de Adjudicação</strong></td>
     <td>Formalização da declaração do vencedor pelo agente de contratação (Art. 18, §1º Lei 14.133/2021)</td>
-    <td>Botão "📄 Termo de Adjudicação" na Etapa 11</td>
+    <td>Botão "📄 Termo de Adjudicação" na Etapa 12</td>
   </tr>
   <tr>
     <td><strong>Termo de Homologação</strong></td>
     <td>Aprovação do procedimento pela autoridade competente / ordenador de despesa (Art. 71 Lei 14.133/2021)</td>
-    <td>Botão "📄 Termo de Homologação" na Etapa 12</td>
+    <td>Botão "📄 Termo de Homologação" na Etapa 13</td>
   </tr>
   <tr>
     <td><strong>Extrato de Contrato</strong></td>
     <td>Extrato para publicação no Diário Oficial e PNCP com todos os dados contratuais (Art. 94 Lei 14.133/2021)</td>
-    <td>Botão "📄 Extrato de Contrato" na Etapa 14</td>
+    <td>Botão "📄 Extrato de Contrato" na Etapa 15</td>
   </tr>
   <tr>
     <td><strong>Processo Completo (PDF único)</strong></td>

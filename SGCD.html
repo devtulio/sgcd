@@ -1914,7 +1914,7 @@
   <div id="pin-card" style="position:relative;z-index:1;background:#fff;border-radius:16px;width:380px;overflow:hidden;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
 
     <!-- Cabeçalho institucional -->
-    <div style="background:#1a3a6b;padding:28px 32px 24px;text-align:center">
+    <div style="background:var(--aubergine);padding:28px 32px 24px;text-align:center">
       <div style="width:52px;height:52px;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.3);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:22px">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e8eef7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M9 8h1"/><path d="M9 12h1"/><path d="M9 16h1"/><path d="M14 8h1"/><path d="M14 12h1"/><path d="M14 16h1"/><path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"/></svg>
       </div>
@@ -1931,7 +1931,7 @@
 
       <!-- Card do órgão -->
       <div id="pin-orgao-info" style="display:flex;align-items:center;gap:9px;background:#e8eef7;border:1px solid rgba(26,58,107,.2);border-radius:8px;padding:10px 12px;margin-bottom:22px">
-        <div id="pin-orgao-avatar" style="width:30px;height:30px;border-radius:6px;background:#1a3a6b;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0">PM</div>
+        <div id="pin-orgao-avatar" style="width:30px;height:30px;border-radius:6px;background:var(--aubergine);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0">PM</div>
         <div style="flex:1;min-width:0">
           <div id="pin-orgao-nome" style="font-size:12px;font-weight:600;color:#102855;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Prefeitura Municipal</div>
           <div style="font-size:10px;color:#666360;margin-top:1px">Agente de Contratação — área restrita</div>
@@ -1946,21 +1946,21 @@
       </div>
 
       <!-- Campo usuário -->
-      <label style="display:block;font-size:11px;font-weight:600;color:#1a3a6b;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px" for="pin-username">Usuário</label>
+      <label style="display:block;font-size:11px;font-weight:600;color:var(--aubergine);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px" for="pin-username">Usuário</label>
       <input type="text" id="pin-username" placeholder="Nome de usuário" autocomplete="username"
         style="width:100%;height:44px;border:1.5px solid #d9d9d9;border-radius:8px;padding:0 14px;font-size:15px;color:#1a1a1a;background:#f9f8f8;outline:none;font-family:inherit;transition:border-color .15s,box-shadow .15s;margin-bottom:14px"
         onkeydown="if(event.key==='Enter')document.getElementById('pin-input').focus()"
-        onfocus="this.style.borderColor='#1a3a6b';this.style.boxShadow='0 0 0 3px rgba(26,58,107,.15)';this.style.background='#fff'"
+        onfocus="this.style.borderColor=getComputedStyle(document.documentElement).getPropertyValue('--aubergine').trim();this.style.boxShadow='0 0 0 3px var(--brand-light)';this.style.background='#fff'"
         onblur="this.style.borderColor='#d9d9d9';this.style.boxShadow='none';this.style.background='#f9f8f8'">
 
       <!-- Campo senha -->
-      <label style="display:block;font-size:11px;font-weight:600;color:#1a3a6b;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px" for="pin-input">Senha de acesso</label>
+      <label style="display:block;font-size:11px;font-weight:600;color:var(--aubergine);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px" for="pin-input">Senha de acesso</label>
       <div style="position:relative;margin-bottom:20px">
         <input type="password" id="pin-input" placeholder="Digite sua senha" autocomplete="current-password"
           style="width:100%;height:44px;border:1.5px solid #d9d9d9;border-radius:8px;padding:0 44px 0 14px;font-size:15px;color:#1a1a1a;background:#f9f8f8;outline:none;font-family:inherit;letter-spacing:.15em;transition:border-color .15s,box-shadow .15s"
           onkeydown="if(event.key==='Enter')verificarSenha();_pinCheckCaps(event)"
           onkeyup="_pinCheckCaps(event)"
-          onfocus="_pinCheckCaps(event);this.style.borderColor='#1a3a6b';this.style.boxShadow='0 0 0 3px rgba(26,58,107,.15)';this.style.background='#fff'"
+          onfocus="_pinCheckCaps(event);this.style.borderColor=getComputedStyle(document.documentElement).getPropertyValue('--aubergine').trim();this.style.boxShadow='0 0 0 3px var(--brand-light)';this.style.background='#fff'"
           onblur="document.getElementById('pin-caps-warn').style.display='none';this.style.borderColor='#d9d9d9';this.style.boxShadow='none';this.style.background='#f9f8f8'">
         <button onclick="_pinToggleOlho()" tabindex="-1" aria-label="Mostrar ou ocultar senha"
           style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#aea79f;padding:4px;line-height:1;font-size:0">
@@ -1973,8 +1973,8 @@
       </div>
 
       <!-- Botão entrar -->
-      <button onclick="verificarSenha()" style="width:100%;height:46px;background:#1a3a6b;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.04em;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:16px;transition:background .15s"
-        onmouseover="this.style.background='#102855'" onmouseout="this.style.background='#1a3a6b'">
+      <button onclick="verificarSenha()" style="width:100%;height:46px;background:var(--aubergine);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.04em;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:16px;transition:background .15s"
+        onmouseover="this.style.background=getComputedStyle(document.documentElement).getPropertyValue('--brand-dark').trim()" onmouseout="this.style.background=getComputedStyle(document.documentElement).getPropertyValue('--aubergine').trim()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
         Entrar no sistema
       </button>
@@ -2419,7 +2419,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.7.0';
+const SGCD_VERSION = '2.8.0';
 const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
   ? 'http://localhost:3000'
   : window.location.origin;
@@ -3025,6 +3025,11 @@ const STEPS = [
     enquadramentoLegal: true
   },
   {
+    name: 'Parecer do Controle Interno',
+    sub: 'Análise prévia pelo Controle Interno Municipal — Art. 8º, Lei 14.133/2021',
+    fields: ['responsavel','data_conclusao','num_parecer_ci','observacoes']
+  },
+  {
     name: 'Parecer Jurídico da Procuradoria-Geral',
     sub: 'Análise jurídica da legalidade e adequação da contratação — Art. 53, Lei 14.133/2021',
     fields: ['responsavel','data_conclusao','num_parecer','observacoes']
@@ -3090,6 +3095,7 @@ const FIELD_LABELS = {
   num_cotacoes: 'Nº de cotações obtidas',
   valor_estimado: 'Valor estimado (R$)',
   fundamento: 'Fundamento legal específico',
+  num_parecer_ci: 'Nº do Parecer do Controle Interno',
   num_parecer: 'Nº do Parecer Jurídico',
   autoridade: 'Autoridade responsável',
   data_publicacao: 'Data de publicação',
@@ -5904,6 +5910,15 @@ async function openProcess(id) {
       changed = true;
     }
 
+    // v2.8.0: Parecer do Controle Interno inserido na posição 6 — splice para processos antigos
+    if (currentProcess.steps.length === 16) {
+      const sd = STEPS[6];
+      const fields = {};
+      if (u.nome && sd.fields.includes('responsavel')) fields.responsavel = u.nome;
+      currentProcess.steps.splice(6, 0, { status: 'pending', fields, completedAt: null });
+      changed = true;
+    }
+
     // Migra steps ausentes (processo criado com versão anterior com menos etapas)
     while (currentProcess.steps.length < STEPS.length) {
       const si = currentProcess.steps.length;
@@ -7194,6 +7209,7 @@ const STEP_REQUIRED_FIELDS = {
   responsavel:      'Responsável',
   data_conclusao:   'Data de conclusão',
   valor_estimado:   'Valor estimado',
+  num_parecer_ci:   'Número do parecer do Controle Interno',
   num_parecer:      'Número do parecer',
   autoridade:       'Autoridade competente',
   data_publicacao:  'Data de publicação',
@@ -7211,16 +7227,18 @@ const STEP_DONE_REQUIRED = [
   /* 1  ETP              */ ['responsavel'],
   /* 2  TR               */ ['responsavel','data_conclusao'],
   /* 3  Pesquisa Preços  */ ['responsavel','data_conclusao','valor_estimado'],
-  /* 4  Enquadramento    */ ['responsavel','data_conclusao'],
-  /* 5  Parecer Jurídico */ ['responsavel','data_conclusao','num_parecer'],
-  /* 6  Autorização      */ ['responsavel','data_conclusao','autoridade'],
-  /* 7  Aviso Dispensa   */ ['responsavel','data_conclusao','data_publicacao'],
-  /* 8  Propostas        */ ['responsavel','data_conclusao'],
-  /* 9  Habilitação      */ ['responsavel','fornecedor'],
-  /* 10 Adjudicação      */ ['responsavel','data_conclusao','valor_adjudicado'],
-  /* 11 Homologação      */ ['responsavel','data_conclusao','autoridade'],
-  /* 12 Nota Empenho     */ ['responsavel','data_conclusao','num_empenho'],
-  /* 13 Instrumento      */ ['responsavel','num_contrato','data_assinatura','valor_contrato'],
+  /* 4  Dotação Orç.     */ ['responsavel','data_conclusao'],
+  /* 5  Enquadramento    */ ['responsavel','data_conclusao'],
+  /* 6  Ctrl. Interno    */ ['responsavel','data_conclusao','num_parecer_ci'],
+  /* 7  Parecer Jurídico */ ['responsavel','data_conclusao','num_parecer'],
+  /* 8  Autorização      */ ['responsavel','data_conclusao','autoridade'],
+  /* 9  Aviso Dispensa   */ ['responsavel','data_conclusao','data_publicacao'],
+  /* 10 Propostas        */ ['responsavel','data_conclusao'],
+  /* 11 Habilitação      */ ['responsavel','fornecedor'],
+  /* 12 Adjudicação      */ ['responsavel','data_conclusao','valor_adjudicado'],
+  /* 13 Homologação      */ ['responsavel','data_conclusao','autoridade'],
+  /* 14 Nota Empenho     */ ['responsavel','data_conclusao','num_empenho'],
+  /* 15 Instrumento      */ ['responsavel','num_contrato','data_assinatura','valor_contrato'],
 ];
 
 async function _confirmarConclusaoEtapa(i) {
@@ -8865,8 +8883,8 @@ function gerarAvisoDispensa() {
   const criterioInciso   = _criterioInciso[proc.criterio_selecao]   || 'I';
   const criterioVantajosa = _criterioVantajosa[proc.criterio_selecao] || _criterioVantajosa.menor_preco;
 
-  const prazoFormatado = v(7,'prazo_propostas') ? new Date(v(7,'prazo_propostas')+'T00:00:00').toLocaleDateString('pt-BR', {day:'2-digit',month:'2-digit',year:'numeric'}) : '_____/_____/________';
-  const enderecoEnvio  = v(7,'endereco_envio') || '_'.repeat(50);
+  const prazoFormatado = v(9,'prazo_propostas') ? new Date(v(9,'prazo_propostas')+'T00:00:00').toLocaleDateString('pt-BR', {day:'2-digit',month:'2-digit',year:'numeric'}) : '_____/_____/________';
+  const enderecoEnvio  = v(9,'endereco_envio') || '_'.repeat(50);
   const valorEstimado  = v(3,'valor_estimado');
   const fundamentoLegal = v(4,'fundamento') || proc.legal || 'Art. 75 da Lei Federal nº 14.133/2021';
   const incisoLegal    = proc.legal ? proc.legal.split(' — ')[0] : 'Art. 75';
@@ -9373,7 +9391,7 @@ function gerarAutorizacao() {
   const fornNome = typeof p.fornecedor === 'object' ? (p.fornecedor?.razao_social || '') : (p.fornecedor || '');
   const fornCnpj = typeof p.fornecedor === 'object' ? (p.fornecedor?.cnpj || '') : '';
 
-  const numParecer = p.steps[5]?.fields?.num_parecer || '';
+  const numParecer = p.steps[7]?.fields?.num_parecer || '';
   const parecerRef = numParecer ? `, com amparo no Parecer Jurídico nº ${numParecer} da Procuradoria-Geral,` : '';
 
   const html = `<!DOCTYPE html>
@@ -9528,13 +9546,13 @@ function gerarProcessoCompleto() {
   const forn = p.fornecedor;
   const fornNome = typeof forn==='object'?(forn?.razao_social||''):(forn||'');
   const fornCnpj = typeof forn==='object'?(forn?.cnpj||''):(forn?'':'');
-  const numParecer = p.steps[5]?.fields?.num_parecer || '';
+  const numParecer = p.steps[7]?.fields?.num_parecer || '';
   const parecerRef = numParecer ? `, com amparo no Parecer Jurídico nº ${numParecer} da Procuradoria-Geral,` : '';
   const s = i => p.steps?.[i]?.fields || {};
-  const vigencia = (s(13).vigencia_inicial && s(13).vigencia_final)
-    ? `${s(13).vigencia_inicial} a ${s(13).vigencia_final}` : (s(13).vigencia_inicial || s(13).vigencia_final || '');
+  const vigencia = (s(15).vigencia_inicial && s(15).vigencia_final)
+    ? `${s(15).vigencia_inicial} a ${s(15).vigencia_final}` : (s(15).vigencia_inicial || s(15).vigencia_final || '');
   const dotacao = p.dotacao_completa || [p.dotacao_programa, p.dotacao_elemento, p.dotacao_fonte].filter(Boolean).join(' / ');
-  const fundamento = s(4).fundamento || '';
+  const fundamento = s(5).fundamento || '';
 
   function section(title, rows, body) {
     const rowsHtml = rows ? rows.filter(r=>r).map(([l,v]) => `<tr><td class="lbl">${l}</td><td>${blank(v)}</td></tr>`).join('') : '';
@@ -9561,47 +9579,47 @@ function gerarProcessoCompleto() {
   ], `Nos termos do ${p.legal ? p.legal.split(' — ')[0] + ' da Lei Federal nº 14.133/2021' : 'Art. 75 da Lei Federal nº 14.133/2021'}${parecerRef}, AUTORIZO a abertura do processo de Dispensa de Licitação.`));
 
   // 2. Publicação
-  if (s(7).data_publicacao) sections.push(section('2. Publicação (PNCP / Diário Oficial)', [
-    ['Data de publicação', s(7).data_publicacao],
-    ['Data de encerramento', s(7).data_encerramento],
-    s(7).link_pncp ? ['Link PNCP', s(7).link_pncp] : null,
-    s(7).link_diario ? ['Link Diário Oficial', s(7).link_diario] : null,
-    s(7).link_site ? ['Link Site Oficial', s(7).link_site] : null,
+  if (s(9).data_publicacao) sections.push(section('2. Publicação (PNCP / Diário Oficial)', [
+    ['Data de publicação', s(9).data_publicacao],
+    ['Data de encerramento', s(9).data_encerramento],
+    s(9).link_pncp ? ['Link PNCP', s(9).link_pncp] : null,
+    s(9).link_diario ? ['Link Diário Oficial', s(9).link_diario] : null,
+    s(9).link_site ? ['Link Site Oficial', s(9).link_site] : null,
   ]));
 
   // 3. Proposta vencedora
-  if (s(10).valor_adjudicado || fornNome) sections.push(section('3. Adjudicação', [
+  if (s(12).valor_adjudicado || fornNome) sections.push(section('3. Adjudicação', [
     ['Fornecedor adjudicado', fornNome + (fornCnpj ? ` — CNPJ: ${fornCnpj}` : '')],
-    ['Valor adjudicado', fmtV(s(10).valor_adjudicado)],
-    ['Data de adjudicação', s(10).data_conclusao],
-    ['Responsável', s(10).responsavel],
+    ['Valor adjudicado', fmtV(s(12).valor_adjudicado)],
+    ['Data de adjudicação', s(12).data_conclusao],
+    ['Responsável', s(12).responsavel],
   ]));
 
   // 4. Homologação
-  if (s(11).data_conclusao) sections.push(section('4. Homologação', [
-    ['Autoridade', s(11).autoridade || u.aut_nome],
-    ['Data de homologação', s(11).data_conclusao],
-    ['Responsável', s(11).responsavel],
+  if (s(13).data_conclusao) sections.push(section('4. Homologação', [
+    ['Autoridade', s(13).autoridade || u.aut_nome],
+    ['Data de homologação', s(13).data_conclusao],
+    ['Responsável', s(13).responsavel],
   ]));
 
   // 5. Nota de Empenho
-  if (s(12).num_empenho || s(12).dotacao) sections.push(section('5. Nota de Empenho', [
-    ['Nº do empenho', s(12).num_empenho],
-    ['Dotação', s(12).dotacao],
-    ['Data', s(12).data_conclusao],
+  if (s(14).num_empenho || s(14).dotacao) sections.push(section('5. Nota de Empenho', [
+    ['Nº do empenho', s(14).num_empenho],
+    ['Dotação', s(14).dotacao],
+    ['Data', s(14).data_conclusao],
   ]));
 
   // 6. Instrumento Contratual
-  if (s(13).num_contrato || s(13).valor_contrato) sections.push(section('6. Instrumento Contratual', [
-    ['Nº do instrumento', s(13).num_contrato],
-    ['Data de assinatura', s(13).data_assinatura],
+  if (s(15).num_contrato || s(15).valor_contrato) sections.push(section('6. Instrumento Contratual', [
+    ['Nº do instrumento', s(15).num_contrato],
+    ['Data de assinatura', s(15).data_assinatura],
     ['Vigência', vigencia],
-    ['Valor do contrato', fmtV(s(13).valor_contrato)],
-    ['Contratante', s(13).contratante || u.orgao],
-    ['Contratado', s(13).contratado || fornNome],
-    ['CNPJ contratado', s(13).cnpj_contratado || fornCnpj],
-    ['Gestor do contrato', s(13).gestor_contrato],
-    ['Fiscal do contrato', s(13).fiscal_contrato],
+    ['Valor do contrato', fmtV(s(15).valor_contrato)],
+    ['Contratante', s(15).contratante || u.orgao],
+    ['Contratado', s(15).contratado || fornNome],
+    ['CNPJ contratado', s(15).cnpj_contratado || fornCnpj],
+    ['Gestor do contrato', s(15).gestor_contrato],
+    ['Fiscal do contrato', s(15).fiscal_contrato],
     dotacao ? ['Dotação Orçamentária', dotacao] : null,
     fundamento ? ['Fundamento', fundamento] : null,
   ]));
@@ -9832,7 +9850,7 @@ function gerarAta() {
 
 <div class="secao">
   <div class="secao-titulo">II — Abertura da Sessão</div>
-  <p>Aos ${hoje}, o(a) ${u.cargo || 'Agente de Contratação'} ${u.nome || blank(v(6,'responsavel'))}${u.matricula ? ', matrícula nº ' + u.matricula + ',' : ''} designado(a) para conduzir o procedimento de Dispensa de Licitação nº ${blank(p.num_dl || p.num)}, declara aberta a sessão pública, dando continuidade à análise do processo administrativo referente à contratação de <strong>${blank(p.objeto)}</strong>, com fundamento no art. 75 da Lei nº 14.133, de 1º de abril de 2021${p.legal ? ' — ' + p.legal : ''}.</p>
+  <p>Aos ${hoje}, o(a) ${u.cargo || 'Agente de Contratação'} ${u.nome || blank(v(8,'responsavel'))}${u.matricula ? ', matrícula nº ' + u.matricula + ',' : ''} designado(a) para conduzir o procedimento de Dispensa de Licitação nº ${blank(p.num_dl || p.num)}, declara aberta a sessão pública, dando continuidade à análise do processo administrativo referente à contratação de <strong>${blank(p.objeto)}</strong>, com fundamento no art. 75 da Lei nº 14.133, de 1º de abril de 2021${p.legal ? ' — ' + p.legal : ''}.</p>
 </div>
 
 <div class="secao">
@@ -9841,11 +9859,12 @@ function gerarAta() {
   <div class="dado"><strong>Estudo Técnico Preliminar (ETP):</strong> ${p.steps[1]?.status === 'done' ? `concluído em ${d(v(1,'data_conclusao'))}` : 'dispensado / não aplicável'}</div>
   <div class="dado"><strong>Termo de Referência (TR):</strong> concluído em ${d(v(2,'data_conclusao'))} — ${blank(v(2,'responsavel'))}</div>
   <div class="dado"><strong>Pesquisa de Preços / Estimativa do Valor:</strong> ${cotacoesValidas.length} cotação(ões) válida(s) — concluída em ${d(v(3,'data_conclusao'))} — valor de referência: ${v(3,'valor_estimado') ? fmtMoney(v(3,'valor_estimado')) : '_'.repeat(20)}</div>
-  <div class="dado"><strong>Enquadramento Legal:</strong> ${blank(v(4,'fundamento'))} — concluído em ${d(v(4,'data_conclusao'))}</div>
-  <div class="dado"><strong>Parecer Jurídico:</strong> ${blank(v(5,'num_parecer'))} — concluído em ${d(v(5,'data_conclusao'))}</div>
-  <div class="dado"><strong>Autorização da Autoridade Competente:</strong> ${blank(v(6,'autoridade'))} em ${d(v(6,'data_conclusao'))}</div>
-  <div class="dado"><strong>Aviso de Dispensa elaborado em:</strong> ${d(v(7,'data_conclusao'))}</div>
-  <div class="dado"><strong>Publicação no PNCP:</strong> de ${d(v(7,'data_publicacao'))} a ${d(v(7,'data_encerramento'))}${v(7,'link_pncp') ? ' — ' + v(7,'link_pncp') : ''}</div>
+  <div class="dado"><strong>Enquadramento Legal:</strong> ${blank(v(5,'fundamento'))} — concluído em ${d(v(5,'data_conclusao'))}</div>
+  <div class="dado"><strong>Parecer do Controle Interno:</strong> ${blank(v(6,'num_parecer_ci'))} — concluído em ${d(v(6,'data_conclusao'))}</div>
+  <div class="dado"><strong>Parecer Jurídico:</strong> ${blank(v(7,'num_parecer'))} — concluído em ${d(v(7,'data_conclusao'))}</div>
+  <div class="dado"><strong>Autorização da Autoridade Competente:</strong> ${blank(v(8,'autoridade'))} em ${d(v(8,'data_conclusao'))}</div>
+  <div class="dado"><strong>Aviso de Dispensa elaborado em:</strong> ${d(v(9,'data_conclusao'))}</div>
+  <div class="dado"><strong>Publicação no PNCP:</strong> de ${d(v(9,'data_publicacao'))} a ${d(v(9,'data_encerramento'))}${v(9,'link_pncp') ? ' — ' + v(9,'link_pncp') : ''}</div>
 </div>
 
 <div class="secao">
@@ -9859,13 +9878,13 @@ function gerarAta() {
   <div class="secao-titulo">V — Propostas Recebidas</div>
   <p>Encerrado o prazo de recebimento, foram analisadas as seguintes propostas:</p>
   ${propostasHtml}
-  ${v(8,'observacoes') ? `<p><strong>Observações:</strong> ${v(8,'observacoes')}</p>` : ''}
+  ${v(10,'observacoes') ? `<p><strong>Observações:</strong> ${v(10,'observacoes')}</p>` : ''}
 </div>
 
 <div class="secao">
   <div class="secao-titulo">VI — Habilitação do Fornecedor</div>
   <p>O(A) Agente de Contratação procedeu à verificação da regularidade fiscal, trabalhista e jurídica do fornecedor com proposta mais vantajosa:</p>
-  <div class="dado"><strong>Fornecedor:</strong> ${blank(v(9,'fornecedor'))}</div>
+  <div class="dado"><strong>Fornecedor:</strong> ${blank(v(11,'fornecedor'))}</div>
   <div class="dado"><strong>CNPJ:</strong> ${blank(currentProcess?.fornecedor?.cnpj || v(iHabilitacao,'cnpj'))}</div>
   <br>
   <table>
@@ -9903,13 +9922,13 @@ function gerarAta() {
 
 <div class="assinaturas">
   <div class="assinatura">
-    <div class="linha"><strong>${u.nome || v(6,'responsavel') || ''}</strong><br>${u.cargo || 'Agente de Contratação'}${u.matricula ? '<br>Matrícula: ' + u.matricula : ''}</div>
+    <div class="linha"><strong>${u.nome || v(8,'responsavel') || ''}</strong><br>${u.cargo || 'Agente de Contratação'}${u.matricula ? '<br>Matrícula: ' + u.matricula : ''}</div>
   </div>
   <div class="assinatura">
-    <div class="linha"><strong>${u.aut_nome || v(11,'autoridade') || v(6,'autoridade') || ''}</strong><br>${u.aut_cargo || 'Autoridade Competente'}</div>
+    <div class="linha"><strong>${u.aut_nome || v(13,'autoridade') || v(8,'autoridade') || ''}</strong><br>${u.aut_cargo || 'Autoridade Competente'}</div>
   </div>
   <div class="assinatura">
-    <div class="linha"><strong>${v(9,'fornecedor') || ''}</strong><br>Representante do Fornecedor</div>
+    <div class="linha"><strong>${v(11,'fornecedor') || ''}</strong><br>Representante do Fornecedor</div>
   </div>
 </div>
 
@@ -10237,6 +10256,7 @@ async function verificarSenha() {
 }
 
 function _showLoginOverlay() {
+  _applyTemaCor(localStorage.getItem('sgcd_tema_cor') || 'laranja');
   const overlay = document.getElementById('overlay-pin');
   overlay.classList.remove('hidden');
   document.getElementById('pin-erro').style.display = 'none';
@@ -10713,6 +10733,7 @@ function _applyFontSize(val) {
 function _applyTemaCor(val) {
   document.documentElement.classList.remove('tema-azul', 'tema-verde', 'tema-roxo');
   if (val && val !== 'laranja') document.documentElement.classList.add('tema-' + val);
+  localStorage.setItem('sgcd_tema_cor', val || 'laranja');
 }
 
 function _applySidebarMode() { /* ponytail: sidebar agora é sempre 220px */ }
