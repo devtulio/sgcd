@@ -17,6 +17,9 @@ __pycache__/
 backups/
 uploads/
 
+# Arquivos institucionais (não versionar)
+brasao.png
+
 # Arquivos temporários
 _tmp_check.js
 nul
