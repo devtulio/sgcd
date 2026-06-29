@@ -172,6 +172,6 @@ Consulte o [CHANGELOG.md](CHANGELOG.md) para o histórico completo de versões e
 
 ## Licença
 
-MIT © Município — uso interno do setor de licitações.
+Distribuído sob a licença **MIT**. Veja [LICENSE](LICENSE) para o texto completo.
 
 > **Aviso:** Os dados ficam armazenados no arquivo `sgcd.db` na pasta do sistema. Faça backups regulares em **Configurações → Backup de Dados** e mantenha cópia do `sgcd.db` em local seguro.
