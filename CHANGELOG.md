@@ -5,6 +5,18 @@
 
 ---
 
+## [2.8.0] — 2026-06-29
+
+### Adicionado
+- **Etapa: Parecer do Controle Interno** — nova etapa no checklist do processo, inserida após o Enquadramento Legal e antes do Parecer Jurídico, conforme fluxo municipal; campos: Responsável, Data de conclusão, Nº do Parecer do Controle Interno e Observações
+- **Documento: Ata de Sessão atualizada** — inclui referência ao Parecer do Controle Interno na seção de instrução do processo (Seção III)
+- **Sincronização de tema na tela de login** — a cor de destaque escolhida em Configurações → Interface é aplicada automaticamente na tela de login (cabeçalho, avatar, labels, campos de entrada e botão de acesso)
+
+### Corrigido
+- **Referências de etapas nos geradores de documentos** — índices de step desatualizados desde a inserção da Dotação Orçamentária (v2.3.0) causavam campos em branco nos documentos gerados; todos os índices foram corrigidos (Enquadramento Legal, Parecer Jurídico, Autorização, Aviso de Dispensa, Propostas, Habilitação, Adjudicação, Homologação, Nota de Empenho, Instrumento Contratual)
+
+---
+
 ## [2.7.0] — 2026-06-29
 
 ### Adicionado
