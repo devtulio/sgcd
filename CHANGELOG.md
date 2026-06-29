@@ -5,6 +5,21 @@
 
 ---
 
+## [2.7.0] — 2026-06-29
+
+### Adicionado
+- **Diagnóstico de rede e servidor** — ferramenta completa de verificação acessível por `Diagnostico SGCD.bat` ou pela opção `[3]` no menu de inicialização:
+  - Detecta IP local e exibe o endereço de acesso pela rede
+  - Verifica se a porta 3000 está em uso e qual processo a ocupa
+  - Testa se o servidor responde em localhost
+  - Verifica regras de firewall do Windows para a porta 3000
+  - Testa conectividade pelo IP da rede
+  - Exibe resumo com problemas encontrados e instruções de correção
+- **`Liberar Porta SGCD.bat`** — cria automaticamente a regra de firewall para a porta 3000 (requer execução como Administrador)
+- **Novo ícone** — ícone do sistema redesenhado com tema de licitação (documento + lupa), mesma identidade visual do SGDP; versões adaptadas por tamanho (16/32/48/64/128/256px)
+
+---
+
 ## [2.6.0] — 2026-06-28
 
 ### Adicionado
