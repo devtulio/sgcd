@@ -1495,14 +1495,21 @@ def _selecionar_modo():
     print('                  Não abre navegador automaticamente')
     print('                  Fica rodando continuamente (Ctrl+C para parar)')
     print()
+    print('  [3] Diagnóstico — Verifica rede, porta e firewall')
+    print()
     while True:
         try:
-            op = input('  Opção [1/2]: ').strip()
+            op = input('  Opção [1/2/3]: ').strip()
         except (EOFError, KeyboardInterrupt):
             op = '1'
-        if op in ('1', '2'):
+        if op in ('1', '2', '3'):
             break
-        print('  Digite 1 ou 2.')
+        print('  Digite 1, 2 ou 3.')
+    if op == '3':
+        import subprocess as _sp
+        diag = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'diagnostico.py')
+        _sp.run([sys.executable, diag])
+        sys.exit(0)
     _modo_servidor = (op == '2')
     modo_label = 'SERVIDOR CONTÍNUO' if _modo_servidor else 'PESSOAL'
     print()
