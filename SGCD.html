@@ -1907,7 +1907,7 @@
 </div>
 
 <!-- ── PIN / Senha de acesso overlay ── -->
-<div class="overlay hidden" id="overlay-pin" style="z-index:99999;background:#0d1b35;align-items:center;justify-content:center">
+<div class="overlay hidden" id="overlay-pin" style="z-index:99999;background:#1a1f2e;align-items:center;justify-content:center">
   <canvas id="pin-canvas" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none"></canvas>
 
   <!-- Configurações do efeito de fundo -->
@@ -1925,7 +1925,7 @@
           <span id="lc-out-nodes" style="font-size:11px;font-weight:600;color:rgba(255,255,255,.9)">60</span>
         </div>
         <input type="range" id="lc-sl-nodes" min="20" max="120" value="60" oninput="_lcParam('count',+this.value,'lc-out-nodes')"
-          style="width:100%;height:3px;accent-color:rgba(100,160,255,.8);cursor:pointer">
+          style="width:100%;height:3px;accent-color:rgba(180,190,210,.8);cursor:pointer">
       </div>
       <div style="margin-bottom:10px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
@@ -1933,7 +1933,7 @@
           <span id="lc-out-dist" style="font-size:11px;font-weight:600;color:rgba(255,255,255,.9)">110</span>
         </div>
         <input type="range" id="lc-sl-dist" min="60" max="200" value="110" oninput="_lcParam('dist',+this.value,'lc-out-dist')"
-          style="width:100%;height:3px;accent-color:rgba(100,160,255,.8);cursor:pointer">
+          style="width:100%;height:3px;accent-color:rgba(180,190,210,.8);cursor:pointer">
       </div>
       <div style="margin-bottom:12px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
@@ -1941,7 +1941,7 @@
           <span id="lc-out-speed" style="font-size:11px;font-weight:600;color:rgba(255,255,255,.9)">4</span>
         </div>
         <input type="range" id="lc-sl-speed" min="1" max="10" value="4" oninput="_lcParam('speed',+this.value,'lc-out-speed')"
-          style="width:100%;height:3px;accent-color:rgba(100,160,255,.8);cursor:pointer">
+          style="width:100%;height:3px;accent-color:rgba(180,190,210,.8);cursor:pointer">
       </div>
       <button onclick="_lcResetConfig()" style="width:100%;padding:5px 0;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);border-radius:6px;color:rgba(255,255,255,.5);font-size:10px;cursor:pointer;letter-spacing:.04em"
         onmouseover="this.style.background='rgba(255,255,255,.13)'" onmouseout="this.style.background='rgba(255,255,255,.07)'">Restaurar padrões</button>
@@ -10411,7 +10411,7 @@ function _loginCanvasStart() {
           ctx.beginPath();
           ctx.moveTo(a.x, a.y);
           ctx.lineTo(b.x, b.y);
-          ctx.strokeStyle = `rgba(100,160,255,${(1 - d / D) * 0.35})`;
+          ctx.strokeStyle = `rgba(180,190,210,${(1 - d / D) * 0.35})`;
           ctx.lineWidth = .7;
           ctx.stroke();
         }
@@ -10422,7 +10422,7 @@ function _loginCanvasStart() {
         ctx.beginPath();
         ctx.moveTo(a.x, a.y);
         ctx.lineTo(mx, my);
-        ctx.strokeStyle = `rgba(130,190,255,${(1 - md / (D * 1.5)) * 0.65})`;
+        ctx.strokeStyle = `rgba(180,190,210,${(1 - md / (D * 1.5)) * 0.65})`;
         ctx.lineWidth = 1;
         ctx.stroke();
       }
@@ -10433,7 +10433,7 @@ function _loginCanvasStart() {
       const near = Math.sqrt(mdx*mdx + mdy*mdy) < D * 1.2;
       ctx.beginPath();
       ctx.arc(n.x, n.y, n.r * (near ? 1.5 : 1), 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(100,160,255,${near ? 0.9 : 0.45})`;
+      ctx.fillStyle = `rgba(180,190,210,${near ? 0.9 : 0.45})`;
       ctx.fill();
       n.x += n.vx; n.y += n.vy;
       if (n.x < 0 || n.x > W) { n.vx *= -1; n.x = Math.max(0, Math.min(W, n.x)); }
