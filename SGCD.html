@@ -10463,10 +10463,16 @@ function _showLoginOverlay() {
   document.getElementById('pin-erro').style.display = 'none';
   document.getElementById('pin-input').value = '';
   const u = (typeof getUser === 'function') ? getUser() : {};
-  if (u?.orgao) {
-    document.getElementById('pin-orgao-nome').textContent = u.orgao;
-    const sigla = u.orgao.split(' ').filter(w => w.length > 3).map(w => w[0]).join('').slice(0,2).toUpperCase() || 'OR';
+  function _applyOrgaoCard(orgao) {
+    if (!orgao) return;
+    document.getElementById('pin-orgao-nome').textContent = orgao;
+    const sigla = orgao.split(' ').filter(w => w.length > 3).map(w => w[0]).join('').slice(0,2).toUpperCase() || 'OR';
     document.getElementById('pin-orgao-avatar').textContent = sigla;
+  }
+  if (u?.orgao) {
+    _applyOrgaoCard(u.orgao);
+  } else {
+    fetch('/api/public/org-info').then(r => r.ok ? r.json() : {}).then(d => _applyOrgaoCard(d.orgao)).catch(() => {});
   }
   const accessEl = document.getElementById('pin-last-access');
   const daysEl   = document.getElementById('pin-days-ago');
