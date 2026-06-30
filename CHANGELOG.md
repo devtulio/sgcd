@@ -5,6 +5,24 @@
 
 ---
 
+## [2.8.2] — 2026-06-29
+
+### Alterado
+- **Tela de login: tema Ardósia fixo** — fundo da tela de login alterado para cinza ardósia (`#1a1f2e`) com partículas prateadas, independente da cor de destaque configurada pelo usuário em Configurações → Interface
+
+### Corrigido
+- **Nome do órgão ausente no modo servidor** — ao acessar o sistema via IP (modo servidor em rede local), o card da tela de login não exibia o nome do órgão pois o `localStorage` estava vazio no primeiro acesso; adicionado endpoint público `/api/public/org-info` que retorna o nome do órgão diretamente do banco de dados, utilizado como fallback automático
+
+---
+
+## [2.8.1] — 2026-06-29
+
+### Adicionado
+- **Efeito de rede de nós na tela de login** — animação de partículas flutuantes interligadas por linhas, com reação ao movimento do mouse; executada em `<canvas>` via `requestAnimationFrame`
+- **Painel de configuração do efeito de nós** — botão de engrenagem (⚙) no canto inferior direito da tela de login abre painel com três controles deslizantes: quantidade de nós (20–120), distância de conexão (60–200 px) e velocidade (1–10); configurações salvas em `localStorage` e aplicadas automaticamente na próxima abertura
+
+---
+
 ## [2.8.0] — 2026-06-29
 
 ### Adicionado
