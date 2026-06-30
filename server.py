@@ -232,6 +232,16 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
 
         if p == '/health':
             self._json(200, {'ok': True})
+        elif p == '/api/public/org-info':
+            try:
+                with get_db() as conn:
+                    rows = conn.execute(
+                        "SELECT key,value FROM sys_settings WHERE key IN ('orgao','municipio','cnpj_orgao')"
+                    ).fetchall()
+                info = {r['key']: r['value'] for r in rows}
+                self._json(200, info)
+            except Exception:
+                self._json(200, {})
         elif p == '/api/public/last-backup':
             try:
                 with get_db() as conn:
