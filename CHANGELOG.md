@@ -5,6 +5,17 @@
 
 ---
 
+## [2.9.2] — 2026-07-01
+
+### Adicionado (diagnóstico)
+- Mesmo após a correção da v2.9.1, o problema persistiu no ambiente real do usuário: o banco de produção continuou com os campos de Organização vazios após seguir os passos indicados. O log de requisições HTTP estava completamente desativado (`log_message` fazia `pass`) e não havia nenhum registro do que de fato chegava ao servidor — impossível diagnosticar às cegas
+- Adicionado log visível no console do servidor (`[SETTINGS] ...`) toda vez que `/api/settings/org` é chamado e o que foi de fato gravado/ignorado
+- Adicionado log no console do navegador (`[SGCD] Enviando/Resposta /api/settings/org`) e um `alert()` bloqueante caso a sincronização com o servidor falhe — antes só havia um toast de 3 segundos, fácil de não notar
+
+**Próximo teste:** repita os mesmos passos observando a janela do servidor (deve aparecer uma linha `[SETTINGS]`) e preste atenção a qualquer alerta bloqueante no navegador. Isso vai mostrar exatamente onde a falha está ocorrendo.
+
+---
+
 ## [2.9.1] — 2026-07-01
 
 ### Corrigido — causa raiz definitiva (encontrada via code review + evidência direta no banco)
