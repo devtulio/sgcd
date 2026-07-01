@@ -5,6 +5,13 @@
 
 ---
 
+## [2.8.3] — 2026-07-01
+
+### Corrigido
+- **Dados de Organização ausentes em outros navegadores/máquinas** — a aba Configurações → Organização exibia campos em branco ao logar de um navegador que nunca havia salvo as configurações localmente (ex.: acesso via IP em modo servidor, opção [2]); `getUser()` dependia apenas do `localStorage`, que é isolado por origem/navegador. Agora, após login bem-sucedido, o sistema busca `/api/settings` e mescla com o cache local, garantindo que os dados salvos no servidor apareçam em qualquer navegador
+
+---
+
 ## [2.8.2] — 2026-06-29
 
 ### Alterado
