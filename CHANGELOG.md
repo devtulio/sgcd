@@ -5,6 +5,17 @@
 
 ---
 
+## [2.8.5] — 2026-07-01
+
+### Corrigido
+- **Causa raiz definitiva: `PUT /api/settings` exigia admin** — a aba Organização é preenchida por qualquer agente de contratação, não apenas pelo admin, mas o endpoint usado para salvá-la (`/api/settings`) retornava 403 para usuários não-admin. Como `saveSettings()` não verificava a resposta, a falha era silenciosa: o usuário via "Configurações salvas!" mas o dado nunca chegava ao banco quando a sessão não era admin
+- Criado endpoint `PUT /api/settings/org`, acessível a qualquer usuário autenticado, restrito às chaves de Organização (orgao, município, autoridade, CNPJ, IBGE, UF); configurações administrativas (backup) continuam exigindo admin em `/api/settings`
+- `saveSettings()` agora avisa na tela se a sincronização com o servidor falhar, em vez de falhar em silêncio
+- Corrigida ordem do merge em `_onLoginSuccess()`: dados do servidor agora têm prioridade sobre cache local desatualizado/vazio (antes, um `sgcd-user` local vazio sobrescrevia o valor correto vindo do servidor)
+- Removida troca automática e indesejada para a aba Configurações a cada login
+
+---
+
 ## [2.8.4] — 2026-07-01
 
 ### Corrigido
