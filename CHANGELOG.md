@@ -5,6 +5,16 @@
 
 ---
 
+## [2.8.7] — 2026-07-01
+
+### Corrigido
+- **Valor vazio do servidor sobrescrevia dado real do navegador** — o fix da v2.8.5 fez o servidor sempre vencer o merge em `_onLoginSuccess()`. Como o banco tinha as chaves de Organização gravadas como string vazia (de um salvamento anterior com campos em branco), esse vazio passou a sobrescrever os dados reais já preenchidos no navegador do modo Pessoal, fazendo-os "desaparecer" ao logar em outra máquina. Corrigido: o merge agora é campo a campo — vazio nunca sobrescreve um valor real, de nenhum dos dois lados; entre dois valores reais, o servidor vence
+- **SMTP continua armazenado só no navegador** (não corrigido nesta versão) — diferente da aba Organização, as credenciais SMTP nunca foram enviadas ao servidor por design (evita salvar senha em texto simples no banco). Isso significa que a aba Comunicação/SMTP precisa ser configurada em cada navegador/máquina separadamente. Avise se quiser que isso também sincronize entre máquinas — requer armazenamento criptografado da senha no servidor
+
+**Ação necessária:** no navegador que já tem os dados corretos (modo Pessoal), abra Configurações → Organização e clique em Salvar novamente para sobrescrever os valores vazios gravados anteriormente no banco.
+
+---
+
 ## [2.8.6] — 2026-07-01
 
 ### Corrigido
