@@ -535,6 +535,11 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         elif p in ('/api/settings', '/api/settings/'):
             if not s['admin']: self._json(403, {'error': 'Acesso negado'}); return
             self._save_settings(data)
+        elif p in ('/api/settings/org', '/api/settings/org/'):
+            # Dados de Organização: qualquer usuário autenticado pode salvar (não é config administrativa)
+            allowed = {'orgao', 'municipio', 'aut_nome', 'aut_cargo', 'site_oficial',
+                       'diario_url', 'cnpj_orgao', 'codigo_ibge', 'uf'}
+            self._save_settings({k: v for k, v in data.items() if k in allowed})
         elif re.fullmatch(r'/api/users/[^/]+', p):
             uid = int(p.split('/')[-1])
             if not s['admin']:

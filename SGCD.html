@@ -2456,7 +2456,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.8.4';
+const SGCD_VERSION = '2.8.5';
 const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
   ? 'http://localhost:3000'
   : window.location.origin;
@@ -10525,13 +10525,13 @@ function _onLoginSuccess() {
       if (r && r.ok) {
         const remote = await r.json();
         const local = JSON.parse(localStorage.getItem('sgcd-user') || '{}');
-        localStorage.setItem('sgcd-user', JSON.stringify({ ...remote, ...local }));
+        // Servidor é a fonte de verdade para dados de Organização; local só preenche o que o servidor não tem
+        localStorage.setItem('sgcd-user', JSON.stringify({ ...local, ...remote }));
       }
     } catch (e) {}
     _atualizarSidebarUsuario();
-    if (typeof showSettings === 'function' && document.getElementById('s-orgao')) showSettings();
-    if (typeof carregarDashboard === 'function') carregarDashboard();
   })();
+  if (typeof carregarDashboard === 'function') carregarDashboard();
 }
 
 function _atualizarSidebarUsuario() {
@@ -10784,21 +10784,24 @@ async function saveSettings() {
   _atualizarSidebarUsuario();
 
 
-  // Save backup config + dados de Organização (server-side, para acesso multi-navegador)
-  await API.put('/api/settings', {
-    backup_path:          (document.getElementById('s-backup-path').value.trim() || 'backups'),
-    auto_backup_enabled:  document.getElementById('s-auto-backup-enabled').checked ? '1' : '0',
-    auto_backup_keep:     String(parseInt(document.getElementById('s-auto-backup-keep').value) || 7),
-    orgao:            u.orgao,
-    municipio:        u.municipio,
-    aut_nome:         u.aut_nome,
-    aut_cargo:        u.aut_cargo,
-    site_oficial:     u.site_oficial,
-    diario_url:       u.diario_url,
-    cnpj_orgao:       u.cnpj_orgao,
-    codigo_ibge:      u.codigo_ibge,
-    uf:               u.uf,
+  // Dados de Organização: endpoint próprio, acessível a qualquer usuário autenticado
+  const rOrg = await API.put('/api/settings/org', {
+    orgao: u.orgao, municipio: u.municipio, aut_nome: u.aut_nome, aut_cargo: u.aut_cargo,
+    site_oficial: u.site_oficial, diario_url: u.diario_url, cnpj_orgao: u.cnpj_orgao,
+    codigo_ibge: u.codigo_ibge, uf: u.uf,
   });
+  if (!rOrg || !rOrg.ok) {
+    toast('⚠ Dados de Organização salvos apenas neste navegador — falha ao sincronizar com o servidor', 'error');
+  }
+
+  // Save backup config (apenas admin)
+  if (_apiUser?.admin) {
+    await API.put('/api/settings', {
+      backup_path:          (document.getElementById('s-backup-path').value.trim() || 'backups'),
+      auto_backup_enabled:  document.getElementById('s-auto-backup-enabled').checked ? '1' : '0',
+      auto_backup_keep:     String(parseInt(document.getElementById('s-auto-backup-keep').value) || 7),
+    });
+  }
 
   // Save SMTP config
   const smtpUser = document.getElementById('s-smtp-user').value.trim();
