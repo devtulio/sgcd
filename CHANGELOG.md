@@ -5,6 +5,13 @@
 
 ---
 
+## [2.8.4] — 2026-07-01
+
+### Corrigido
+- **Causa raiz: dados de Organização nunca eram salvos no servidor** — `saveSettings()` gravava órgão, município, autoridade competente, CNPJ, código IBGE e UF apenas em `localStorage`, sem enviar ao servidor via `PUT /api/settings`. O fix da v2.8.3 (buscar `/api/settings` no login) não resolvia porque o dado nunca havia chegado ao banco. Agora esses campos são enviados ao servidor junto com as demais configurações, tornando-os visíveis em qualquer navegador/máquina que acessar o sistema. **Ação necessária:** reabra Configurações → Organização e clique em Salvar uma vez para sincronizar dados já preenchidos anteriormente
+
+---
+
 ## [2.8.3] — 2026-07-01
 
 ### Corrigido
