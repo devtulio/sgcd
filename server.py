@@ -18,6 +18,15 @@ import urllib.error
 import uuid
 import re
 import base64
+
+# Windows: console pode usar cp1252/cp850 em vez de UTF-8, quebrando prints
+# com caracteres especiais (╔═╗, emojis). Força UTF-8 para evitar UnicodeEncodeError.
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, 'reconfigure'):
+        try:
+            _stream.reconfigure(encoding='utf-8', errors='replace')
+        except Exception:
+            pass
 import html as html_mod
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart

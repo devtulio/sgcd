@@ -5,6 +5,14 @@
 
 ---
 
+## [2.8.6] — 2026-07-01
+
+### Corrigido
+- **Crash do servidor ao iniciar (`UnicodeEncodeError`)** — em algumas instalações do Windows, o console usa codificação `cp1252`/`cp850` em vez de UTF-8, e os caracteres de caixa (`╔═╗`) usados no cabeçalho do menu de inicialização não existem nessa codificação, derrubando o processo assim que `server.py` era executado. Isso explicava falhas anteriores relatadas: se o servidor nunca chegava a iniciar, nenhuma configuração — Organização, SMTP ou qualquer outra — ficava disponível. Corrigido forçando `stdout`/`stderr` para UTF-8 logo no início do script
+- Validado em teste real (não apenas leitura de código): login, `PUT /api/settings/org` como usuário não-admin, `GET /api/settings` e `GET /api/public/org-info` — todos funcionando conforme esperado após a correção
+
+---
+
 ## [2.8.5] — 2026-07-01
 
 ### Corrigido
