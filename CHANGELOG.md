@@ -5,6 +5,16 @@
 
 ---
 
+## [2.9.1] — 2026-07-01
+
+### Corrigido — causa raiz definitiva (encontrada via code review + evidência direta no banco)
+- **Servidor gravava campo vazio por cima de valor real** — `_save_settings()` fazia `INSERT OR REPLACE` cego para qualquer valor recebido, inclusive string vazia. A proteção da v2.8.7 cobria apenas a leitura (merge no login); a escrita continuava desprotegida. Bastava um único "Salvar" em **qualquer** navegador com os campos em branco (ex.: testando o acesso via IP antes dos dados chegarem lá) para apagar o dado real do banco — confirmado inspecionando `sys_settings` diretamente: todas as chaves de Organização estavam gravadas como `''` mesmo após instruções anteriores terem sido seguidas. Corrigido: `_save_settings()` agora ignora qualquer valor vazio recebido, não sobrescreve o que já está salvo, para todos os endpoints (`/api/settings`, `/api/settings/org`, `/api/settings/smtp`)
+- **Risco de cache do navegador** — `server.py` nunca enviava `Cache-Control` ao servir `SGCD.html`/JS/CSS, permitindo que o navegador usasse uma versão em cache sem revalidar com o servidor após uma atualização. Adicionado `Cache-Control: no-cache, must-revalidate` para arquivos `.html`, `.js` e `.css`
+
+**Ação necessária (última vez):** no navegador com os dados corretos, abra Configurações → Organização e clique em Salvar mais uma vez. A partir de agora, nenhum navegador com campos em branco vai conseguir apagar esse dado por engano.
+
+---
+
 ## [2.9.0] — 2026-07-01
 
 ### Adicionado

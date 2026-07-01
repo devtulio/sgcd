@@ -234,6 +234,13 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         self._cors()
         self.end_headers()
 
+    def end_headers(self):
+        # SGCD.html/JS mudam com frequência entre versões; sem isso o navegador
+        # pode servir do cache sem revalidar com o servidor (heurística por Last-Modified).
+        if self.command == 'GET' and urlparse(self.path).path.rstrip('/').endswith(('.html', '.js', '.css')):
+            self.send_header('Cache-Control', 'no-cache, must-revalidate')
+        super().end_headers()
+
     def do_GET(self):
         parsed = urlparse(self.path)
         p  = parsed.path.rstrip('/')
@@ -554,9 +561,8 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
             if not s['admin']: self._json(403, {'error': 'Acesso negado'}); return
             allowed = {'smtp_host', 'smtp_port', 'smtp_secure', 'smtp_require_tls',
                        'smtp_ignore_ssl', 'smtp_user', 'smtp_pass', 'smtp_from_name', 'smtp_to'}
-            # smtp_pass só é sobrescrita se enviada não-vazia (mantém a senha salva se o campo ficar em branco)
-            payload = {k: v for k, v in data.items() if k in allowed and not (k == 'smtp_pass' and not v)}
-            self._save_settings(payload)
+            # _save_settings() já ignora valores vazios, então smtp_pass em branco preserva a senha salva
+            self._save_settings({k: v for k, v in data.items() if k in allowed})
         elif re.fullmatch(r'/api/users/[^/]+', p):
             uid = int(p.split('/')[-1])
             if not s['admin']:
@@ -959,9 +965,14 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
     # ── Configurações ─────────────────────────────────────────────────────────
 
     def _save_settings(self, data):
+        # ponytail: string vazia nunca sobrescreve um valor já salvo — evita que um
+        # formulário em branco (navegador que nunca carregou os dados) apague a
+        # configuração real ao salvar. Para limpar um campo, edite o banco diretamente.
         with get_db() as conn:
             for key, value in data.items():
                 v = value if isinstance(value, str) else json.dumps(value, ensure_ascii=False)
+                if v == '':
+                    continue
                 conn.execute('INSERT OR REPLACE INTO sys_settings (key,value) VALUES (?,?)', (key, v))
         if 'auto_backup_keep' in data or 'backup_path' in data:
             _rotate_backups()
