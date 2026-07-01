@@ -2456,7 +2456,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.8.7';
+const SGCD_VERSION = '2.9.0';
 const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
   ? 'http://localhost:3000'
   : window.location.origin;
@@ -10168,6 +10168,28 @@ async function _getSmtpForSend() {
   }
   return cfg;
 }
+// Traz a config SMTP salva no servidor (admin) para este navegador, reencriptando
+// a senha com a chave local. Servidor só vence se tiver host configurado (não vazio).
+async function _syncSmtpFromServer(remote) {
+  if (!remote.smtp_host) return;
+  const local = getSmtp();
+  const stored = {
+    host: remote.smtp_host,
+    port: parseInt(remote.smtp_port) || 587,
+    secure: remote.smtp_secure === '1',
+    requireTLS: remote.smtp_require_tls !== '0',
+    ignoreSSL: remote.smtp_ignore_ssl === '1',
+    auth: { user: remote.smtp_user || '' },
+    from: { name: remote.smtp_from_name || 'SGCD', email: remote.smtp_user || '' },
+    to:   { email: remote.smtp_to || '' },
+  };
+  if (remote.smtp_pass) {
+    stored.auth.pass_enc = await _encryptText(remote.smtp_pass);
+  } else if (local.auth?.pass_enc) {
+    stored.auth.pass_enc = local.auth.pass_enc;
+  }
+  localStorage.setItem('sgcd-smtp', JSON.stringify(stored));
+}
 
 function _getAuditor() {
   const u = getUser();
@@ -10529,9 +10551,11 @@ function _onLoginSuccess() {
         // não importa o lado. Entre dois valores reais, servidor vence.
         const merged = { ...local };
         for (const [k, v] of Object.entries(remote)) {
+          if (k.startsWith('smtp_')) continue;
           if (v !== '' && v !== null && v !== undefined) merged[k] = v;
         }
         localStorage.setItem('sgcd-user', JSON.stringify(merged));
+        await _syncSmtpFromServer(remote);
       }
     } catch (e) {}
     _atualizarSidebarUsuario();
@@ -10808,18 +10832,37 @@ async function saveSettings() {
     });
   }
 
-  // Save SMTP config
+  // Save SMTP config (local, para uso imediato neste navegador)
   const smtpUser = document.getElementById('s-smtp-user').value.trim();
+  const smtpPassTyped = document.getElementById('s-smtp-pass').value;
   await saveSmtp({
     host:       document.getElementById('s-smtp-host').value.trim(),
     port:       parseInt(document.getElementById('s-smtp-port').value) || 587,
     secure:     document.getElementById('s-smtp-ssl').checked,
     requireTLS: document.getElementById('s-smtp-tls').checked,
     ignoreSSL:  document.getElementById('s-smtp-ignore-ssl').checked,
-    auth: { user: smtpUser, pass: document.getElementById('s-smtp-pass').value },
+    auth: { user: smtpUser, pass: smtpPassTyped },
     from: { name: document.getElementById('s-smtp-from-name').value.trim() || 'SGCD', email: smtpUser },
     to:   { email: document.getElementById('s-smtp-to').value.trim() },
   });
+
+  // Sincroniza SMTP com o servidor (admin), para outras máquinas puxarem no login
+  if (_apiUser?.admin) {
+    const rSmtp = await API.put('/api/settings/smtp', {
+      smtp_host: document.getElementById('s-smtp-host').value.trim(),
+      smtp_port: String(parseInt(document.getElementById('s-smtp-port').value) || 587),
+      smtp_secure: document.getElementById('s-smtp-ssl').checked ? '1' : '0',
+      smtp_require_tls: document.getElementById('s-smtp-tls').checked ? '1' : '0',
+      smtp_ignore_ssl: document.getElementById('s-smtp-ignore-ssl').checked ? '1' : '0',
+      smtp_user: smtpUser,
+      smtp_pass: smtpPassTyped,
+      smtp_from_name: document.getElementById('s-smtp-from-name').value.trim() || 'SGCD',
+      smtp_to: document.getElementById('s-smtp-to').value.trim(),
+    });
+    if (!rSmtp || !rSmtp.ok) {
+      toast('⚠ SMTP salvo apenas neste navegador — falha ao sincronizar com o servidor', 'error');
+    }
+  }
 
   updateHeaderUser();
   document.getElementById('btn-save-settings')?.classList.remove('has-changes');

@@ -549,6 +549,14 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
             allowed = {'orgao', 'municipio', 'aut_nome', 'aut_cargo', 'site_oficial',
                        'diario_url', 'cnpj_orgao', 'codigo_ibge', 'uf'}
             self._save_settings({k: v for k, v in data.items() if k in allowed})
+        elif p in ('/api/settings/smtp', '/api/settings/smtp/'):
+            # Config SMTP: sensível (inclui senha), restrita a admin
+            if not s['admin']: self._json(403, {'error': 'Acesso negado'}); return
+            allowed = {'smtp_host', 'smtp_port', 'smtp_secure', 'smtp_require_tls',
+                       'smtp_ignore_ssl', 'smtp_user', 'smtp_pass', 'smtp_from_name', 'smtp_to'}
+            # smtp_pass só é sobrescrita se enviada não-vazia (mantém a senha salva se o campo ficar em branco)
+            payload = {k: v for k, v in data.items() if k in allowed and not (k == 'smtp_pass' and not v)}
+            self._save_settings(payload)
         elif re.fullmatch(r'/api/users/[^/]+', p):
             uid = int(p.split('/')[-1])
             if not s['admin']:
