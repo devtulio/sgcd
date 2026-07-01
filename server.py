@@ -555,6 +555,7 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
             # Dados de Organização: qualquer usuário autenticado pode salvar (não é config administrativa)
             allowed = {'orgao', 'municipio', 'aut_nome', 'aut_cargo', 'site_oficial',
                        'diario_url', 'cnpj_orgao', 'codigo_ibge', 'uf'}
+            print(f"  [SETTINGS] PUT /api/settings/org recebido de {s.get('nome') or s.get('user_id')} (admin={s['admin']})", flush=True)
             self._save_settings({k: v for k, v in data.items() if k in allowed})
         elif p in ('/api/settings/smtp', '/api/settings/smtp/'):
             # Config SMTP: sensível (inclui senha), restrita a admin
@@ -968,12 +969,16 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         # ponytail: string vazia nunca sobrescreve um valor já salvo — evita que um
         # formulário em branco (navegador que nunca carregou os dados) apague a
         # configuração real ao salvar. Para limpar um campo, edite o banco diretamente.
+        gravadas, ignoradas = [], []
         with get_db() as conn:
             for key, value in data.items():
                 v = value if isinstance(value, str) else json.dumps(value, ensure_ascii=False)
                 if v == '':
+                    ignoradas.append(key)
                     continue
                 conn.execute('INSERT OR REPLACE INTO sys_settings (key,value) VALUES (?,?)', (key, v))
+                gravadas.append(key)
+        print(f'  [SETTINGS] gravadas={gravadas} ignoradas(vazias)={ignoradas}', flush=True)
         if 'auto_backup_keep' in data or 'backup_path' in data:
             _rotate_backups()
         self._json(200, {'ok': True})
