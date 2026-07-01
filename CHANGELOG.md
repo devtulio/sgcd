@@ -5,6 +5,19 @@
 
 ---
 
+## [2.9.0] — 2026-07-01
+
+### Adicionado
+- **Sincronização de SMTP entre máquinas** — a configuração de e-mail (host, porta, usuário, senha, remetente, destinatário padrão) agora é persistida no servidor via `PUT /api/settings/smtp` (restrito a admin, mesmo nível de sensibilidade do backup) e sincronizada automaticamente para qualquer navegador/máquina que fizer login, eliminando a necessidade de reconfigurar SMTP em cada computador
+- A senha SMTP é armazenada no banco do servidor e, ao chegar em cada navegador, é recriptografada com a chave local (AES-GCM) antes de ir para o `localStorage` — o fluxo de envio de e-mail (que já transmitia a senha em texto claro ao servidor a cada disparo) não muda
+- Salvar SMTP com o campo de senha em branco mantém a senha já configurada (não apaga)
+- Usuários não-admin continuam podendo ler a configuração SMTP sincronizada (necessário para disparar e-mails), mas não podem alterá-la
+
+### Corrigido
+- Nada nesta versão além do exposto acima; validado com testes reais (login, salvar como admin, tentativa de salvar como não-admin, leitura, preservação de senha em branco) antes do commit
+
+---
+
 ## [2.8.7] — 2026-07-01
 
 ### Corrigido
