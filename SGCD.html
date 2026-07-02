@@ -2456,7 +2456,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.9.6';
+const SGCD_VERSION = '2.10.0';
 const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
   ? 'http://localhost:3000'
   : window.location.origin;
@@ -3031,17 +3031,20 @@ const STEPS = [
   {
     name: 'Documento de Formalização da Demanda (DFD)',
     sub: 'Art. 12, §1º — justificativa da necessidade',
-    fields: ['responsavel','data_conclusao','observacoes']
+    fields: ['responsavel','data_conclusao','observacoes'],
+    dfd: true
   },
   {
     name: 'Estudo Técnico Preliminar (ETP)',
     sub: 'Quando aplicável — Art. 18, §2º',
-    fields: ['responsavel','data_conclusao','observacoes']
+    fields: ['responsavel','data_conclusao','observacoes'],
+    etp: true
   },
   {
     name: 'Termo de Referência (TR)',
     sub: 'Especificação do objeto, critérios e obrigações — Art. 6º, XXIII',
-    fields: ['responsavel','data_conclusao','observacoes']
+    fields: ['responsavel','data_conclusao','observacoes'],
+    termoReferencia: true
   },
   {
     name: 'Pesquisa de Preços / Estimativa do Valor',
@@ -3064,12 +3067,14 @@ const STEPS = [
   {
     name: 'Parecer do Controle Interno',
     sub: 'Análise prévia pelo Controle Interno Municipal — Art. 8º, Lei 14.133/2021',
-    fields: ['responsavel','data_conclusao','num_parecer_ci','observacoes']
+    fields: ['responsavel','data_conclusao','num_parecer_ci','observacoes'],
+    controleInterno: true
   },
   {
     name: 'Parecer Jurídico da Procuradoria-Geral',
     sub: 'Análise jurídica da legalidade e adequação da contratação — Art. 53, Lei 14.133/2021',
-    fields: ['responsavel','data_conclusao','num_parecer','observacoes']
+    fields: ['responsavel','data_conclusao','num_parecer','observacoes'],
+    parecerJuridico: true
   },
   {
     name: 'Autorização da Autoridade Competente',
@@ -3110,7 +3115,8 @@ const STEPS = [
   {
     name: 'Nota de Empenho',
     sub: 'Reserva orçamentária e emissão da NE',
-    fields: ['responsavel','data_conclusao','num_empenho','dotacao','observacoes']
+    fields: ['responsavel','data_conclusao','num_empenho','dotacao','observacoes'],
+    notaEmpenho: true
   },
   {
     name: 'Instrumento Contratual',
@@ -8886,11 +8892,13 @@ function gerarAvisoDispensa() {
     { ok: !!proc.num_dl,    msg: 'Número da DL não informado (campo "Nº DL" no painel lateral)', bloqueia: false },
     { ok: !!proc.objeto,    msg: 'Objeto da contratação não preenchido', bloqueia: true },
     { ok: !!proc.legal,     msg: 'Base legal (Art. 75, inciso) não selecionada', bloqueia: false },
-    { ok: !!(proc.valor || proc.steps?.[3]?.fields?.valor_estimado), msg: 'Valor estimado não informado', bloqueia: false },
+    { ok: !!(proc.valor || proc.steps?.[STEPS.findIndex(s => s.cotacoes)]?.fields?.valor_estimado), msg: 'Valor estimado não informado', bloqueia: false },
   ])) return;
   const u = getUser();
   const p = i => proc.steps[i]?.fields || {};
   const v = (i, f) => p(i)[f] || '';
+  const iCotacoes = STEPS.findIndex(s => s.cotacoes);
+  const iAviso     = STEPS.findIndex(s => s.avisoDispensa);
   const hoje = new Date().toLocaleDateString('pt-BR', { day:'numeric', month:'long', year:'numeric' });
   const blank = txt => txt || '_'.repeat(40);
   const fmtVal = val => val ? fmtMoney(val) : '_'.repeat(20);
@@ -8920,10 +8928,11 @@ function gerarAvisoDispensa() {
   const criterioInciso   = _criterioInciso[proc.criterio_selecao]   || 'I';
   const criterioVantajosa = _criterioVantajosa[proc.criterio_selecao] || _criterioVantajosa.menor_preco;
 
-  const prazoFormatado = v(9,'prazo_propostas') ? new Date(v(9,'prazo_propostas')+'T00:00:00').toLocaleDateString('pt-BR', {day:'2-digit',month:'2-digit',year:'numeric'}) : '_____/_____/________';
-  const enderecoEnvio  = v(9,'endereco_envio') || '_'.repeat(50);
-  const valorEstimado  = v(3,'valor_estimado');
-  const fundamentoLegal = v(4,'fundamento') || proc.legal || 'Art. 75 da Lei Federal nº 14.133/2021';
+  const prazoFormatado = v(iAviso,'prazo_propostas') ? new Date(v(iAviso,'prazo_propostas')+'T00:00:00').toLocaleDateString('pt-BR', {day:'2-digit',month:'2-digit',year:'numeric'}) : '_____/_____/________';
+  const enderecoEnvio  = v(iAviso,'endereco_envio') || '_'.repeat(50);
+  const valorEstimado  = v(iCotacoes,'valor_estimado');
+  // BUG (corrigido): lia da etapa "Dotação Orçamentária" (sem campo fundamento) em vez de "Enquadramento Legal"
+  const fundamentoLegal = v(STEPS.findIndex(s => s.enquadramentoLegal),'fundamento') || proc.legal || 'Art. 75 da Lei Federal nº 14.133/2021';
   const incisoLegal    = proc.legal ? proc.legal.split(' — ')[0] : 'Art. 75';
 
   const html = `<!DOCTYPE html>
@@ -9192,14 +9201,17 @@ function exportarPNCP() {
 
 function gerarExtratoContrato() {
   const proc = currentProcess;
+  // BUG (corrigido): lia da etapa "Homologação" em vez de "Instrumento Contratual",
+  // onde de fato vivem num_contrato/contratante/vigência/valor_contrato
+  const iInstrumento = STEPS.findIndex(s => s.extratoContrato);
   if (!_validarDocumento([
     { ok: _temFornecedor(proc), msg: 'Nenhum fornecedor vinculado ao processo — o campo "Contratado" ficará em branco', bloqueia: true },
     { ok: !!proc.num_dl,        msg: 'Número da DL não informado', bloqueia: false },
-    { ok: !!(proc.steps?.[13]?.fields?.valor_contrato || proc.valor), msg: 'Valor do contrato não preenchido (etapa de Contratação)', bloqueia: false },
-    { ok: !!(proc.steps?.[13]?.fields?.vigencia_inicial), msg: 'Vigência do contrato não informada (etapa de Contratação)', bloqueia: false },
+    { ok: !!(proc.steps?.[iInstrumento]?.fields?.valor_contrato || proc.valor), msg: 'Valor do contrato não preenchido (etapa de Contratação)', bloqueia: false },
+    { ok: !!(proc.steps?.[iInstrumento]?.fields?.vigencia_inicial), msg: 'Vigência do contrato não informada (etapa de Contratação)', bloqueia: false },
   ])) return;
   const u = getUser();
-  const data = proc.steps[13]?.fields || {};
+  const data = proc.steps[iInstrumento]?.fields || {};
   const hoje = new Date().toLocaleDateString('pt-BR', { day:'numeric', month:'long', year:'numeric' });
   const blank = txt => txt || '_'.repeat(40);
   const forn = proc.fornecedor;
@@ -9209,7 +9221,7 @@ function gerarExtratoContrato() {
   const vigencia = data.vigencia_inicial && data.vigencia_final
     ? `${data.vigencia_inicial} a ${data.vigencia_final}`
     : (data.vigencia_inicial || data.vigencia_final || '');
-  const fundamento = proc.steps[4]?.fields?.fundamento || '';
+  const fundamento = proc.steps[STEPS.findIndex(s => s.enquadramentoLegal)]?.fields?.fundamento || '';
 
   const html = `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -9313,7 +9325,8 @@ function gerarEnquadramentoLegal() {
   const fmtVal = v => v ? fmtMoney(v) : '_______________';
   const d = dt => dt ? new Date(dt).toLocaleDateString('pt-BR') : '_____/_____/_______';
 
-  const stepData = p.steps?.[4]?.fields || {};
+  // BUG (corrigido): lia da etapa "Dotação Orçamentária" (sem campo fundamento) em vez de "Enquadramento Legal"
+  const stepData = p.steps?.[STEPS.findIndex(s => s.enquadramentoLegal)]?.fields || {};
   const responsavel   = stepData.responsavel   || u.nome || '';
   const dataConclusao = stepData.data_conclusao ? d(stepData.data_conclusao) : hoje;
   const fundamento    = stepData.fundamento || p.legal || '';
@@ -9428,7 +9441,7 @@ function gerarAutorizacao() {
   const fornNome = typeof p.fornecedor === 'object' ? (p.fornecedor?.razao_social || '') : (p.fornecedor || '');
   const fornCnpj = typeof p.fornecedor === 'object' ? (p.fornecedor?.cnpj || '') : '';
 
-  const numParecer = p.steps[7]?.fields?.num_parecer || '';
+  const numParecer = p.steps[STEPS.findIndex(s => s.parecerJuridico)]?.fields?.num_parecer || '';
   const parecerRef = numParecer ? `, com amparo no Parecer Jurídico nº ${numParecer} da Procuradoria-Geral,` : '';
 
   const html = `<!DOCTYPE html>
@@ -9583,13 +9596,19 @@ function gerarProcessoCompleto() {
   const forn = p.fornecedor;
   const fornNome = typeof forn==='object'?(forn?.razao_social||''):(forn||'');
   const fornCnpj = typeof forn==='object'?(forn?.cnpj||''):(forn?'':'');
-  const numParecer = p.steps[7]?.fields?.num_parecer || '';
+  const numParecer = p.steps[STEPS.findIndex(s => s.parecerJuridico)]?.fields?.num_parecer || '';
   const parecerRef = numParecer ? `, com amparo no Parecer Jurídico nº ${numParecer} da Procuradoria-Geral,` : '';
   const s = i => p.steps?.[i]?.fields || {};
-  const vigencia = (s(15).vigencia_inicial && s(15).vigencia_final)
-    ? `${s(15).vigencia_inicial} a ${s(15).vigencia_final}` : (s(15).vigencia_inicial || s(15).vigencia_final || '');
+  const iAviso        = STEPS.findIndex(st => st.avisoDispensa);
+  const iAdjudicacao   = STEPS.findIndex(st => st.adjudicacao);
+  const iHomologacao   = STEPS.findIndex(st => st.homologacao);
+  const iNotaEmpenho   = STEPS.findIndex(st => st.notaEmpenho);
+  const iInstrumento   = STEPS.findIndex(st => st.extratoContrato);
+  const iEnquadramento = STEPS.findIndex(st => st.enquadramentoLegal);
+  const vigencia = (s(iInstrumento).vigencia_inicial && s(iInstrumento).vigencia_final)
+    ? `${s(iInstrumento).vigencia_inicial} a ${s(iInstrumento).vigencia_final}` : (s(iInstrumento).vigencia_inicial || s(iInstrumento).vigencia_final || '');
   const dotacao = p.dotacao_completa || [p.dotacao_programa, p.dotacao_elemento, p.dotacao_fonte].filter(Boolean).join(' / ');
-  const fundamento = s(5).fundamento || '';
+  const fundamento = s(iEnquadramento).fundamento || '';
 
   function section(title, rows, body) {
     const rowsHtml = rows ? rows.filter(r=>r).map(([l,v]) => `<tr><td class="lbl">${l}</td><td>${blank(v)}</td></tr>`).join('') : '';
@@ -9616,47 +9635,47 @@ function gerarProcessoCompleto() {
   ], `Nos termos do ${p.legal ? p.legal.split(' — ')[0] + ' da Lei Federal nº 14.133/2021' : 'Art. 75 da Lei Federal nº 14.133/2021'}${parecerRef}, AUTORIZO a abertura do processo de Dispensa de Licitação.`));
 
   // 2. Publicação
-  if (s(9).data_publicacao) sections.push(section('2. Publicação (PNCP / Diário Oficial)', [
-    ['Data de publicação', s(9).data_publicacao],
-    ['Data de encerramento', s(9).data_encerramento],
-    s(9).link_pncp ? ['Link PNCP', s(9).link_pncp] : null,
-    s(9).link_diario ? ['Link Diário Oficial', s(9).link_diario] : null,
-    s(9).link_site ? ['Link Site Oficial', s(9).link_site] : null,
+  if (s(iAviso).data_publicacao) sections.push(section('2. Publicação (PNCP / Diário Oficial)', [
+    ['Data de publicação', s(iAviso).data_publicacao],
+    ['Data de encerramento', s(iAviso).data_encerramento],
+    s(iAviso).link_pncp ? ['Link PNCP', s(iAviso).link_pncp] : null,
+    s(iAviso).link_diario ? ['Link Diário Oficial', s(iAviso).link_diario] : null,
+    s(iAviso).link_site ? ['Link Site Oficial', s(iAviso).link_site] : null,
   ]));
 
   // 3. Proposta vencedora
-  if (s(12).valor_adjudicado || fornNome) sections.push(section('3. Adjudicação', [
+  if (s(iAdjudicacao).valor_adjudicado || fornNome) sections.push(section('3. Adjudicação', [
     ['Fornecedor adjudicado', fornNome + (fornCnpj ? ` — CNPJ: ${fornCnpj}` : '')],
-    ['Valor adjudicado', fmtV(s(12).valor_adjudicado)],
-    ['Data de adjudicação', s(12).data_conclusao],
-    ['Responsável', s(12).responsavel],
+    ['Valor adjudicado', fmtV(s(iAdjudicacao).valor_adjudicado)],
+    ['Data de adjudicação', s(iAdjudicacao).data_conclusao],
+    ['Responsável', s(iAdjudicacao).responsavel],
   ]));
 
   // 4. Homologação
-  if (s(13).data_conclusao) sections.push(section('4. Homologação', [
-    ['Autoridade', s(13).autoridade || u.aut_nome],
-    ['Data de homologação', s(13).data_conclusao],
-    ['Responsável', s(13).responsavel],
+  if (s(iHomologacao).data_conclusao) sections.push(section('4. Homologação', [
+    ['Autoridade', s(iHomologacao).autoridade || u.aut_nome],
+    ['Data de homologação', s(iHomologacao).data_conclusao],
+    ['Responsável', s(iHomologacao).responsavel],
   ]));
 
   // 5. Nota de Empenho
-  if (s(14).num_empenho || s(14).dotacao) sections.push(section('5. Nota de Empenho', [
-    ['Nº do empenho', s(14).num_empenho],
-    ['Dotação', s(14).dotacao],
-    ['Data', s(14).data_conclusao],
+  if (s(iNotaEmpenho).num_empenho || s(iNotaEmpenho).dotacao) sections.push(section('5. Nota de Empenho', [
+    ['Nº do empenho', s(iNotaEmpenho).num_empenho],
+    ['Dotação', s(iNotaEmpenho).dotacao],
+    ['Data', s(iNotaEmpenho).data_conclusao],
   ]));
 
   // 6. Instrumento Contratual
-  if (s(15).num_contrato || s(15).valor_contrato) sections.push(section('6. Instrumento Contratual', [
-    ['Nº do instrumento', s(15).num_contrato],
-    ['Data de assinatura', s(15).data_assinatura],
+  if (s(iInstrumento).num_contrato || s(iInstrumento).valor_contrato) sections.push(section('6. Instrumento Contratual', [
+    ['Nº do instrumento', s(iInstrumento).num_contrato],
+    ['Data de assinatura', s(iInstrumento).data_assinatura],
     ['Vigência', vigencia],
-    ['Valor do contrato', fmtV(s(15).valor_contrato)],
-    ['Contratante', s(15).contratante || u.orgao],
-    ['Contratado', s(15).contratado || fornNome],
-    ['CNPJ contratado', s(15).cnpj_contratado || fornCnpj],
-    ['Gestor do contrato', s(15).gestor_contrato],
-    ['Fiscal do contrato', s(15).fiscal_contrato],
+    ['Valor do contrato', fmtV(s(iInstrumento).valor_contrato)],
+    ['Contratante', s(iInstrumento).contratante || u.orgao],
+    ['Contratado', s(iInstrumento).contratado || fornNome],
+    ['CNPJ contratado', s(iInstrumento).cnpj_contratado || fornCnpj],
+    ['Gestor do contrato', s(iInstrumento).gestor_contrato],
+    ['Fiscal do contrato', s(iInstrumento).fiscal_contrato],
     dotacao ? ['Dotação Orçamentária', dotacao] : null,
     fundamento ? ['Fundamento', fundamento] : null,
   ]));
@@ -9765,7 +9784,15 @@ function gerarAta() {
   const blank = txt => txt || '_'.repeat(40);
 
   // Índices calculados dinamicamente para resistir a reordenação de etapas
-  const iCotacoes   = STEPS.findIndex(s => s.cotacoes);
+  const iDfd          = STEPS.findIndex(s => s.dfd);
+  const iEtp           = STEPS.findIndex(s => s.etp);
+  const iTr            = STEPS.findIndex(s => s.termoReferencia);
+  const iCotacoes      = STEPS.findIndex(s => s.cotacoes);
+  const iEnquadramento = STEPS.findIndex(s => s.enquadramentoLegal);
+  const iControleInterno = STEPS.findIndex(s => s.controleInterno);
+  const iParecerJuridico = STEPS.findIndex(s => s.parecerJuridico);
+  const iAutorizacao   = STEPS.findIndex(s => s.autorizacao);
+  const iAviso         = STEPS.findIndex(s => s.avisoDispensa);
   const iPropostas  = STEPS.findIndex(s => s.propostas);
   const iHabilitacao = STEPS.findIndex(s => s.certidoes);
   const iAdjudicacao = STEPS.findIndex(s => s.adjudicacao);
@@ -9887,41 +9914,41 @@ function gerarAta() {
 
 <div class="secao">
   <div class="secao-titulo">II — Abertura da Sessão</div>
-  <p>Aos ${hoje}, o(a) ${u.cargo || 'Agente de Contratação'} ${u.nome || blank(v(8,'responsavel'))}${u.matricula ? ', matrícula nº ' + u.matricula + ',' : ''} designado(a) para conduzir o procedimento de Dispensa de Licitação nº ${blank(p.num_dl || p.num)}, declara aberta a sessão pública, dando continuidade à análise do processo administrativo referente à contratação de <strong>${blank(p.objeto)}</strong>, com fundamento no art. 75 da Lei nº 14.133, de 1º de abril de 2021${p.legal ? ' — ' + p.legal : ''}.</p>
+  <p>Aos ${hoje}, o(a) ${u.cargo || 'Agente de Contratação'} ${u.nome || blank(v(iAutorizacao,'responsavel'))}${u.matricula ? ', matrícula nº ' + u.matricula + ',' : ''} designado(a) para conduzir o procedimento de Dispensa de Licitação nº ${blank(p.num_dl || p.num)}, declara aberta a sessão pública, dando continuidade à análise do processo administrativo referente à contratação de <strong>${blank(p.objeto)}</strong>, com fundamento no art. 75 da Lei nº 14.133, de 1º de abril de 2021${p.legal ? ' — ' + p.legal : ''}.</p>
 </div>
 
 <div class="secao">
   <div class="secao-titulo">III — Instrumento Convocatório e Instrução do Processo</div>
-  <div class="dado"><strong>Documento de Formalização da Demanda (DFD):</strong> concluído em ${d(v(0,'data_conclusao'))} — ${blank(v(0,'responsavel'))}</div>
-  <div class="dado"><strong>Estudo Técnico Preliminar (ETP):</strong> ${p.steps[1]?.status === 'done' ? `concluído em ${d(v(1,'data_conclusao'))}` : 'dispensado / não aplicável'}</div>
-  <div class="dado"><strong>Termo de Referência (TR):</strong> concluído em ${d(v(2,'data_conclusao'))} — ${blank(v(2,'responsavel'))}</div>
-  <div class="dado"><strong>Pesquisa de Preços / Estimativa do Valor:</strong> ${cotacoesValidas.length} cotação(ões) válida(s) — concluída em ${d(v(3,'data_conclusao'))} — valor de referência: ${v(3,'valor_estimado') ? fmtMoney(v(3,'valor_estimado')) : '_'.repeat(20)}</div>
-  <div class="dado"><strong>Enquadramento Legal:</strong> ${blank(v(5,'fundamento'))} — concluído em ${d(v(5,'data_conclusao'))}</div>
-  <div class="dado"><strong>Parecer do Controle Interno:</strong> ${blank(v(6,'num_parecer_ci'))} — concluído em ${d(v(6,'data_conclusao'))}</div>
-  <div class="dado"><strong>Parecer Jurídico:</strong> ${blank(v(7,'num_parecer'))} — concluído em ${d(v(7,'data_conclusao'))}</div>
-  <div class="dado"><strong>Autorização da Autoridade Competente:</strong> ${blank(v(8,'autoridade'))} em ${d(v(8,'data_conclusao'))}</div>
-  <div class="dado"><strong>Aviso de Dispensa elaborado em:</strong> ${d(v(9,'data_conclusao'))}</div>
-  <div class="dado"><strong>Publicação no PNCP:</strong> de ${d(v(9,'data_publicacao'))} a ${d(v(9,'data_encerramento'))}${v(9,'link_pncp') ? ' — ' + v(9,'link_pncp') : ''}</div>
+  <div class="dado"><strong>Documento de Formalização da Demanda (DFD):</strong> concluído em ${d(v(iDfd,'data_conclusao'))} — ${blank(v(iDfd,'responsavel'))}</div>
+  <div class="dado"><strong>Estudo Técnico Preliminar (ETP):</strong> ${p.steps[iEtp]?.status === 'done' ? `concluído em ${d(v(iEtp,'data_conclusao'))}` : 'dispensado / não aplicável'}</div>
+  <div class="dado"><strong>Termo de Referência (TR):</strong> concluído em ${d(v(iTr,'data_conclusao'))} — ${blank(v(iTr,'responsavel'))}</div>
+  <div class="dado"><strong>Pesquisa de Preços / Estimativa do Valor:</strong> ${cotacoesValidas.length} cotação(ões) válida(s) — concluída em ${d(v(iCotacoes,'data_conclusao'))} — valor de referência: ${v(iCotacoes,'valor_estimado') ? fmtMoney(v(iCotacoes,'valor_estimado')) : '_'.repeat(20)}</div>
+  <div class="dado"><strong>Enquadramento Legal:</strong> ${blank(v(iEnquadramento,'fundamento'))} — concluído em ${d(v(iEnquadramento,'data_conclusao'))}</div>
+  <div class="dado"><strong>Parecer do Controle Interno:</strong> ${blank(v(iControleInterno,'num_parecer_ci'))} — concluído em ${d(v(iControleInterno,'data_conclusao'))}</div>
+  <div class="dado"><strong>Parecer Jurídico:</strong> ${blank(v(iParecerJuridico,'num_parecer'))} — concluído em ${d(v(iParecerJuridico,'data_conclusao'))}</div>
+  <div class="dado"><strong>Autorização da Autoridade Competente:</strong> ${blank(v(iAutorizacao,'autoridade'))} em ${d(v(iAutorizacao,'data_conclusao'))}</div>
+  <div class="dado"><strong>Aviso de Dispensa elaborado em:</strong> ${d(v(iAviso,'data_conclusao'))}</div>
+  <div class="dado"><strong>Publicação no PNCP:</strong> de ${d(v(iAviso,'data_publicacao'))} a ${d(v(iAviso,'data_encerramento'))}${v(iAviso,'link_pncp') ? ' — ' + v(iAviso,'link_pncp') : ''}</div>
 </div>
 
 <div class="secao">
   <div class="secao-titulo">IV — Cotações Recebidas</div>
   <p>Foram obtidas as seguintes cotações de preço para composição do valor de referência:</p>
   ${cotacoesHtml}
-  ${v(3,'observacoes') ? `<p><strong>Observações:</strong> ${v(3,'observacoes')}</p>` : ''}
+  ${v(iCotacoes,'observacoes') ? `<p><strong>Observações:</strong> ${v(iCotacoes,'observacoes')}</p>` : ''}
 </div>
 
 <div class="secao">
   <div class="secao-titulo">V — Propostas Recebidas</div>
   <p>Encerrado o prazo de recebimento, foram analisadas as seguintes propostas:</p>
   ${propostasHtml}
-  ${v(10,'observacoes') ? `<p><strong>Observações:</strong> ${v(10,'observacoes')}</p>` : ''}
+  ${v(iPropostas,'observacoes') ? `<p><strong>Observações:</strong> ${v(iPropostas,'observacoes')}</p>` : ''}
 </div>
 
 <div class="secao">
   <div class="secao-titulo">VI — Habilitação do Fornecedor</div>
   <p>O(A) Agente de Contratação procedeu à verificação da regularidade fiscal, trabalhista e jurídica do fornecedor com proposta mais vantajosa:</p>
-  <div class="dado"><strong>Fornecedor:</strong> ${blank(v(11,'fornecedor'))}</div>
+  <div class="dado"><strong>Fornecedor:</strong> ${blank(v(iHabilitacao,'fornecedor'))}</div>
   <div class="dado"><strong>CNPJ:</strong> ${blank(currentProcess?.fornecedor?.cnpj || v(iHabilitacao,'cnpj'))}</div>
   <br>
   <table>
@@ -9959,13 +9986,13 @@ function gerarAta() {
 
 <div class="assinaturas">
   <div class="assinatura">
-    <div class="linha"><strong>${u.nome || v(8,'responsavel') || ''}</strong><br>${u.cargo || 'Agente de Contratação'}${u.matricula ? '<br>Matrícula: ' + u.matricula : ''}</div>
+    <div class="linha"><strong>${u.nome || v(iAutorizacao,'responsavel') || ''}</strong><br>${u.cargo || 'Agente de Contratação'}${u.matricula ? '<br>Matrícula: ' + u.matricula : ''}</div>
   </div>
   <div class="assinatura">
-    <div class="linha"><strong>${u.aut_nome || v(13,'autoridade') || v(8,'autoridade') || ''}</strong><br>${u.aut_cargo || 'Autoridade Competente'}</div>
+    <div class="linha"><strong>${u.aut_nome || v(iHomologacao,'autoridade') || v(iAutorizacao,'autoridade') || ''}</strong><br>${u.aut_cargo || 'Autoridade Competente'}</div>
   </div>
   <div class="assinatura">
-    <div class="linha"><strong>${v(11,'fornecedor') || ''}</strong><br>Representante do Fornecedor</div>
+    <div class="linha"><strong>${v(iHabilitacao,'fornecedor') || ''}</strong><br>Representante do Fornecedor</div>
   </div>
 </div>
 
