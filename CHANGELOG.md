@@ -5,6 +5,18 @@
 
 ---
 
+## [2.9.4] — 2026-07-01
+
+### Corrigido — causa raiz definitiva do SMTP
+- **`crypto.subtle` indisponível em contexto inseguro** — a criptografia AES-GCM da senha SMTP usa a Web Crypto API, que só existe em contexto seguro (HTTPS ou `localhost`). Acesso via IP puro em rede local (`http://192.168.x.x`, o uso normal do "modo Servidor") é contexto inseguro por definição do navegador — `crypto.subtle` fica `undefined`, e toda tentativa de criptografar/descriptografar a senha lançava exceção silenciosa. Isso já era um bug **preexistente** na função de SMTP (mesmo antes da sincronização entre máquinas), só nunca testado nesse cenário. Explica por que Organização sincronizou (sem criptografia) e SMTP não (quebrava ao tentar criptografar a senha recebida do servidor)
+- Corrigido com fallback: quando `crypto.subtle` não está disponível, usa-se codificação base64 simples (prefixo `b64:`) em vez de AES-GCM — mesmo nível de proteção prática de antes, já que a chave de criptografia também ficava salva ao lado no `localStorage`, então nunca foi proteção contra acesso à máquina, apenas ofuscação contra leitura casual
+- Validado isoladamente em Node.js simulando contexto inseguro (sem `crypto.subtle`): criptografa, descriptografa e sincroniza corretamente, inclusive com acentuação
+
+### Identificado (não corrigido nesta versão)
+- **Brasão customizado não sincroniza entre máquinas** — diferente de Organização/SMTP, o brasão customizado (upload em Configurações) é salvo apenas como imagem em base64 no `localStorage`, nunca enviado ao servidor. É um problema da mesma família, mas com arquitetura diferente (arquivo binário vs texto) — requer uma correção própria, ainda não implementada
+
+---
+
 ## [2.9.3] — 2026-07-01
 
 ### Adicionado (diagnóstico)
