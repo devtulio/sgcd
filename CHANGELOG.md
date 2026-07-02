@@ -5,6 +5,16 @@
 
 ---
 
+## [2.11.2] — 2026-07-02
+
+### Adicionado
+- **Clique na notificação navega até o item** — clicar num alerta em Notificações agora leva direto para o processo (prazo, vencido, parado, vigência) ou para a aba de certidões do fornecedor (certidão vencendo), em vez de só fechar o painel
+
+### Corrigido
+- **Alerta de "vigência contratual vencendo" nunca disparava** — `_buildNotificacoes()` lia `vigencia_final` da etapa "Homologação" (índice 13, que não tem esse campo) em vez de "Instrumento Contratual" (índice 15). Mesma classe de bug já corrigida nos geradores de documento (v2.10.0), presente também aqui
+
+---
+
 ## [2.11.1] — 2026-07-02
 
 ### Adicionado

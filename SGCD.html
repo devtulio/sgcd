@@ -2474,7 +2474,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.11.1';
+const SGCD_VERSION = '2.11.2';
 const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
   ? 'http://localhost:3000'
   : window.location.origin;
@@ -11705,8 +11705,10 @@ async function _buildNotificacoes() {
   }
 
   // Vigência contratual vencendo em 30 dias (todos os processos concluídos com contrato)
+  // BUG (corrigido): lia da etapa "Homologação" (sem campo vigencia_final) em vez de "Instrumento Contratual"
+  const iInstrumentoNotif = STEPS.findIndex(s => s.extratoContrato);
   for (const p of processes) {
-    const vigFinal = p.steps?.[13]?.fields?.vigencia_final;
+    const vigFinal = p.steps?.[iInstrumentoNotif]?.fields?.vigencia_final;
     if (!vigFinal) continue;
     const d = new Date(vigFinal + 'T00:00:00');
     const diff = Math.ceil((d - now) / 86400000);
@@ -11758,14 +11760,23 @@ async function renderNotificacoes() {
   }
   const _icon = { prazo:'🟡', vencido:'🔴', parado:'⏸', cert:'📋', vigencia:'📅', 'vigencia-vencida':'🔴' };
   const _bg   = { prazo:'#FFF3CD', vencido:'#FCEBEB', parado:'#F3F4F6', cert:'#EFF6FF', vigencia:'#FFF3CD', 'vigencia-vencida':'#FCEBEB' };
-  list.innerHTML = itens.map(it => `
-    <div class="notif-item" onclick="toggleNotificacoes();${it.p ? `openProcess('${it.p.id}')` : ''}">
+  window._notifItens = itens;
+  list.innerHTML = itens.map((it, i) => `
+    <div class="notif-item" style="cursor:pointer" onclick="_notifClick(${i})">
       <div class="notif-icon" style="background:${_bg[it.tipo]}">${_icon[it.tipo]}</div>
       <div class="notif-body">
         <div class="notif-title">${escHtml(it.titulo)}</div>
         <div class="notif-sub">${escHtml(it.sub)}</div>
       </div>
     </div>`).join('');
+}
+
+function _notifClick(i) {
+  const it = window._notifItens?.[i];
+  toggleNotificacoes();
+  if (!it) return;
+  if (it.tipo === 'cert' && it.f) openFornDetail(it.f.id, false, 'certs');
+  else if (it.p) openProcess(it.p.id);
 }
 
 function toggleNotificacoes() {
