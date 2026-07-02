@@ -559,6 +559,18 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
                        'diario_url', 'cnpj_orgao', 'codigo_ibge', 'uf'}
             print(f"  [SETTINGS] PUT /api/settings/org recebido de {s.get('nome') or s.get('user_id')} (admin={s['admin']})", flush=True)
             self._save_settings({k: v for k, v in data.items() if k in allowed})
+        elif p in ('/api/settings/brasao', '/api/settings/brasao/'):
+            # Brasão customizado (data URL base64): qualquer usuário autenticado pode salvar.
+            # Bypassa o "vazio nunca sobrescreve" de _save_settings() — aqui vazio É o
+            # sinal explícito de "remover o brasão customizado", não um formulário em branco.
+            dataurl = data.get('brasao_dataurl', '')
+            with get_db() as conn:
+                if dataurl:
+                    conn.execute('INSERT OR REPLACE INTO sys_settings (key,value) VALUES (?,?)', ('brasao_dataurl', dataurl))
+                else:
+                    conn.execute("DELETE FROM sys_settings WHERE key='brasao_dataurl'")
+            print(f"  [SETTINGS] PUT /api/settings/brasao de {s.get('nome') or s.get('user_id')} — {'removido' if not dataurl else f'{len(dataurl)} bytes'}", flush=True)
+            self._json(200, {'ok': True})
         elif p in ('/api/settings/smtp', '/api/settings/smtp/'):
             # Config SMTP: sensível (inclui senha), restrita a admin
             if not s['admin']: self._json(403, {'error': 'Acesso negado'}); return
