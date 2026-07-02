@@ -1343,44 +1343,7 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
     # ── E-mail ────────────────────────────────────────────────────────────────
 
     def _send_email(self, data):
-        smtp  = data['smtp']
-        frm   = data['from']
-        to    = data['to']
-        subj  = data['subject']
-        html  = data['html']
-        plain = data.get('text', '')
-
-        msg = MIMEMultipart('alternative')
-        msg['Subject'] = subj
-        msg['From']    = f"{frm['name']} <{frm['email']}>"
-        msg['To']      = to if isinstance(to, str) else ', '.join(to)
-        if plain: msg.attach(MIMEText(plain, 'plain', 'utf-8'))
-        msg.attach(MIMEText(html, 'html', 'utf-8'))
-
-        port = int(smtp.get('port', 587))
-        host = smtp['host']
-        user = smtp['auth']['user']
-        pw   = smtp['auth']['pass']
-
-        ctx = ssl.create_default_context()
-        if smtp.get('ignoreSSL'):
-            ctx.check_hostname = False
-            ctx.verify_mode    = ssl.CERT_NONE
-
-        try:
-            if smtp.get('secure'):
-                with smtplib.SMTP_SSL(host, port, context=ctx) as s:
-                    s.login(user, pw); s.send_message(msg)
-            else:
-                with smtplib.SMTP(host, port) as s:
-                    s.ehlo()
-                    if smtp.get('requireTLS', True): s.starttls(context=ctx)
-                    s.login(user, pw); s.send_message(msg)
-        except ssl.SSLCertVerificationError as e:
-            raise RuntimeError(
-                f'Falha SSL no servidor SMTP ({host}). '
-                f'Ative "Ignorar verificação SSL" nas configurações. Detalhe: {e}'
-            ) from e
+        _send_email_raw(data['smtp'], data['from'], data['to'], data['subject'], data['html'], data.get('text', ''))
 
     # ── Helpers HTTP ──────────────────────────────────────────────────────────
 
@@ -1477,6 +1440,117 @@ def _find_browser():
         if os.path.isfile(c): return c
     return None
 
+def _send_email_raw(smtp, frm, to, subj, html, plain=''):
+    msg = MIMEMultipart('alternative')
+    msg['Subject'] = subj
+    msg['From']    = f"{frm['name']} <{frm['email']}>"
+    msg['To']      = to if isinstance(to, str) else ', '.join(to)
+    if plain: msg.attach(MIMEText(plain, 'plain', 'utf-8'))
+    msg.attach(MIMEText(html, 'html', 'utf-8'))
+
+    port = int(smtp.get('port', 587))
+    host = smtp['host']
+    user = smtp['auth']['user']
+    pw   = smtp['auth']['pass']
+
+    ctx = ssl.create_default_context()
+    if smtp.get('ignoreSSL'):
+        ctx.check_hostname = False
+        ctx.verify_mode    = ssl.CERT_NONE
+
+    if smtp.get('secure'):
+        with smtplib.SMTP_SSL(host, port, context=ctx) as s:
+            s.login(user, pw); s.send_message(msg)
+    else:
+        with smtplib.SMTP(host, port) as s:
+            s.ehlo()
+            if smtp.get('requireTLS', True): s.starttls(context=ctx)
+            s.login(user, pw); s.send_message(msg)
+
+def _send_daily_alerts():
+    """Resumo diário por e-mail de prazos vencendo e processos parados.
+    Só envia se SMTP estiver configurado no servidor e ainda não tiver enviado hoje."""
+    with get_db() as conn:
+        cfg = {r['key']: r['value'] for r in conn.execute(
+            "SELECT key,value FROM sys_settings WHERE key LIKE 'smtp_%' OR key='alert_email_last_sent'"
+        ).fetchall()}
+    if not (cfg.get('smtp_host') and cfg.get('smtp_user') and cfg.get('smtp_pass') and cfg.get('smtp_to')):
+        return
+    hoje = time.strftime('%Y-%m-%d')
+    if cfg.get('alert_email_last_sent') == hoje:
+        return
+
+    with get_db() as conn:
+        rows = conn.execute("SELECT data FROM processes WHERE deleted_at IS NULL").fetchall()
+
+    agora = time.time()
+    parados, prazos = [], []
+    for row in rows:
+        try:
+            p = json.loads(row['data'])
+        except Exception:
+            continue
+        steps = p.get('steps') or []
+        done = sum(1 for st in steps if st.get('status') == 'done')
+        if steps and done == len(steps):
+            continue  # processo concluído — fora dos alertas
+
+        objeto = p.get('objeto') or p.get('num') or p.get('id')
+        updated = p.get('updatedAt')
+        if updated:
+            try:
+                ts = time.mktime(time.strptime(updated[:19], '%Y-%m-%dT%H:%M:%S'))
+                dias_parado = int((agora - ts) / 86400)
+                if dias_parado >= 15:
+                    parados.append((objeto, dias_parado))
+            except Exception:
+                pass
+
+        prazo = p.get('prazo')
+        if prazo:
+            try:
+                ts = time.mktime(time.strptime(prazo[:10], '%Y-%m-%d'))
+                dias = int((ts - agora) / 86400)
+                if dias <= 7:
+                    prazos.append((objeto, dias))
+            except Exception:
+                pass
+
+    if not parados and not prazos:
+        # Nada para reportar hoje — ainda assim marca como "enviado" para não reprocessar
+        with get_db() as conn:
+            conn.execute("INSERT OR REPLACE INTO sys_settings (key,value) VALUES ('alert_email_last_sent',?)", (hoje,))
+        return
+
+    linhas = []
+    if prazos:
+        linhas.append('<h3>Prazos</h3><ul>')
+        for objeto, dias in sorted(prazos, key=lambda x: x[1]):
+            txt = f'vencido há {-dias} dia(s)' if dias < 0 else (f'vence hoje' if dias == 0 else f'vence em {dias} dia(s)')
+            linhas.append(f'<li><strong>{html_mod.escape(str(objeto))}</strong> — {txt}</li>')
+        linhas.append('</ul>')
+    if parados:
+        linhas.append('<h3>Processos parados (15+ dias sem atualização)</h3><ul>')
+        for objeto, dias in sorted(parados, key=lambda x: -x[1]):
+            linhas.append(f'<li><strong>{html_mod.escape(str(objeto))}</strong> — {dias} dias sem atualização</li>')
+        linhas.append('</ul>')
+
+    corpo = f"<p>Resumo automático do SGCD — {hoje}</p>" + ''.join(linhas)
+    smtp_cfg = {
+        'host': cfg['smtp_host'], 'port': cfg.get('smtp_port', 587),
+        'secure': cfg.get('smtp_secure') == '1', 'requireTLS': cfg.get('smtp_require_tls') != '0',
+        'ignoreSSL': cfg.get('smtp_ignore_ssl') == '1',
+        'auth': {'user': cfg['smtp_user'], 'pass': cfg['smtp_pass']},
+    }
+    frm = {'name': cfg.get('smtp_from_name') or 'SGCD', 'email': cfg['smtp_user']}
+    try:
+        _send_email_raw(smtp_cfg, frm, cfg['smtp_to'], f'SGCD — Resumo de pendências ({hoje})', corpo)
+        print(f'  [ALERTAS] E-mail de resumo enviado ({len(prazos)} prazo(s), {len(parados)} parado(s))', flush=True)
+    except Exception as e:
+        _log.error('Falha ao enviar e-mail de alertas: %s', e)
+    with get_db() as conn:
+        conn.execute("INSERT OR REPLACE INTO sys_settings (key,value) VALUES ('alert_email_last_sent',?)", (hoje,))
+
 _last_trash_purge = 0
 
 def _purge_old_trash():
@@ -1512,6 +1586,8 @@ def _watchdog():
         if time.time() - _last_trash_purge > 3600:
             try: _purge_old_trash()
             except Exception as e: _log.error('Erro ao esvaziar lixeira: %s', e)
+        try: _send_daily_alerts()
+        except Exception as e: _log.error('Erro ao enviar alertas por e-mail: %s', e)
 
 # ── Backup automático do banco ─────────────────────────────────────────────────
 

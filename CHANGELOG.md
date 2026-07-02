@@ -5,6 +5,17 @@
 
 ---
 
+## [2.11.1] — 2026-07-02
+
+### Adicionado
+- **Alertas por e-mail automáticos** — antes, os alertas de prazo e processos parados só existiam dentro do navegador (não eram vistos se ninguém abrisse o sistema naquele dia). Agora, com o SMTP configurado (Configurações → Comunicação), o servidor envia sozinho, uma vez por dia, um resumo por e-mail com prazos vencendo/vencidos e processos sem atualização há 15+ dias — sem depender de ninguém estar logado
+- Roda na mesma thread de manutenção que já existia (expira sessões, esvazia lixeira antiga); só dispara envio real quando há algo a reportar, e nunca reenvia no mesmo dia
+- Extraída a lógica de envio de e-mail (`_send_email_raw`) para reuso entre o teste manual de SMTP e o novo job automático, eliminando duplicação
+
+Testado com servidor real: sem SMTP configurado, não dispara; com SMTP configurado (mesmo inválido), detecta corretamente prazo vencido e processo parado, tenta enviar, registra falha sem derrubar o servidor, e marca o dia como já processado para não repetir a cada 5s.
+
+---
+
 ## [2.11.0] — 2026-07-02
 
 ### Adicionado

@@ -1,6 +1,6 @@
 # SGCD — Sistema de Gestão de Contratação Direta
 
-![Versão](https://img.shields.io/badge/versão-v2.11.0-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-Python%20%2B%20SQLite-orange) ![Licença](https://img.shields.io/badge/licença-MIT-green) ![Multiusuário](https://img.shields.io/badge/acesso-multiusuário-blueviolet)
+![Versão](https://img.shields.io/badge/versão-v2.11.1-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-Python%20%2B%20SQLite-orange) ![Licença](https://img.shields.io/badge/licença-MIT-green) ![Multiusuário](https://img.shields.io/badge/acesso-multiusuário-blueviolet)
 
 ## Descrição
 
@@ -27,6 +27,7 @@ Funciona em rede local: um único computador executa o servidor e todos os usuá
 - **Visualização Kanban** por fase (Instrução / Publicado / Análise / Adjudicação / Contratação / Concluído)
 - **Notificações por e-mail via SMTP** com editor rich text para fornecedor e equipe interna
 - **Notificações in-app** — alertas de prazo, processos parados e certidões vencendo
+- **Resumo diário por e-mail** — prazos e processos parados, enviado automaticamente pelo servidor sem depender de ninguém logado (requer SMTP configurado)
 - **QR Code de autenticidade** em todos os documentos gerados com verificação online
 - **Exportação PNCP** — JSON estruturado no formato da API do Portal Nacional de Contratações Públicas
 - **Backup automático** ao encerrar o sistema (JSON + banco de dados SQLite) com rotação configurável
