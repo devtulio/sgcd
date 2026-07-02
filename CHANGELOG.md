@@ -5,6 +5,18 @@
 
 ---
 
+## [2.9.3] — 2026-07-01
+
+### Adicionado (diagnóstico)
+- Testei isoladamente a lógica exata de `_syncSmtpFromServer()` (Node.js, `localStorage` vazio simulando navegador novo, resposta real do servidor incluindo senha) — sincronizou, criptografou e descriptografou corretamente. A lógica em si está correta
+- Faltava instrumentação no lado da **leitura**: só o `PUT` tinha log; o `GET /api/settings` (que dispara a sincronização no login) não tinha nenhum. Um teste sem log nenhum no console do servidor não permitia saber se o navegador sequer chegou a pedir os dados
+- Adicionado log no servidor: `[SETTINGS] GET /api/settings de <usuário> — chaves retornadas: [...]`
+- Adicionado log no console do navegador em cada etapa do `_onLoginSuccess()`: antes do GET, status da resposta, chaves recebidas, e o conteúdo de `sgcd-smtp` após a sincronização
+
+**Próximo teste:** repita o acesso pela janela anônima e observe **as duas pontas ao mesmo tempo** — a linha `[SETTINGS] GET /api/settings ...` na janela do servidor, e no navegador abra o DevTools (F12) → Console e procure as linhas `[SGCD] ...`. Isso vai mostrar exatamente se a requisição saiu do navegador, chegou ao servidor, e o que veio de volta.
+
+---
+
 ## [2.9.2] — 2026-07-01
 
 ### Adicionado (diagnóstico)

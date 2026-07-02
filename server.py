@@ -394,7 +394,9 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         elif p == '/api/settings':
             with get_db() as conn:
                 rows = conn.execute('SELECT key,value FROM sys_settings').fetchall()
-            self._json(200, {r['key']: r['value'] for r in rows})
+            result = {r['key']: r['value'] for r in rows}
+            print(f"  [SETTINGS] GET /api/settings de {s.get('nome') or s.get('user_id')} — chaves retornadas: {sorted(result.keys())}", flush=True)
+            self._json(200, result)
 
         # Usuários (admin)
         elif p == '/api/users':
