@@ -5,6 +5,14 @@
 
 ---
 
+## [2.9.6] — 2026-07-01
+
+### Removido
+- **Sistema de "senha de acesso" local morto** — `_verificarSenhaComMigracao()`, `_hashSenha()`, `_getPassSalt()` e as chaves `sgcd-access-hash`/`sgcd-passwd-salt` eram resquício da arquitetura anterior à autenticação server-side (hash SHA-256 verificado no navegador). Confirmado que não eram chamados em nenhum lugar do fluxo de login atual (`verificarSenha()` vai direto para `/api/auth/login`). Também removida referência órfã a um botão (`btn-remover-senha`) que não existe mais no HTML
+- Nenhuma mudança de comportamento — código morto, sem uso ativo. Validado subindo o servidor e testando login antes do commit
+
+---
+
 ## [2.9.5] — 2026-07-01
 
 ### Adicionado
