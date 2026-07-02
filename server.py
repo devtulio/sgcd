@@ -139,6 +139,15 @@ def init_db():
             CREATE INDEX IF NOT EXISTS idx_forn_cnpj     ON fornecedores(cnpj);
             CREATE INDEX IF NOT EXISTS idx_audit_ts      ON audit_global(ts);
         ''')
+        # Migração: coluna deleted_at para lixeira (soft-delete) — SQLite não suporta
+        # ADD COLUMN IF NOT EXISTS, então tentamos e ignoramos se já existir
+        for tbl in ('processes', 'fornecedores'):
+            try:
+                conn.execute(f'ALTER TABLE {tbl} ADD COLUMN deleted_at TEXT')
+            except sqlite3.OperationalError:
+                pass
+        conn.execute('CREATE INDEX IF NOT EXISTS idx_proc_deleted ON processes(deleted_at)')
+        conn.execute('CREATE INDEX IF NOT EXISTS idx_forn_deleted ON fornecedores(deleted_at)')
         # Sessões são descartadas a cada início do servidor (logout automático ao fechar janela)
         conn.execute('DELETE FROM sessions')
         # Cria admin padrão se não houver usuários
@@ -318,10 +327,12 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         self._route_put(p, self._body(), s)
 
     def do_DELETE(self):
-        p = urlparse(self.path).path.rstrip('/')
+        parsed = urlparse(self.path)
+        p = parsed.path.rstrip('/')
+        qs = parse_qs(parsed.query)
         s = self._auth()
         if not s: return
-        self._route_delete(p, s)
+        self._route_delete(p, qs, s)
 
     # ── Roteamento ────────────────────────────────────────────────────────────
 
@@ -546,7 +557,11 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
     def _route_put(self, p, body, s):
         data = self._parse_json(body)
 
-        if re.fullmatch(r'/api/processes/[^/]+', p):
+        if re.fullmatch(r'/api/processes/[^/]+/restore', p):
+            self._restore_process(p.split('/')[-2])
+        elif re.fullmatch(r'/api/fornecedores/[^/]+/restore', p):
+            self._restore_fornecedor(p.split('/')[-2])
+        elif re.fullmatch(r'/api/processes/[^/]+', p):
             self._update_process(p.split('/')[-1], data, s)
         elif re.fullmatch(r'/api/fornecedores/[^/]+', p):
             self._update_fornecedor(p.split('/')[-1], data)
@@ -589,15 +604,28 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         else:
             self._json(404, {'error': 'Rota não encontrada'})
 
-    def _route_delete(self, p, s):
+    def _route_delete(self, p, qs, s):
+        purge = qs.get('purge', [None])[0] == '1'
+
         if re.fullmatch(r'/api/processes/[^/]+', p):
-            with get_db() as conn:
-                conn.execute('DELETE FROM processes WHERE id=?', (p.split('/')[-1],))
+            pid = p.split('/')[-1]
+            if purge:
+                if not s['admin']: self._json(403, {'error': 'Acesso negado'}); return
+                self._purge_process(pid)
+            else:
+                with get_db() as conn:
+                    conn.execute('UPDATE processes SET deleted_at=? WHERE id=?', (_now(), pid))
             self._json(200, {'ok': True})
 
         elif re.fullmatch(r'/api/fornecedores/[^/]+', p):
-            with get_db() as conn:
-                conn.execute('DELETE FROM fornecedores WHERE id=?', (p.split('/')[-1],))
+            fid = p.split('/')[-1]
+            if purge:
+                if not s['admin']: self._json(403, {'error': 'Acesso negado'}); return
+                with get_db() as conn:
+                    conn.execute('DELETE FROM fornecedores WHERE id=?', (fid,))
+            else:
+                with get_db() as conn:
+                    conn.execute('UPDATE fornecedores SET deleted_at=? WHERE id=?', (_now(), fid))
             self._json(200, {'ok': True})
 
         elif p == '/api/files' and parse_qs(urlparse(self.path).query).get('process_id'):
@@ -734,8 +762,10 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         unidade = qp('unidade', '')
         page    = int(qp('page', 1))
         per     = min(int(qp('per', 500)), 2000)
+        trash   = qp('trash') == '1'
 
         where, params = [], []
+        where.append('deleted_at IS NOT NULL' if trash else 'deleted_at IS NULL')
         if q:
             where.append('(objeto LIKE ? OR num_proc LIKE ? OR num_dl LIKE ?)')
             params += [f'%{q}%', f'%{q}%', f'%{q}%']
@@ -745,13 +775,19 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
             where.append('unidade=?'); params.append(unidade)
 
         wc = ('WHERE ' + ' AND '.join(where)) if where else ''
+        order = 'deleted_at DESC' if trash else 'updated_at DESC'
         with get_db() as conn:
             total = conn.execute(f'SELECT COUNT(*) FROM processes {wc}', params).fetchone()[0]
             rows  = conn.execute(
-                f'SELECT data FROM processes {wc} ORDER BY updated_at DESC LIMIT ? OFFSET ?',
+                f'SELECT data,deleted_at FROM processes {wc} ORDER BY {order} LIMIT ? OFFSET ?',
                 params + [per, (page-1)*per]
             ).fetchall()
-        self._json(200, {'total': total, 'items': [json.loads(r['data']) for r in rows]})
+        items = []
+        for r in rows:
+            item = json.loads(r['data'])
+            item['deletedAt'] = r['deleted_at']
+            items.append(item)
+        self._json(200, {'total': total, 'items': items})
 
     def _get_process(self, pid):
         with get_db() as conn:
@@ -797,6 +833,20 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
             )
         self._json(200, existing)
 
+    def _restore_process(self, pid):
+        with get_db() as conn:
+            conn.execute('UPDATE processes SET deleted_at=NULL WHERE id=?', (pid,))
+        self._json(200, {'ok': True})
+
+    def _purge_process(self, pid):
+        with get_db() as conn:
+            rows = conn.execute('SELECT nome_disco FROM files WHERE process_id LIKE ?', (pid + '%',)).fetchall()
+            for row in rows:
+                fp = os.path.join(UPLOADS_DIR, row['nome_disco'])
+                if os.path.exists(fp): os.remove(fp)
+            conn.execute('DELETE FROM files WHERE process_id LIKE ?', (pid + '%',))
+            conn.execute('DELETE FROM processes WHERE id=?', (pid,))
+
     # ── Fornecedores ──────────────────────────────────────────────────────────
 
     def _list_fornecedores(self, qs):
@@ -804,20 +854,28 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         q    = qp('q', '')
         page = int(qp('page', 1))
         per     = min(int(qp('per', 500)), 2000)
+        trash   = qp('trash') == '1'
 
         where, params = [], []
+        where.append('deleted_at IS NOT NULL' if trash else 'deleted_at IS NULL')
         if q:
             where.append('(razao_social LIKE ? OR cnpj LIKE ?)')
             params += [f'%{q}%', f'%{q}%']
 
         wc = ('WHERE ' + ' AND '.join(where)) if where else ''
+        order = 'deleted_at DESC' if trash else 'razao_social ASC'
         with get_db() as conn:
             total = conn.execute(f'SELECT COUNT(*) FROM fornecedores {wc}', params).fetchone()[0]
             rows  = conn.execute(
-                f'SELECT data FROM fornecedores {wc} ORDER BY razao_social ASC LIMIT ? OFFSET ?',
+                f'SELECT data,deleted_at FROM fornecedores {wc} ORDER BY {order} LIMIT ? OFFSET ?',
                 params + [per, (page-1)*per]
             ).fetchall()
-        self._json(200, {'total': total, 'items': [json.loads(r['data']) for r in rows]})
+        items = []
+        for r in rows:
+            item = json.loads(r['data'])
+            item['deletedAt'] = r['deleted_at']
+            items.append(item)
+        self._json(200, {'total': total, 'items': items})
 
     def _get_fornecedor(self, fid):
         with get_db() as conn:
@@ -852,6 +910,11 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
                  existing['updatedAt'], fid)
             )
         self._json(200, existing)
+
+    def _restore_fornecedor(self, fid):
+        with get_db() as conn:
+            conn.execute('UPDATE fornecedores SET deleted_at=NULL WHERE id=?', (fid,))
+        self._json(200, {'ok': True})
 
     # ── Arquivos ──────────────────────────────────────────────────────────────
 
@@ -1414,6 +1477,27 @@ def _find_browser():
         if os.path.isfile(c): return c
     return None
 
+_last_trash_purge = 0
+
+def _purge_old_trash():
+    """Esvazia a lixeira: processos/fornecedores excluídos há mais de 30 dias."""
+    global _last_trash_purge
+    _last_trash_purge = time.time()
+    limite_iso = time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime(time.time() - 30 * 86400))
+    with get_db() as conn:
+        old_procs = conn.execute(
+            "SELECT id FROM processes WHERE deleted_at IS NOT NULL AND deleted_at < ?", (limite_iso,)
+        ).fetchall()
+        for row in old_procs:
+            pid = row['id']
+            files = conn.execute('SELECT nome_disco FROM files WHERE process_id LIKE ?', (pid + '%',)).fetchall()
+            for f in files:
+                fp = os.path.join(UPLOADS_DIR, f['nome_disco'])
+                if os.path.exists(fp): os.remove(fp)
+            conn.execute('DELETE FROM files WHERE process_id LIKE ?', (pid + '%',))
+            conn.execute('DELETE FROM processes WHERE id=?', (pid,))
+        conn.execute("DELETE FROM fornecedores WHERE deleted_at IS NOT NULL AND deleted_at < ?", (limite_iso,))
+
 def _watchdog():
     # Limpa sessões expiradas a cada 5s e verifica encerramento.
     # Com SESSION_TTL=15s e ping a cada 5s, um browser fechado sem logout
@@ -1425,6 +1509,9 @@ def _watchdog():
         with get_db() as conn:
             conn.execute('DELETE FROM sessions WHERE expires<?', (time.time(),))
         _check_shutdown()
+        if time.time() - _last_trash_purge > 3600:
+            try: _purge_old_trash()
+            except Exception as e: _log.error('Erro ao esvaziar lixeira: %s', e)
 
 # ── Backup automático do banco ─────────────────────────────────────────────────
 

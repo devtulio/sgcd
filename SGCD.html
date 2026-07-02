@@ -1073,6 +1073,10 @@
     </button>
 
     <div class="nav-section">Administração</div>
+    <button class="nav-item" id="nav-lixeira" onclick="showLixeira()">
+      <span class="nav-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></span>
+      Lixeira
+    </button>
     <button class="nav-item" id="nav-audit" onclick="showAudit()">
       <span class="nav-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>
       Auditoria
@@ -1564,6 +1568,17 @@
       <div id="audit-load-more" style="text-align:center;margin:16px 0;display:none">
         <button class="btn btn-outline btn-sm" onclick="renderAudit(true)">Carregar mais registros</button>
       </div>
+    </div>
+  </div>
+
+  <!-- ── Lixeira ── -->
+  <div id="view-lixeira" class="view">
+    <div class="dash-top">
+      <h2>Lixeira</h2>
+    </div>
+    <div style="max-width:960px;margin:0 auto;padding:0 16px 24px">
+      <p style="font-size:.75rem;color:var(--gray-500);margin-bottom:14px">Processos excluídos ficam aqui por 30 dias antes de serem apagados permanentemente. Restaure a qualquer momento.</p>
+      <div id="lixeira-lista"></div>
     </div>
   </div>
 
@@ -2458,7 +2473,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.10.3';
+const SGCD_VERSION = '2.11.0';
 const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
   ? 'http://localhost:3000'
   : window.location.origin;
@@ -4029,7 +4044,7 @@ function setNavActive(id) {
   if (el) el.classList.add('active');
 }
 
-const _ALL_VIEWS = ['view-dash','view-detail','view-fornecedores','view-audit','view-settings','view-agenda'];
+const _ALL_VIEWS = ['view-dash','view-detail','view-fornecedores','view-audit','view-settings','view-agenda','view-lixeira'];
 function _hideAllViews() { _ALL_VIEWS.forEach(id => document.getElementById(id)?.classList.remove('active')); }
 
 let _auditPage = 0;
@@ -4158,6 +4173,39 @@ async function showAudit() {
   await renderAudit();
 }
 
+async function showLixeira() {
+  _hideAllViews();
+  document.getElementById('view-lixeira').classList.add('active');
+  setNavActive('nav-lixeira');
+  const el = document.getElementById('lixeira-lista');
+  el.innerHTML = '<p style="color:var(--gray-400);padding:32px 0;text-align:center">Carregando…</p>';
+  const r = await API.get('/api/processes?trash=1&per=500');
+  const d = await API.json(r);
+  const items = d?.items || [];
+  if (!items.length) {
+    el.innerHTML = '<p style="color:var(--gray-400);padding:32px 0;text-align:center">Lixeira vazia.</p>';
+    return;
+  }
+  el.innerHTML = items.map(p => {
+    const dias = p.deletedAt ? Math.max(0, 30 - Math.floor((Date.now() - new Date(p.deletedAt).getTime()) / 86400000)) : null;
+    return `<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--gray-200);border-radius:var(--radius);margin-bottom:8px;background:var(--gray-50)">
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;font-size:.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(p.objeto || 'Sem objeto')}</div>
+        <div style="font-size:.72rem;color:var(--gray-500)">PA ${escHtml(p.num_proc || '—')} · DL ${escHtml(p.num_dl || '—')}${dias !== null ? ` · exclui definitivamente em ${dias} dia(s)` : ''}</div>
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="restoreProcess('${p.id}')">↩ Restaurar</button>
+      <button class="btn btn-danger btn-sm" onclick="purgeProcess('${p.id}','${escHtml(p.num_proc || '')}','${escHtml((p.objeto||'').replace(/'/g,"\\'"))}')">Excluir definitivamente</button>
+    </div>`;
+  }).join('');
+}
+
+async function restoreProcess(pid) {
+  await API.put(`/api/processes/${pid}/restore`, {});
+  await _auditEvento('PROCESSO_RESTAURADO', `Processo restaurado da lixeira`, pid);
+  toast('Processo restaurado.', 'success');
+  showLixeira();
+}
+
 function toggleAuditFilters() {
   const panel = document.getElementById('audit-filters-panel');
   const btn   = document.getElementById('btn-audit-filters');
@@ -4196,7 +4244,8 @@ function limparFiltrosAudit() {
 const _AUDIT_EVENT_LABELS = {
   ETAPA_DONE: 'Etapa concluída', ETAPA_BLOCKED: 'Etapa bloqueada', ETAPA_PENDING: 'Etapa reaberta',
   ARQUIVO_ANEXADO: 'Arquivo anexado', ARQUIVO_REMOVIDO: 'Arquivo removido',
-  DOCUMENTO_GERADO: 'Documento gerado', PROCESSO_EXCLUIDO: 'Processo excluído',
+  DOCUMENTO_GERADO: 'Documento gerado', PROCESSO_EXCLUIDO: 'Processo movido p/ lixeira',
+  PROCESSO_RESTAURADO: 'Processo restaurado', PROCESSO_EXPURGADO: 'Processo excluído definitivamente',
   CERTIDAO_ATUALIZADA: 'Certidão atualizada', CERTIDAO_SINCRONIZADA: 'Certidão sincronizada',
   FORNECEDOR_ALTERADO: 'Fornecedor alterado', CAMPO_ALTERADO: 'Campo alterado'
 };
@@ -4209,6 +4258,8 @@ const _AUDIT_EVENT_META = {
   ARQUIVO_REMOVIDO:     { bg: '#FCEBEB', color: '#A32D2D' },
   DOCUMENTO_GERADO:     { bg: '#e8eef7', color: '#1a3a6b' },
   PROCESSO_EXCLUIDO:    { bg: '#FCEBEB', color: '#A32D2D' },
+  PROCESSO_RESTAURADO:  { bg: '#E1F5EE', color: '#0F6E56' },
+  PROCESSO_EXPURGADO:   { bg: '#FCEBEB', color: '#A32D2D' },
   CERTIDAO_ATUALIZADA:  { bg: '#FFF3D8', color: '#854F0B' },
   CERTIDAO_SINCRONIZADA:{ bg: '#E1F5EE', color: '#0F6E56' },
   FORNECEDOR_ALTERADO:  { bg: '#E1F5EE', color: '#0F6E56' },
@@ -7537,21 +7588,33 @@ async function deleteFile(fileId, stepIdx) {
 // ══════════════════════════════════════════════════════════════
 async function deleteProcess() {
   const p = currentProcess;
+  const c1 = await customConfirm(
+    `Mover o processo para a lixeira?\n\n"${p.objeto}"\n\nEle sai das listagens normais, mas fica recuperável em Lixeira por 30 dias — inclusive os arquivos anexados.`,
+    { title: 'Excluir Processo', icon: '🗑️', okLabel: 'Mover para a lixeira', okClass: 'btn-danger' }
+  );
+  if (!c1) return;
+  await _auditEvento('PROCESSO_EXCLUIDO',
+    `PA: ${p.num_proc || '—'} | DL: ${p.num_dl || '—'} | Objeto: ${p.objeto}`, p.id);
+  await API.del(`/api/processes/${p.id}`);
+  toast('Processo movido para a lixeira.', '');
+  showDash();
+}
+
+// Expurgo definitivo (a partir da tela de Lixeira) — irreversível, exige digitar o nº do processo
+async function purgeProcess(pid, numProc, objeto) {
   const dark   = document.body.classList.contains('dark');
   const bg     = dark ? '#2a2a2a' : '#ffffff';
   const txt    = dark ? '#f0ece8' : '#1a1a1a';
   const sub    = dark ? '#9ca3af' : '#6b7280';
   const inpBg  = dark ? '#1a1a1a' : '#f9fafb';
 
-  // — Confirmação 1: aviso geral —
   const c1 = await customConfirm(
-    `Você está prestes a excluir permanentemente o processo:\n\n"${p.objeto}"\n\nTodos os dados, etapas e arquivos anexados serão removidos. Esta ação não pode ser desfeita.`,
-    { title: '⚠️ Excluir Processo', icon: '🚨', okLabel: 'Continuar', okClass: 'btn-danger' }
+    `Você está prestes a excluir PERMANENTEMENTE o processo:\n\n"${objeto}"\n\nTodos os dados, etapas e arquivos anexados serão removidos para sempre. Esta ação não pode ser desfeita.`,
+    { title: '⚠️ Excluir Permanentemente', icon: '🚨', okLabel: 'Continuar', okClass: 'btn-danger' }
   );
   if (!c1) return;
 
-  // — Confirmação 2: digitação do número do processo —
-  const frase = (p.num_proc || 'EXCLUIR').toUpperCase();
+  const frase = (numProc || 'EXCLUIR').toUpperCase();
   const digitado = await new Promise(resolve => {
     const overlay = document.createElement('div');
     overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center';
@@ -7560,14 +7623,14 @@ async function deleteProcess() {
         <div style="font-size:2rem;margin-bottom:12px">🚨</div>
         <h3 style="font-size:1rem;font-weight:700;margin-bottom:10px;color:#dc2626">Confirmação obrigatória</h3>
         <p style="font-size:.85rem;color:${sub};line-height:1.6;margin-bottom:16px">
-          Para confirmar a exclusão, digite o número do processo:<br>
+          Para confirmar a exclusão definitiva, digite o número do processo:<br>
           <strong style="color:${txt};font-family:monospace;letter-spacing:1px">${escHtml(frase)}</strong>
         </p>
         <input id="_del-confirm-input" type="text" placeholder="Digite aqui..."
           style="width:100%;padding:10px 12px;border:2px solid #dc2626;border-radius:6px;font-size:.9rem;background:${inpBg};color:${txt};outline:none;margin-bottom:16px">
         <div style="display:flex;gap:10px;justify-content:flex-end">
           <button id="_del-cancel" class="btn btn-outline btn-sm">Cancelar</button>
-          <button id="_del-ok" class="btn btn-sm" style="background:#dc2626;color:#fff;border:none" disabled>Excluir Processo</button>
+          <button id="_del-ok" class="btn btn-sm" style="background:#dc2626;color:#fff;border:none" disabled>Excluir Definitivamente</button>
         </div>
       </div>`;
     document.body.appendChild(overlay);
@@ -7583,13 +7646,10 @@ async function deleteProcess() {
     overlay.addEventListener('click', e => { if (e.target === overlay) { document.body.removeChild(overlay); resolve(false); } });
   });
   if (!digitado) return;
-  await _auditEvento('PROCESSO_EXCLUIDO',
-    `PA: ${p.num_proc || '—'} | DL: ${p.num_dl || '—'} | Objeto: ${p.objeto}`, p.id);
-  const pid = p.id;
-  await API.del(`/api/files?process_id=${encodeURIComponent(pid + '_')}`);
-  await dbDelete('processes', pid);
-  toast('Processo excluído.', '');
-  showDash();
+  await _auditEvento('PROCESSO_EXPURGADO', `PA: ${numProc || '—'} | Objeto: ${objeto}`);
+  await API.del(`/api/processes/${pid}?purge=1`);
+  toast('Processo excluído permanentemente.', '');
+  showLixeira();
 }
 
 // ══════════════════════════════════════════════════════════════

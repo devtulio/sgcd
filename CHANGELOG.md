@@ -5,6 +5,22 @@
 
 ---
 
+## [2.11.0] — 2026-07-02
+
+### Adicionado
+- **Lixeira** — excluir um processo agora move para uma lixeira (nova aba "Lixeira" em Administração) em vez de apagar direto. Fica recuperável por 30 dias, incluindo os arquivos anexados; depois disso é expurgado automaticamente. Restauração com um clique
+- Exclusão permanente ("Excluir definitivamente") continua existindo, restrita a admin, com a mesma confirmação em duas etapas (digitar o número do processo) que a exclusão simples tinha antes
+- Nova coluna `deleted_at` em `processes` e `fornecedores` (migração automática e segura para bancos já existentes)
+- Novos endpoints: `GET /api/processes?trash=1` (lista a lixeira), `PUT /api/processes/<id>/restore`, `DELETE /api/processes/<id>?purge=1` (expurgo definitivo, admin-only) — mesmo padrão para fornecedores
+- Expurgo automático diário de itens com mais de 30 dias na lixeira (thread de manutenção já existente)
+
+### Corrigido
+- Excluir um processo apagava os arquivos anexados imediatamente, mesmo antes desta versão — o que já tornava a "lixeira" inútil para recuperar documentos. Corrigido: arquivos só são removidos de fato no expurgo definitivo, nunca na exclusão simples
+
+Validado com testes reais: criar → excluir → listar lixeira → restaurar → excluir de novo → expurgar → confirmar remoção definitiva; bloqueio de expurgo para não-admin; migração de schema testada contra cópia do banco de produção sem perda de dados.
+
+---
+
 ## [2.10.3] — 2026-07-01
 
 ### Corrigido

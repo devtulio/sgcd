@@ -1,6 +1,6 @@
 # SGCD — Sistema de Gestão de Contratação Direta
 
-![Versão](https://img.shields.io/badge/versão-v2.10.3-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-Python%20%2B%20SQLite-orange) ![Licença](https://img.shields.io/badge/licença-MIT-green) ![Multiusuário](https://img.shields.io/badge/acesso-multiusuário-blueviolet)
+![Versão](https://img.shields.io/badge/versão-v2.11.0-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-Python%20%2B%20SQLite-orange) ![Licença](https://img.shields.io/badge/licença-MIT-green) ![Multiusuário](https://img.shields.io/badge/acesso-multiusuário-blueviolet)
 
 ## Descrição
 
@@ -30,6 +30,7 @@ Funciona em rede local: um único computador executa o servidor e todos os usuá
 - **QR Code de autenticidade** em todos os documentos gerados com verificação online
 - **Exportação PNCP** — JSON estruturado no formato da API do Portal Nacional de Contratações Públicas
 - **Backup automático** ao encerrar o sistema (JSON + banco de dados SQLite) com rotação configurável
+- **Lixeira** — processos excluídos ficam recuperáveis por 30 dias, incluindo arquivos anexados
 - **Autenticação multiusuário** com hashing PBKDF2-HMAC-SHA256 e gestão de usuários pelo admin
 - **Relatório executivo** com KPIs, gráfico de barras por status e alertas de processos parados
 - **Diagnóstico de rede** — verifica IP, porta 3000, regras de firewall e acessibilidade pela LAN
