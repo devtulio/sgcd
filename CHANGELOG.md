@@ -5,6 +5,15 @@
 
 ---
 
+## [2.9.5] — 2026-07-01
+
+### Adicionado
+- **Sincronização do brasão customizado entre máquinas** — o brasão customizado (upload em Configurações → Organização) agora é salvo no servidor via `PUT /api/settings/brasao` (qualquer usuário autenticado) e sincronizado automaticamente no login, junto com Organização e SMTP
+- Remover o brasão customizado agora propaga para todos os navegadores (endpoint trata remoção como ação explícita — diferente de Organização/SMTP, aqui vazio realmente significa "apagar", não "campo não preenchido ainda")
+- Validado com teste real: salvar, ler via `GET /api/settings`, remover e confirmar que a chave desaparece de fato
+
+---
+
 ## [2.9.4] — 2026-07-01
 
 ### Corrigido — causa raiz definitiva do SMTP
