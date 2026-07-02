@@ -2458,7 +2458,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.10.1';
+const SGCD_VERSION = '2.10.2';
 const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
   ? 'http://localhost:3000'
   : window.location.origin;
@@ -9925,7 +9925,7 @@ function gerarAta() {
   <div class="dado"><strong>Estudo Técnico Preliminar (ETP):</strong> ${p.steps[iEtp]?.status === 'done' ? `concluído em ${d(v(iEtp,'data_conclusao'))}` : 'dispensado / não aplicável'}</div>
   <div class="dado"><strong>Termo de Referência (TR):</strong> concluído em ${d(v(iTr,'data_conclusao'))} — ${blank(v(iTr,'responsavel'))}</div>
   <div class="dado"><strong>Pesquisa de Preços / Estimativa do Valor:</strong> ${cotacoesValidas.length} cotação(ões) válida(s) — concluída em ${d(v(iCotacoes,'data_conclusao'))} — valor de referência: ${v(iCotacoes,'valor_estimado') ? fmtMoney(v(iCotacoes,'valor_estimado')) : '_'.repeat(20)}</div>
-  <div class="dado"><strong>Enquadramento Legal:</strong> ${blank(v(iEnquadramento,'fundamento'))} — concluído em ${d(v(iEnquadramento,'data_conclusao'))}</div>
+  <div class="dado"><strong>Enquadramento Legal:</strong> ${blank(v(iEnquadramento,'fundamento') || p.legal)} — concluído em ${d(v(iEnquadramento,'data_conclusao'))}</div>
   <div class="dado"><strong>Parecer do Controle Interno:</strong> ${blank(v(iControleInterno,'num_parecer_ci'))} — concluído em ${d(v(iControleInterno,'data_conclusao'))}</div>
   <div class="dado"><strong>Parecer Jurídico:</strong> ${blank(v(iParecerJuridico,'num_parecer'))} — concluído em ${d(v(iParecerJuridico,'data_conclusao'))}</div>
   <div class="dado"><strong>Autorização da Autoridade Competente:</strong> ${blank(v(iAutorizacao,'autoridade'))} em ${d(v(iAutorizacao,'data_conclusao'))}</div>

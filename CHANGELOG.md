@@ -5,6 +5,16 @@
 
 ---
 
+## [2.10.2] — 2026-07-01
+
+### Corrigido
+- **Ata de Sessão sem fallback no Enquadramento Legal** — diferente da Justificativa de Enquadramento Legal e do Aviso de Dispensa (que já caem de volta na hipótese legal selecionada quando o campo livre "Fundamento legal específico" está em branco), a Ata mostrava só sublinhados nesse caso. Corrigido para usar o mesmo padrão
+
+### Observação
+- O texto "Decreto nº 11.317/2022" que aparecia numa Ata gerada **não é um bug de código** — é texto digitado manualmente no campo "Fundamento legal específico" daquele processo específico, antes do decreto ser atualizado. Para corrigir processos já existentes: abra o processo → etapa Enquadramento Legal → apague ou atualize o campo "Fundamento legal específico". Novos processos usam automaticamente o decreto configurado em Configurações → Organização
+
+---
+
 ## [2.10.1] — 2026-07-01
 
 ### Corrigido
