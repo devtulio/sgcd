@@ -556,7 +556,7 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         elif p in ('/api/settings/org', '/api/settings/org/'):
             # Dados de Organização: qualquer usuário autenticado pode salvar (não é config administrativa)
             allowed = {'orgao', 'municipio', 'aut_nome', 'aut_cargo', 'site_oficial',
-                       'diario_url', 'cnpj_orgao', 'codigo_ibge', 'uf'}
+                       'diario_url', 'cnpj_orgao', 'codigo_ibge', 'uf', 'decreto_limites'}
             print(f"  [SETTINGS] PUT /api/settings/org recebido de {s.get('nome') or s.get('user_id')} (admin={s['admin']})", flush=True)
             self._save_settings({k: v for k, v in data.items() if k in allowed})
         elif p in ('/api/settings/brasao', '/api/settings/brasao/'):
