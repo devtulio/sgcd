@@ -5,6 +5,18 @@
 
 ---
 
+## [2.10.1] — 2026-07-01
+
+### Corrigido
+- **Grafia "Formalização da Demanda" → "Formalização de Demanda"** — nome oficial correto do DFD (Art. 12, §1º, Lei 14.133/2021), corrigido no nome da etapa, na Autorização, na Ata e no Manual
+- **Ata de Sessão**: "referente à contratação de" → "referente à:", conforme padrão de redação solicitado
+- **Decreto de atualização de limites desatualizado e incompleto** — a Justificativa de Enquadramento Legal citava "Decreto Federal nº 11.317/2022" (defasado; o vigente é o nº 12.807/2025) e só aparecia para o limite de bens/serviços (R$ 65.492,11), nunca para obras (R$ 130.984,20)
+
+### Adicionado
+- **Campo "Decreto de Atualização dos Limites de Dispensa"** em Configurações → Organização — como o decreto muda todo ano, esse texto agora é editável pelo usuário e usado nos documentos gerados, com o decreto vigente (nº 12.807/2025) como valor padrão caso o campo fique em branco. Sincroniza entre máquinas pelo mesmo endpoint já usado para os demais dados de Organização
+
+---
+
 ## [2.10.0] — 2026-07-01
 
 ### Corrigido — 2 bugs ativos encontrados durante auditoria de índices hardcoded
