@@ -5,6 +5,14 @@
 
 ---
 
+## [2.10.3] — 2026-07-01
+
+### Corrigido
+- **Botão "Encerrar sistema" enganoso em modo Servidor Contínuo** — o botão pedia confirmação "Deseja encerrar o sistema?" mas, nesse modo, `_check_shutdown()` nunca desliga o processo (por design — só faz backup). Resultado: o usuário confirmava o encerramento e nada acontecia além de deslogar, sem nenhum aviso. Agora o botão fica oculto quando o servidor está em modo Servidor Contínuo (novo campo `modo_servidor` em `GET /health`), já que nesse modo o encerramento só deve acontecer por quem tem acesso físico ao console (Ctrl+C)
+- Removido `fetch('/shutdown')` em `fecharSistema()` — rota inexistente no servidor, sempre retornava 404 silenciosamente (código morto desde sempre; o encerramento real já acontecia via `_check_shutdown()` disparado pelo logout)
+
+---
+
 ## [2.10.2] — 2026-07-01
 
 ### Corrigido

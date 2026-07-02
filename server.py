@@ -247,7 +247,7 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         qs = parse_qs(parsed.query)
 
         if p == '/health':
-            self._json(200, {'ok': True})
+            self._json(200, {'ok': True, 'modo_servidor': _modo_servidor})
         elif p == '/api/public/org-info':
             try:
                 with get_db() as conn:
