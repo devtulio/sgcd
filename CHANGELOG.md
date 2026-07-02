@@ -5,6 +5,21 @@
 
 ---
 
+## [2.10.0] — 2026-07-01
+
+### Corrigido — 2 bugs ativos encontrados durante auditoria de índices hardcoded
+- **Justificativa de Enquadramento Legal com dados da etapa errada** — `gerarEnquadramentoLegal()` lia responsável/data/observações da etapa "Indicação de Dotação Orçamentária" (índice 4) em vez de "Enquadramento Legal" (índice 5). O campo `fundamento` nunca existiu na etapa errada, então sempre caía no fallback `p.legal`, mascarando o problema
+- **Extrato de Contrato com dados da etapa errada** — `gerarExtratoContrato()` lia número do contrato, contratante, contratado, CNPJ, vigência e valor da etapa "Homologação" (índice 13) em vez de "Instrumento Contratual" (índice 15), onde esses campos realmente existem. Documento usado para publicação no Diário Oficial e PNCP gerando com campos essenciais em branco
+- **Aviso de Dispensa** tinha a mesma confusão de índice 4×5 para o campo `fundamento` (`gerarAvisoDispensa()`)
+
+### Alterado — eliminada a classe inteira de bug por índice hardcoded
+- Substituídas **todas** as ~30 referências numéricas a `steps[N]` nos geradores de documento (`gerarEnquadramentoLegal`, `gerarAvisoDispensa`, `gerarExtratoContrato`, `gerarAutorizacao`, `gerarProcessoCompleto`, `gerarAta`) por `STEPS.findIndex(s => s.marcador)`, seguindo o padrão que já existia parcialmente em `gerarAta()`
+- Adicionados marcadores booleanos (`dfd`, `etp`, `termoReferencia`, `controleInterno`, `parecerJuridico`, `notaEmpenho`) às etapas do array `STEPS` que ainda não tinham
+- Motivação: essa classe de bug já havia causado a inserção incorreta da etapa "Controle Interno" quebrar múltiplos documentos na v2.8.0. Agora, inserir, remover ou reordenar uma etapa não quebra mais nenhum gerador de documento — a referência é sempre por nome, nunca por posição
+- Validado com teste funcional em Node.js: processo simulado com valor rastreável em cada uma das 17 etapas, confirmando que cada gerador lê exatamente o campo da etapa correta
+
+---
+
 ## [2.9.6] — 2026-07-01
 
 ### Removido
