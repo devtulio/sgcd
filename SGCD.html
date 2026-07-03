@@ -2479,7 +2479,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.13.0';
+const SGCD_VERSION = '2.13.1';
 const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
   ? 'http://localhost:3000'
   : window.location.origin;
@@ -6466,6 +6466,9 @@ function renderStepFields(i, step, data, certFileMap = {}) {
   if (step.enquadramentoLegal) {
     html += `<div style="margin-top:12px"><button class="btn btn-outline btn-sm" onclick="gerarEnquadramentoLegal()">📄 Gerar Justificativa de Enquadramento Legal</button></div>`;
   }
+  if (step.justificativaEscolha) {
+    html += `<div style="margin-top:12px"><button class="btn btn-outline btn-sm" onclick="gerarJustificativaEscolha()">📄 Gerar Justificativa da Escolha do Fornecedor</button></div>`;
+  }
   if (step.extrato) {
     const pub = data.fields['data_publicacao'];
     const enc = data.fields['data_encerramento'];
@@ -9537,6 +9540,112 @@ ${_qrFooter(p)}
 
   const win = window.open('', '_blank', 'width=900,height=700');
   _gerarDocumento(win, html, 'Justificativa de Enquadramento Legal');
+}
+
+function gerarJustificativaEscolha() {
+  const p = currentProcess;
+  const u = getUser();
+  const hoje = new Date().toLocaleDateString('pt-BR', { day:'numeric', month:'long', year:'numeric' });
+  const blank = txt => txt || '_'.repeat(40);
+  const fmtVal = v => v ? fmtMoney(v) : '_______________';
+  const d = dt => dt ? new Date(dt).toLocaleDateString('pt-BR') : '_____/_____/_______';
+
+  const stepData = p.steps?.[STEPS.findIndex(s => s.justificativaEscolha)]?.fields || {};
+  const responsavel   = stepData.responsavel   || u.nome || '';
+  const dataConclusao = stepData.data_conclusao ? d(stepData.data_conclusao) : hoje;
+  const justificativa = stepData.justificativa_escolha || '';
+  const observacoes   = stepData.observacoes || '';
+  const fornForn = typeof p.fornecedor === 'object' ? p.fornecedor : null;
+  const fornNome = fornForn?.razao_social || fornForn?.nome_fantasia || (typeof p.fornecedor === 'string' ? p.fornecedor : '');
+  const fornCnpj = fornForn?.cnpj || '';
+
+  const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>${_nomeArquivoDoc(p, 'JUSTIFICATIVA DA ESCOLHA DO FORNECEDOR')}</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; color: #000; background: #fff; padding: 2cm 2.5cm; }
+  .header { text-align: center; margin-bottom: 24pt; border-bottom: 2px solid #000; padding-bottom: 14pt; }
+  .header img { height: 90pt; width: auto; margin-bottom: 8pt; }
+  .header h1 { font-size: 13pt; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+  .header h2 { font-size: 11pt; font-weight: 400; margin-top: 2pt; }
+  .doc-title { text-align: center; margin: 20pt 0 18pt; }
+  .doc-title h3 { font-size: 13pt; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid #000; display: inline-block; padding-bottom: 4pt; }
+  .doc-title .num { font-size: 11pt; margin-top: 6pt; }
+  .section { margin-bottom: 14pt; }
+  .section p { line-height: 1.8; text-align: justify; margin-bottom: 8pt; }
+  .field-table { width: 100%; border-collapse: collapse; margin: 14pt 0; }
+  .field-table td { padding: 5pt 8pt; border: 1px solid #333; font-size: 11pt; vertical-align: top; text-align: justify; }
+  .field-table td.lbl { font-weight: 700; text-transform: uppercase; font-size: 9pt; letter-spacing: .4px; width: 38%; background: #f5f5f5; text-align: center; vertical-align: middle; }
+  .obs-box { background: #f9f9f9; border-left: 3px solid #555; padding: 10pt 14pt; margin: 14pt 0; font-size: 11pt; line-height: 1.8; text-align: justify; }
+  .base-legal { font-size: 9.5pt; color: #444; border-top: 1px solid #ccc; padding-top: 8pt; margin-top: 16pt; line-height: 1.6; }
+  .city-date { text-align: right; margin-top: 30pt; margin-bottom: 6pt; font-size: 11pt; }
+  .signature-block { margin-top: 40pt; }
+  .signature-line { border-top: 1px solid #000; width: 280pt; margin: 0 auto; text-align: center; padding-top: 4pt; font-size: 10pt; }
+  .footer { margin-top: 40pt; border-top: 1px solid #ccc; padding-top: 6pt; text-align: center; font-size: 8pt; color: #666; }
+  .btn-print { display: block; margin: 0 auto 20pt; padding: 8pt 24pt; background: #1a3a6b; color: #fff; border: none; border-radius: 4px; font-size: 11pt; cursor: pointer; letter-spacing: .5px; }
+  .btn-print:hover { background: #102855; }
+  @media print { body { padding: 0; } .no-print { display: none !important; } }
+  @page { @bottom-right { content: "Folha " counter(page); font-size: 8pt; color: #888; } }
+</style>
+</head>
+<body>
+<button class="btn-print no-print" onclick="window.print()">🖨 Imprimir / Salvar PDF</button>
+
+<div class="header">
+  <img src="data:image/png;base64,__BRASAO_PLACEHOLDER__" alt="Brasão">
+  <h1>${blank(u.orgao)}</h1>
+  <h2>${blank(u.municipio)}</h2>
+</div>
+
+<div class="doc-title">
+  <h3>Justificativa da Escolha do Fornecedor</h3>
+  <div class="num">Dispensa de Licitação nº ${blank(p.num_dl || p.num)}</div>
+</div>
+
+<table class="field-table">
+  <tr><td class="lbl">Processo Administrativo</td><td>${blank(p.num_proc || p.num)}</td></tr>
+  <tr><td class="lbl">Dispensa de Licitação nº</td><td>${blank(p.num_dl || p.num)}</td></tr>
+  <tr><td class="lbl">Objeto</td><td>${blank(p.objeto)}</td></tr>
+  <tr><td class="lbl">Valor Estimado</td><td>${fmtVal(p.valor)}</td></tr>
+  <tr><td class="lbl">Fornecedor Escolhido</td><td>${blank(fornNome)}</td></tr>
+  ${fornCnpj ? `<tr><td class="lbl">CNPJ</td><td>${fornCnpj}</td></tr>` : ''}
+</table>
+
+<div class="section">
+  <p>O <strong>Agente de Contratação</strong> da <strong>${blank(u.orgao)}</strong>, em cumprimento ao disposto no <strong>Art. 72, VI, da Lei Federal nº 14.133/2021</strong>, que exige a instrução do processo de contratação direta com a razão da escolha do contratado, vem apresentar a justificativa da escolha do fornecedor acima identificado para a contratação em referência.</p>
+
+  <p>O fornecedor <strong>${blank(fornNome)}</strong> foi considerado habilitado, nos termos verificados na etapa de Habilitação do Fornecedor, e apresentou condições regulares para a execução do objeto <strong>${blank(p.objeto)}</strong>, pelo valor de <strong>${fmtVal(p.valor)}</strong>.</p>
+
+  ${justificativa ? `<p><strong>Razão da escolha:</strong> ${justificativa.replace(/\n/g,'<br>')}</p>` : `<p>_________________________________________________________________________</p>`}
+
+  <p>Diante do exposto, justifica-se a escolha do fornecedor acima identificado para a presente contratação direta, ficando o processo apto ao prosseguimento de seus trâmites legais, notadamente à fase de adjudicação.</p>
+</div>
+
+${observacoes ? `<div class="obs-box"><strong>Observações complementares:</strong><br>${observacoes.replace(/\n/g,'<br>')}</div>` : ''}
+
+<div class="base-legal">
+  <strong>Base legal:</strong> Art. 72, VI, da Lei Federal nº 14.133/2021 — Razão da escolha do contratado.
+</div>
+
+<div class="city-date">${blank(u.municipio)}, ${dataConclusao}</div>
+
+<div class="signature-block">
+  <div class="signature-line">
+    <div><strong>${blank(responsavel)}</strong></div>
+    <div style="font-size:9pt;margin-top:2pt">Agente de Contratação${u.matricula ? ' — Matrícula: ' + u.matricula : ''}</div>
+    <div style="font-size:9pt;margin-top:1pt">${blank(u.orgao)}</div>
+  </div>
+</div>
+
+${_qrFooter(p)}
+</body>
+</html>`;
+
+  const win = window.open('', '_blank', 'width=900,height=700');
+  _gerarDocumento(win, html, 'Justificativa da Escolha do Fornecedor');
 }
 
 function gerarAutorizacao() {

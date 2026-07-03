@@ -5,6 +5,13 @@
 
 ---
 
+## [2.13.1] — 2026-07-03
+
+### Adicionado
+- **Geração de documento para a etapa "Justificativa da Escolha do Fornecedor"** — botão "📄 Gerar Justificativa da Escolha do Fornecedor" na Etapa 13, seguindo o mesmo padrão visual e de nomenclatura dos demais documentos do sistema (`gerarJustificativaEscolha()`). O documento traz processo, fornecedor escolhido, CNPJ, o texto da justificativa registrado na etapa e a base legal (Art. 72, VI da Lei 14.133/2021). MANUAL.html atualizado (Seção 6 e tabela de "Documentos Gerados" na Seção 9)
+
+---
+
 ## [2.13.0] — 2026-07-03
 
 ### Adicionado
