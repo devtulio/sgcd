@@ -5,6 +5,20 @@
 
 ---
 
+## [2.14.0] — 2026-07-03
+
+### Adicionado
+- **`diagnostico.py` reescrito: diagnóstico e correção automática de rede** — usuário reportou que outras máquinas não conseguiam acessar o SGCD mesmo com o servidor no modo 2 e o diagnóstico antigo dizendo que estava tudo certo. Investigação encontrou falsos positivos conhecidos no diagnóstico anterior: ele só testava a própria máquina se conectando a si mesma, e a checagem de firewall era um `findstr "3000"` frouxo que não confirmava se a regra estava habilitada, no perfil de rede certo, nem em modo "allow". Reescrito para verificar de verdade:
+  - **Perfil de rede** (Domínio/Privada/Pública) — Windows bloqueia entrada por padrão em rede "Pública"; corrige automaticamente para "Privada" mediante confirmação
+  - **Regra de firewall completa** — checa habilitada + allow + TCP + porta 3000 + perfil, via `Get-NetFirewallRule`/`Get-NetFirewallPortFilter` (PowerShell, mais confiável que parsing de texto do `netsh`); remove regras antigas/quebradas e recria corretamente
+  - **Antivírus de terceiros** — detecta produtos além do Windows Defender (que têm firewall próprio, fora do alcance deste script) e avisa
+  - **Outros dispositivos na rede local** — varredura + tabela ARP; se nenhum outro dispositivo for encontrado, aponta isolamento de cliente (AP isolation) ou VLAN separada como causa provável — cenário comum em redes corporativas geridas por TI, que não pode ser corrigido por software nesta máquina
+  - **IP via DHCP** — avisa que o endereço pode mudar e quebrar atalhos salvos em outras máquinas; sugere pedir reserva de IP fixo ao TI, já informando o MAC address
+  - **Elevação automática** — se rodado sem privilégio de Administrador (necessário para corrigir firewall/perfil de rede), oferece reabrir elevado via UAC automaticamente
+- Testado em ambiente isolado: todas as seções executam corretamente, incluindo a varredura de rede (29 dispositivos encontrados) e o auto-teste de conexão pelo IP local
+
+---
+
 ## [2.13.5] — 2026-07-03
 
 ### Adicionado

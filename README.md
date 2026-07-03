@@ -1,6 +1,6 @@
 # SGCD — Sistema de Gestão de Contratação Direta
 
-![Versão](https://img.shields.io/badge/versão-v2.13.5-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-Python%20%2B%20SQLite-orange) ![Licença](https://img.shields.io/badge/licença-MIT-green) ![Multiusuário](https://img.shields.io/badge/acesso-multiusuário-blueviolet)
+![Versão](https://img.shields.io/badge/versão-v2.14.0-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-Python%20%2B%20SQLite-orange) ![Licença](https://img.shields.io/badge/licença-MIT-green) ![Multiusuário](https://img.shields.io/badge/acesso-multiusuário-blueviolet)
 
 ## Descrição
 
@@ -35,7 +35,7 @@ Funciona em rede local: um único computador executa o servidor e todos os usuá
 - **Lixeira** — processos excluídos ficam recuperáveis por 30 dias, incluindo arquivos anexados
 - **Autenticação multiusuário** com hashing PBKDF2-HMAC-SHA256 e gestão de usuários pelo admin
 - **Relatório executivo** com KPIs, gráfico de barras por status e alertas de processos parados
-- **Diagnóstico de rede** — verifica IP, porta 3000, regras de firewall e acessibilidade pela LAN
+- **Diagnóstico e correção automática de rede** — verifica IP, porta 3000, perfil de rede, regra de firewall, antivírus de terceiros e outros dispositivos alcançáveis na LAN; corrige automaticamente o que estiver ao alcance do Windows (com elevação de Administrador)
 
 ---
 
@@ -70,7 +70,7 @@ Funciona em rede local: um único computador executa o servidor e todos os usuá
 |-------|-----------|
 | **[1] Pessoal** | Uso individual — abre o navegador automaticamente e encerra ao sair |
 | **[2] Servidor** | Máquina central em rede — fica rodando continuamente (Ctrl+C para parar) |
-| **[3] Diagnóstico** | Verifica configurações de rede, porta e firewall |
+| **[3] Diagnóstico** | Verifica e corrige automaticamente rede, porta e firewall (pede elevação de Administrador quando necessário) |
 
 ### Acesso em rede local
 
@@ -80,8 +80,9 @@ Outros usuários acessam pelo IP do computador servidor:
 http://192.168.x.x:3000/SGCD.html
 ```
 
-Execute **`Diagnostico SGCD.bat`** para descobrir o IP e verificar se o acesso está funcionando.  
-Execute **`Liberar Porta SGCD.bat`** como Administrador para abrir a porta 3000 no firewall.
+Execute **`Diagnostico SGCD.bat`** (ou a opção **[3]** do `Iniciar SGCD.bat`) para descobrir o IP, verificar e corrigir automaticamente firewall, perfil de rede e antivírus de terceiros. Ele também testa se há outros dispositivos alcançáveis na rede — útil para identificar isolamento de cliente (Wi-Fi) ou VLANs separadas, casos que exigem intervenção do time de TI.
+
+> Se o diagnóstico indicar tudo certo mas outra máquina ainda não conseguir acessar, é sinal de bloqueio fora do alcance do Windows (isolamento de rede corporativa, VLAN, ou firewall de outro dispositivo/roteador) — nesse caso, use o teste indicado pelo próprio diagnóstico (`ping` e `Test-NetConnection`) a partir da outra máquina para confirmar e leve essa evidência ao TI.
 
 ---
 
