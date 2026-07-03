@@ -5,6 +5,13 @@
 
 ---
 
+## [2.15.1] — 2026-07-03
+
+### Adicionado
+- **Favicon na aba do navegador** — `SGCD.html` não declarava nenhum `<link rel="icon">`, então a barra superior do navegador ficava sem ícone. Adicionado apontando para `sgcd.ico` (já existente no projeto, usado no atalho da área de trabalho). Testado: servidor já serve `.ico` estático corretamente (`Content-Type: image/x-icon`)
+
+---
+
 ## [2.15.0] — 2026-07-03
 
 ### Adicionado
