@@ -5,6 +5,13 @@
 
 ---
 
+## [2.13.4] — 2026-07-03
+
+### Corrigido
+- **Geração da Ata de Sessão gerava `Uncaught ReferenceError: proc is not defined` quando havia proposta vencedora registrada** — em `gerarAta()`, a linha que monta o rótulo "Vencedora — {critério}" referenciava `proc.criterio_selecao`, mas a variável do processo nessa função se chama `p` (resíduo de código copiado de outra função que usa `proc`). Como o rótulo é montado dentro de um objeto literal avaliado para toda linha da tabela de propostas — não só quando a situação é "vencedora" —, o erro ocorria sempre que havia ao menos uma proposta cadastrada. Reportado pelo usuário. Corrigido para `p.criterio_selecao`
+
+---
+
 ## [2.13.3] — 2026-07-03
 
 ### Corrigido
