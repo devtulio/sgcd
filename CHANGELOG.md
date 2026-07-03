@@ -5,6 +5,13 @@
 
 ---
 
+## [2.15.2] — 2026-07-03
+
+### Corrigido
+- **Coluna "Objeto" cortada no Relatório Executivo** — `gerarRelatorioExecutivo()` truncava o texto do objeto em 55 (lista de processos) e 60 caracteres (processos parados) com `.slice()`, sem reticências, cortando no meio da palavra mesmo a tabela tendo espaço de sobra para quebrar linha. Reportado pelo usuário com captura de tela. Removida a truncagem — mesmo padrão já usado no Relatório Geral, que sempre mostrou o objeto completo
+
+---
+
 ## [2.15.1] — 2026-07-03
 
 ### Adicionado
