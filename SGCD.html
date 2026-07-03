@@ -2479,7 +2479,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.12.0';
+const SGCD_VERSION = '2.12.1';
 const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
   ? 'http://localhost:3000'
   : window.location.origin;
@@ -10230,7 +10230,22 @@ async function _hashSha256(text) {
 }
 
 function abrirModalAssinatura(p, docNome, htmlContent, win) {
-  const overlay = document.createElement('div');
+  // Modal vive DENTRO da janela do documento (win), não na janela principal —
+  // documentos abrem maximizados, e a janela principal ficaria escondida atrás.
+  const doc = win.document;
+  if (!doc.getElementById('sig-modal-style')) {
+    const style = doc.createElement('style');
+    style.id = 'sig-modal-style';
+    style.textContent = `
+      .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:6px;font-size:.85rem;font-weight:600;border:none;cursor:pointer;font-family:inherit}
+      .btn-primary{background:#1a3a6b;color:#fff}
+      .btn-danger{background:#dc2626;color:#fff}
+      .btn-outline{background:#fff;color:#374151;border:1px solid #d1d5db}
+      .btn-sm{padding:5px 12px;font-size:.78rem}
+    `;
+    doc.head.appendChild(style);
+  }
+  const overlay = doc.createElement('div');
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center';
   const dark = document.body.classList.contains('dark');
   const bg  = dark ? '#2a2a2a' : '#ffffff';
@@ -10286,7 +10301,7 @@ function abrirModalAssinatura(p, docNome, htmlContent, win) {
       toast('Documento assinado (nível simples). Salve o PDF na janela do documento.', 'success');
       close();
     } catch (e) {
-      render(`<p style="color:var(--danger)">Erro ao assinar: ${escHtml(e.message)}</p><div style="text-align:right;margin-top:12px"><button class="btn btn-outline btn-sm" id="sig-voltar">Voltar</button></div>`);
+      render(`<p style="color:#dc2626">Erro ao assinar: ${escHtml(e.message)}</p><div style="text-align:right;margin-top:12px"><button class="btn btn-outline btn-sm" id="sig-voltar">Voltar</button></div>`);
       overlay.querySelector('#sig-voltar').onclick = telaEscolha;
     }
   }
@@ -10296,7 +10311,7 @@ function abrirModalAssinatura(p, docNome, htmlContent, win) {
       <h3 style="font-size:1rem;font-weight:700;margin-bottom:10px">gov.br — nível avançado</h3>
       <ol style="font-size:.78rem;color:${sub};line-height:1.7;padding-left:18px;margin-bottom:14px">
         <li>Salve o PDF deste documento (botão "Imprimir / Salvar PDF" na janela do documento).</li>
-        <li>Abra o <a href="https://assinador.iti.gov.br/" target="_blank" rel="noopener">assinador.iti.gov.br</a> e assine lá com seu login gov.br.</li>
+        <li>Abra o <a href="https://www.gov.br/pt-br/servicos/assinar-documentos-digitalmente" target="_blank" rel="noopener">catálogo de serviços gov.br</a>, entre em "Assinar documentos digitalmente" e assine lá com seu login gov.br.</li>
         <li>Baixe o PDF assinado e selecione-o abaixo.</li>
       </ol>
       <input type="file" id="sig-govbr-file" accept="application/pdf" style="width:100%;margin-bottom:14px">
@@ -10318,7 +10333,7 @@ function abrirModalAssinatura(p, docNome, htmlContent, win) {
       const r = await API.upload('/api/signatures/upload', form);
       const d = await API.json(r);
       if (!r || !r.ok || !d) {
-        render(`<p style="color:var(--danger)">Erro ao enviar: ${escHtml(d?.error||'falha desconhecida')}</p><div style="text-align:right;margin-top:12px"><button class="btn btn-outline btn-sm" id="sig-voltar2">Voltar</button></div>`);
+        render(`<p style="color:#dc2626">Erro ao enviar: ${escHtml(d?.error||'falha desconhecida')}</p><div style="text-align:right;margin-top:12px"><button class="btn btn-outline btn-sm" id="sig-voltar2">Voltar</button></div>`);
         overlay.querySelector('#sig-voltar2').onclick = telaEscolha;
         return;
       }
@@ -10361,7 +10376,7 @@ function abrirModalAssinatura(p, docNome, htmlContent, win) {
       const r = await API.upload('/api/signatures/upload', form);
       const d = await API.json(r);
       if (!r || !r.ok || !d) {
-        render(`<p style="color:var(--danger)">${escHtml(d?.error||'Falha ao assinar com o certificado.')}</p><div style="text-align:right;margin-top:12px"><button class="btn btn-outline btn-sm" id="sig-voltar2">Voltar</button></div>`);
+        render(`<p style="color:#dc2626">${escHtml(d?.error||'Falha ao assinar com o certificado.')}</p><div style="text-align:right;margin-top:12px"><button class="btn btn-outline btn-sm" id="sig-voltar2">Voltar</button></div>`);
         overlay.querySelector('#sig-voltar2').onclick = telaEscolha;
         return;
       }
@@ -10379,8 +10394,9 @@ function abrirModalAssinatura(p, docNome, htmlContent, win) {
   }
 
   telaEscolha();
-  document.body.appendChild(overlay);
+  doc.body.appendChild(overlay);
   overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  win.focus();
 }
 
 // ══════════════════════════════════════════════════════════════

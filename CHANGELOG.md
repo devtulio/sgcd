@@ -5,6 +5,14 @@
 
 ---
 
+## [2.12.1] — 2026-07-02
+
+### Corrigido
+- **Modal de assinatura escondido atrás da janela do documento** — o modal era inserido na janela principal do SGCD, mas o documento gerado abre maximizado, cobrindo a janela principal e obrigando a redimensionar manualmente para ver o modal. Corrigido: o modal agora vive dentro da própria janela do documento (com estilos próprios, já que essa janela não tem a folha de estilo principal do app), sempre visível assim que o botão "Assinar Documento" é clicado
+- **Link do gov.br não abria** — `assinador.iti.gov.br` retornava erro. Substituído pelo catálogo oficial de serviços `gov.br/pt-br/servicos/assinar-documentos-digitalmente`, que aponta para a ferramenta correta mesmo que o endereço interno da ferramenta mude no futuro
+
+---
+
 ## [2.12.0] — 2026-07-02
 
 ### Adicionado — Assinatura Eletrônica de Documentos (3 módulos)
