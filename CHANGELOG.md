@@ -5,6 +5,21 @@
 
 ---
 
+## [2.13.0] — 2026-07-03
+
+### Adicionado
+- **Nova etapa de checklist: "Justificativa da Escolha do Fornecedor"** — sugestão do Controle Interno, com base no **Art. 72, VI da Lei 14.133/2021**, que exige que o processo de contratação direta seja instruído com a "razão da escolha do contratado", item distinto da habilitação (regularidade fiscal/jurídica) e da justificativa de preço (pesquisa de preços). Inserida entre **Habilitação do Fornecedor** e **Adjudicação**, seguindo a ordem do Art. 72 (V-habilitação, VI-razão da escolha) e o fluxo lógico do processo. O checklist passa de 17 para **18 etapas**
+- Migração automática para processos já existentes: ao abrir um processo antigo (17 etapas), a nova etapa é inserida em branco na posição correta, mesmo padrão já usado nas inserções anteriores (v2.3.0 — Dotação Orçamentária, v2.8.0 — Parecer do Controle Interno)
+
+### Corrigido
+- **Cálculo automático da data mínima de encerramento do Aviso de Dispensa estava morto desde o v2.8.0** — o código verificava `if (i === 7 && f === 'data_publicacao')` para acionar o cálculo automático dos 3 dias úteis mínimos (Art. 75, §3º), mas o índice real da etapa "Aviso de Dispensa" havia mudado de 7 para 9 quando a etapa "Parecer do Controle Interno" foi inserida (v2.8.0) — a condição nunca mais era verdadeira. Corrigido substituindo o índice fixo por busca dinâmica (`STEPS.findIndex(s => s.avisoDispensa)`), imune a futuras inserções de etapas
+- **Classificação de fase no Kanban (`processoFase`) desalinhada desde a mesma mudança do v2.8.0** — os limiares fixos (`i<=7` Instrução, `i===8` Publicado etc.) também dependiam da posição antiga das etapas e ficaram incorretos após o deslocamento de índices. Reescrito para usar os mesmos flags de identificação das etapas (`avisoDispensa`, `certidoes`, `adjudicacao`) em vez de números fixos
+- **`renderSignatures(id)` referenciava variável inexistente** — em `renderDetail()`, gerava erro `id is not defined` (visível como toast) toda vez que um processo era aberto, embora não impedisse o restante da tela de carregar. Corrigido para `renderSignatures(p.id)`
+- **MANUAL.html estava sem a descrição da etapa "Indicação de Dotação Orçamentária"** desde que ela foi adicionada ao sistema (v2.3.0) — a caixa de descrição nunca existia na Seção 6, e toda a numeração de etapas a partir dali (Enquadramento Legal em diante) estava um número atrasada em relação ao app real. Adicionada a caixa faltante e renumeradas as 18 etapas e todas as referências cruzadas ("Etapa N") no manual
+- **Linha corrompida na tabela de "Documentos Gerados"** (Seção 9) — resíduo de uma edição malsucedida anterior deixou o texto `Botão "📄 $110)` no lugar da descrição do botão "Despacho de Recusa/Desclassificação". Corrigido
+
+---
+
 ## [2.12.3] — 2026-07-03
 
 ### Corrigido

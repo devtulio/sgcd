@@ -2479,7 +2479,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.12.3';
+const SGCD_VERSION = '2.13.0';
 const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
   ? 'http://localhost:3000'
   : window.location.origin;
@@ -3125,6 +3125,12 @@ const STEPS = [
     certidoes: true
   },
   {
+    name: 'Justificativa da Escolha do Fornecedor',
+    sub: 'Razão da escolha do contratado — Art. 72, VI',
+    fields: ['responsavel','data_conclusao','justificativa_escolha','observacoes'],
+    justificativaEscolha: true
+  },
+  {
     name: 'Adjudicação',
     sub: 'Declaração do vencedor pelo agente de contratação',
     fields: ['responsavel','data_conclusao','valor_adjudicado','observacoes'],
@@ -3162,6 +3168,7 @@ const FIELD_LABELS = {
   num_cotacoes: 'Nº de cotações obtidas',
   valor_estimado: 'Valor estimado (R$)',
   fundamento: 'Fundamento legal específico',
+  justificativa_escolha: 'Justificativa da escolha do fornecedor (razão da escolha — Art. 72, VI)',
   num_parecer_ci: 'Nº do Parecer do Controle Interno',
   num_parecer: 'Nº do Parecer Jurídico',
   autoridade: 'Autoridade responsável',
@@ -6024,6 +6031,15 @@ async function openProcess(id) {
       changed = true;
     }
 
+    // v2.13.0: Justificativa da Escolha do Fornecedor inserida na posição 12 — splice para processos antigos
+    if (currentProcess.steps.length === 17) {
+      const sd = STEPS[12];
+      const fields = {};
+      if (u.nome && sd.fields.includes('responsavel')) fields.responsavel = u.nome;
+      currentProcess.steps.splice(12, 0, { status: 'pending', fields, completedAt: null });
+      changed = true;
+    }
+
     // Migra steps ausentes (processo criado com versão anterior com menos etapas)
     while (currentProcess.steps.length < STEPS.length) {
       const si = currentProcess.steps.length;
@@ -6095,7 +6111,7 @@ function renderDetail() {
   renderTimeline();
   renderFracPanel();
   renderLimiteAnualPanel();
-  renderSignatures(id);
+  renderSignatures(p.id);
 }
 
 async function renderSignatures(processId) {
@@ -6400,12 +6416,12 @@ function renderStepFields(i, step, data, certFileMap = {}) {
   let html = step.fields.map(f => {
     const label = FIELD_LABELS[f] || f;
     const val   = escHtml(data.fields[f] || autoDefaults[f] || '');
-    if (f === 'observacoes') {
+    if (f === 'observacoes' || f === 'justificativa_escolha') {
       return `<label>${label}</label>
         <textarea rows="2" onchange="updateField(${i},'${f}',this.value)">${val}</textarea>`;
     }
     if (DATE_FIELDS.has(f)) {
-      if (i === 7 && f === 'data_publicacao') {
+      if (i === STEPS.findIndex(s => s.avisoDispensa) && f === 'data_publicacao') {
         return `<label>${label}</label>
           <input type="date" value="${data.fields[f]||''}" onchange="onPublicacaoChange(${i},this.value)">`;
       }
@@ -8217,10 +8233,13 @@ function processoFase(p) {
   const ns = nextPendingStep(p);
   if (!ns) return 'Concluído';
   const i = ns.idx;
-  if (i <= 7)  return 'Instrução';
-  if (i === 8) return 'Publicado';
-  if (i <= 10) return 'Análise';
-  if (i <= 12) return 'Adjudicação';
+  const iAviso = STEPS.findIndex(s => s.avisoDispensa);
+  const iHabilitacao = STEPS.findIndex(s => s.certidoes);
+  const iAdjudicacao = STEPS.findIndex(s => s.adjudicacao);
+  if (i < iAviso) return 'Instrução';
+  if (i === iAviso) return 'Publicado';
+  if (i < iHabilitacao) return 'Análise';
+  if (i <= iAdjudicacao) return 'Adjudicação';
   return 'Contratação';
 }
 
