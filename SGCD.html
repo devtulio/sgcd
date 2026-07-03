@@ -1482,6 +1482,11 @@
             <div class="timeline" id="timeline"></div>
           </div>
         </div>
+        <!-- Assinaturas -->
+        <div class="sidebar-card" id="sig-card" style="display:none">
+          <h4>Assinaturas</h4>
+          <div class="body" id="sig-list"></div>
+        </div>
         <!-- Audit log -->
         <div class="sidebar-card" id="audit-card" style="display:none">
           <h4 style="display:flex;justify-content:space-between;align-items:center">
@@ -2474,7 +2479,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.11.2';
+const SGCD_VERSION = '2.12.0';
 const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
   ? 'http://localhost:3000'
   : window.location.origin;
@@ -4245,7 +4250,8 @@ function limparFiltrosAudit() {
 const _AUDIT_EVENT_LABELS = {
   ETAPA_DONE: 'Etapa concluída', ETAPA_BLOCKED: 'Etapa bloqueada', ETAPA_PENDING: 'Etapa reaberta',
   ARQUIVO_ANEXADO: 'Arquivo anexado', ARQUIVO_REMOVIDO: 'Arquivo removido',
-  DOCUMENTO_GERADO: 'Documento gerado', PROCESSO_EXCLUIDO: 'Processo movido p/ lixeira',
+  DOCUMENTO_GERADO: 'Documento gerado', DOCUMENTO_ASSINADO: 'Documento assinado',
+  PROCESSO_EXCLUIDO: 'Processo movido p/ lixeira',
   PROCESSO_RESTAURADO: 'Processo restaurado', PROCESSO_EXPURGADO: 'Processo excluído definitivamente',
   CERTIDAO_ATUALIZADA: 'Certidão atualizada', CERTIDAO_SINCRONIZADA: 'Certidão sincronizada',
   FORNECEDOR_ALTERADO: 'Fornecedor alterado', CAMPO_ALTERADO: 'Campo alterado'
@@ -4258,6 +4264,7 @@ const _AUDIT_EVENT_META = {
   ARQUIVO_ANEXADO:      { bg: '#E6F1FB', color: '#185FA5' },
   ARQUIVO_REMOVIDO:     { bg: '#FCEBEB', color: '#A32D2D' },
   DOCUMENTO_GERADO:     { bg: '#e8eef7', color: '#1a3a6b' },
+  DOCUMENTO_ASSINADO:   { bg: '#E1F5EE', color: '#0F6E56' },
   PROCESSO_EXCLUIDO:    { bg: '#FCEBEB', color: '#A32D2D' },
   PROCESSO_RESTAURADO:  { bg: '#E1F5EE', color: '#0F6E56' },
   PROCESSO_EXPURGADO:   { bg: '#FCEBEB', color: '#A32D2D' },
@@ -4474,7 +4481,7 @@ async function gerarRelatorioAuditoria() {
   const dtGerFmt = now.toLocaleDateString('pt-BR') + ' às ' + now.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
 
   const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
-<title>Trilha de Auditoria — SGCD</title>
+<title>${_nomeArquivoDoc(null, 'RELATORIO DE AUDITORIA')}</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Times New Roman', Times, serif; font-size: 11pt; color: #000; background: #fff; padding: 2cm 2.5cm; }
@@ -6088,6 +6095,29 @@ function renderDetail() {
   renderTimeline();
   renderFracPanel();
   renderLimiteAnualPanel();
+  renderSignatures(id);
+}
+
+async function renderSignatures(processId) {
+  const card = document.getElementById('sig-card');
+  const list = document.getElementById('sig-list');
+  if (!card || !list) return;
+  const r = await API.get(`/api/signatures?process_id=${encodeURIComponent(processId)}`);
+  const d = await API.json(r);
+  const items = d?.items || [];
+  if (!items.length) { card.style.display = 'none'; return; }
+  card.style.display = '';
+  const metodoLabel = { internal: 'Simples', govbr: 'gov.br', 'icp-brasil': 'ICP-Brasil' };
+  list.innerHTML = items.map(sig => {
+    const cod = (() => { try { return JSON.parse(sig.extra_json || '{}').cod || ''; } catch { return ''; } })();
+    const data = sig.signed_at ? new Date(sig.signed_at).toLocaleString('pt-BR') : '';
+    const download = sig.file_id ? `<a href="${API_BASE}/api/files/${sig.file_id}" target="_blank" style="font-size:.7rem">Baixar PDF</a>` : '';
+    return `<div style="padding:6px 0;border-bottom:1px solid var(--gray-200);font-size:.75rem">
+      <div><strong>${escHtml(sig.doc_type||'')}</strong> — ${metodoLabel[sig.method]||sig.method}</div>
+      <div style="color:var(--gray-500)">${escHtml(sig.signer_name||'')} · ${data}${cod?' · '+cod:''}</div>
+      ${download}
+    </div>`;
+  }).join('');
 }
 
 function renderFracPanel() {
@@ -7781,7 +7811,7 @@ function gerarRelatorio() {
   ].filter(Boolean).join(' · ');
 
   const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
-<title>Relatório de Processos — SGCD</title>
+<title>${_nomeArquivoDoc(null, 'RELATORIO GERAL DE PROCESSOS')}</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Times New Roman', Times, serif; font-size: 11pt; color: #000; background: #fff; padding: 2cm 2.5cm; }
@@ -7901,7 +7931,7 @@ async function gerarRelatorioFornecedores() {
   }
 
   const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
-<title>Relatório de Fornecedores — SGCD</title>
+<title>${_nomeArquivoDoc(null, 'RELATORIO DE FORNECEDORES')}</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Times New Roman', Times, serif; font-size: 11pt; color: #000; background: #fff; padding: 2cm 2.5cm; }
@@ -7989,7 +8019,7 @@ function gerarMapaPrecos(stepIdx) {
   }).join('');
 
   const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
-<title>Mapa de Preços — ${escHtml(numLine||p.objeto)}</title>
+<title>${_nomeArquivoDoc(p, 'MAPA DE PRECOS')}</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:'Times New Roman',serif;font-size:11pt;color:#000;padding:2cm 2.5cm}
@@ -8350,7 +8380,7 @@ function gerarDespachoRecusa(stepIdx, pi) {
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Despacho de Recusa — ${prop.fornecedor || 'Fornecedor'}</title>
+<title>${_nomeArquivoDoc(proc, 'DESPACHO DE RECUSA')}</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; color: #000; background: #fff; padding: 2cm 2.5cm; }
@@ -8491,7 +8521,7 @@ function gerarDespachoInabilitacao(stepIdx) {
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Despacho de Inabilitação — ${escHtml(fornNome || 'Fornecedor')}</title>
+<title>${_nomeArquivoDoc(proc, 'DESPACHO DE INABILITACAO')}</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; color: #000; background: #fff; padding: 2cm 2.5cm; }
@@ -8636,7 +8666,7 @@ function gerarDespachoHabilitacao(stepIdx) {
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Despacho de Habilitação — ${escHtml(fornNome || 'Fornecedor')}</title>
+<title>${_nomeArquivoDoc(proc, 'DESPACHO DE HABILITACAO')}</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; color: #000; background: #fff; padding: 2cm 2.5cm; }
@@ -8752,7 +8782,7 @@ function gerarTermoAdjudicacao() {
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Termo de Adjudicação — ${escHtml(proc.num_dl || proc.num || 'DL')}</title>
+<title>${_nomeArquivoDoc(proc, 'TERMO DE ADJUDICACAO')}</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; color: #000; background: #fff; padding: 2cm 2.5cm; }
@@ -8868,7 +8898,7 @@ function gerarTermoHomologacao() {
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Termo de Homologação — ${escHtml(proc.num_dl || proc.num || 'DL')}</title>
+<title>${_nomeArquivoDoc(proc, 'TERMO DE HOMOLOGACAO')}</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; color: #000; background: #fff; padding: 2cm 2.5cm; }
@@ -9003,7 +9033,7 @@ function gerarAvisoDispensa() {
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Aviso de Dispensa de Licitação — ${escHtml(proc.num_dl || proc.num || 'DL')}</title>
+<title>${_nomeArquivoDoc(proc, 'AVISO DE DISPENSA')}</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; color: #000; background: #fff; padding: 2cm 2.5cm; }
@@ -9291,7 +9321,7 @@ function gerarExtratoContrato() {
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Extrato de Contrato — ${escHtml(data.num_contrato || proc.num_dl || proc.num || 'DL')}</title>
+<title>${_nomeArquivoDoc(proc, 'EXTRATO DE CONTRATO')}</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; color: #000; background: #fff; padding: 2cm 2.5cm; }
@@ -9404,7 +9434,7 @@ function gerarEnquadramentoLegal() {
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Justificativa de Enquadramento Legal — ${p.num_dl || p.num || 'DL'}</title>
+<title>${_nomeArquivoDoc(p, 'JUSTIFICATIVA DE ENQUADRAMENTO LEGAL')}</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; color: #000; background: #fff; padding: 2cm 2.5cm; }
@@ -9512,7 +9542,7 @@ function gerarAutorizacao() {
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Autorização de Abertura — ${p.num_dl || p.num || 'DL'}</title>
+<title>${_nomeArquivoDoc(p, 'AUTORIZACAO DE ABERTURA')}</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; color: #000; background: #fff; padding: 2cm 2.5cm; }
@@ -9644,6 +9674,18 @@ function _gerarDocumento(win, html, docNome) {
   }
   win.document.write(finalHtml);
   win.document.close();
+
+  // Botão "Assinar Documento" — injetado aqui, uma única vez, pois todo
+  // gerador de documento passa por esta função central
+  const printBtn = win.document.querySelector('.btn-print');
+  if (printBtn) {
+    const signBtn = win.document.createElement('button');
+    signBtn.className = 'btn-print no-print';
+    signBtn.textContent = '✍ Assinar Documento';
+    signBtn.style.marginLeft = '8px';
+    signBtn.onclick = () => abrirModalAssinatura(currentProcess, docNome || 'Documento', finalHtml, win);
+    printBtn.insertAdjacentElement('afterend', signBtn);
+  }
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -9770,7 +9812,7 @@ function gerarProcessoCompleto() {
   </div>`;
 
   const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
-<title>Processo Completo — ${escHtml(p.objeto)}</title>
+<title>${_nomeArquivoDoc(p, 'PROCESSO COMPLETO')}</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; color: #000; background: #fff; }
@@ -9920,7 +9962,7 @@ function gerarAta() {
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Ata de Sessão — ${p.num_dl || p.num || 'DL'}</title>
+<title>${_nomeArquivoDoc(p, 'ATA DE SESSAO')}</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; color: #000; background: #fff; padding: 20mm 25mm; }
@@ -10178,6 +10220,168 @@ document.getElementById('confirm-overlay').addEventListener('click', e => {
     document.getElementById('confirm-overlay').classList.add('hidden');
   }
 });
+
+// ══════════════════════════════════════════════════════════════
+// ASSINATURA ELETRÔNICA — 3 módulos (Simples / gov.br / ICP-Brasil)
+// ══════════════════════════════════════════════════════════════
+async function _hashSha256(text) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function abrirModalAssinatura(p, docNome, htmlContent, win) {
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center';
+  const dark = document.body.classList.contains('dark');
+  const bg  = dark ? '#2a2a2a' : '#ffffff';
+  const txt = dark ? '#f0ece8' : '#1a1a1a';
+  const sub = dark ? '#9ca3af' : '#6b7280';
+
+  function render(inner) {
+    overlay.innerHTML = `<div style="background:${bg};color:${txt};border-radius:12px;padding:26px 30px;max-width:460px;width:92%;max-height:88vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.5)">${inner}</div>`;
+  }
+  function close() { overlay.remove(); }
+
+  function telaEscolha() {
+    render(`
+      <h3 style="font-size:1rem;font-weight:700;margin-bottom:4px">Assinar Documento</h3>
+      <p style="font-size:.78rem;color:${sub};margin-bottom:16px">${escHtml(docNome)} — escolha como deseja assinar.</p>
+      <div id="sig-card-simples" class="sig-card" style="border:1px solid var(--gray-200,#333);border-radius:8px;padding:12px 14px;margin-bottom:10px;cursor:pointer">
+        <strong>1. Assinatura Simples</strong>
+        <p style="font-size:.72rem;color:${sub};margin-top:2px">Registra sua identidade e um hash do documento. Rápido, sem upload — mas <strong>não substitui</strong> assinatura física em atos que exigem nível avançado/qualificado.</p>
+      </div>
+      <div id="sig-card-govbr" class="sig-card" style="border:1px solid var(--gray-200,#333);border-radius:8px;padding:12px 14px;margin-bottom:10px;cursor:pointer">
+        <strong>2. gov.br (nível avançado)</strong>
+        <p style="font-size:.72rem;color:${sub};margin-top:2px">Assine no portal público do governo com seu login gov.br, depois reenvie o PDF assinado aqui.</p>
+      </div>
+      <div id="sig-card-icp" class="sig-card" style="border:1px solid var(--gray-200,#333);border-radius:8px;padding:12px 14px;margin-bottom:16px;cursor:pointer">
+        <strong>3. Certificado ICP-Brasil (nível qualificado)</strong>
+        <p style="font-size:.72rem;color:${sub};margin-top:2px">Assine com seu certificado A1 (.pfx) próprio. A senha não é armazenada.</p>
+      </div>
+      <div style="text-align:right"><button class="btn btn-outline btn-sm" id="sig-cancelar">Cancelar</button></div>
+    `);
+    overlay.querySelector('#sig-card-simples').onclick = () => { playClick(); fluxoSimples(); };
+    overlay.querySelector('#sig-card-govbr').onclick   = () => { playClick(); fluxoGovBr(); };
+    overlay.querySelector('#sig-card-icp').onclick     = () => { playClick(); fluxoIcp(); };
+    overlay.querySelector('#sig-cancelar').onclick     = () => { playClick(); close(); };
+  }
+
+  async function fluxoSimples() {
+    render(`<p style="font-size:.85rem">Assinando…</p>`);
+    try {
+      const u = getUser();
+      const hash = await _hashSha256(htmlContent);
+      const r = await API.post('/api/signatures', {
+        process_id: p?.id || '', doc_type: docNome, doc_filename: _nomeArquivoDoc(p, docNome), hash_sha256: hash,
+      });
+      const d = await API.json(r);
+      if (!r || !r.ok || !d) throw new Error('Falha ao registrar assinatura no servidor');
+      const agora = new Date().toLocaleString('pt-BR');
+      const carimbo = win.document.createElement('div');
+      carimbo.style.cssText = 'margin-top:14pt;padding:8pt 10pt;border:1px solid #999;font-size:8pt;color:#333;background:#f9f9f9';
+      carimbo.innerHTML = `Assinado eletronicamente por <strong>${escHtml(u.nome||'')}</strong>${u.cargo?', '+escHtml(u.cargo):''}, em ${agora} — Nível: <strong>Assinatura Simples</strong> — Código: <strong>${d.cod}</strong>`;
+      win.document.body.appendChild(carimbo);
+      if (p?.id) await _auditEvento('DOCUMENTO_ASSINADO', `${docNome} — Simples — código ${d.cod}`, p.id);
+      if (p?.id) renderSignatures(p.id);
+      toast('Documento assinado (nível simples). Salve o PDF na janela do documento.', 'success');
+      close();
+    } catch (e) {
+      render(`<p style="color:var(--danger)">Erro ao assinar: ${escHtml(e.message)}</p><div style="text-align:right;margin-top:12px"><button class="btn btn-outline btn-sm" id="sig-voltar">Voltar</button></div>`);
+      overlay.querySelector('#sig-voltar').onclick = telaEscolha;
+    }
+  }
+
+  function fluxoGovBr() {
+    render(`
+      <h3 style="font-size:1rem;font-weight:700;margin-bottom:10px">gov.br — nível avançado</h3>
+      <ol style="font-size:.78rem;color:${sub};line-height:1.7;padding-left:18px;margin-bottom:14px">
+        <li>Salve o PDF deste documento (botão "Imprimir / Salvar PDF" na janela do documento).</li>
+        <li>Abra o <a href="https://assinador.iti.gov.br/" target="_blank" rel="noopener">assinador.iti.gov.br</a> e assine lá com seu login gov.br.</li>
+        <li>Baixe o PDF assinado e selecione-o abaixo.</li>
+      </ol>
+      <input type="file" id="sig-govbr-file" accept="application/pdf" style="width:100%;margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between">
+        <button class="btn btn-outline btn-sm" id="sig-voltar">Voltar</button>
+        <button class="btn btn-primary btn-sm" id="sig-enviar">Enviar PDF assinado</button>
+      </div>
+    `);
+    overlay.querySelector('#sig-voltar').onclick = telaEscolha;
+    overlay.querySelector('#sig-enviar').onclick = async () => {
+      const file = overlay.querySelector('#sig-govbr-file').files[0];
+      if (!file) { toast('Selecione o PDF assinado.', 'error'); return; }
+      const form = new FormData();
+      form.append('method', 'govbr');
+      form.append('process_id', p?.id || '');
+      form.append('doc_type', docNome);
+      form.append('pdf', file, _nomeArquivoDoc(p, docNome) + '.pdf');
+      render(`<p style="font-size:.85rem">Enviando…</p>`);
+      const r = await API.upload('/api/signatures/upload', form);
+      const d = await API.json(r);
+      if (!r || !r.ok || !d) {
+        render(`<p style="color:var(--danger)">Erro ao enviar: ${escHtml(d?.error||'falha desconhecida')}</p><div style="text-align:right;margin-top:12px"><button class="btn btn-outline btn-sm" id="sig-voltar2">Voltar</button></div>`);
+        overlay.querySelector('#sig-voltar2').onclick = telaEscolha;
+        return;
+      }
+      if (p?.id) await _auditEvento('DOCUMENTO_ASSINADO', `${docNome} — gov.br — código ${d.cod}`, p.id);
+      if (p?.id) renderSignatures(p.id);
+      toast('PDF assinado anexado ao processo.', 'success');
+      close();
+    };
+  }
+
+  function fluxoIcp() {
+    render(`
+      <h3 style="font-size:1rem;font-weight:700;margin-bottom:10px">ICP-Brasil — nível qualificado</h3>
+      <p style="font-size:.78rem;color:${sub};margin-bottom:12px">Salve o PDF deste documento (ainda sem assinar) e selecione-o abaixo, junto com seu certificado A1 (.pfx) e a senha. A senha não é armazenada.</p>
+      <label style="font-size:.72rem;font-weight:600;display:block;margin-bottom:4px">PDF do documento</label>
+      <input type="file" id="sig-icp-pdf" accept="application/pdf" style="width:100%;margin-bottom:10px">
+      <label style="font-size:.72rem;font-weight:600;display:block;margin-bottom:4px">Certificado (.pfx)</label>
+      <input type="file" id="sig-icp-cert" accept=".pfx,.p12" style="width:100%;margin-bottom:10px">
+      <label style="font-size:.72rem;font-weight:600;display:block;margin-bottom:4px">Senha do certificado</label>
+      <input type="password" id="sig-icp-senha" style="width:100%;padding:6px 8px;margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between">
+        <button class="btn btn-outline btn-sm" id="sig-voltar">Voltar</button>
+        <button class="btn btn-primary btn-sm" id="sig-assinar">Assinar</button>
+      </div>
+    `);
+    overlay.querySelector('#sig-voltar').onclick = telaEscolha;
+    overlay.querySelector('#sig-assinar').onclick = async () => {
+      const pdfFile  = overlay.querySelector('#sig-icp-pdf').files[0];
+      const certFile = overlay.querySelector('#sig-icp-cert').files[0];
+      const senha    = overlay.querySelector('#sig-icp-senha').value;
+      if (!pdfFile || !certFile || !senha) { toast('Preencha o PDF, o certificado e a senha.', 'error'); return; }
+      const form = new FormData();
+      form.append('method', 'icp-brasil');
+      form.append('process_id', p?.id || '');
+      form.append('doc_type', docNome);
+      form.append('pdf', pdfFile, _nomeArquivoDoc(p, docNome) + '.pdf');
+      form.append('cert', certFile, certFile.name);
+      form.append('senha', senha);
+      render(`<p style="font-size:.85rem">Assinando com o certificado…</p>`);
+      const r = await API.upload('/api/signatures/upload', form);
+      const d = await API.json(r);
+      if (!r || !r.ok || !d) {
+        render(`<p style="color:var(--danger)">${escHtml(d?.error||'Falha ao assinar com o certificado.')}</p><div style="text-align:right;margin-top:12px"><button class="btn btn-outline btn-sm" id="sig-voltar2">Voltar</button></div>`);
+        overlay.querySelector('#sig-voltar2').onclick = telaEscolha;
+        return;
+      }
+      if (p?.id) await _auditEvento('DOCUMENTO_ASSINADO', `${docNome} — ICP-Brasil — código ${d.cod}`, p.id);
+      if (p?.id) renderSignatures(p.id);
+      render(`<p style="font-size:.85rem;color:var(--success,#166534)">Documento assinado com sucesso!</p>
+        <p style="font-size:.72rem;color:${sub};margin:8px 0 14px">Confira também no verificador oficial: <a href="https://verificador.iti.gov.br/" target="_blank" rel="noopener">verificador.iti.gov.br</a></p>
+        <div style="display:flex;justify-content:space-between">
+          <a class="btn btn-outline btn-sm" href="${API_BASE}/api/files/${d.file_id}" target="_blank">Baixar PDF assinado</a>
+          <button class="btn btn-primary btn-sm" id="sig-fechar">Fechar</button>
+        </div>`);
+      overlay.querySelector('#sig-fechar').onclick = close;
+      toast('PDF assinado com certificado ICP-Brasil.', 'success');
+    };
+  }
+
+  telaEscolha();
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+}
 
 // ══════════════════════════════════════════════════════════════
 // THEME — claro / escuro
@@ -12146,7 +12350,7 @@ function gerarRelatorioExecutivo() {
   }).join('');
 
   const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
-<title>Relatório Executivo — ${escHtml(user.orgao||'SGCD')}</title>
+<title>${_nomeArquivoDoc(null, 'RELATORIO EXECUTIVO')}</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:Arial,sans-serif;font-size:13px;color:#1f2937;background:#fff;padding:32px 40px}
@@ -12770,6 +12974,21 @@ function _temPropostaVencedora(proc) {
   if (propIdx < 0) return false;
   const lista = JSON.parse(proc.steps[propIdx]?.fields?._propostas || '[]');
   return lista.some(p => p.situacao === 'vencedora');
+}
+
+// Nome padronizado de arquivo/título para documentos gerados, no mesmo espírito
+// dos nomes de backup (SIS_SGCD_BACKUP_...). Chrome/Edge usam a tag <title> como
+// nome sugerido ao "Salvar como PDF", então isso já resolve a nomenclatura.
+function _nomeArquivoDoc(p, tipo) {
+  const pa = p?.num_proc || p?.num || '';
+  const dl = p?.num_dl || '';
+  if (pa || dl) {
+    const paFmt = (pa || '-').replace(/\//g, '-');
+    const dlFmt = (dl || '-').replace(/\//g, '-');
+    return `PA ${paFmt} DL ${dlFmt} - ${tipo}`;
+  }
+  const hoje = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
+  return `${tipo} - ${hoje}`;
 }
 
 function _docAuthCode(p) {

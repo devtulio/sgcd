@@ -132,12 +132,29 @@ def init_db():
                 key   TEXT PRIMARY KEY,
                 value TEXT
             );
+            CREATE TABLE IF NOT EXISTS signatures (
+                id             TEXT PRIMARY KEY,
+                cod            TEXT UNIQUE,
+                process_id     TEXT REFERENCES processes(id) ON DELETE CASCADE,
+                doc_type       TEXT NOT NULL,
+                doc_filename   TEXT,
+                signer_user_id INTEGER REFERENCES users(id),
+                signer_name    TEXT,
+                method         TEXT NOT NULL,
+                status         TEXT DEFAULT 'signed',
+                hash_sha256    TEXT,
+                file_id        TEXT REFERENCES files(id),
+                signed_at      TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M:%S','now','localtime')),
+                extra_json     TEXT
+            );
             CREATE INDEX IF NOT EXISTS idx_proc_status   ON processes(status);
             CREATE INDEX IF NOT EXISTS idx_proc_unidade  ON processes(unidade);
             CREATE INDEX IF NOT EXISTS idx_proc_updated  ON processes(updated_at);
             CREATE INDEX IF NOT EXISTS idx_files_proc    ON files(process_id);
             CREATE INDEX IF NOT EXISTS idx_forn_cnpj     ON fornecedores(cnpj);
             CREATE INDEX IF NOT EXISTS idx_audit_ts      ON audit_global(ts);
+            CREATE INDEX IF NOT EXISTS idx_sig_proc      ON signatures(process_id);
+            CREATE INDEX IF NOT EXISTS idx_sig_cod       ON signatures(cod);
         ''')
         # Migração: coluna deleted_at para lixeira (soft-delete) — SQLite não suporta
         # ADD COLUMN IF NOT EXISTS, então tentamos e ignoramos se já existir
@@ -318,7 +335,13 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
 
         s = self._auth()
         if not s: return
-        self._route_post(p, self._body(), s)
+        # BUG (corrigido): _upload_file_direct/_create_signature_upload leem o corpo
+        # de novo via self.rfile.read() para multipart — ler aqui também esvaziaria o
+        # socket e travaria a segunda leitura (ConnectionResetError sob curl -F, e
+        # potencialmente sob navegador também). Multipart é lido só pelo handler.
+        ct = self.headers.get('Content-Type', '')
+        body = b'' if 'multipart/form-data' in ct else self._body()
+        self._route_post(p, body, s)
 
     def do_PUT(self):
         p = urlparse(self.path).path.rstrip('/')
@@ -389,6 +412,18 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
             self._json(200, {'id': row['id'], 'name': row['nome_original'], 'type': row['mime'], 'size': row['tamanho']})
         elif re.fullmatch(r'/api/files/[^/]+', p):
             self._serve_file(p.split('/')[-1])
+
+        # Assinaturas
+        elif p == '/api/signatures':
+            pid = qp('process_id')
+            with get_db() as conn:
+                if pid:
+                    rows = conn.execute(
+                        'SELECT * FROM signatures WHERE process_id=? ORDER BY signed_at DESC', (pid,)
+                    ).fetchall()
+                else:
+                    rows = conn.execute('SELECT * FROM signatures ORDER BY signed_at DESC LIMIT 500').fetchall()
+            self._json(200, {'items': [dict(r) for r in rows]})
 
         # Auditoria
         elif p == '/api/audit':
@@ -550,6 +585,12 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
 
         elif p == '/api/files':
             self._upload_file_direct(s)
+
+        elif p == '/api/signatures':
+            self._create_signature_simple(data, s)
+
+        elif p == '/api/signatures/upload':
+            self._create_signature_upload(s)
 
         else:
             self._json(404, {'error': 'Rota não encontrada'})
@@ -993,6 +1034,91 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         self._json(200, {'id': fid, 'process_id': process_id, 'step_index': step_index,
                          'nome_original': filename, 'tamanho': len(file_bytes), 'mime': mime})
 
+    # ── Assinaturas ───────────────────────────────────────────────────────────
+
+    def _create_signature_simple(self, data, s):
+        """Módulo 1 — Assinatura Simples: hash do documento + identidade do usuário logado."""
+        process_id = data.get('process_id') or ''
+        doc_type   = data.get('doc_type') or ''
+        filename   = data.get('doc_filename') or ''
+        hash_sha256 = data.get('hash_sha256') or ''
+        if not doc_type or not hash_sha256:
+            self._json(400, {'error': 'doc_type e hash_sha256 são obrigatórios'}); return
+
+        sig_id = str(uuid.uuid4())
+        cod = _gerar_cod_assinatura()
+        with get_db() as conn:
+            conn.execute(
+                '''INSERT INTO signatures (id,cod,process_id,doc_type,doc_filename,signer_user_id,
+                   signer_name,method,status,hash_sha256)
+                   VALUES (?,?,?,?,?,?,?,?,?,?)''',
+                (sig_id, cod, process_id, doc_type, filename, s['user_id'], s.get('nome'),
+                 'internal', 'signed', hash_sha256)
+            )
+        self._json(200, {'id': sig_id, 'cod': cod})
+
+    def _create_signature_upload(self, s):
+        """Módulos 2 (gov.br) e 3 (ICP-Brasil) — recebe PDF (já assinado, no
+        caso gov.br, ou a assinar + certificado .pfx + senha, no caso ICP-Brasil)."""
+        ct = self.headers.get('Content-Type', '')
+        if 'multipart/form-data' not in ct:
+            self._json(400, {'error': 'Esperado multipart/form-data'}); return
+        boundary = ct.split('boundary=')[-1].strip().encode()
+        length = int(self.headers.get('Content-Length', 0))
+        if length > MAX_UPLOAD:
+            self._json(413, {'error': f'Arquivo muito grande (máximo {MAX_UPLOAD//1024//1024} MB)'}); return
+        body = self.rfile.read(length)
+        parts = _parse_multipart_all(body, boundary)
+
+        method     = parts.get('method', {}).get('text', '')
+        process_id = parts.get('process_id', {}).get('text', '')
+        doc_type   = parts.get('doc_type', {}).get('text', '')
+        pdf_bytes  = parts.get('pdf', {}).get('data')
+        pdf_name   = parts.get('pdf', {}).get('filename') or 'documento.pdf'
+
+        if method not in ('govbr', 'icp-brasil'):
+            self._json(400, {'error': 'method deve ser "govbr" ou "icp-brasil"'}); return
+        if not pdf_bytes:
+            self._json(400, {'error': 'PDF não encontrado no upload'}); return
+
+        extra = {}
+        if method == 'icp-brasil':
+            cert_bytes = parts.get('cert', {}).get('data')
+            senha = parts.get('senha', {}).get('text', '')
+            if not cert_bytes or not senha:
+                self._json(400, {'error': 'Certificado (.pfx) e senha são obrigatórios para ICP-Brasil'}); return
+            try:
+                pdf_bytes, cert_info = _assinar_pdf_icp(pdf_bytes, cert_bytes, senha)
+                extra['cert_subject'] = cert_info
+            except Exception as e:
+                self._json(400, {'error': f'Falha ao assinar com o certificado: {e}'}); return
+            finally:
+                cert_bytes = None; senha = None  # descarta referências assim que possível
+
+        # Salva o PDF (assinado) como um arquivo do processo, reaproveitando a tabela files
+        safe_name = secrets.token_hex(16) + '.pdf'
+        with open(os.path.join(UPLOADS_DIR, safe_name), 'wb') as f:
+            f.write(pdf_bytes)
+        fid = str(uuid.uuid4())
+        with get_db() as conn:
+            conn.execute(
+                '''INSERT INTO files (id,process_id,step_index,nome_original,nome_disco,tamanho,mime,uploaded_by)
+                   VALUES (?,?,?,?,?,?,?,?)''',
+                (fid, process_id, '', pdf_name, safe_name, len(pdf_bytes), 'application/pdf', s['user_id'])
+            )
+
+        sig_id = str(uuid.uuid4())
+        cod = _gerar_cod_assinatura()
+        with get_db() as conn:
+            conn.execute(
+                '''INSERT INTO signatures (id,cod,process_id,doc_type,doc_filename,signer_user_id,
+                   signer_name,method,status,file_id,extra_json)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?)''',
+                (sig_id, cod, process_id, doc_type, pdf_name, s['user_id'], s.get('nome'),
+                 method, 'signed', fid, json.dumps(extra, ensure_ascii=False) if extra else None)
+            )
+        self._json(200, {'id': sig_id, 'cod': cod, 'file_id': fid})
+
     def _serve_file(self, fid):
         with get_db() as conn:
             row = conn.execute('SELECT * FROM files WHERE id=?', (fid,)).fetchone()
@@ -1266,6 +1392,35 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
 
     def _serve_verificar(self, cod):
         cod_safe = html_mod.escape(cod)
+        # Consulta real no servidor — antes disso era um hash fraco recalculado no
+        # navegador com URL fixa para localhost, o que nem funcionava fora da máquina
+        # do servidor. Agora consulta a tabela signatures diretamente.
+        with get_db() as conn:
+            row = conn.execute(
+                '''SELECT sig.*, p.objeto AS proc_objeto, p.num_proc, p.num_dl, p.unidade
+                   FROM signatures sig LEFT JOIN processes p ON p.id = sig.process_id
+                   WHERE sig.cod = ?''', (cod,)
+            ).fetchone()
+
+        metodo_label = {'internal': 'Assinatura Simples (nível básico — controle interno)',
+                         'govbr': 'gov.br (nível avançado)',
+                         'icp-brasil': 'Certificado ICP-Brasil (nível qualificado)'}
+        extra_note = ''
+        if row:
+            nums = ' · '.join(x for x in [f"PA {row['num_proc']}" if row['num_proc'] else '', f"DL {row['num_dl']}" if row['num_dl'] else ''] if x)
+            status_html = f'''<h2>✓ Assinatura Encontrada</h2>
+    <div class="field"><strong>Documento:</strong> {html_mod.escape(row['doc_type'] or '')}</div>
+    <div class="field"><strong>Processo:</strong> {html_mod.escape(nums or '—')} — {html_mod.escape(row['proc_objeto'] or '—')}</div>
+    <div class="field"><strong>Assinado por:</strong> {html_mod.escape(row['signer_name'] or '—')}</div>
+    <div class="field"><strong>Método:</strong> {html_mod.escape(metodo_label.get(row['method'], row['method']))}</div>
+    <div class="field"><strong>Data:</strong> {html_mod.escape(row['signed_at'] or '—')}</div>'''
+            status_class = 'ok'
+            if row['method'] == 'icp-brasil':
+                extra_note = '<p style="font-size:12px;color:#6b7280;margin-top:10px">Para validar a cadeia de certificação, confira também o <a href="https://verificador.iti.gov.br/" target="_blank">verificador oficial do ITI</a>.</p>'
+        else:
+            status_html = '<h2>✗ Não encontrado</h2><p style="font-size:13px;margin-top:6px">O código não corresponde a nenhuma assinatura registrada nesta instalação.</p>'
+            status_class = 'err'
+
         html = f"""<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -1293,44 +1448,10 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
   <h1>Verificação de Autenticidade</h1>
   <p style="font-size:13px;color:#6b7280;margin-bottom:14px">Código informado:</p>
   <div class="cod">{cod_safe}</div>
-  <div id="status" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:16px 20px;margin-bottom:20px">
-    <p style="font-size:13px;color:#6b7280">Consultando base de dados local…</p>
-  </div>
-  <div class="footer">SGCD v2.1 · Lei Federal nº 14.133/2021 · Verificação local</div>
+  <div id="status" class="{status_class}">{status_html}</div>
+  {extra_note}
+  <div class="footer">SGCD · Lei Federal nº 14.133/2021 · Verificação local</div>
 </div>
-<script>
-(function(){{
-  function authCode(p){{
-    const str=[p.id,p.objeto,p.valor,p.createdAt].join('|');
-    let h=0; for(let i=0;i<str.length;i++) h=Math.imul(31,h)+str.charCodeAt(i)|0;
-    const hex=(h>>>0).toString(16).toUpperCase().padStart(8,'0');
-    return hex.slice(0,4)+'-'+hex.slice(4);
-  }}
-  const token=localStorage.getItem('sgcd-token')||'';
-  fetch('http://localhost:3000/api/processes?per=2000',{{headers:{{'Authorization':'Bearer '+token}}}})
-    .then(r=>r.json()).then(d=>{{
-      const cod={json.dumps(cod_safe)};
-      const match=(d.items||[]).find(p=>authCode(p)===cod);
-      const el=document.getElementById('status');
-      if(match){{
-        el.className='ok';
-        const nums=[match.num_proc&&'PA '+match.num_proc,match.num_dl&&'DL '+match.num_dl].filter(Boolean).join(' · ');
-        el.innerHTML='<h2>✓ Documento Autêntico</h2>'
-          +'<div class="field"><strong>Processo:</strong> '+(nums||'—')+'</div>'
-          +'<div class="field"><strong>Objeto:</strong> '+(match.objeto||'—')+'</div>'
-          +'<div class="field"><strong>Unidade:</strong> '+(match.unidade||'—')+'</div>'
-          +'<div class="field"><strong>Valor estimado:</strong> '+((v=>{{const n=parseFloat(String(v).replace(/[^\\d,.-]/g,'').replace(',','.'));return isNaN(n)?v||'—':n.toLocaleString('pt-BR',{{style:'currency',currency:'BRL'}})}})(match.valor))+'</div>';
-      }}else{{
-        el.className='err';
-        el.innerHTML='<h2>✗ Documento não encontrado</h2><p style="font-size:13px;margin-top:6px">O código não corresponde a nenhum processo nesta instalação.</p>';
-      }}
-    }}).catch(()=>{{
-      const el=document.getElementById('status');
-      el.className='err';
-      el.innerHTML='<h2>Erro ao consultar</h2><p style="font-size:13px;margin-top:6px">Verifique se o sistema SGCD está em execução.</p>';
-    }});
-}})();
-</script>
 </body></html>"""
         payload = html.encode('utf-8')
         self.send_response(200)
@@ -1379,6 +1500,16 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
 
 def _now():
     return time.strftime('%Y-%m-%dT%H:%M:%S')
+
+def _gerar_cod_assinatura():
+    """Código curto de verificação (ex: A1B2-C3D4), único na tabela signatures."""
+    with get_db() as conn:
+        for _ in range(10):
+            raw = secrets.token_hex(4).upper()
+            cod = raw[:4] + '-' + raw[4:]
+            if not conn.execute('SELECT 1 FROM signatures WHERE cod=?', (cod,)).fetchone():
+                return cod
+    raise RuntimeError('Não foi possível gerar código de verificação único')
 
 def _float(v):
     if v is None: return None
@@ -1439,6 +1570,30 @@ def _find_browser():
     ]:
         if os.path.isfile(c): return c
     return None
+
+def _assinar_pdf_icp(pdf_bytes, cert_bytes, senha):
+    """Assina um PDF com certificado ICP-Brasil A1 (.pfx), nível qualificado.
+    Import tardio de pyHanko: o servidor sobe normalmente mesmo sem a lib
+    instalada — só o módulo ICP-Brasil fica indisponível, com erro claro.
+    Retorna (pdf_assinado_bytes, subject_do_certificado)."""
+    import tempfile, io
+    from pyhanko.sign import signers
+    from pyhanko.pdf_utils.incremental_writer import IncrementalPdfFileWriter
+
+    with tempfile.NamedTemporaryFile(suffix='.pfx', delete=False) as tf:
+        tf.write(cert_bytes)
+        pfx_path = tf.name
+    try:
+        signer = signers.SimpleSigner.load_pkcs12(pfx_path, passphrase=senha.encode('utf-8'))
+        if signer is None:
+            raise ValueError('Senha do certificado incorreta ou arquivo .pfx inválido/corrompido')
+        cert_subject = str(signer.signing_cert.subject.human_friendly)
+        writer = IncrementalPdfFileWriter(io.BytesIO(pdf_bytes))
+        out = io.BytesIO()
+        signers.sign_pdf(writer, signers.PdfSignatureMetadata(field_name='Signature1'), signer=signer, output=out)
+        return out.getvalue(), cert_subject
+    finally:
+        os.remove(pfx_path)
 
 def _send_email_raw(smtp, frm, to, subj, html, plain=''):
     msg = MIMEMultipart('alternative')

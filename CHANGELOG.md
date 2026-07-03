@@ -5,6 +5,30 @@
 
 ---
 
+## [2.12.0] — 2026-07-02
+
+### Adicionado — Assinatura Eletrônica de Documentos (3 módulos)
+- Novo botão **"Assinar Documento"** em todos os ~15 documentos gerados pelo sistema, abrindo um modal para escolher o módulo de assinatura:
+  1. **Assinatura Simples** — hash SHA-256 real do conteúdo do documento + identidade do usuário logado, registrado no servidor. Rápido, sem upload. **Não substitui** assinatura física em atos que exigem nível avançado/qualificado (Lei 14.063/2020) — serve como controle interno / trilha de auditoria reforçada.
+  2. **gov.br (nível avançado)** — link direto para o portal público `assinador.iti.gov.br` (mesmo padrão dos links de certidão já usados na etapa de Habilitação); usuário assina lá com login gov.br e reenvia o PDF assinado, que fica anexado ao processo.
+  3. **Certificado ICP-Brasil A1 — .pfx (nível qualificado)** — assinatura digital real do PDF no servidor, usando a nova dependência `pyHanko` (`requirements.txt`, opcional — só necessária para este módulo). A senha do certificado nunca é armazenada, usada uma única vez em memória durante a assinatura.
+- **Nomenclatura padronizada dos PDFs** — todos os documentos gerados agora sugerem o nome `PA {num_proc} DL {num_dl} - {TIPO DO DOCUMENTO}` ao salvar como PDF (via tag `<title>`, que o Chrome/Edge usam como nome sugerido), no mesmo espírito dos nomes de backup já existentes
+- Nova seção **"Assinaturas"** na tela de detalhe do processo, listando quem assinou, quando e por qual módulo, com link de download do PDF assinado quando houver
+- Nova tabela `signatures` no banco (migração automática e segura para banco já existente)
+- A página de verificação `/verificar/<código>` agora consulta a tabela `signatures` de verdade, em vez de recalcular um hash fraco de 32 bits no navegador — corrige também um bug pré-existente onde a URL de consulta estava fixa em `http://localhost:3000`, o que nunca funcionava para quem acessava via IP de rede
+
+### Corrigido
+- **Bug pré-existente de travamento em uploads via multipart** — `do_POST` sempre lia o corpo inteiro da requisição antes de despachar a rota, e o handler de upload de arquivos (`_upload_file_direct`, usado por todo anexo de processo) tentava ler o corpo *de novo*, travando a conexão sob certas condições (confirmado com `curl -F`, resultando em `ConnectionResetError`). Corrigido evitando a leitura antecipada para requisições multipart — o handler correspondente agora é o único a consumir o corpo
+
+### Validado com testes reais (não apenas leitura de código)
+- Certificado ICP-Brasil de teste (auto-assinado) e PDF de teste gerados especificamente para validar a assinatura — PDF resultante confirmado com campo `Signature1` do tipo `/Sig` real
+- Módulo 1 (Simples): criação e verificação por código funcionando via API
+- Módulo 2 (gov.br): upload de PDF via multipart funcionando, arquivo anexado ao processo
+- Módulo 3 (ICP-Brasil): assinatura real via `pyHanko`, PDF assinado baixado e confirmado válido; senha incorreta tratada com erro claro, sem travar o servidor
+- Migração de schema testada contra cópia do banco de produção, sem perda de dados
+
+---
+
 ## [2.11.2] — 2026-07-02
 
 ### Adicionado
