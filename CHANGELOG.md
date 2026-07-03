@@ -5,6 +5,13 @@
 
 ---
 
+## [2.12.2] — 2026-07-02
+
+### Corrigido
+- **Link do gov.br ainda incorreto** — o catálogo de serviços gov.br (v2.12.1) retornou "página não existe". Com base na URL de redirecionamento do SSO observada pelo usuário (`sso.acesso.gov.br/login?client_id=assinador.iti.br...`), o endereço correto da ferramenta é `assinador.iti.br` (domínio `.br`, não `.gov.br`) — atualizado. **Aguardando confirmação do usuário** de que o link abre corretamente antes de considerar definitivo
+
+---
+
 ## [2.12.1] — 2026-07-02
 
 ### Corrigido
