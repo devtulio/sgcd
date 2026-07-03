@@ -5,6 +5,14 @@
 
 ---
 
+## [2.12.3] — 2026-07-03
+
+### Corrigido
+- **Sincronização de Organização/SMTP/brasão abortava silenciosamente com `localStorage` corrompido** — testando o acesso via IP de rede com um navegador real (Chrome), encontrei um valor corrompido em `localStorage['sgcd-user']` (literalmente a string `"[object Object]"`, resíduo de alguma versão anterior do sistema). O `JSON.parse` sem proteção nessa leitura lançava exceção e abortava **toda** a sincronização em `_onLoginSuccess()` — Organização, SMTP e brasão ficavam em branco mesmo com o servidor respondendo corretamente (confirmado via console: `GET /api/settings` retornava 200 com 25 chaves, mas o processamento local quebrava logo em seguida)
+- Corrigido com parse defensivo (try/catch, cai para `{}` em caso de corrupção) — mesmo padrão já usado em `getUser()`. Testado de ponta a ponta com navegador real: antes da correção, campos em branco; depois, todos os campos de Organização e SMTP carregando corretamente
+
+---
+
 ## [2.12.2] — 2026-07-02
 
 ### Corrigido
