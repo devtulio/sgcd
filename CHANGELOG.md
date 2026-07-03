@@ -5,6 +5,13 @@
 
 ---
 
+## [2.13.2] — 2026-07-03
+
+### Corrigido
+- **Janela de "Justificativa da Escolha do Fornecedor" abria em tamanho fixo pequeno (900x700), diferente do esperado** — removida a dimensão fixa de `window.open()`, passando a herdar o tamanho da janela do navegador, mesmo padrão já usado no gerador de "Processo Completo"
+
+---
+
 ## [2.13.1] — 2026-07-03
 
 ### Adicionado
