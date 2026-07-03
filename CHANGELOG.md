@@ -5,6 +5,13 @@
 
 ---
 
+## [2.13.3] — 2026-07-03
+
+### Corrigido
+- **Botão "Relatório" no Dashboard gerava erro `Uncaught ReferenceError: fSt is not defined`** — `gerarRelatorio()` usava as variáveis de filtro (`fSt`, `fUn`, `fDe`, `fAte`, `fVmin`, `fVmax`, `q`) sem nunca obtê-las de `_getDashFilters()` no escopo da função. Reportado pelo usuário ao clicar em "Relatório" no Dashboard. Corrigido obtendo os filtros no início da função
+
+---
+
 ## [2.13.2] — 2026-07-03
 
 ### Corrigido
