@@ -62,7 +62,7 @@ Funciona em rede local: um único computador executa o servidor e todos os usuá
 | Campo   | Valor       |
 |---------|-------------|
 | Usuário | `admin`     |
-| Senha   | `sgcd2024`  |
+| Senha   | `admin123`  |
 
 ### Modo de operação
 
