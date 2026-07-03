@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Manual Operacional — SGCD v2.14.0</title>
+<title>Manual Operacional — SGCD v2.15.0</title>
 <style>
   /* Reset e base */
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -89,7 +89,7 @@
       margin: 20mm 20mm 25mm;
       size: A4;
       @top-center {
-        content: "SGCD v2.14.0 — Manual Operacional";
+        content: "SGCD v2.15.0 — Manual Operacional";
         font-family: 'Times New Roman', serif;
         font-size: 9pt;
         color: #666;
@@ -118,7 +118,7 @@
     <div class="cover-title">Manual Operacional</div>
     <div class="cover-subtitle">SGCD — Sistema de Gestão de Contratação Direta</div>
     <div class="cover-system">Gestão de Processos de Dispensa de Licitação</div>
-    <div class="cover-version">Versão v2.14.0</div>
+    <div class="cover-version">Versão v2.15.0</div>
     <br>
     <div style="font-size:11pt; color:#555; line-height:1.8;">
       Aplicação web multiusuário para agentes de contratação pública<br>
@@ -1130,6 +1130,19 @@
 </ol>
 <div class="aviso">
   <strong>Atenção:</strong> A restauração substitui completamente todos os dados atuais (processos, fornecedores e configurações) pelos dados do arquivo de backup. Essa operação não pode ser desfeita. Faça um backup do estado atual antes de restaurar, se necessário.
+</div>
+
+<h3>Sincronizar com outro agente (mesclar backups)</h3>
+<p>Quando dois agentes usam o sistema em máquinas diferentes, a <strong>Restauração</strong> não é a ferramenta certa — ela apaga tudo e coloca só os dados do arquivo. Para juntar o trabalho dos dois sem perder nada, use <strong>Sincronizar backup</strong>, em Configurações → Backup de Dados:</p>
+<ol>
+  <li>No computador do Agente 1, clique em <strong>"Exportar backup"</strong> (Sistema, JSON) e envie o arquivo ao Agente 2</li>
+  <li>No computador do Agente 2, em <strong>"Sincronizar com outro agente"</strong>, clique em <strong>"Sincronizar backup"</strong> e selecione o arquivo recebido</li>
+  <li>Processos e fornecedores que só existem no arquivo são somados automaticamente</li>
+  <li>Se algum processo ou fornecedor existir nos dois lados com alterações diferentes, uma tela de revisão mostra as duas versões lado a lado — marque quais devem vir do backup; os desmarcados mantêm a versão já existente na máquina</li>
+  <li>Um backup de segurança do banco atual é criado automaticamente antes de aplicar qualquer alteração</li>
+</ol>
+<div class="nota">
+  <strong>Nota:</strong> Se, por coincidência, as duas máquinas tiverem criado processos com o mesmo número oficial (ex.: "PA 5/2026") para assuntos diferentes, o sistema avisa ao final da sincronização — nesse caso, renumeie manualmente um dos processos, já que os números de referência precisam ser únicos.
 </div>
 
 <h3>Auto-backup automático</h3>

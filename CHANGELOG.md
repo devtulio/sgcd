@@ -5,6 +5,25 @@
 
 ---
 
+## [2.15.0] — 2026-07-03
+
+### Adicionado
+- **Sincronização (merge) de backup entre agentes** — usuário pediu uma forma de exportar o backup de uma máquina e mesclar (não substituir) na de outro agente, somando o que é novo e mantendo o que já existe. A função já existia (`sincronizarBackup()`), mas nunca tinha sido ligada a nenhum botão — código morto, nunca testado, com bugs reais. Corrigido e ligado à interface (Configurações → Dados → novo cartão "Sincronizar com outro agente"):
+  - Corrigido merge de arquivos: usava `f.processId` (deveria ser `f.process_id`, nome da coluna exportada) e uma checagem de decodificação (`_enc`/`data`) que nunca correspondia ao formato real exportado (`data_b64`) — nenhum arquivo era mesclado, silenciosamente
+  - Adicionada deduplicação de arquivos: antes de reenviar um arquivo, verifica se já existe no processo de destino (por nome+tamanho) — sem isso, cada sincronização repetida duplicaria os arquivos
+  - Adicionada tela de revisão de conflitos: quando o mesmo processo/fornecedor existe nos dois lados com data de alteração diferente, mostra os dois lado a lado (objeto, valor, status, datas) com marcação por item — antes disso, o sistema aplicava "mais recente vence" silenciosamente, sem deixar o usuário escolher
+  - Corrigida corrupção de autoria na auditoria: o merge enviava eventos do outro agente para `POST /api/audit`, que sempre grava o usuário logado como autor (correto para lançar eventos ao vivo, errado para importar histórico de outra máquina) — novo endpoint `POST /api/audit/bulk` (admin, com `_insert_audit_raw()` extraído de `_restore_backup()`) preserva o autor original
+  - Adicionado backup de segurança automático antes de aplicar qualquer mesclagem (reaproveita `/api/backups/db/now`, já existente)
+  - Adicionada detecção de números de processo duplicados (`num_proc`/`num_dl`) entre registros com `id` diferente após a mesclagem — cada máquina sugere numeração sequencial própria, então duas máquinas podem coincidentemente usar o mesmo número oficial para processos diferentes; o sistema avisa para renumeração manual (não bloqueia nem renumera sozinho)
+  - Falhas parciais (ex.: um processo falha ao mesclar) agora são contadas e reportadas por categoria, em vez de abortar com uma mensagem genérica que escondia o que já tinha sido gravado
+
+### Corrigido
+- **Restauração completa via JSON (`_restore_backup()`) não criava backup de segurança antes de apagar tudo** — diferente da restauração via arquivo `.db`, que já fazia isso. Corrigido adicionando a mesma chamada de segurança
+
+Validado em ambiente isolado simulando duas máquinas independentes (processos exclusivos, um conflito real de `updatedAt`, e uma colisão proposital de número de processo): registros novos mesclados automaticamente, conflito detectado corretamente, arquivo mesclado e não duplicado numa segunda sincronização, autoria de auditoria preservada, números duplicados detectados nos dois casos esperados.
+
+---
+
 ## [2.14.0] — 2026-07-03
 
 ### Adicionado

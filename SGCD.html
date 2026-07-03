@@ -1841,6 +1841,16 @@
             </div>
           </div>
 
+          <div style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:10px 12px;display:flex;flex-direction:column;gap:6px;margin-bottom:12px">
+            <div style="font-size:.7rem;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:.4px">Sincronizar com outro agente</div>
+            <p style="font-size:.72rem;color:var(--gray-500);margin:0 0 2px;line-height:1.5">Mescla o backup (JSON) de outra máquina com os dados atuais — soma o que é novo, mantém o que já existe, e deixa você revisar registros que foram alterados nos dois lados antes de aplicar.</p>
+            <label class="btn btn-outline btn-sm" style="cursor:pointer;justify-content:flex-start;width:fit-content">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+              Sincronizar backup
+              <input type="file" accept=".json" style="display:none" onchange="sincronizarBackup(this.files[0]).then(()=>this.value='')">
+            </label>
+          </div>
+
           <hr style="border:none;border-top:1px solid var(--gray-100);margin:4px 0 12px">
 
           <!-- Backup automático -->
@@ -2479,7 +2489,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.14.0';
+const SGCD_VERSION = '2.15.0';
 const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
   ? 'http://localhost:3000'
   : window.location.origin;
@@ -2971,6 +2981,77 @@ async function importBackup(file) {
   } catch(e) { toast('Erro ao importar: ' + e.message, 'error'); }
 }
 
+// Mostra os registros que existem nos dois lados com data de alteração diferente
+// e deixa o usuário escolher, um a um (ou em lote), qual versão manter.
+// Resolve com { procIds: Set, fornIds: Set } (itens aprovados para vir do backup),
+// ou null se o usuário cancelar a sincronização inteira nesta etapa.
+function _mostrarRevisaoSincronizacao(procAtualizados, fornAtualizados, procMapLocal, fornMapLocal) {
+  return new Promise(resolve => {
+    const fmtData = ts => ts ? new Date(ts).toLocaleString('pt-BR') : '—';
+
+    const linhaProc = p => {
+      const local = procMapLocal.get(p.id);
+      return `<div class="sync-conflict-item" data-kind="proc" data-id="${escHtml(p.id)}">
+        <label style="display:flex;gap:8px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--gray-100);cursor:pointer">
+          <input type="checkbox" checked style="margin-top:4px">
+          <div style="flex:1;font-size:.78rem">
+            <div style="font-weight:600">PA ${escHtml(p.num_proc||'—')} · DL ${escHtml(p.num_dl||'—')} — ${escHtml((p.objeto||'').slice(0,70))}</div>
+            <div style="color:var(--gray-500);margin-top:2px">Local: ${fmtData(local?.updatedAt)} (${escHtml(local?.status||'—')})  →  Backup: ${fmtData(p.updatedAt)} (${escHtml(p.status||'—')})</div>
+          </div>
+        </label>
+      </div>`;
+    };
+    const linhaForn = f => {
+      const local = fornMapLocal.get(f.id);
+      return `<div class="sync-conflict-item" data-kind="forn" data-id="${escHtml(f.id)}">
+        <label style="display:flex;gap:8px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--gray-100);cursor:pointer">
+          <input type="checkbox" checked style="margin-top:4px">
+          <div style="flex:1;font-size:.78rem">
+            <div style="font-weight:600">${escHtml(f.razao_social || f.nome || '(sem nome)')}</div>
+            <div style="color:var(--gray-500);margin-top:2px">CNPJ ${escHtml(f.cnpj||'—')}  ·  Local: ${fmtData(local?.updatedAt)}  →  Backup: ${fmtData(f.updatedAt)}</div>
+          </div>
+        </label>
+      </div>`;
+    };
+
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px';
+    overlay.innerHTML = `
+      <div style="background:#fff;border-radius:10px;max-width:640px;width:100%;max-height:82vh;display:flex;flex-direction:column;box-shadow:0 12px 40px rgba(0,0,0,.3)">
+        <div style="padding:16px 20px;border-bottom:1px solid var(--gray-200)">
+          <h3 style="margin:0;font-size:1rem">🔄 Revisar conflitos da sincronização</h3>
+          <p style="margin:4px 0 0;font-size:.78rem;color:var(--gray-500)">Estes registros existem nas duas máquinas com alterações diferentes. Marcados = vem a versão do backup. Desmarcados = mantém a versão local.</p>
+        </div>
+        <div style="padding:10px 20px;display:flex;gap:8px;border-bottom:1px solid var(--gray-100)">
+          <button class="btn btn-outline btn-sm" id="sync-check-all" type="button">Aceitar todos do backup</button>
+          <button class="btn btn-outline btn-sm" id="sync-check-none" type="button">Manter todos locais</button>
+        </div>
+        <div style="overflow-y:auto;padding:0 20px;flex:1">
+          ${procAtualizados.length ? `<div style="font-size:.72rem;font-weight:700;text-transform:uppercase;color:var(--gray-500);margin-top:10px">Processos (${procAtualizados.length})</div>${procAtualizados.map(linhaProc).join('')}` : ''}
+          ${fornAtualizados.length ? `<div style="font-size:.72rem;font-weight:700;text-transform:uppercase;color:var(--gray-500);margin-top:10px">Fornecedores (${fornAtualizados.length})</div>${fornAtualizados.map(linhaForn).join('')}` : ''}
+        </div>
+        <div style="padding:14px 20px;border-top:1px solid var(--gray-200);display:flex;justify-content:flex-end;gap:8px">
+          <button class="btn btn-outline" id="sync-cancel" type="button">Cancelar sincronização</button>
+          <button class="btn btn-primary" id="sync-apply" type="button">Aplicar</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    overlay.querySelector('#sync-check-all').onclick  = () => overlay.querySelectorAll('input[type=checkbox]').forEach(c => c.checked = true);
+    overlay.querySelector('#sync-check-none').onclick = () => overlay.querySelectorAll('input[type=checkbox]').forEach(c => c.checked = false);
+    overlay.querySelector('#sync-cancel').onclick = () => { overlay.remove(); resolve(null); };
+    overlay.querySelector('#sync-apply').onclick = () => {
+      const procIds = new Set(), fornIds = new Set();
+      overlay.querySelectorAll('.sync-conflict-item').forEach(el => {
+        if (!el.querySelector('input[type=checkbox]').checked) return;
+        (el.dataset.kind === 'proc' ? procIds : fornIds).add(el.dataset.id);
+      });
+      overlay.remove();
+      resolve({ procIds, fornIds });
+    };
+  });
+}
+
 async function sincronizarBackup(file) {
   try {
     if (file.size > 200 * 1024 * 1024) { toast('Arquivo muito grande (máx. 200 MB).', 'error'); return; }
@@ -2989,13 +3070,13 @@ async function sincronizarBackup(file) {
     // Calcula o que será mesclado
     const procNovos   = [], procAtualizados = [], fornNovos = [], fornAtualizados = [];
     for (const p of backup.processes || []) {
-      if (!procMap.has(p.id))                                                           procNovos.push(p);
-      else if ((p.updatedAt || 0) > (procMap.get(p.id).updatedAt || 0))               procAtualizados.push(p);
+      if (!procMap.has(p.id))                                                     procNovos.push(p);
+      else if ((p.updatedAt || 0) > (procMap.get(p.id).updatedAt || 0))          procAtualizados.push(p);
     }
     for (const f of backup.fornecedores || []) {
       const ts = v => v?.updatedAt || v?.addedAt || 0;
-      if (!fornMap.has(f.id))                                                           fornNovos.push(f);
-      else if (ts(f) > ts(fornMap.get(f.id)))                                          fornAtualizados.push(f);
+      if (!fornMap.has(f.id))                                                     fornNovos.push(f);
+      else if (ts(f) > ts(fornMap.get(f.id)))                                    fornAtualizados.push(f);
     }
     const auditNovos = (backup.auditGlobal || []).filter(e => !auditIds.has(e.id));
 
@@ -3009,43 +3090,115 @@ async function sincronizarBackup(file) {
       return;
     }
 
-    const resumo = [
-      procNovos.length      && `${procNovos.length} processo(s) novo(s)`,
-      procAtualizados.length && `${procAtualizados.length} processo(s) atualizado(s)`,
-      fornNovos.length      && `${fornNovos.length} fornecedor(es) novo(s)`,
-      fornAtualizados.length && `${fornAtualizados.length} fornecedor(es) atualizado(s)`,
+    const resumoNovos = [
+      procNovos.length && `${procNovos.length} processo(s) novo(s)`,
+      fornNovos.length && `${fornNovos.length} fornecedor(es) novo(s)`,
     ].filter(Boolean).join(', ');
+    const totalConflitos = procAtualizados.length + fornAtualizados.length;
 
     const ok = await customConfirm(
-      `Backup de ${nomeAgente} exportado em ${new Date(backup.exportedAt).toLocaleString('pt-BR')}.\n\nSerão incorporados: ${resumo}.\n\nSeus processos mais recentes, configurações, brasão e perfil não serão alterados. Em caso de conflito, prevalece a versão com a data de modificação mais recente.`,
-      { title: 'Sincronizar com outro agente', icon: '🔄', okLabel: 'Sincronizar', okClass: 'btn-primary', cancelLabel: 'Cancelar' }
+      `Backup de ${nomeAgente} exportado em ${new Date(backup.exportedAt).toLocaleString('pt-BR')}.\n\n` +
+      (resumoNovos ? `Serão somados automaticamente: ${resumoNovos}.\n\n` : '') +
+      (totalConflitos
+        ? `${totalConflitos} registro(s) existem nos dois lados com alterações diferentes — na próxima tela você escolhe, um a um, qual versão manter.`
+        : 'Nenhum conflito encontrado.') +
+      `\n\nSerá feito um backup de segurança do banco atual antes de aplicar qualquer alteração.`,
+      { title: 'Sincronizar com outro agente', icon: '🔄', okLabel: 'Continuar', okClass: 'btn-primary', cancelLabel: 'Cancelar' }
     );
     if (!ok) return;
 
-    // Mescla processos
-    const procsMesclados = new Set();
-    for (const p of [...procNovos, ...procAtualizados]) {
-      await dbPut('processes', p);
-      procsMesclados.add(p.id);
+    // Revisão de conflitos — só para registros que já existem dos dois lados
+    let aceitos = { procIds: new Set(procAtualizados.map(p => p.id)), fornIds: new Set(fornAtualizados.map(f => f.id)) };
+    if (totalConflitos > 0) {
+      const revisao = await _mostrarRevisaoSincronizacao(procAtualizados, fornAtualizados, procMap, fornMap);
+      if (!revisao) { toast('Sincronização cancelada.', 'info'); return; }
+      aceitos = revisao;
     }
-    // Mescla fornecedores
-    for (const f of [...fornNovos, ...fornAtualizados]) await dbPut('fornecedores', f);
-    // Mescla arquivos apenas dos processos que entraram/foram atualizados
-    for (const f of backup.files || []) {
-      if (procsMesclados.has(f.processId)) {
-        const rec = { ...f };
-        if (rec._enc === 'base64' && rec.data) { rec.data = _base64ToBuf(rec.data); delete rec._enc; }
-        await dbPut('files', rec);
-      }
-    }
-    // Mescla auditoria (apenas registros novos)
-    for (const e of auditNovos) await dbPut('auditGlobal', e);
 
-    await _auditEvento('SYNC_BACKUP', `Sincronização com ${nomeAgente}: ${resumo}`);
+    // Backup de segurança antes de gravar qualquer coisa
+    try { await API.post('/api/backups/db/now', {}); } catch (e) { console.warn('Falha ao criar backup de segurança:', e); }
+
+    const procParaAplicar = [...procNovos, ...procAtualizados.filter(p => aceitos.procIds.has(p.id))];
+    const fornParaAplicar = [...fornNovos, ...fornAtualizados.filter(f => aceitos.fornIds.has(f.id))];
+
+    // Mescla processos e fornecedores, contando sucesso/falha por categoria
+    // (falha parcial não deve passar despercebida nem abortar o resto do lote)
+    const falhas = { processos: 0, fornecedores: 0, arquivos: 0, auditoria: 0 };
+    const procsMesclados = new Set();
+    for (const p of procParaAplicar) {
+      try { await dbPut('processes', p); procsMesclados.add(p.id); }
+      catch (e) { falhas.processos++; console.error('Falha ao mesclar processo', p.id, e); }
+    }
+    for (const f of fornParaAplicar) {
+      try { await dbPut('fornecedores', f); }
+      catch (e) { falhas.fornecedores++; console.error('Falha ao mesclar fornecedor', f.id, e); }
+    }
+
+    // Mescla arquivos apenas dos processos que entraram/foram atualizados, pulando
+    // os que já existem no processo de destino (evita duplicar a cada sincronização repetida)
+    const arquivosPorProcesso = new Map();
+    for (const f of backup.files || []) {
+      if (!f.process_id || !procsMesclados.has(f.process_id)) continue;
+      try {
+        if (!arquivosPorProcesso.has(f.process_id)) {
+          arquivosPorProcesso.set(f.process_id, await dbGetByIndex('files', 'processId', f.process_id));
+        }
+        const jaExiste = arquivosPorProcesso.get(f.process_id)
+          .some(existente => existente.name === f.nome_original && existente.size === f.tamanho);
+        if (jaExiste || !f.data_b64) continue;
+        await dbPut('files', {
+          processId: f.process_id,
+          stepIdx:   f.step_index,
+          name:      f.nome_original,
+          type:      f.mime,
+          size:      f.tamanho,
+          data:      _base64ToBuf(f.data_b64)
+        });
+      } catch (e) { falhas.arquivos++; console.error('Falha ao mesclar arquivo', f.id, e); }
+    }
+
+    // Mescla auditoria (apenas registros novos), preservando o autor original —
+    // /api/audit/bulk existe justamente porque POST /api/audit sempre grava o
+    // usuário da sessão atual como autor, o que corromperia a autoria do outro agente
+    if (auditNovos.length) {
+      try {
+        const r = await API.post('/api/audit/bulk', { items: auditNovos });
+        if (!r?.ok) falhas.auditoria = auditNovos.length;
+      } catch (e) { falhas.auditoria = auditNovos.length; console.error('Falha ao mesclar auditoria:', e); }
+    }
+
+    // Detecta processos com o mesmo número oficial (num_proc/num_dl) apontando para ids diferentes —
+    // cada máquina sugere numeração sequencial própria, então colisão é esperada, não um bug
+    const procsFinais = await dbGetAll('processes');
+    const porNumero = new Map();
+    for (const p of procsFinais) {
+      if (!p.num_proc && !p.num_dl) continue;
+      const chave = `PA ${p.num_proc||'—'} / DL ${p.num_dl||'—'}`;
+      if (!porNumero.has(chave)) porNumero.set(chave, new Set());
+      porNumero.get(chave).add(p.id);
+    }
+    const duplicados = [...porNumero.entries()].filter(([, ids]) => ids.size > 1).map(([chave]) => chave);
+
+    const resumoFinal = [
+      procParaAplicar.length && `${procParaAplicar.length} processo(s)`,
+      fornParaAplicar.length && `${fornParaAplicar.length} fornecedor(es)`,
+    ].filter(Boolean).join(', ') || 'nenhum registro';
+    const falhasMsg = Object.entries(falhas).filter(([, n]) => n > 0).map(([k, n]) => `${n} ${k}`).join(', ');
+    const dupMsg = duplicados.length ? ` Números duplicados entre processos diferentes: ${duplicados.join('; ')} — renumere manualmente.` : '';
+
+    await _auditEvento('SYNC_BACKUP',
+      `Sincronização com ${nomeAgente}: ${resumoFinal} aplicados.` +
+      (falhasMsg ? ` Falhas: ${falhasMsg}.` : '') + dupMsg
+    );
     await loadProcesses();
     renderDash();
-    toast(`Sincronização concluída — ${resumo}.`, 'success');
-  } catch(e) { toast('Erro na sincronização: ' + e.message, 'error'); }
+
+    if (falhasMsg) {
+      toast(`Sincronização concluída com falhas (${falhasMsg}) — veja o console para detalhes.`, 'error');
+    } else {
+      toast(`Sincronização concluída — ${resumoFinal} aplicados.${dupMsg}`, 'success');
+    }
+  } catch (e) { toast('Erro na sincronização: ' + e.message, 'error'); }
 }
 
 // ══════════════════════════════════════════════════════════════

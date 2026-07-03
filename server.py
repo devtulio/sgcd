@@ -1,4 +1,4 @@
-# SGCD v2.14.0 — Servidor local: SQLite, autenticação, REST API, proxy CNPJ, e-mail SMTP, backup automático
+# SGCD v2.15.0 — Servidor local: SQLite, autenticação, REST API, proxy CNPJ, e-mail SMTP, backup automático
 import http.server
 import socketserver
 import os
@@ -561,6 +561,10 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
 
         elif p == '/api/audit':
             self._add_audit(data, s)
+
+        elif p == '/api/audit/bulk':
+            if not s['admin']: self._json(403, {'error': 'Acesso negado'}); return
+            self._add_audit_bulk(data)
 
         elif p in ('/api/settings', '/api/settings/'):
             if not s['admin']: self._json(403, {'error': 'Acesso negado'}); return
@@ -1166,6 +1170,18 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
             )
         self._json(200, {'ok': True})
 
+    def _add_audit_bulk(self, data):
+        """Importa uma lista de eventos de auditoria preservando o autor original
+        (usado pela sincronização de backup entre agentes — ver _insert_audit_raw)."""
+        eventos = data.get('items') if isinstance(data, dict) else data
+        if not isinstance(eventos, list):
+            self._json(400, {'error': 'Campo "items" deve ser uma lista'}); return
+        with get_db() as conn:
+            for a in eventos:
+                if isinstance(a, dict):
+                    _insert_audit_raw(conn, a)
+        self._json(200, {'ok': True, 'inseridos': len(eventos)})
+
     # ── Configurações ─────────────────────────────────────────────────────────
 
     def _save_settings(self, data):
@@ -1270,6 +1286,7 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
     def _restore_backup(self, data):
         if not data.get('_sgcd'):
             self._json(400, {'error': 'Arquivo não é um backup SGCD válido'}); return
+        _do_db_backup()  # backup do atual antes de substituir tudo
         with get_db() as conn:
             conn.execute('DELETE FROM audit_global')
             conn.execute('DELETE FROM files')
@@ -1299,17 +1316,7 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
                 )
 
             for a in data.get('auditGlobal', []):
-                conn.execute(
-                    '''INSERT OR REPLACE INTO audit_global
-                       (id,ts,user_id,user_nome,type,label,detail,process_id,process_obj)
-                       VALUES (?,?,?,?,?,?,?,?,?)''',
-                    (a.get('id') or str(uuid.uuid4()), a.get('ts'),
-                     a.get('userId') or a.get('user_id'),
-                     a.get('userName') or a.get('user_nome'),
-                     a.get('type'), a.get('label'), a.get('detail'),
-                     a.get('processId') or a.get('process_id'),
-                     json.dumps(a['processObj']) if a.get('processObj') else a.get('process_obj'))
-                )
+                _insert_audit_raw(conn, a)
 
             for key, value in (data.get('settings') or {}).items():
                 v = value if isinstance(value, str) else json.dumps(value, ensure_ascii=False)
@@ -1500,6 +1507,23 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
 
 def _now():
     return time.strftime('%Y-%m-%dT%H:%M:%S')
+
+def _insert_audit_raw(conn, a):
+    """Insere um evento de auditoria preservando autor/id/data originais do payload
+    (ao contrário de _add_audit, que sempre carimba o usuário da sessão atual —
+    correto para lançar eventos ao vivo, errado para importar histórico de outra
+    máquina via restauração/sincronização de backup)."""
+    conn.execute(
+        '''INSERT OR REPLACE INTO audit_global
+           (id,ts,user_id,user_nome,type,label,detail,process_id,process_obj)
+           VALUES (?,?,?,?,?,?,?,?,?)''',
+        (a.get('id') or str(uuid.uuid4()), a.get('ts'),
+         a.get('userId') or a.get('user_id'),
+         a.get('userName') or a.get('user_nome'),
+         a.get('type'), a.get('label'), a.get('detail'),
+         a.get('processId') or a.get('process_id'),
+         json.dumps(a['processObj']) if a.get('processObj') else a.get('process_obj'))
+    )
 
 def _gerar_cod_assinatura():
     """Código curto de verificação (ex: A1B2-C3D4), único na tabela signatures."""

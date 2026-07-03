@@ -1,6 +1,6 @@
 # SGCD — Sistema de Gestão de Contratação Direta
 
-![Versão](https://img.shields.io/badge/versão-v2.14.0-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-Python%20%2B%20SQLite-orange) ![Licença](https://img.shields.io/badge/licença-MIT-green) ![Multiusuário](https://img.shields.io/badge/acesso-multiusuário-blueviolet)
+![Versão](https://img.shields.io/badge/versão-v2.15.0-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-Python%20%2B%20SQLite-orange) ![Licença](https://img.shields.io/badge/licença-MIT-green) ![Multiusuário](https://img.shields.io/badge/acesso-multiusuário-blueviolet)
 
 ## Descrição
 
@@ -32,6 +32,7 @@ Funciona em rede local: um único computador executa o servidor e todos os usuá
 - **Assinatura eletrônica de documentos** — 3 módulos à escolha: Simples (interna), gov.br (nível avançado) e certificado ICP-Brasil A1 (nível qualificado)
 - **Exportação PNCP** — JSON estruturado no formato da API do Portal Nacional de Contratações Públicas
 - **Backup automático** ao encerrar o sistema (JSON + banco de dados SQLite) com rotação configurável
+- **Sincronização de backup entre agentes/máquinas** — mescla dados de outra instalação (soma o que é novo, revisa o que conflita) sem substituir o banco inteiro
 - **Lixeira** — processos excluídos ficam recuperáveis por 30 dias, incluindo arquivos anexados
 - **Autenticação multiusuário** com hashing PBKDF2-HMAC-SHA256 e gestão de usuários pelo admin
 - **Relatório executivo** com KPIs, gráfico de barras por status e alertas de processos parados
