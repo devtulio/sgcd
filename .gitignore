@@ -24,3 +24,6 @@ brasao.png
 _tmp_check.js
 nul
 *.log
+
+# Ferramentas de desenvolvimento (lint) — não fazem parte do runtime
+node_modules/

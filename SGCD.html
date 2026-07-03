@@ -2479,7 +2479,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.13.4';
+const SGCD_VERSION = '2.13.5';
 const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
   ? 'http://localhost:3000'
   : window.location.origin;
@@ -12309,13 +12309,8 @@ async function importarCsv() {
 
       if (consultarCnpj && forn.cnpj.length === 14) {
         try {
-          const resp = await fetch(`${API_BASE}/cnpj/${forn.cnpj}`, { signal: AbortSignal.timeout(8000) });
-          if (resp.ok) {
-            const d = await resp.json();
-            if (d.status !== 'ERROR') {
-              forn = { ...forn, ...parseCnpjData(d) };
-            }
-          }
+          const { data } = await fetchCnpjData(forn.cnpj);
+          forn = { ...forn, ...data };
         } catch { /* ignora erro de CNPJ individual */ }
       }
 
@@ -12326,7 +12321,6 @@ async function importarCsv() {
 
   progressBar.style.width = '100%';
   progressMsg.textContent = `Concluído! ${ok} importado(s)${erros ? ', '+erros+' erro(s)' : ''}.`;
-  await loadFornecedores?.();
   renderFornecedores();
   setTimeout(() => {
     fecharModalCsv();

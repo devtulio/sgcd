@@ -1,6 +1,6 @@
 # SGCD — Sistema de Gestão de Contratação Direta
 
-![Versão](https://img.shields.io/badge/versão-v2.13.4-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-Python%20%2B%20SQLite-orange) ![Licença](https://img.shields.io/badge/licença-MIT-green) ![Multiusuário](https://img.shields.io/badge/acesso-multiusuário-blueviolet)
+![Versão](https://img.shields.io/badge/versão-v2.13.5-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-Python%20%2B%20SQLite-orange) ![Licença](https://img.shields.io/badge/licença-MIT-green) ![Multiusuário](https://img.shields.io/badge/acesso-multiusuário-blueviolet)
 
 ## Descrição
 
@@ -166,6 +166,17 @@ Todos os documentos abrem em janela separada com botão "🖨 Imprimir / Salvar 
 | **SQLite** | Armazenamento persistente dos dados (`sgcd.db`) |
 | **ReceitaWS / BrasilAPI** | Consulta de CNPJ (primária + fallback automático) |
 | **ViaCEP** | Preenchimento automático de endereço por CEP |
+
+---
+
+## Desenvolvimento
+
+O sistema em si continua zero-dependência (Python stdlib + HTML puro). Para quem for alterar o código, há um lint opcional que verifica variáveis indefinidas no JavaScript de `SGCD.html`:
+
+```bash
+npm install   # uma vez, instala apenas o ESLint (ferramenta de dev, não é usada em produção)
+npm run lint
+```
 
 ---
 

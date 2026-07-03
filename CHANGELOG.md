@@ -5,7 +5,14 @@
 
 ---
 
-## [2.13.4] — 2026-07-03
+## [2.13.5] — 2026-07-03
+
+### Adicionado
+- **Lint de desenvolvimento (`npm run lint`)** — script que extrai o JS de `SGCD.html` e roda ESLint com a regra `no-undef`, para pegar bugs de variável indefinida (como os corrigidos em `fSt`/`proc` nas versões anteriores) antes do commit. Não afeta o runtime do sistema — é uma ferramenta de desenvolvimento isolada (`package.json`, `eslint.config.js`, `scripts/lint.mjs`), o servidor e o cliente continuam zero-dependência
+
+### Corrigido
+- **Importação de fornecedores via CSV com consulta de CNPJ ativada quebrava silenciosamente ao final da importação** — `importarCsv()` chamava `parseCnpjData(d)`, função que nunca existiu no sistema (a consulta de CNPJ real usa `fetchCnpjData()`, com fallback ReceitaWS → BrasilAPI e normalização adequada dos campos). O `ReferenceError` correspondente não estava dentro do try/catch da requisição, então a exceção escapava e interrompia a função antes de recarregar a lista de fornecedores e exibir o toast de conclusão — a importação funcionava (os fornecedores eram salvos), mas a tela ficava travada em "Importando X de Y…" sem feedback final. Corrigido reaproveitando `fetchCnpjData()`, já usada e testada no cadastro manual de fornecedores. Encontrado pelo novo lint automatizado, não reportado por usuário
+- **Chamada a `loadFornecedores()` (função inexistente) na mesma função** — código morto que nunca executava com sucesso; removido, já que `renderFornecedores()` (chamada logo em seguida) já recarrega os dados do banco
 
 ### Corrigido
 - **Geração da Ata de Sessão gerava `Uncaught ReferenceError: proc is not defined` quando havia proposta vencedora registrada** — em `gerarAta()`, a linha que monta o rótulo "Vencedora — {critério}" referenciava `proc.criterio_selecao`, mas a variável do processo nessa função se chama `p` (resíduo de código copiado de outra função que usa `proc`). Como o rótulo é montado dentro de um objeto literal avaliado para toda linha da tabela de propostas — não só quando a situação é "vencedora" —, o erro ocorria sempre que havia ao menos uma proposta cadastrada. Reportado pelo usuário. Corrigido para `p.criterio_selecao`

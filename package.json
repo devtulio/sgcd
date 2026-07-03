@@ -1,0 +1,13 @@
+{
+  "name": "sgcd-lint",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Ferramentas de desenvolvimento do SGCD (lint apenas — não afeta o runtime do sistema, que continua zero-dependência)",
+  "scripts": {
+    "lint": "node scripts/lint.mjs"
+  },
+  "devDependencies": {
+    "eslint": "^9.15.0"
+  }
+}
