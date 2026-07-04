@@ -5,6 +5,14 @@
 
 ---
 
+## [2.17.4] — 2026-07-04
+
+### Corrigido
+- **Manual desatualizado** — o corpo do `MANUAL.html` não descrevia Notificações por E-mail (SMTP/resumo diário), Assinatura Eletrônica de Documentos, Vinculação entre Processos, Agenda de Vencimentos, Lixeira e Exportação PNCP, embora já lançados. Seções 24–29 adicionadas; seções 21–23 (que existiam no corpo mas não apareciam no sumário) corrigidas; Histórico de Versões passa a ser a Seção 30 e aparece no sumário.
+- README: adicionada seção "Contribuição" apontando para `CONTRIBUTING.md`
+
+---
+
 ## [2.17.3] — 2026-07-04
 
 ### Corrigido
