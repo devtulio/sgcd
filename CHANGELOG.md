@@ -5,6 +5,14 @@
 
 ---
 
+## [2.17.3] — 2026-07-04
+
+### Corrigido
+- **Brasão da sidebar não refletia o customizado** — a `<img>` da sidebar sempre exibia o arquivo estático `brasao.png`, mesmo com um brasão customizado já sincronizado com o servidor (usado nos relatórios PDF e na prévia de Configurações). Agora a sidebar é dinâmica e atualizada a partir do brasão sincronizado, com atualização imediata ao fazer upload/remover, sem esperar novo login.
+- Adicionado `GET /api/settings/brasao` (o `PUT` já existia) — mesma rota usada pelo SGDP, que agora compartilha a mesma lógica de armazenamento server-side.
+
+---
+
 ## [2.17.2] — 2026-07-04
 
 ### Adicionado
