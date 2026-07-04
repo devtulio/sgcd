@@ -1039,7 +1039,7 @@
 
 <nav id="sidebar" aria-label="Navegação principal">
   <div class="sidebar-logo">
-    <img src="brasao.png" alt="" class="sidebar-brasao" onerror="this.style.display='none'">
+    <img id="sidebar-brasao" alt="" class="sidebar-brasao" style="display:none" onerror="this.style.display='none'">
     <div class="s-title">SGCD</div>
     <div class="s-sub">Contratação Direta</div>
     <div class="s-muni" id="sidebar-orgao">—</div>
@@ -2901,6 +2901,8 @@ async function importBackup(file) {
     if (backup.settings) localStorage.setItem('sgcd-user', backup.settings);
     if (backup.brasao)   localStorage.setItem('sgcd-brasao-dataurl', backup.brasao);
     if (backup.smtp)     localStorage.setItem('sgcd-smtp', backup.smtp);
+    window._BRASAO_CACHE = null;
+    _atualizarSidebarUsuario();
     const auditMsg = hasAudit ? ` e ${backup.auditGlobal.length} registros de auditoria` : '';
     const cfgMsg = backup.settings ? ' Configurações e brasão restaurados.' : '';
     const smtpMsg = backup.smtp ? ' ⚠ Re-informe a senha SMTP em Configurações (não é transferida entre instalações).' : '';
@@ -10888,6 +10890,12 @@ function _atualizarSidebarUsuario() {
   if (el('sidebar-cargo'))  el('sidebar-cargo').textContent  = cargo;
   if (el('sidebar-avatar')) el('sidebar-avatar').textContent = inicial;
   if (el('sidebar-orgao'))  el('sidebar-orgao').textContent  = orgao;
+  const brasaoUrl = localStorage.getItem('sgcd-brasao-dataurl');
+  const sb = el('sidebar-brasao');
+  if (sb) {
+    if (brasaoUrl) { sb.src = brasaoUrl; sb.style.display = 'block'; }
+    else { sb.src = ''; sb.style.display = 'none'; }
+  }
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -12690,6 +12698,8 @@ function previewBrasao(input) {
       const img = document.getElementById('s-brasao-preview');
       img.src = ev.target.result; img.style.display = '';
       document.getElementById('btn-remove-brasao').style.display = '';
+      const sb = document.getElementById('sidebar-brasao');
+      if (sb) { sb.src = ev.target.result; sb.style.display = 'block'; }
       const r = await API.put('/api/settings/brasao', { brasao_dataurl: ev.target.result });
       if (r && r.ok) {
         toast('Brasão atualizado e sincronizado com o servidor!', 'success');
@@ -12710,9 +12720,11 @@ async function removerBrasao() {
   const img = document.getElementById('s-brasao-preview');
   img.src = ''; img.style.display = 'none';
   document.getElementById('btn-remove-brasao').style.display = 'none';
+  const sb = document.getElementById('sidebar-brasao');
+  if (sb) { sb.src = ''; sb.style.display = 'none'; }
   const r = await API.put('/api/settings/brasao', { brasao_dataurl: '' });
   if (r && r.ok) {
-    toast('Brasão removido em todos os navegadores — usando brasão padrão.', 'success');
+    toast('Brasão removido em todos os navegadores.', 'success');
   } else {
     toast('Brasão removido apenas neste navegador — falha ao sincronizar remoção com o servidor', 'error');
   }

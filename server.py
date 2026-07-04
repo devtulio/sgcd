@@ -455,6 +455,11 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
             print(f"  [SETTINGS] GET /api/settings de {s.get('nome') or s.get('user_id')} — chaves retornadas: {sorted(result.keys())}", flush=True)
             self._json(200, result)
 
+        elif p in ('/api/settings/brasao', '/api/settings/brasao/'):
+            with get_db() as conn:
+                row = conn.execute("SELECT value FROM sys_settings WHERE key='brasao_dataurl'").fetchone()
+            self._json(200, {'brasao_dataurl': row['value'] if row else ''})
+
         # Usuários (admin)
         elif p == '/api/users':
             if not s['admin']: self._json(403, {'error': 'Acesso negado'}); return
