@@ -198,6 +198,12 @@ Consulte o [CHANGELOG.md](CHANGELOG.md) para o histórico completo de versões e
 
 ---
 
+## Contribuição
+
+Contribuições são bem-vindas! Veja o [CONTRIBUTING.md](CONTRIBUTING.md) para orientações sobre como reportar bugs, sugerir funcionalidades e enviar Pull Requests.
+
+---
+
 ## Licença
 
 Distribuído sob a licença **MIT**. Veja [LICENSE](LICENSE) para o texto completo.
