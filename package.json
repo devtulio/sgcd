@@ -8,6 +8,7 @@
     "lint": "node scripts/lint.mjs"
   },
   "devDependencies": {
-    "eslint": "^9.15.0"
+    "eslint": "^9.15.0",
+    "globals": "^14.0.0"
   }
 }

@@ -5,6 +5,16 @@
 
 ---
 
+## [2.16.1] — 2026-07-04
+
+### Corrigido
+- **`eslint.config.js` mantinha à mão uma lista de ~35 globais de navegador** — achado no `/ponytail-review` desta sessão. Substituído por `globals.browser` do pacote `globals` (já dependência transitiva do ESLint, promovida a dependência direta), evitando manter essa lista manualmente e cobrindo mais globais de navegador do que a lista anterior
+- **CSS duplicado entre `gerarEnquadramentoLegal()` e `gerarJustificativaEscolha()`** — as duas funções repetiam o mesmo bloco de ~25 linhas de estilo do documento. Extraído para uma constante `_DOC_CSS` compartilhada. Escopo limitado a essas duas funções (o mesmo bloco também se repete em outras ~13 funções `gerar*` pré-existentes no arquivo — refatorar todas seria uma mudança maior e mais arriscada, fora do escopo desta correção pontual)
+
+Validado: lint passa, e o HTML gerado pelas duas funções continua com o CSS idêntico ao de antes (testado ao vivo capturando o HTML de ambas e comparando byte a byte o conteúdo do `<style>`).
+
+---
+
 ## [2.16.0] — 2026-07-04
 
 ### Adicionado
