@@ -5,6 +5,53 @@
 
 ---
 
+## [2.17.2] — 2026-07-04
+
+### Adicionado
+- **Tela de encerramento** — ao clicar em "Fechar sistema", a página exibe uma tela de confirmação visual ("Sistema encerrado") antes de tentar fechar a aba, cobrindo o caso em que `window.close()` é bloqueado pelo navegador (aba não aberta via script). Paridade com o SGDP.
+
+---
+
+## [2.17.1] — 2026-07-04
+
+### Corrigido
+- **Vazamento de conexões SQLite** — `with get_db() as conn:` (63 pontos em `server.py`) gerencia commit/rollback da transação, mas o `__exit__` padrão de `sqlite3.Connection` não fecha a conexão. Cada requisição deixava uma conexão aberta até o garbage collector limpar. Corrigido no ponto único de origem: `get_db()` agora usa uma subclasse `_ConnAutoClose` cujo `__exit__` fecha a conexão depois do commit/rollback — nenhum dos 63 call sites precisou mudar. Confirmado sem nenhum `ResourceWarning` mesmo promovendo-os a erro fatal (`python -W error::ResourceWarning`) rodando a suíte completa de testes
+
+---
+
+## [2.17.0] — 2026-07-04
+
+### Adicionado
+- **Suíte de testes automatizados do backend** (`tests/test_server.py`), usando só `unittest` da stdlib — mantém o zero-dependência do sistema. Sobe o servidor real contra banco/uploads/backups em diretório temporário e testa via HTTP real: login (sucesso/falha), acesso negado sem token/token inválido, CRUD de processos (criar, listar, atualizar, lixeira, restaurar), CRUD de fornecedores, auditoria (registro + bulk restrito a admin), configurações, gestão de usuários (usuário comum não pode criar outro usuário), e exportação de backup
+- Instruções de execução (`python -m unittest discover -s tests -v`) documentadas no README, seção Desenvolvimento
+
+### Corrigido
+- **`server.py` executava o menu interativo e subia o servidor no nível do módulo** — um simples `import server` (necessário para os testes) disparava o prompt de terminal e travava. Todo esse bloco foi movido para dentro de `if __name__ == '__main__':`; `python server.py` continua idêntico, mas o módulo agora pode ser importado com segurança
+
+### Observado (não corrigido nesta versão)
+- Todo `with get_db() as conn:` no `server.py` só gerencia a transação (commit/rollback) — não fecha a conexão SQLite, pegadinha conhecida do módulo `sqlite3` (o `with` de uma `Connection` não é um context manager de fechamento). É um vazamento de recursos pré-existente em dezenas de pontos do arquivo; ficou visível nos `ResourceWarning` durante os testes por causa do volume de requisições em sequência rápida. Correção ampla o suficiente para tratar à parte, fora do escopo desta suíte de testes.
+
+---
+
+## [2.16.3] — 2026-07-04
+
+### Removido
+- **Web Worker de serialização morto** (`_WORKER_CODE`, `_getSerializeWorker()`, `_workerRun()`, `_bufToBase64()`) — servia para serializar backups fora da thread principal; ficou órfão desde que o backup passou a ser feito via API do servidor. Zero pontos de chamada
+- **`dbClearStore()`, `_renderFornView()`, `_renderFornEdit()`** — funções/wrappers sem nenhuma chamada, resquícios de refatorações anteriores
+- **`dbGetByIndexRange()`** — stub que sempre retornava `[]`. Os 2 pontos de chamada (filtro de auditoria por data) sempre caíam no fallback sem filtro nenhum, então **o filtro de período no relatório de auditoria nunca funcionava de fato**; corrigido para filtrar de verdade sobre a lista completa
+- **Duplicação entre `_export_backup()` e `_do_json_backup()`** (server.py) — as duas montavam o mesmo payload de backup quase byte a byte; extraído para `_build_backup_payload()` compartilhado
+
+Achados de uma varredura dedicada de over-engineering/código morto no sistema. Redução líquida de ~91 linhas em SGCD.html.
+
+---
+
+## [2.16.2] — 2026-07-04
+
+### Melhorado
+- **`_DOC_CSS` aplicado a todos os geradores de documento** — a constante compartilhada de CSS base, antes usada apenas em 2 funções, agora substitui o bloco duplicado em todas as 15 funções `gerar*`. Redução de ~100 linhas de CSS repetido. Cada função mantém apenas seu CSS específico adicional após `${_DOC_CSS}`
+
+---
+
 ## [2.16.1] — 2026-07-04
 
 ### Corrigido

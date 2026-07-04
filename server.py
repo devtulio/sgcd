@@ -1,4 +1,4 @@
-# SGCD v2.16.1 — Servidor local: SQLite, autenticação, REST API, proxy CNPJ, e-mail SMTP, backup automático
+# SGCD v2.17.2 — Servidor local: SQLite, autenticação, REST API, proxy CNPJ, e-mail SMTP, backup automático
 import http.server
 import socketserver
 import os
@@ -60,8 +60,19 @@ _backup_pos_sess  = False   # True = backup pós-sessão já executado; aguarda 
 
 # ── Banco de dados ────────────────────────────────────────────────────────────
 
+class _ConnAutoClose(sqlite3.Connection):
+    """sqlite3.Connection.__exit__ só faz commit/rollback da transação — não fecha
+    a conexão. Sem isso, todo `with get_db() as conn:` (63 pontos no arquivo) vaza
+    uma conexão aberta por chamada. Fecha a conexão junto, sem precisar alterar
+    nenhum call site."""
+    def __exit__(self, exc_type, exc, tb):
+        try:
+            return super().__exit__(exc_type, exc, tb)
+        finally:
+            self.close()
+
 def get_db():
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, factory=_ConnAutoClose)
     conn.row_factory = sqlite3.Row
     conn.execute('PRAGMA journal_mode=WAL')
     conn.execute('PRAGMA foreign_keys=ON')
@@ -1248,31 +1259,7 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
     # ── Backup ────────────────────────────────────────────────────────────────
 
     def _export_backup(self):
-        with get_db() as conn:
-            processes    = [json.loads(r['data']) for r in conn.execute('SELECT data FROM processes').fetchall()]
-            fornecedores = [json.loads(r['data']) for r in conn.execute('SELECT data FROM fornecedores').fetchall()]
-            audit        = [dict(r) for r in conn.execute('SELECT * FROM audit_global').fetchall()]
-            settings     = {r['key']: r['value'] for r in conn.execute('SELECT key,value FROM sys_settings').fetchall()}
-            file_rows    = conn.execute('SELECT * FROM files').fetchall()
-
-        files_out = []
-        for fr in file_rows:
-            fp = os.path.join(UPLOADS_DIR, fr['nome_disco'])
-            b64 = ''
-            if os.path.exists(fp):
-                with open(fp, 'rb') as f:
-                    b64 = base64.b64encode(f.read()).decode()
-            files_out.append({**dict(fr), 'data_b64': b64})
-
-        backup  = {
-            '_sgcd': True, 'version': 4,
-            'exportedAt': _now(),
-            'processes': processes,
-            'fornecedores': fornecedores,
-            'auditGlobal': audit,
-            'settings': settings,
-            'files': files_out
-        }
+        backup = _build_backup_payload()
         payload = json.dumps(backup, ensure_ascii=False).encode('utf-8')
         self.send_response(200)
         self._cors()
@@ -1770,6 +1757,27 @@ def _watchdog():
 
 # ── Backup automático do banco ─────────────────────────────────────────────────
 
+def _build_backup_payload():
+    with get_db() as conn:
+        processes    = [json.loads(r['data']) for r in conn.execute('SELECT data FROM processes').fetchall()]
+        fornecedores = [json.loads(r['data']) for r in conn.execute('SELECT data FROM fornecedores').fetchall()]
+        audit        = [dict(r) for r in conn.execute('SELECT * FROM audit_global').fetchall()]
+        settings     = {r['key']: r['value'] for r in conn.execute('SELECT key,value FROM sys_settings').fetchall()}
+        file_rows    = conn.execute('SELECT * FROM files').fetchall()
+    files_out = []
+    for fr in file_rows:
+        fp = os.path.join(UPLOADS_DIR, fr['nome_disco'])
+        b64 = ''
+        if os.path.exists(fp):
+            with open(fp, 'rb') as f:
+                b64 = base64.b64encode(f.read()).decode()
+        files_out.append({**dict(fr), 'data_b64': b64})
+    return {
+        '_sgcd': True, 'version': 4, 'exportedAt': _now(),
+        'processes': processes, 'fornecedores': fornecedores,
+        'auditGlobal': audit, 'settings': settings, 'files': files_out,
+    }
+
 def _do_json_backup(cfg=None):
     if cfg is None: cfg = _get_backup_cfg()
     bdir = cfg['path']
@@ -1778,25 +1786,7 @@ def _do_json_backup(cfg=None):
     name = time.strftime('SIS_SGCD_BACKUP_%Y-%m-%d_%H-%M-%S.json')
     dst  = os.path.join(bdir, name)
     try:
-        with get_db() as conn:
-            processes    = [json.loads(r['data']) for r in conn.execute('SELECT data FROM processes').fetchall()]
-            fornecedores = [json.loads(r['data']) for r in conn.execute('SELECT data FROM fornecedores').fetchall()]
-            audit        = [dict(r) for r in conn.execute('SELECT * FROM audit_global').fetchall()]
-            settings     = {r['key']: r['value'] for r in conn.execute('SELECT key,value FROM sys_settings').fetchall()}
-            file_rows    = conn.execute('SELECT * FROM files').fetchall()
-        files_out = []
-        for fr in file_rows:
-            fp = os.path.join(UPLOADS_DIR, fr['nome_disco'])
-            b64 = ''
-            if os.path.exists(fp):
-                with open(fp, 'rb') as f:
-                    b64 = base64.b64encode(f.read()).decode()
-            files_out.append({**dict(fr), 'data_b64': b64})
-        backup = {
-            '_sgcd': True, 'version': 4, 'exportedAt': _now(),
-            'processes': processes, 'fornecedores': fornecedores,
-            'auditGlobal': audit, 'settings': settings, 'files': files_out,
-        }
+        backup = _build_backup_payload()
         with open(dst, 'w', encoding='utf-8') as f:
             json.dump(backup, f, ensure_ascii=False)
         print(f'Backup JSON automático: {name}')
@@ -1920,47 +1910,48 @@ def _selecionar_modo():
     print(f'  Modo: {modo_label}')
     print('  ─────────────────────────────────────────────────')
 
-_selecionar_modo()
-_check_db_integrity()
-_rotate_backups(_get_backup_cfg())  # limpa excedentes dos backups da sessão anterior
-threading.Thread(target=_watchdog, daemon=True).start()
+if __name__ == '__main__':
+    _selecionar_modo()
+    _check_db_integrity()
+    _rotate_backups(_get_backup_cfg())  # limpa excedentes dos backups da sessão anterior
+    threading.Thread(target=_watchdog, daemon=True).start()
 
-socketserver.ThreadingTCPServer.allow_reuse_address = True
-with socketserver.ThreadingTCPServer(('', PORT), SGCDHandler) as httpd:
-    print(f'  Servidor: http://localhost:{PORT}')
+    socketserver.ThreadingTCPServer.allow_reuse_address = True
+    with socketserver.ThreadingTCPServer(('', PORT), SGCDHandler) as httpd:
+        print(f'  Servidor: http://localhost:{PORT}')
 
-    if _modo_servidor:
-        # Modo servidor: exibe IP da rede e fica rodando sem abrir browser
-        import socket as _socket
-        try:
-            ip_local = _socket.gethostbyname(_socket.gethostname())
-        except Exception:
-            ip_local = 'desconhecido'
-        print(f'  Rede:     http://{ip_local}:{PORT}/SGCD.html')
-        print()
-        print('  Aguardando conexões... (Ctrl+C para encerrar)')
-        try:
-            httpd.serve_forever()
-        except KeyboardInterrupt:
-            print('\n  Encerrando servidor...')
-    else:
-        # Modo pessoal: abre o app no navegador
-        browser = _find_browser()
-        if browser:
-            threading.Thread(target=httpd.serve_forever, daemon=True).start()
-            time.sleep(1)
-            profile_dir = os.path.join(os.environ.get('TEMP', os.path.expanduser('~')), 'SGCD-Profile')
-            proc = subprocess.Popen([
-                browser,
-                f'--app=http://localhost:{PORT}/SGCD.html',
-                '--start-maximized',
-                '--disable-background-mode',
-                f'--user-data-dir={profile_dir}',
-            ])
-            print('  App aberto. Feche a janela do SGCD para encerrar.')
-            proc.wait()
-            print('  Encerrando servidor...')
-            while True: time.sleep(1)
+        if _modo_servidor:
+            # Modo servidor: exibe IP da rede e fica rodando sem abrir browser
+            import socket as _socket
+            try:
+                ip_local = _socket.gethostbyname(_socket.gethostname())
+            except Exception:
+                ip_local = 'desconhecido'
+            print(f'  Rede:     http://{ip_local}:{PORT}/SGCD.html')
+            print()
+            print('  Aguardando conexões... (Ctrl+C para encerrar)')
+            try:
+                httpd.serve_forever()
+            except KeyboardInterrupt:
+                print('\n  Encerrando servidor...')
         else:
-            print(f'  Chrome/Edge não encontrado. Abra manualmente: http://localhost:{PORT}/SGCD.html')
-            httpd.serve_forever()
+            # Modo pessoal: abre o app no navegador
+            browser = _find_browser()
+            if browser:
+                threading.Thread(target=httpd.serve_forever, daemon=True).start()
+                time.sleep(1)
+                profile_dir = os.path.join(os.environ.get('TEMP', os.path.expanduser('~')), 'SGCD-Profile')
+                proc = subprocess.Popen([
+                    browser,
+                    f'--app=http://localhost:{PORT}/SGCD.html',
+                    '--start-maximized',
+                    '--disable-background-mode',
+                    f'--user-data-dir={profile_dir}',
+                ])
+                print('  App aberto. Feche a janela do SGCD para encerrar.')
+                proc.wait()
+                print('  Encerrando servidor...')
+                while True: time.sleep(1)
+            else:
+                print(f'  Chrome/Edge não encontrado. Abra manualmente: http://localhost:{PORT}/SGCD.html')
+                httpd.serve_forever()

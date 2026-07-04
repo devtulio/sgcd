@@ -1,6 +1,6 @@
 # SGCD — Sistema de Gestão de Contratação Direta
 
-![Versão](https://img.shields.io/badge/versão-v2.16.1-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-Python%20%2B%20SQLite-orange) ![Licença](https://img.shields.io/badge/licença-MIT-green) ![Multiusuário](https://img.shields.io/badge/acesso-multiusuário-blueviolet)
+![Versão](https://img.shields.io/badge/versão-v2.17.2-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-Python%20%2B%20SQLite-orange) ![Licença](https://img.shields.io/badge/licença-MIT-green) ![Multiusuário](https://img.shields.io/badge/acesso-multiusuário-blueviolet)
 
 ## Descrição
 
@@ -182,6 +182,12 @@ O sistema em si continua zero-dependência (Python stdlib + HTML puro). Para que
 ```bash
 npm install   # uma vez, instala apenas o ESLint (ferramenta de dev, não é usada em produção)
 npm run lint
+```
+
+Há também uma suíte de testes automatizados do backend (`server.py`), usando só `unittest` da stdlib — sobe o servidor real contra um banco e uploads temporários e testa os endpoints REST (login, processos, fornecedores, auditoria, configurações, usuários, backup):
+
+```bash
+python -m unittest discover -s tests -v
 ```
 
 ---
