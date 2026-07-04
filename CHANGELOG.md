@@ -5,6 +5,16 @@
 
 ---
 
+## [2.16.0] — 2026-07-04
+
+### Adicionado
+- **Python portátil embutido como fallback no `Iniciar SGCD.bat`** — usuário relatou que, ao tentar instalar o SGCD no servidor da prefeitura (Windows Server), o instalador do Python não rodava (típico de bloqueio por AppLocker/política de grupo, antivírus corporativo, ou arquivo "bloqueado" pelo Windows por vir da internet). O `Iniciar SGCD.bat` agora detecta a ausência do Python no PATH e, nesse caso, extrai automaticamente uma distribuição Python embarcável (portátil, sem instalador, incluída no projeto como `python-3.12.9-embed-amd64.zip`) para `C:\Python312-embed\` — não exige privilégio de administrador nem executar nenhum instalador, contornando os bloqueios comuns em servidores corporativos travados
+- Em execuções seguintes, o `.bat` detecta o Python já extraído em `C:\Python312-embed\` e o usa diretamente, sem repetir a extração
+
+Testado: extração real via PowerShell (`System.IO.Compression.ZipFile`, compatível com versões antigas do PowerShell — não depende do `Expand-Archive`, que exige PowerShell 5+), confirmado que todos os módulos usados pelo `server.py` (incluindo `sqlite3`, `ssl`, `http.server`) funcionam nessa distribuição embarcável, e que o servidor sobe e responde normalmente rodando com esse Python. Validado também que o `.bat` detecta e reutiliza corretamente uma instalação já extraída quando `python` não está no PATH do sistema. No caminho, encontrado e corrigido um bug real na primeira versão do script: a continuação de linha `^` usada para quebrar o comando PowerShell em várias linhas, quando colocada *dentro* de uma string entre aspas, fica literal em vez de ser removida pelo `cmd.exe` — quebrava o comando com `'^' não é reconhecido como cmdlet`. Corrigido reescrevendo o comando inteiro em uma única linha.
+
+---
+
 ## [2.15.2] — 2026-07-03
 
 ### Corrigido

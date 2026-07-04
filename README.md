@@ -1,6 +1,6 @@
 # SGCD — Sistema de Gestão de Contratação Direta
 
-![Versão](https://img.shields.io/badge/versão-v2.15.2-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-Python%20%2B%20SQLite-orange) ![Licença](https://img.shields.io/badge/licença-MIT-green) ![Multiusuário](https://img.shields.io/badge/acesso-multiusuário-blueviolet)
+![Versão](https://img.shields.io/badge/versão-v2.16.0-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-Python%20%2B%20SQLite-orange) ![Licença](https://img.shields.io/badge/licença-MIT-green) ![Multiusuário](https://img.shields.io/badge/acesso-multiusuário-blueviolet)
 
 ## Descrição
 
@@ -46,6 +46,9 @@ Funciona em rede local: um único computador executa o servidor e todos os usuá
 - **Google Chrome** ou **Microsoft Edge** (recomendado)
 - Windows 10/11
 - Opcional: `pip install -r requirements.txt` — só necessário para o módulo de assinatura com certificado ICP-Brasil (`pyhanko`)
+
+> **Servidor sem Python instalado (ex.: Windows Server bloqueado por política de TI):**
+> o `Iniciar SGCD.bat` detecta automaticamente a ausência do Python e extrai uma versão portátil (embarcável, sem instalador) incluída no próprio projeto (`python-3.12.9-embed-amd64.zip`) para `C:\Python312-embed\` — não exige instalação nem privilégio de administrador. Isso resolve o caso comum de instaladores `.exe` bloqueados por AppLocker/antivírus corporativo em servidores.
 
 ---
 
@@ -94,6 +97,7 @@ SGCD/
 ├── SGCD.html                # Frontend — aplicação web completa
 ├── server.py                # Servidor Python (API REST + SQLite + uploads)
 ├── Iniciar SGCD.bat         # Inicializa o servidor
+├── python-3.12.9-embed-amd64.zip  # Python portátil (fallback se não houver Python instalado)
 ├── Criar Atalho SGCD.bat    # Cria atalho na área de trabalho com ícone
 ├── Criar Atalho SGCD.ps1    # Script PowerShell de criação do atalho
 ├── Diagnostico SGCD.bat     # Roda o diagnóstico de rede (clique duplo)
