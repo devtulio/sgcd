@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Manual Operacional — SGCD v2.17.4</title>
+<title>Manual Operacional — SGCD v2.17.5</title>
 <style>
   /* Reset e base */
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -90,7 +90,7 @@
       margin: 20mm 20mm 25mm;
       size: A4;
       @top-center {
-        content: "SGCD v2.17.4 — Manual Operacional";
+        content: "SGCD v2.17.5 — Manual Operacional";
         font-family: 'Times New Roman', serif;
         font-size: 9pt;
         color: #666;
@@ -119,7 +119,7 @@
     <div class="cover-title">Manual Operacional</div>
     <div class="cover-subtitle">SGCD — Sistema de Gestão de Contratação Direta</div>
     <div class="cover-system">Gestão de Processos de Dispensa de Licitação</div>
-    <div class="cover-version">Versão v2.17.4</div>
+    <div class="cover-version">Versão v2.17.5</div>
     <br>
     <div style="font-size:11pt; color:#555; line-height:1.8;">
       Aplicação web multiusuário para agentes de contratação pública<br>
@@ -795,10 +795,10 @@
   <li>Localize a seção <strong>"Documentos"</strong> ou o botão de clipe/anexo</li>
   <li>Clique em <strong>"Anexar Arquivo"</strong> e selecione o arquivo no computador</li>
   <li>Formatos aceitos: PDF, DOCX, DOC, PNG, JPG</li>
-  <li>O arquivo será armazenado no IndexedDB junto com o processo</li>
+  <li>O arquivo é enviado ao servidor e armazenado na pasta <code>uploads/</code>, com o registro vinculado ao processo no banco <code>sgcd.db</code></li>
 </ol>
 <div class="aviso">
-  <strong>Atenção:</strong> Arquivos anexados ficam armazenados no navegador. Arquivos muito grandes podem afetar o desempenho do sistema. Recomenda-se compactar PDFs antes de anexar.
+  <strong>Atenção:</strong> Arquivos anexados ficam armazenados no servidor (não no navegador) — limite de 50 MB por arquivo. Recomenda-se compactar PDFs grandes antes de anexar.
 </div>
 
 <h3 id="sec7-4">7.4 Editar informações do processo</h3>
@@ -1120,7 +1120,7 @@
 
 <!-- ─────────────────────────────────────────────── SEÇÃO 12 -->
 <h2 id="sec12">12. Backup e Restauração</h2>
-<p>Como os dados do SGCD ficam armazenados exclusivamente no navegador, é fundamental realizar backups regulares para evitar perda de informações.</p>
+<p>Os dados do SGCD ficam armazenados no arquivo <code>sgcd.db</code> (SQLite), no servidor local. Mesmo assim, é fundamental realizar backups regulares para se proteger contra perda do arquivo, falha de disco ou exclusão acidental.</p>
 
 <h3>Como fazer backup</h3>
 <ol>
@@ -1158,7 +1158,7 @@
 </div>
 
 <h3>Auto-backup automático</h3>
-<p>O sistema realiza um <strong>auto-backup automático</strong> no localStorage sempre que um processo é salvo. Essa cópia serve como proteção emergencial contra perda acidental de dados, mas não substitui o backup em arquivo JSON. O auto-backup respeita limites de tamanho: se a base de dados ultrapassar 4 MB, o sistema exibe um aviso e não tenta salvar, evitando erros de quota do navegador.</p>
+<p>O servidor realiza um <strong>backup automático do banco</strong> (cópia do arquivo <code>sgcd.db</code>, com nome <code>DB_SGCD_BACKUP_[data-hora].db</code>) e um <strong>backup JSON automático</strong> sempre que a última sessão ativa é encerrada. Ambos são gravados na pasta <code>backups/</code> (ou em outra pasta configurada em Configurações → Backup de Dados). O sistema mantém automaticamente os backups mais recentes e descarta os mais antigos, respeitando o número configurado em <strong>"Manter últimos N backups"</strong> (padrão: 7).</p>
 
 <h3>Factory Reset — Limpeza total de dados</h3>
 <p>A função <strong>Factory Reset</strong> apaga permanentemente <em>todos</em> os dados do sistema: processos, fornecedores, certidões, configurações e brasão. Para evitar exclusões acidentais, o processo exige <strong>três confirmações sucessivas</strong>:</p>
@@ -1206,11 +1206,11 @@
 </div>
 
 <div class="dica">
-  <strong>Backup antes de limpar o cache:</strong> os dados do SGCD ficam no navegador. Antes de limpar o histórico ou cache, sempre exporte um backup em Configurações → Backup de Dados.
+  <strong>Faça backups regulares:</strong> os dados ficam no arquivo <code>sgcd.db</code>, no servidor. Além dos backups automáticos (ver Seção 21), exporte um backup manual periodicamente em Configurações → Backup de Dados, especialmente antes de atualizar o sistema ou mover a instalação para outro computador.
 </div>
 
 <div class="dica">
-  <strong>Use sempre o mesmo navegador:</strong> os dados ficam vinculados ao perfil do navegador. Se você usar Chrome no trabalho, use sempre o Chrome para acessar o SGCD. Não misture navegadores (Chrome e Edge não compartilham dados).
+  <strong>Acesse de qualquer navegador:</strong> como os dados ficam no servidor (não no navegador), você pode acessar o SGCD de qualquer navegador ou computador na mesma rede, bastando fazer login com seu usuário e senha.
 </div>
 
 <div class="dica">
@@ -1338,7 +1338,7 @@
 </ol>
 <p>Os seguintes campos são salvos no modelo: objeto, base legal, critério de seleção, valor estimado, unidade solicitante, natureza de despesa, categoria e subcategoria.</p>
 <div class="nota">
-  <strong>Nota:</strong> Os modelos são armazenados localmente no <code>localStorage</code> do navegador e persistem entre sessões. Não são afetados pelo backup/restauração do IndexedDB.
+  <strong>Nota:</strong> Os modelos são armazenados localmente no <code>localStorage</code> do navegador (não no banco <code>sgcd.db</code>) e persistem entre sessões, mas ficam vinculados ao navegador/computador usado para criá-los. Não são incluídos no backup/restauração do sistema (Seção 12).
 </div>
 
 <h3 id="sec17-2">17.2 Aplicando um modelo</h3>
@@ -1459,30 +1459,26 @@
 
 <!-- ─────────────────────────────────────────────── SEÇÃO 22 -->
 <h2 id="sec21">21. Backup Automático e Proteção de Dados</h2>
-<p>A partir da versão 1.18.0, o SGCD protege os dados do usuário de forma automática, sem necessidade de ação manual a cada alteração.</p>
+<p>A partir da versão 2.0, o SGCD roda com um servidor local (<code>server.py</code>) que protege os dados automaticamente, sem necessidade de ação manual a cada alteração.</p>
 
-<h3 id="sec21-1">21.1 Snapshot automático</h3>
-<p>Toda vez que um processo é salvo, o sistema aguarda 3 segundos e grava automaticamente um <strong>snapshot compactado</strong> no armazenamento local do navegador (<code>localStorage</code>). Esse snapshot contém todos os processos e fornecedores cadastrados, exceto anexos de arquivo (para não exceder o limite de espaço do navegador).</p>
-<div class="nota">
-  <strong>Limite de tamanho:</strong> O <code>localStorage</code> comporta aproximadamente 5 MB. Se a base de dados exceder esse limite, o sistema exibirá um aviso solicitando a exportação de um backup manual.
-</div>
-<p>O snapshot automático também é gravado quando o usuário fecha ou recarrega a aba do navegador, desde que a opção <strong>"Snapshot ao fechar"</strong> esteja ativa nas Configurações → Dados.</p>
-
-<h3 id="sec21-2">21.2 Banner de alerta de backup</h3>
-<p>Uma faixa de alerta laranja é exibida na parte inferior da tela quando:</p>
+<h3 id="sec21-1">21.1 Backup automático do servidor</h3>
+<p>Quando a última sessão ativa é encerrada (todos os usuários fazem logout ou fecham o navegador), o servidor grava automaticamente:</p>
 <ul>
-  <li>Nenhum backup manual foi exportado ainda (primeiro uso do sistema); ou</li>
-  <li>O último backup manual foi exportado há <strong>mais de 7 dias</strong>.</li>
+  <li>Uma <strong>cópia do banco</strong> (<code>DB_SGCD_BACKUP_[data-hora].db</code>) — cópia binária completa do <code>sgcd.db</code>, incluindo referências a todos os anexos;</li>
+  <li>Um <strong>backup JSON</strong> (<code>SIS_SGCD_BACKUP_[data-hora].json</code>) — processos, fornecedores e configurações em formato legível.</li>
 </ul>
-<p>O banner exibe o número de dias sem backup e um botão de exportação rápida. Ao exportar o backup, o banner é dispensado automaticamente. Clicar em <strong>"Lembrar depois"</strong> oculta o banner até o próximo carregamento.</p>
-
-<h3 id="sec21-3">21.3 Exportação manual recomendada</h3>
-<p>O backup manual (<strong>Configurações → Dados → Exportar Backup</strong>) gera um arquivo <code>.json</code> completo com processos, fornecedores, arquivos anexados, configurações e brasão. Este é o único formato que inclui anexos e que pode ser importado para restaurar o sistema em outro computador ou navegador.</p>
-<div class="aviso">
-  <strong>Atenção:</strong> O snapshot automático é um mecanismo de proteção contra falhas imediatas — não substitui o backup manual. Guarde os arquivos de backup exportados em local seguro (pasta de rede, nuvem ou mídia externa).
+<p>Ambos são salvos na pasta <code>backups/</code> (ou em outra pasta definida em Configurações → Backup de Dados). O sistema mantém apenas os backups automáticos mais recentes, descartando os mais antigos conforme o número configurado em <strong>"Manter últimos N backups"</strong> (padrão: 7).</p>
+<div class="nota">
+  <strong>Backup sob demanda:</strong> em Configurações → Backup de Dados, o botão <strong>"Fazer backup agora"</strong> aciona uma cópia do banco imediatamente, sem esperar o encerramento da sessão.
 </div>
 
-<h3 id="sec21-4">21.4 Validação ao concluir etapas</h3>
+<h3 id="sec21-2">21.2 Exportação manual (JSON)</h3>
+<p>Além do backup automático do servidor, é possível exportar manualmente um backup em <strong>Configurações → Backup de Dados → Exportar Backup</strong>. O arquivo <code>.json</code> gerado contém processos, fornecedores, configurações e brasão, e pode ser usado para restaurar o sistema em outra instalação (ver Seção 12).</p>
+<div class="aviso">
+  <strong>Atenção:</strong> o backup automático protege contra perda do arquivo <code>sgcd.db</code> na própria máquina, mas não substitui guardar uma cópia exportada em local externo (nuvem, pen drive, pasta de rede) — especialmente antes de atualizar o sistema ou trocar de computador.
+</div>
+
+<h3 id="sec21-3">21.3 Validação ao concluir etapas</h3>
 <p>Ao marcar uma etapa como <strong>Concluída</strong>, o sistema verifica se os campos obrigatórios daquela etapa foram preenchidos. Se algum campo estiver em branco, uma caixa de confirmação é exibida listando os campos faltantes:</p>
 <ul>
   <li>Clicar em <strong>"Concluir mesmo assim"</strong> marca a etapa como concluída sem preencher os campos.</li>
@@ -1507,41 +1503,26 @@
 <hr class="section-divider">
 
 <!-- ─────────────────────────────────────────────── SEÇÃO 23 -->
-<h2 id="sec22">22. Controle de Acesso por Senha</h2>
-<p>O SGCD permite configurar uma senha de abertura para proteger o acesso ao sistema em computadores compartilhados.</p>
+<h2 id="sec22">22. Login e Controle de Acesso</h2>
+<p>A partir da versão 2.0, o acesso ao SGCD é feito por <strong>login individual</strong> (usuário e senha), autenticado pelo servidor local. Cada usuário tem sua própria conta, com registro de autoria nas etapas, documentos e na Trilha de Auditoria (Seção 15).</p>
 
-<h3 id="sec22-1">22.1 Configurando a senha</h3>
-<p>Acesse <strong>Configurações → Segurança</strong>. O painel exibe três campos:</p>
-<ol>
-  <li><strong>Senha atual</strong> — deixe em branco se ainda não há senha configurada.</li>
-  <li><strong>Nova senha</strong> — mínimo de 4 caracteres.</li>
-  <li><strong>Confirmar nova senha</strong> — deve ser idêntica ao campo anterior.</li>
-</ol>
-<p>Clique em <strong>"Definir Senha"</strong> para salvar. Para remover a proteção, informe a senha atual e clique em <strong>"Remover Senha"</strong>.</p>
+<h3 id="sec22-1">22.1 Tela de login</h3>
+<p>Ao abrir o SGCD, o sistema exibe uma tela de login solicitando <strong>usuário</strong> e <strong>senha</strong>. Ao autenticar, o servidor cria uma sessão temporária para o navegador; a sessão é renovada automaticamente enquanto o SGCD permanece aberto e expira pouco depois de a aba ser fechada. Em caso de usuário ou senha incorretos, o formulário exibe uma mensagem de erro e permite nova tentativa.</p>
+<p>Na primeira instalação, o sistema cria automaticamente um usuário administrador padrão (<code>admin</code>); a senha inicial deve ser trocada no primeiro acesso, em Configurações → Segurança.</p>
 
-<h3 id="sec22-2">22.2 Tela de acesso restrito</h3>
-<p>Quando uma senha está configurada, o sistema exibe uma tela de acesso ao ser carregado. Essa tela apresenta:</p>
+<h3 id="sec22-2">22.2 Gerenciando usuários</h3>
+<p>Usuários com permissão de <strong>administrador</strong> podem gerenciar contas em <strong>Configurações → Segurança → Gerenciar Usuários</strong>:</p>
 <ul>
-  <li>O nome do órgão configurado nas Configurações → Organização.</li>
-  <li>A data do último backup exportado.</li>
-  <li>Um campo de senha com opção de visualizar os caracteres digitados.</li>
+  <li><strong>+ Novo usuário:</strong> cria uma conta informando nome, usuário, cargo, matrícula e senha (mínimo 6 caracteres), com opção de marcá-la como administradora.</li>
+  <li><strong>Editar usuário:</strong> altera dados cadastrais, redefine a senha de outro usuário ou ativa/desativa a conta.</li>
 </ul>
-<p>Em caso de senha incorreta, o formulário exibe uma mensagem de erro com animação visual e limpa o campo para nova tentativa. Pressionar <kbd>Enter</kbd> no campo de senha aciona o botão de entrar.</p>
+<p>Um usuário sem permissão de administrador só pode alterar a própria senha, informando a senha atual para confirmação.</p>
 <div class="nota">
-  <strong>Limitação técnica:</strong> A senha é armazenada como hash SHA-256 no <code>localStorage</code> do navegador. Essa proteção impede acesso acidental, mas não é equivalente a criptografia do banco de dados. Um administrador com acesso às ferramentas de desenvolvedor do navegador pode, em tese, limpar o hash e remover a proteção. Para ambientes que exijam segurança elevada, combine o uso do SGCD com senha de login do sistema operacional.
+  <strong>Armazenamento da senha:</strong> as senhas nunca são gravadas em texto claro — o servidor armazena apenas um hash (PBKDF2-SHA256, com salt por usuário) no banco <code>sgcd.db</code>. A comunicação entre o navegador e o servidor local usa o token de sessão emitido no login.
 </div>
 
 <h3 id="sec22-3">22.3 Recuperação de acesso</h3>
-<p>Se a senha for esquecida, é possível removê-la manualmente pelo console do navegador:</p>
-<ol>
-  <li>Abra as ferramentas de desenvolvedor (F12).</li>
-  <li>Acesse a aba <strong>Console</strong>.</li>
-  <li>Execute: <code>localStorage.removeItem('sgcd-access-hash')</code></li>
-  <li>Recarregue a página.</li>
-</ol>
-<div class="aviso">
-  <strong>Atenção:</strong> Este procedimento deve ser realizado apenas pelo administrador do sistema. Mantenha a senha anotada em local seguro.
-</div>
+<p>Se um usuário esquecer a senha, qualquer administrador pode redefini-la em <strong>Configurações → Segurança → Gerenciar Usuários</strong>, editando a conta e definindo uma nova senha. Se <strong>nenhum</strong> administrador tiver acesso, é necessário restaurar um backup do banco (<code>sgcd.db</code>) anterior ao problema, ou reinstalar o sistema — o que recria o usuário <code>admin</code> padrão.</p>
 
 <hr class="section-divider">
 
@@ -1700,6 +1681,11 @@
 
 <!-- ─────────────────────────────────────────────── SEÇÃO 30 -->
 <h2 id="sec30">30. Histórico de Versões</h2>
+
+<h3>v2.17.5 — Julho/2026</h3>
+<ul>
+  <li><strong>Descrições de arquitetura desatualizadas</strong> — várias seções (Anexar Documentos, Backup e Restauração, Auto-backup, Templates de Processo, Backup Automático, Controle de Acesso) ainda descreviam a arquitetura antiga do sistema (dados e senha guardados exclusivamente no navegador via <code>localStorage</code>/IndexedDB), desatualizada desde a migração para servidor Python + SQLite. Textos corrigidos para refletir o armazenamento real (<code>sgcd.db</code>, pasta <code>uploads/</code>, login com sessão de servidor); Seção 22 renomeada de "Controle de Acesso por Senha" para "Login e Controle de Acesso", descrevendo o mecanismo real de autenticação por usuário/senha.</li>
+</ul>
 
 <h3>v2.17.4 — Julho/2026</h3>
 <ul>

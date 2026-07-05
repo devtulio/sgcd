@@ -5,6 +5,13 @@
 
 ---
 
+## [2.17.5] — 2026-07-04
+
+### Corrigido
+- **Descrições de arquitetura desatualizadas no manual** — seções sobre anexar documentos, backup/restauração, auto-backup, templates de processo e controle de acesso ainda descreviam a arquitetura antiga (dados/senha no `localStorage`/IndexedDB do navegador), desatualizada desde a migração para servidor Python + SQLite. Textos corrigidos para refletir `sgcd.db`, pasta `uploads/` e login com sessão de servidor; Seção 22 renomeada para "Login e Controle de Acesso".
+
+---
+
 ## [2.17.4] — 2026-07-04
 
 ### Corrigido
