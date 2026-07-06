@@ -144,7 +144,7 @@
 
   /* ── Layout ──────────────────────────────────────── */
   #app { padding: 24px 32px 24px calc(220px + 24px); }
-  @media (max-width: 760px) { #sidebar { display: none; } #app { padding-left: 16px; } }
+  @media (max-width: 760px) { #sidebar { display: none; } #app { padding-left: 16px; } footer { padding-left: 16px !important; } }
   #app.layout-expanded { padding: 24px 24px 24px calc(220px + 24px); }
   #app.layout-expanded #agenda-body   { max-width: none !important; padding: 0 0 32px !important; }
   #app.layout-expanded #audit-inner   { max-width: none !important; padding: 0 0 16px !important; }
@@ -13236,7 +13236,7 @@ setInterval(() => {
 }, 5000);
 
 </script>
-<footer style="text-align:center;padding:18px 16px 14px;font-size:.72rem;color:var(--gray-400);border-top:1px solid var(--gray-100);margin-top:32px">
+<footer style="text-align:center;padding:18px 16px 14px calc(220px + 16px);font-size:.72rem;color:var(--gray-400);border-top:1px solid var(--gray-100);margin-top:32px">
   SGCD — Sistema de Gestão de Contratação Direta &nbsp;·&nbsp; <strong id="footer-version"></strong> &nbsp;·&nbsp; Lei Federal nº 14.133/2021
 </footer>
 </body>
