@@ -10560,7 +10560,7 @@ async function alterarMinhaSenha() {
   if (!nova)  { show('Digite a nova senha.', false); return; }
   if (nova !== confirma) { show('As senhas não coincidem.', false); return; }
 
-  const r = await API.req('PUT', `/api/users/${_apiUser.id}`, { old_password: atual, password: nova });
+  const r = await API.req('PUT', `/api/usuarios/${_apiUser.id}`, { old_password: atual, password: nova });
   if (!r.ok) { show((await r.json()).error || 'Erro ao alterar senha.', false); return; }
   document.getElementById('s-senha-atual').value = '';
   document.getElementById('s-senha-nova').value = '';
@@ -11212,7 +11212,7 @@ async function renderUsuarios() {
   const el = document.getElementById('usuarios-lista');
   if (!el) return;
   el.innerHTML = '<p style="color:var(--gray-400);font-style:italic">Carregando…</p>';
-  const r = await API.get('/api/users');
+  const r = await API.get('/api/usuarios');
   const users = await API.json(r);
   if (!users) { el.innerHTML = '<p style="color:var(--danger)">Erro ao carregar usuários.</p>'; return; }
   if (!users.length) { el.innerHTML = '<p style="color:var(--gray-400)">Nenhum usuário cadastrado.</p>'; return; }
@@ -11251,7 +11251,7 @@ function abrirModalNovoUsuario() {
   _abrirModalUsuario(null);
 }
 async function abrirModalEditarUsuario(id) {
-  const r = await API.get('/api/users');
+  const r = await API.get('/api/usuarios');
   const users = await API.json(r);
   const u = users?.find(x => x.id === id);
   if (u) _abrirModalUsuario(u);
@@ -11317,8 +11317,8 @@ function _abrirModalUsuario(u) {
     if (!payload.username) { toast('Informe o username.', 'error'); return; }
     if (isNew && !senha)   { toast('Informe a senha inicial.', 'error'); return; }
     const r = isNew
-      ? await API.post('/api/users', payload)
-      : await API.put(`/api/users/${u.id}`, payload);
+      ? await API.post('/api/usuarios', payload)
+      : await API.put(`/api/usuarios/${u.id}`, payload);
     if (r?.ok) {
       toast(isNew ? 'Usuário criado!' : 'Usuário atualizado!', 'success');
       document.body.removeChild(overlay);

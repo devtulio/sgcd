@@ -80,8 +80,15 @@ def get_db():
 
 def init_db():
     with get_db() as conn:
+        # Migração: tabela 'users' (nome antigo) → 'usuarios' (padrão SGDP).
+        # SQLite atualiza sozinho as FKs de sessions/processes/files/signatures
+        # que apontavam para users(id); preserva cargo/matricula e demais dados.
+        tables = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+        if 'users' in tables and 'usuarios' not in tables:
+            conn.execute('ALTER TABLE users RENAME TO usuarios')
+            conn.commit()
         conn.executescript('''
-            CREATE TABLE IF NOT EXISTS users (
+            CREATE TABLE IF NOT EXISTS usuarios (
                 id         INTEGER PRIMARY KEY AUTOINCREMENT,
                 username   TEXT NOT NULL UNIQUE COLLATE NOCASE,
                 nome       TEXT NOT NULL,
@@ -94,7 +101,7 @@ def init_db():
             );
             CREATE TABLE IF NOT EXISTS sessions (
                 token    TEXT PRIMARY KEY,
-                user_id  INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                user_id  INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
                 expires  REAL NOT NULL
             );
             CREATE TABLE IF NOT EXISTS processes (
@@ -108,7 +115,7 @@ def init_db():
                 num_dl     TEXT,
                 created_at TEXT,
                 updated_at TEXT,
-                created_by INTEGER REFERENCES users(id)
+                created_by INTEGER REFERENCES usuarios(id)
             );
             CREATE TABLE IF NOT EXISTS fornecedores (
                 id           TEXT PRIMARY KEY,
@@ -125,7 +132,7 @@ def init_db():
                 nome_disco    TEXT NOT NULL,
                 tamanho       INTEGER,
                 mime          TEXT,
-                uploaded_by   INTEGER REFERENCES users(id),
+                uploaded_by   INTEGER REFERENCES usuarios(id),
                 uploaded_em   TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M:%S','now','localtime'))
             );
             CREATE TABLE IF NOT EXISTS audit_global (
@@ -149,7 +156,7 @@ def init_db():
                 process_id     TEXT REFERENCES processes(id) ON DELETE CASCADE,
                 doc_type       TEXT NOT NULL,
                 doc_filename   TEXT,
-                signer_user_id INTEGER REFERENCES users(id),
+                signer_user_id INTEGER REFERENCES usuarios(id),
                 signer_name    TEXT,
                 method         TEXT NOT NULL,
                 status         TEXT DEFAULT 'signed',
@@ -179,9 +186,9 @@ def init_db():
         # Sessões são descartadas a cada início do servidor (logout automático ao fechar janela)
         conn.execute('DELETE FROM sessions')
         # Cria admin padrão se não houver usuários
-        if conn.execute('SELECT COUNT(*) FROM users').fetchone()[0] == 0:
+        if conn.execute('SELECT COUNT(*) FROM usuarios').fetchone()[0] == 0:
             conn.execute(
-                'INSERT INTO users (username,nome,cargo,senha_hash,admin) VALUES (?,?,?,?,1)',
+                'INSERT INTO usuarios (username,nome,cargo,senha_hash,admin) VALUES (?,?,?,?,1)',
                 ('admin', 'Administrador', 'Agente de Contratação', _hash_password('admin123'))
             )
             conn.commit()
@@ -218,7 +225,7 @@ def get_session(token):
         row = conn.execute(
             '''SELECT s.token, s.user_id, s.expires,
                       u.nome, u.username, u.cargo, u.matricula, u.admin, u.ativo
-               FROM sessions s JOIN users u ON u.id=s.user_id
+               FROM sessions s JOIN usuarios u ON u.id=s.user_id
                WHERE s.token=? AND s.expires>? AND u.ativo=1''',
             (token, time.time())
         ).fetchone()
@@ -461,11 +468,11 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
             self._json(200, {'brasao_dataurl': row['value'] if row else ''})
 
         # Usuários (admin)
-        elif p == '/api/users':
+        elif p == '/api/usuarios':
             if not s['admin']: self._json(403, {'error': 'Acesso restrito'}); return
             with get_db() as conn:
                 rows = conn.execute(
-                    'SELECT id,username,nome,cargo,matricula,admin,ativo,criado_em FROM users'
+                    'SELECT id,username,nome,cargo,matricula,admin,ativo,criado_em FROM usuarios'
                 ).fetchall()
             self._json(200, [dict(r) for r in rows])
 
@@ -586,7 +593,7 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
             if not s['admin']: self._json(403, {'error': 'Acesso restrito'}); return
             self._save_settings(data)
 
-        elif p == '/api/users':
+        elif p == '/api/usuarios':
             if not s['admin']: self._json(403, {'error': 'Acesso restrito'}); return
             self._create_user(data)
 
@@ -654,7 +661,7 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
                        'smtp_ignore_ssl', 'smtp_user', 'smtp_pass', 'smtp_from_name', 'smtp_to'}
             # _save_settings() já ignora valores vazios, então smtp_pass em branco preserva a senha salva
             self._save_settings({k: v for k, v in data.items() if k in allowed})
-        elif re.fullmatch(r'/api/users/[^/]+', p):
+        elif re.fullmatch(r'/api/usuarios/[^/]+', p):
             uid = int(p.split('/')[-1])
             if not s['admin']:
                 if uid != s['user_id']:
@@ -712,13 +719,13 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
                     conn.execute('DELETE FROM files WHERE id=?', (fid,))
             self._json(200, {'ok': True})
 
-        elif re.fullmatch(r'/api/users/[^/]+', p):
+        elif re.fullmatch(r'/api/usuarios/[^/]+', p):
             if not s['admin']: self._json(403, {'error': 'Acesso restrito'}); return
             uid = int(p.split('/')[-1])
             if uid == s['user_id']:
                 self._json(400, {'error': 'Não é possível excluir o próprio usuário'}); return
             with get_db() as conn:
-                conn.execute('DELETE FROM users WHERE id=?', (uid,))
+                conn.execute('DELETE FROM usuarios WHERE id=?', (uid,))
             self._json(200, {'ok': True})
 
         elif p == '/api/processes/all':
@@ -796,7 +803,7 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
 
         with get_db() as conn:
             row = conn.execute(
-                'SELECT * FROM users WHERE username=? COLLATE NOCASE AND ativo=1', (username,)
+                'SELECT * FROM usuarios WHERE username=? COLLATE NOCASE AND ativo=1', (username,)
             ).fetchone()
 
         if not row or not _verify_password(password, row['senha_hash']):
@@ -1231,7 +1238,7 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         try:
             with get_db() as conn:
                 conn.execute(
-                    'INSERT INTO users (username,nome,cargo,matricula,senha_hash,admin) VALUES (?,?,?,?,?,?)',
+                    'INSERT INTO usuarios (username,nome,cargo,matricula,senha_hash,admin) VALUES (?,?,?,?,?,?)',
                     (username, nome, data.get('cargo'), data.get('matricula'),
                      _hash_password(password), int(bool(data.get('admin'))))
                 )
@@ -1242,7 +1249,7 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
 
     def _update_user(self, uid, data, s):
         with get_db() as conn:
-            if not conn.execute('SELECT 1 FROM users WHERE id=?', (uid,)).fetchone():
+            if not conn.execute('SELECT 1 FROM usuarios WHERE id=?', (uid,)).fetchone():
                 self._json(404, {'error': 'Usuário não encontrado'}); return
             fields, params = [], []
             for col in ('nome', 'cargo', 'matricula'):
@@ -1253,12 +1260,12 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
                 if len(data['password']) < 6:
                     self._json(400, {'error': 'Senha mínima: 6 caracteres'}); return
                 if 'old_password' in data:
-                    row = conn.execute('SELECT senha_hash FROM users WHERE id=?', (uid,)).fetchone()
+                    row = conn.execute('SELECT senha_hash FROM usuarios WHERE id=?', (uid,)).fetchone()
                     if not row or not _verify_password(data['old_password'], row['senha_hash']):
                         self._json(403, {'error': 'Senha atual incorreta'}); return
                 fields.append('senha_hash=?'); params.append(_hash_password(data['password']))
             if fields:
-                conn.execute(f'UPDATE users SET {",".join(fields)} WHERE id=?', params + [uid])
+                conn.execute(f'UPDATE usuarios SET {",".join(fields)} WHERE id=?', params + [uid])
         self._json(200, {'ok': True})
 
     # ── Backup ────────────────────────────────────────────────────────────────

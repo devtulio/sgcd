@@ -178,7 +178,7 @@ class TestAudit(SGCDTestCase):
     def test_bulk_de_auditoria_exige_admin(self):
         # cria usuário não-admin e confirma que /api/audit/bulk nega acesso
         admin_token = self.login()
-        status, _ = self.request('POST', '/api/users', {
+        status, _ = self.request('POST', '/api/usuarios', {
             'username': 'comum', 'nome': 'Usuário Comum', 'password': 'senha123', 'admin': False
         }, token=admin_token)
         self.assertEqual(status, 200)
@@ -200,12 +200,12 @@ class TestSettingsAndUsers(SGCDTestCase):
 
     def test_usuario_comum_nao_pode_criar_usuario(self):
         admin_token = self.login()
-        self.request('POST', '/api/users', {
+        self.request('POST', '/api/usuarios', {
             'username': 'user2', 'nome': 'Outro Usuário', 'password': 'senha123', 'admin': False
         }, token=admin_token)
         user_token = self.login('user2', 'senha123')
 
-        status, data = self.request('POST', '/api/users', {
+        status, data = self.request('POST', '/api/usuarios', {
             'username': 'user3', 'nome': 'Terceiro', 'password': 'senha123', 'admin': False
         }, token=user_token)
         self.assertEqual(status, 403)
