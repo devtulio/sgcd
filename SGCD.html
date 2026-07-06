@@ -10,25 +10,31 @@
     --brand:        #1a3a6b;
     --brand-light:  #e8eef7;
     --brand-dark:   #102855;
-    --aubergine:    #1a3a6b;
-    --aubergine-mid:#2a5298;
+    --accent:       #1a3a6b;
+    --accent-light: #2a5298;
     --success:      #15803d;
     --success-light:#dcfce7;
     --warning:      #d97706;
     --warning-light:#fef3c7;
     --danger:       #dc2626;
     --danger-light: #fee2e2;
+    --green:  #15803d; --green-bg:  #dcfce7;
+    --red:    #dc2626; --red-bg:    #fee2e2;
+    --yellow: #d97706; --yellow-bg: #fef3c7;
     --gray-50:      #f9fafb;
     --gray-100:     #f3f4f6;
     --gray-200:     #e5e7eb;
     --gray-300:     #d1d5db;
     --gray-400:     #9ca3af;
     --gray-500:     #6b7280;
+    --gray-600:     #4b5563;
     --gray-700:     #374151;
+    --gray-800:     #1f2937;
     --gray-900:     #111827;
     --radius: 8px;
     --shadow: 0 1px 3px rgba(0,0,0,.10), 0 1px 2px rgba(0,0,0,.06);
     --shadow-md: 0 4px 6px rgba(0,0,0,.07), 0 2px 4px rgba(0,0,0,.06);
+    --shadow-lg: 0 10px 25px rgba(0,0,0,.12);
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -42,22 +48,22 @@
     --brand:        #0066CC;
     --brand-light:  #e0eeff;
     --brand-dark:   #0052a3;
-    --aubergine:    #0052a3;
-    --aubergine-mid:#0066CC;
+    --accent:       #0052a3;
+    --accent-light: #0066CC;
   }
   html.tema-verde {
     --brand:        #1a7a3c;
     --brand-light:  #dcfce7;
     --brand-dark:   #145e2d;
-    --aubergine:    #145e2d;
-    --aubergine-mid:#1a7a3c;
+    --accent:       #145e2d;
+    --accent-light: #1a7a3c;
   }
   html.tema-roxo {
     --brand:        #5E2750;
     --brand-light:  #f5edf3;
     --brand-dark:   #44193a;
-    --aubergine:    #44193a;
-    --aubergine-mid:#5E2750;
+    --accent:       #44193a;
+    --accent-light: #5E2750;
   }
 
   body {
@@ -71,7 +77,7 @@
   /* ── Sidebar (estilo SGDP) ───────────────────────────── */
   #sidebar {
     position: fixed; left: 0; top: 0; bottom: 0; width: 220px;
-    background: var(--aubergine); color: #fff;
+    background: var(--accent); color: #fff;
     display: flex; flex-direction: column; overflow-y: auto; z-index: 90;
   }
   .sidebar-logo {
@@ -472,7 +478,7 @@
   .sidebar-card h4 {
     padding: 10px 16px; font-size: .75rem; font-weight: 700; text-transform: uppercase;
     letter-spacing: .6px; color: #fff; border-bottom: 2px solid var(--brand);
-    background: var(--aubergine-mid);
+    background: var(--accent-light);
   }
   .sidebar-card .body { padding: 12px 16px; }
 
@@ -518,7 +524,7 @@
   .modal-header {
     padding: 16px 24px; display: flex; justify-content: space-between; align-items: center;
     border-bottom: 3px solid var(--brand); position: sticky; top: 0;
-    background: var(--aubergine); z-index: 1; border-radius: 12px 12px 0 0;
+    background: var(--accent); z-index: 1; border-radius: 12px 12px 0 0;
   }
   .modal-header h2, .modal-header h3 { font-size: .9rem; font-weight: 500; color: #fff; letter-spacing: .8px; }
   .modal-header .btn-ghost { color: rgba(255,255,255,.7); }
@@ -612,19 +618,19 @@
     display: flex; flex-direction: column; gap: 8px; pointer-events: none;
   }
   .toast-msg {
-    background: var(--aubergine); color: #fff; padding: 10px 16px;
+    background: var(--accent); color: #fff; padding: 10px 16px;
     border-radius: var(--radius); font-size: .8rem; box-shadow: var(--shadow-md);
     animation: slideIn .2s ease; max-width: 320px;
     border-left: 4px solid var(--brand);
   }
-  .toast-msg.success { background: var(--aubergine); border-color: var(--success); }
-  .toast-msg.error   { background: var(--aubergine); border-color: var(--danger); }
+  .toast-msg.success { background: var(--accent); border-color: var(--success); }
+  .toast-msg.error   { background: var(--accent); border-color: var(--danger); }
   @keyframes slideIn { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
   /* scrollbar */
   ::-webkit-scrollbar { width: 8px; height: 8px; }
   ::-webkit-scrollbar-track { background: var(--gray-100); }
-  ::-webkit-scrollbar-thumb { background: var(--aubergine-mid); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb { background: var(--accent-light); border-radius: 4px; }
   ::-webkit-scrollbar-thumb:hover { background: var(--brand); }
 
   /* ── Propostas ───────────────────────────────────── */
@@ -849,7 +855,7 @@
   .forn-qsa { padding: 8px 12px; border-top: 1px solid var(--gray-100); }
   .forn-qsa-title { font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--gray-500); margin-bottom: 4px; }
   .forn-qsa-item { font-size: .75rem; color: var(--gray-700); padding: 2px 0; }
-  .cnpj-strip { display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: var(--aubergine); border-radius: var(--radius); margin-bottom: 10px; }
+  .cnpj-strip { display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: var(--accent); border-radius: var(--radius); margin-bottom: 10px; }
   .cnpj-strip span { font-size: .75rem; color: rgba(255,255,255,.7); }
   .cnpj-strip strong { color: #fff; font-size: .8rem; letter-spacing: .5px; }
 
@@ -1037,7 +1043,7 @@
 <a href="#app" class="skip-link">Ir para o conteúdo principal</a>
 
 
-<nav id="sidebar" aria-label="Navegação principal">
+<aside id="sidebar" aria-label="Navegação principal">
   <div class="sidebar-logo">
     <img id="sidebar-brasao" alt="" class="sidebar-brasao" style="display:none" onerror="this.style.display='none'">
     <div class="s-title">SGCD</div>
@@ -1054,7 +1060,7 @@
   </div>
   <div class="sidebar-date" id="sidebar-date"></div>
 
-  <div class="sidebar-nav">
+  <nav class="sidebar-nav">
     <div class="nav-section">Principal</div>
     <button class="nav-item active" id="nav-dash" onclick="showDash()">
       <span class="nav-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></span>
@@ -1091,7 +1097,7 @@
       <span class="nav-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></span>
       Configurações
     </button>
-  </div>
+  </nav>
 
   <div class="sidebar-user">
     <div class="user-avatar" id="sidebar-avatar">?</div>
@@ -1106,7 +1112,7 @@
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
     </button>
   </div>
-</nav>
+</aside>
 
 <div id="app">
   <!-- ── Dashboard ── -->
@@ -1421,7 +1427,7 @@
         <div class="detail-meta" id="d-meta"></div>
       </div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <button class="btn btn-outline btn-sm" onclick="gerarAta()" style="border-color:var(--aubergine-mid);color:var(--aubergine-mid)">&#128196; Gerar Ata</button>
+        <button class="btn btn-outline btn-sm" onclick="gerarAta()" style="border-color:var(--accent-light);color:var(--accent-light)">&#128196; Gerar Ata</button>
         <button class="btn btn-outline btn-sm" onclick="verificarConformidade()" style="border-color:#7c3aed;color:#7c3aed">✔ Conformidade</button>
         <button class="btn btn-outline btn-sm" id="btn-toggle-sidebar-detail" onclick="toggleDetailSidebar()" title="Mostrar/ocultar painel de informações">⊟ Painel</button>
         <button class="btn btn-outline btn-sm" onclick="salvarComoTemplate()" title="Salvar este processo como modelo reutilizável">⊞ Modelo</button>
@@ -1614,7 +1620,7 @@
       <div class="cfg-panel active" id="cfg-interface">
 
         <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
-          <legend style="font-size:.72rem;font-weight:700;color:var(--aubergine-mid);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Tema de aparência</legend>
+          <legend style="font-size:.72rem;font-weight:700;color:var(--accent-light);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Tema de aparência</legend>
           <div class="info-field">
             <select id="s-dark-mode">
               <option value="light">Claro — fundo branco</option>
@@ -1625,7 +1631,7 @@
         </fieldset>
 
         <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
-          <legend style="font-size:.72rem;font-weight:700;color:var(--aubergine-mid);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Largura do conteúdo</legend>
+          <legend style="font-size:.72rem;font-weight:700;color:var(--accent-light);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Largura do conteúdo</legend>
           <div class="info-field">
             <select id="s-layout-width">
               <option value="compacto">Compacta — margens laterais confortáveis</option>
@@ -1636,7 +1642,7 @@
         </fieldset>
 
         <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
-          <legend style="font-size:.72rem;font-weight:700;color:var(--aubergine-mid);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Tamanho da fonte</legend>
+          <legend style="font-size:.72rem;font-weight:700;color:var(--accent-light);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Tamanho da fonte</legend>
           <div class="info-field">
             <select id="s-font-size">
               <option value="normal">Normal — padrão do sistema</option>
@@ -1648,7 +1654,7 @@
         </fieldset>
 
         <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
-          <legend style="font-size:.72rem;font-weight:700;color:var(--aubergine-mid);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Cor de destaque</legend>
+          <legend style="font-size:.72rem;font-weight:700;color:var(--accent-light);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Cor de destaque</legend>
           <div class="info-field">
             <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px">
               <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.82rem">
@@ -1677,7 +1683,7 @@
         </fieldset>
 
         <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
-          <legend style="font-size:.72rem;font-weight:700;color:var(--aubergine-mid);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Barra lateral</legend>
+          <legend style="font-size:.72rem;font-weight:700;color:var(--accent-light);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Barra lateral</legend>
           <div class="info-field">
             <select id="s-sidebar-mode">
               <option value="compacta">Compacta — somente ícones</option>
@@ -1688,7 +1694,7 @@
         </fieldset>
 
         <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
-          <legend style="font-size:.72rem;font-weight:700;color:var(--aubergine-mid);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Painel de informações (processo)</legend>
+          <legend style="font-size:.72rem;font-weight:700;color:var(--accent-light);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Painel de informações (processo)</legend>
           <div class="info-field">
             <select id="s-detail-sidebar">
               <option value="visivel">Visível — exibe informações ao lado do checklist</option>
@@ -1704,7 +1710,7 @@
         <p style="font-size:.75rem;color:var(--gray-500);margin-bottom:20px">Estas informações serão usadas para pré-preencher os campos de responsável e para subsidiar a geração da Ata.</p>
 
         <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
-          <legend style="font-size:.72rem;font-weight:700;color:var(--aubergine-mid);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Órgão</legend>
+          <legend style="font-size:.72rem;font-weight:700;color:var(--accent-light);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Órgão</legend>
           <div class="info-field"><label>Nome do Órgão</label>
             <input type="text" id="s-orgao" placeholder="Ex: Prefeitura Municipal de Orindiúva"></div>
           <div class="info-field"><label>Município / UF</label>
@@ -1726,7 +1732,7 @@
         </fieldset>
 
         <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
-          <legend style="font-size:.72rem;font-weight:700;color:var(--aubergine-mid);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Autoridade Competente</legend>
+          <legend style="font-size:.72rem;font-weight:700;color:var(--accent-light);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Autoridade Competente</legend>
           <div class="info-field"><label>Nome Completo</label>
             <input type="text" id="s-aut-nome" placeholder="Ex: Maria Souza"></div>
           <div class="info-field"><label>Cargo</label>
@@ -1749,7 +1755,7 @@
         </fieldset>
 
         <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
-          <legend style="font-size:.72rem;font-weight:700;color:var(--aubergine-mid);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Controle de Fracionamento</legend>
+          <legend style="font-size:.72rem;font-weight:700;color:var(--accent-light);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Controle de Fracionamento</legend>
           <div class="info-field">
             <label>Janela temporal de análise</label>
             <select id="s-frac-janela">
@@ -1769,7 +1775,7 @@
       <!-- ── Aba: Comunicação ── -->
       <div class="cfg-panel" id="cfg-comunicacao">
         <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
-          <legend style="font-size:.72rem;font-weight:700;color:var(--aubergine-mid);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">E-mail (SMTP)</legend>
+          <legend style="font-size:.72rem;font-weight:700;color:var(--accent-light);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">E-mail (SMTP)</legend>
           <p style="font-size:.75rem;color:var(--gray-500);margin-bottom:12px;line-height:1.5">Configure o servidor SMTP para envio de notificações. O servidor local (<strong>server.py</strong>) deve estar em execução. As credenciais sincronizam com o servidor (admin) e ficam disponíveis em qualquer navegador da rede.<br><br>
           Assim que configurado, o sistema passa a enviar automaticamente um <strong>resumo diário por e-mail</strong> (prazos vencendo e processos parados há 15+ dias) para o e-mail interno abaixo — mesmo sem ninguém logado.</p>
           <div class="info-field"><label>Servidor SMTP (host)</label><input type="text" id="s-smtp-host" placeholder="ex: smtp.gmail.com"></div>
@@ -1798,7 +1804,7 @@
       <!-- ── Aba: Dados ── -->
       <div class="cfg-panel" id="cfg-dados">
         <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
-          <legend style="font-size:.72rem;font-weight:700;color:var(--aubergine-mid);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Backup de Dados</legend>
+          <legend style="font-size:.72rem;font-weight:700;color:var(--accent-light);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Backup de Dados</legend>
 
           <!-- Pasta de backup -->
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
@@ -1891,7 +1897,7 @@
       <!-- ── Aba: Segurança ── -->
       <div class="cfg-panel" id="cfg-seguranca">
         <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
-          <legend style="font-size:.72rem;font-weight:700;color:var(--aubergine-mid);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Alterar Minha Senha</legend>
+          <legend style="font-size:.72rem;font-weight:700;color:var(--accent-light);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Alterar Minha Senha</legend>
           <div class="info-field">
             <label>Senha atual</label>
             <input type="password" id="s-senha-atual" placeholder="••••••••" autocomplete="current-password">
@@ -1985,7 +1991,7 @@
   <div id="pin-card" style="position:relative;z-index:1;background:#fff;border-radius:16px;width:380px;overflow:hidden;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
 
     <!-- Cabeçalho institucional -->
-    <div style="background:var(--aubergine);padding:28px 32px 24px;text-align:center">
+    <div style="background:var(--accent);padding:28px 32px 24px;text-align:center">
       <div style="width:52px;height:52px;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.3);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:22px">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e8eef7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M9 8h1"/><path d="M9 12h1"/><path d="M9 16h1"/><path d="M14 8h1"/><path d="M14 12h1"/><path d="M14 16h1"/><path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"/></svg>
       </div>
@@ -2002,7 +2008,7 @@
 
       <!-- Card do órgão -->
       <div id="pin-orgao-info" style="display:flex;align-items:center;gap:9px;background:#e8eef7;border:1px solid rgba(26,58,107,.2);border-radius:8px;padding:10px 12px;margin-bottom:22px">
-        <div id="pin-orgao-avatar" style="width:30px;height:30px;border-radius:6px;background:var(--aubergine);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0">PM</div>
+        <div id="pin-orgao-avatar" style="width:30px;height:30px;border-radius:6px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0">PM</div>
         <div style="flex:1;min-width:0">
           <div id="pin-orgao-nome" style="font-size:12px;font-weight:600;color:#102855;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Prefeitura Municipal</div>
           <div style="font-size:10px;color:#666360;margin-top:1px">Agente de Contratação — área restrita</div>
@@ -2017,21 +2023,21 @@
       </div>
 
       <!-- Campo usuário -->
-      <label style="display:block;font-size:11px;font-weight:600;color:var(--aubergine);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px" for="pin-username">Usuário</label>
+      <label style="display:block;font-size:11px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px" for="pin-username">Usuário</label>
       <input type="text" id="pin-username" placeholder="Nome de usuário" autocomplete="username"
         style="width:100%;height:44px;border:1.5px solid #d9d9d9;border-radius:8px;padding:0 14px;font-size:15px;color:#1a1a1a;background:#f9f8f8;outline:none;font-family:inherit;transition:border-color .15s,box-shadow .15s;margin-bottom:14px"
         onkeydown="if(event.key==='Enter')document.getElementById('pin-input').focus()"
-        onfocus="this.style.borderColor=getComputedStyle(document.documentElement).getPropertyValue('--aubergine').trim();this.style.boxShadow='0 0 0 3px var(--brand-light)';this.style.background='#fff'"
+        onfocus="this.style.borderColor=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();this.style.boxShadow='0 0 0 3px var(--brand-light)';this.style.background='#fff'"
         onblur="this.style.borderColor='#d9d9d9';this.style.boxShadow='none';this.style.background='#f9f8f8'">
 
       <!-- Campo senha -->
-      <label style="display:block;font-size:11px;font-weight:600;color:var(--aubergine);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px" for="pin-input">Senha de acesso</label>
+      <label style="display:block;font-size:11px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px" for="pin-input">Senha de acesso</label>
       <div style="position:relative;margin-bottom:20px">
         <input type="password" id="pin-input" placeholder="Digite sua senha" autocomplete="current-password"
           style="width:100%;height:44px;border:1.5px solid #d9d9d9;border-radius:8px;padding:0 44px 0 14px;font-size:15px;color:#1a1a1a;background:#f9f8f8;outline:none;font-family:inherit;letter-spacing:.15em;transition:border-color .15s,box-shadow .15s"
           onkeydown="if(event.key==='Enter')verificarSenha();_pinCheckCaps(event)"
           onkeyup="_pinCheckCaps(event)"
-          onfocus="_pinCheckCaps(event);this.style.borderColor=getComputedStyle(document.documentElement).getPropertyValue('--aubergine').trim();this.style.boxShadow='0 0 0 3px var(--brand-light)';this.style.background='#fff'"
+          onfocus="_pinCheckCaps(event);this.style.borderColor=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();this.style.boxShadow='0 0 0 3px var(--brand-light)';this.style.background='#fff'"
           onblur="document.getElementById('pin-caps-warn').style.display='none';this.style.borderColor='#d9d9d9';this.style.boxShadow='none';this.style.background='#f9f8f8'">
         <button onclick="_pinToggleOlho()" tabindex="-1" aria-label="Mostrar ou ocultar senha"
           style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#aea79f;padding:4px;line-height:1;font-size:0">
@@ -2044,8 +2050,8 @@
       </div>
 
       <!-- Botão entrar -->
-      <button onclick="verificarSenha()" style="width:100%;height:46px;background:var(--aubergine);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.04em;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:16px;transition:background .15s"
-        onmouseover="this.style.background=getComputedStyle(document.documentElement).getPropertyValue('--brand-dark').trim()" onmouseout="this.style.background=getComputedStyle(document.documentElement).getPropertyValue('--aubergine').trim()">
+      <button onclick="verificarSenha()" style="width:100%;height:46px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.04em;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:16px;transition:background .15s"
+        onmouseover="this.style.background=getComputedStyle(document.documentElement).getPropertyValue('--brand-dark').trim()" onmouseout="this.style.background=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
         Entrar no sistema
       </button>
@@ -2490,10 +2496,11 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.17.5';
-const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-  ? 'http://localhost:3000'
-  : window.location.origin;
+const SGCD_VERSION = '2.18.0';
+// URL absoluta (não relativa) porque API_BASE também monta o texto do QR Code
+// de verificação de assinatura, lido por celular fora do navegador — precisa
+// da origem real, nunca uma porta fixa (era 'http://localhost:3000' hardcoded).
+const API_BASE = window.location.origin;
 document.title = `SGCD v${SGCD_VERSION}`;
 // ── API wrapper (REST) ────────────────────────────────────────
 let _apiToken = localStorage.getItem('sgcd-token') || null;
@@ -2551,126 +2558,100 @@ async function fecharSistema() {
 // ── Camada de compatibilidade IDB → REST API ──────────────────
 // Mantém assinaturas idênticas ao código existente.
 
-async function dbGetAll(store) {
-  if (store === 'processes') {
-    const r = await API.get('/api/processes?per=2000');
-    const d = await API.json(r);
-    return d?.items || [];
-  }
-  if (store === 'fornecedores') {
-    const r = await API.get('/api/fornecedores?per=2000');
-    const d = await API.json(r);
-    return d?.items || [];
-  }
-  if (store === 'auditGlobal') {
-    const r = await API.get('/api/audit?per=2000');
-    const d = await API.json(r);
-    return (d?.items || []).map(a => ({
-      id: a.id, ts: a.ts,
-      at: a.ts ? new Date(a.ts).getTime() : Date.now(),
-      userId: a.user_id, userName: a.user_nome,
-      usuario: a.user_nome,
-      type: a.type, evento: a.type, label: a.label,
-      detail: a.detail, detalhe: a.detail,
-      processId: a.process_id,
-      processObj: a.process_obj ? JSON.parse(a.process_obj) : null
-    }));
-  }
-  if (store === 'files') {
-    return []; // arquivos são buscados por processo via dbGetByIndex
-  }
-  return [];
+// ── Acesso a dados (chama a REST API direto, sem camada intermediária) ──
+
+async function listarProcessos() {
+  const r = await API.get('/api/processes?per=2000');
+  const d = await API.json(r);
+  return d?.items || [];
+}
+async function buscarProcesso(id) {
+  const r = await API.get(`/api/processes/${id}`);
+  return r?.ok ? API.json(r) : null;
+}
+async function salvarProcesso(data) {
+  const r = await API.put(`/api/processes/${data.id}`, data);
+  return r?.ok ? API.json(r) : data;
+}
+async function excluirProcesso(id) {
+  await API.del(`/api/processes/${id}`);
 }
 
-async function dbGet(store, key) {
-  if (store === 'processes') {
-    const r = await API.get(`/api/processes/${key}`);
-    return r?.ok ? API.json(r) : null;
-  }
-  if (store === 'fornecedores') {
-    const r = await API.get(`/api/fornecedores/${key}`);
-    return r?.ok ? API.json(r) : null;
-  }
-  if (store === 'files') {
-    // Retorna apenas metadados (name/type) — conteúdo é buscado em downloadFile()
-    const r = await API.get(`/api/files/${key}/meta`);
-    if (!r?.ok) return { id: key, name: String(key) };
-    return API.json(r);
-  }
-  return null;
+async function listarFornecedores() {
+  const r = await API.get('/api/fornecedores?per=2000');
+  const d = await API.json(r);
+  return d?.items || [];
+}
+async function buscarFornecedor(id) {
+  const r = await API.get(`/api/fornecedores/${id}`);
+  return r?.ok ? API.json(r) : null;
+}
+async function salvarFornecedor(data) {
+  const r = await API.put(`/api/fornecedores/${data.id}`, data);
+  return r?.ok ? API.json(r) : data;
+}
+async function excluirFornecedor(id) {
+  await API.del(`/api/fornecedores/${id}`);
 }
 
-async function dbPut(store, data) {
-  if (store === 'processes') {
-    const r = await API.put(`/api/processes/${data.id}`, data);
-    return r?.ok ? API.json(r) : data;
-  }
-  if (store === 'fornecedores') {
-    const r = await API.put(`/api/fornecedores/${data.id}`, data);
-    return r?.ok ? API.json(r) : data;
-  }
-  if (store === 'auditGlobal') {
-    await API.post('/api/audit', data);
-    return data;
-  }
-  if (store === 'files') {
-    // data.data é ArrayBuffer; faz upload multipart
-    const form = new FormData();
-    const blob = new Blob([data.data], { type: data.type || 'application/octet-stream' });
-    form.append('file', blob, data.name);
-    form.append('process_id', data.processId || '');
-    form.append('step_index', String(data.stepIdx ?? ''));
-    form.append('nome_original', data.name || '');
-    form.append('mime', data.type || 'application/octet-stream');
-    form.append('tamanho', String(data.size || 0));
-    const r = await API.upload('/api/files', form);
-    const d = await API.json(r);
-    return d ? { ...data, id: d.id } : data;
-  }
-  return data;
+async function listarAuditGlobal() {
+  const r = await API.get('/api/audit?per=2000');
+  const d = await API.json(r);
+  return (d?.items || []).map(a => ({
+    id: a.id, ts: a.ts,
+    at: a.ts ? new Date(a.ts).getTime() : Date.now(),
+    userId: a.user_id, userName: a.user_nome,
+    usuario: a.user_nome,
+    type: a.type, evento: a.type, label: a.label,
+    detail: a.detail, detalhe: a.detail,
+    processId: a.process_id,
+    processObj: a.process_obj ? JSON.parse(a.process_obj) : null
+  }));
 }
 
-async function dbDelete(store, key) {
-  if (store === 'processes')    await API.del(`/api/processes/${key}`);
-  if (store === 'fornecedores') await API.del(`/api/fornecedores/${key}`);
-  if (store === 'files')        await API.del(`/api/files/${key}`);
-  if (store === 'auditGlobal')  { /* sem endpoint individual */ }
+async function buscarArquivoMeta(id) {
+  // Retorna apenas metadados (name/type) — conteúdo é buscado em downloadFile()
+  const r = await API.get(`/api/files/${id}/meta`);
+  if (!r?.ok) return { id, name: String(id) };
+  return API.json(r);
 }
-
-// dbGetByIndex substituto — usado para buscar arquivos por processo
-async function dbGetByIndex(store, indexName, value) {
-  if (store === 'files' && (indexName === 'processId' || indexName === 'pid')) {
-    const r = await API.get(`/api/files?process_id=${encodeURIComponent(value)}`);
-    const d = await API.json(r);
-    const items = Array.isArray(d) ? d : (d?.items || []);
-    return items.map(f => ({
-      id: f.id, processId: f.process_id, stepIdx: f.step_index,
-      name: f.nome_original, type: f.mime, size: f.tamanho,
-      _serverFile: true
-    }));
-  }
-  return [];
+async function uploadArquivo(data) {
+  // data.data é ArrayBuffer; faz upload multipart
+  const form = new FormData();
+  const blob = new Blob([data.data], { type: data.type || 'application/octet-stream' });
+  form.append('file', blob, data.name);
+  form.append('process_id', data.processId || '');
+  form.append('step_index', String(data.stepIdx ?? ''));
+  form.append('nome_original', data.name || '');
+  form.append('mime', data.type || 'application/octet-stream');
+  form.append('tamanho', String(data.size || 0));
+  const r = await API.upload('/api/files', form);
+  const d = await API.json(r);
+  return d ? { ...data, id: d.id } : data;
 }
-
-async function dbGetByIndexPrefix(store, indexName, prefix) {
-  if (store === 'files') {
-    const r = await API.get(`/api/files?process_id=${encodeURIComponent(prefix)}&prefix=1`);
-    const d = await API.json(r);
-    const items = Array.isArray(d) ? d : (d?.items || []);
-    return items.map(f => ({
-      id: f.id, processId: f.process_id, stepIdx: f.step_index,
-      name: f.nome_original, type: f.mime, size: f.tamanho,
-      _serverFile: true
-    }));
-  }
-  return dbGetByIndex(store, indexName, prefix);
+async function excluirArquivo(id) {
+  await API.del(`/api/files/${id}`);
 }
-
-// initDB não é mais necessário (SQLite no servidor), mantido como no-op
-async function initDB() { return Promise.resolve(); }
-let db = null; // compatibilidade — não usado
-
-const DB_NAME = '__sgcd_api__', DB_VER = 4; // compat stubs
+async function buscarArquivosPorProcesso(processId) {
+  const r = await API.get(`/api/files?process_id=${encodeURIComponent(processId)}`);
+  const d = await API.json(r);
+  const items = Array.isArray(d) ? d : (d?.items || []);
+  return items.map(f => ({
+    id: f.id, processId: f.process_id, stepIdx: f.step_index,
+    name: f.nome_original, type: f.mime, size: f.tamanho,
+    _serverFile: true
+  }));
+}
+async function buscarArquivosPorPrefixo(prefix) {
+  const r = await API.get(`/api/files?process_id=${encodeURIComponent(prefix)}&prefix=1`);
+  const d = await API.json(r);
+  const items = Array.isArray(d) ? d : (d?.items || []);
+  return items.map(f => ({
+    id: f.id, processId: f.process_id, stepIdx: f.step_index,
+    name: f.nome_original, type: f.mime, size: f.tamanho,
+    _serverFile: true
+  }));
+}
 
 // ── Tratamento global de erros JS ──────────────────────────────
 let _globalErrorCount = 0;
@@ -2758,7 +2739,7 @@ async function factoryReset() {
 
   // — Confirmação 3: contagem regressiva com contagem de dados —
   const [processes, fornecedores, files] = await Promise.all([
-    dbGetAll('processes'), dbGetAll('fornecedores'),
+    listarProcessos(), listarFornecedores(),
     API.json(await API.get('/api/files?per=1')).then(d => d?.total ?? 0).catch(() => 0)
   ]);
   const fileCount = files; // files é agora o count (número)
@@ -2833,7 +2814,7 @@ async function exportBackup() {
   try {
     // Obtém contagem prévia para informar o usuário
     const [processes, fornecedores] = await Promise.all([
-      dbGetAll('processes'), dbGetAll('fornecedores')
+      listarProcessos(), listarFornecedores()
     ]);
     const confirmed = await customConfirm(
       `Prestes a salvar ${processes.length} processo(s) e ${fornecedores.length} fornecedor(es).\n\n💡 Guarde o arquivo em local externo à máquina — pasta de rede, servidor municipal, OneDrive/Google Drive institucional ou repositório do POP — para garantir recuperação em caso de formatação ou falha do equipamento.`,
@@ -2991,7 +2972,7 @@ async function sincronizarBackup(file) {
 
     // Carrega estado atual
     const [procAtual, fornAtual, auditAtual] = await Promise.all([
-      dbGetAll('processes'), dbGetAll('fornecedores'), dbGetAll('auditGlobal')
+      listarProcessos(), listarFornecedores(), listarAuditGlobal()
     ]);
     const procMap  = new Map(procAtual.map(p => [p.id, p]));
     const fornMap  = new Map(fornAtual.map(f => [f.id, f]));
@@ -3056,11 +3037,11 @@ async function sincronizarBackup(file) {
     const falhas = { processos: 0, fornecedores: 0, arquivos: 0, auditoria: 0 };
     const procsMesclados = new Set();
     for (const p of procParaAplicar) {
-      try { await dbPut('processes', p); procsMesclados.add(p.id); }
+      try { await salvarProcesso(p); procsMesclados.add(p.id); }
       catch (e) { falhas.processos++; console.error('Falha ao mesclar processo', p.id, e); }
     }
     for (const f of fornParaAplicar) {
-      try { await dbPut('fornecedores', f); }
+      try { await salvarFornecedor(f); }
       catch (e) { falhas.fornecedores++; console.error('Falha ao mesclar fornecedor', f.id, e); }
     }
 
@@ -3071,12 +3052,12 @@ async function sincronizarBackup(file) {
       if (!f.process_id || !procsMesclados.has(f.process_id)) continue;
       try {
         if (!arquivosPorProcesso.has(f.process_id)) {
-          arquivosPorProcesso.set(f.process_id, await dbGetByIndex('files', 'processId', f.process_id));
+          arquivosPorProcesso.set(f.process_id, await buscarArquivosPorProcesso(f.process_id));
         }
         const jaExiste = arquivosPorProcesso.get(f.process_id)
           .some(existente => existente.name === f.nome_original && existente.size === f.tamanho);
         if (jaExiste || !f.data_b64) continue;
-        await dbPut('files', {
+        await uploadArquivo({
           processId: f.process_id,
           stepIdx:   f.step_index,
           name:      f.nome_original,
@@ -3099,7 +3080,7 @@ async function sincronizarBackup(file) {
 
     // Detecta processos com o mesmo número oficial (num_proc/num_dl) apontando para ids diferentes —
     // cada máquina sugere numeração sequencial própria, então colisão é esperada, não um bug
-    const procsFinais = await dbGetAll('processes');
+    const procsFinais = await listarProcessos();
     const porNumero = new Map();
     for (const p of procsFinais) {
       if (!p.num_proc && !p.num_dl) continue;
@@ -3677,7 +3658,7 @@ function maskMoney(el) {
 // LOAD / SAVE
 // ══════════════════════════════════════════════════════════════
 async function loadProcesses() {
-  processes = await dbGetAll('processes');
+  processes = await listarProcessos();
   processes.sort((a,b) => b.createdAt - a.createdAt);
   fracResultado = analisarFracionamento(processes);
   updateAgendaBadge();
@@ -3705,7 +3686,7 @@ async function saveProcess(p) {
   _showSaveIndicator();
   p.updatedAt = Date.now();
   try {
-    await dbPut('processes', p);
+    await salvarProcesso(p);
     updateAgendaBadge();
   } catch (e) {
     toast('Erro ao salvar. Verifique a conexão com o servidor.', 'error');
@@ -3950,12 +3931,12 @@ async function buscarCnpj(stepIdx) {
   }
 }
 async function saveFornecedor(forn, processId) {
-  const existing = await dbGet('fornecedores', forn.id);
+  const existing = await buscarFornecedor(forn.id);
   const prevProcessos = existing?.processos || [];
   const processos = processId
     ? [...new Set([...prevProcessos, processId])]
     : prevProcessos;
-  await dbPut('fornecedores', {
+  await salvarFornecedor({
     ...(existing || {}),   // preserva campos manuais (obs, email, website, qsa editado etc.)
     ...forn,               // sobrescreve com dados frescos da Receita Federal
     processos,
@@ -4022,7 +4003,7 @@ function limparBuscaForn() {
 }
 
 async function renderFornecedores() {
-  const all = await dbGetAll('fornecedores');
+  const all = await listarFornecedores();
   const q    = (document.getElementById('forn-search')?.value || '').toLowerCase();
   const sort = document.getElementById('forn-sort')?.value || 'recent';
 
@@ -4381,7 +4362,7 @@ const _AUDIT_ICON_SVG = {
 const _AUDIT_EVENT_COLORS = {
   ETAPA_DONE: 'var(--success)', ETAPA_BLOCKED: 'var(--danger)', ETAPA_PENDING: 'var(--warning)',
   ARQUIVO_ANEXADO: '#0ea5e9', ARQUIVO_REMOVIDO: 'var(--danger)',
-  DOCUMENTO_GERADO: 'var(--aubergine-mid)', PROCESSO_EXCLUIDO: 'var(--danger)',
+  DOCUMENTO_GERADO: 'var(--accent-light)', PROCESSO_EXCLUIDO: 'var(--danger)',
   CERTIDAO_ATUALIZADA: '#7c3aed', CERTIDAO_SINCRONIZADA: 'var(--success)',
   FORNECEDOR_ALTERADO: '#0369a1', CAMPO_ALTERADO: 'var(--gray-500)'
 };
@@ -4400,7 +4381,7 @@ async function renderAudit(loadMore = false) {
   const fAte  = document.getElementById('audit-filter-ate')?.value;
   const fUser = (document.getElementById('audit-filter-user')?.value || '').toLowerCase();
 
-  let todos = (await dbGetAll('auditGlobal')).sort((a, b) => b.at - a.at);
+  let todos = (await listarAuditGlobal()).sort((a, b) => b.at - a.at);
   if (fDe || fAte) {
     const tsFrom = fDe ? new Date(fDe + 'T00:00:00').getTime() : null;
     const tsTo   = fAte ? new Date(fAte + 'T23:59:59').getTime() : null;
@@ -4522,7 +4503,7 @@ async function gerarRelatorioAuditoria() {
   const fAte  = document.getElementById('audit-filter-ate')?.value;
   const fUser = (document.getElementById('audit-filter-user')?.value || '').toLowerCase();
 
-  let todos = (await dbGetAll('auditGlobal')).sort((a, b) => b.at - a.at);
+  let todos = (await listarAuditGlobal()).sort((a, b) => b.at - a.at);
   if (fDe || fAte) {
     const tsFrom = fDe ? new Date(fDe + 'T00:00:00').getTime() : null;
     const tsTo   = fAte ? new Date(fAte + 'T23:59:59').getTime() : null;
@@ -5223,7 +5204,7 @@ function _fornViewHtml(f) {
 async function toggleFornCard(id, editMode = false, tab = 'dados') {
   if (_expandedFornId && _expandedFornId !== id) _collapseFornCard(_expandedFornId);
   if (_expandedFornId === id && !editMode) { _collapseFornCard(id); return; }
-  _currentForn = await dbGet('fornecedores', id);
+  _currentForn = await buscarFornecedor(id);
   if (!_currentForn) return;
   _expandedFornId = id;
   _fornTab = tab;
@@ -5521,7 +5502,7 @@ async function _saveFornEdit() {
     entrada: row.querySelector('.fe-qsa-entrada')?.value || ''
   })).filter(s => s.nome);
 
-  await dbPut('fornecedores', _currentForn);
+  await salvarFornecedor(_currentForn);
   const _camposForn = ['razao_social','nome_fantasia','situacao','porte','natureza_juridica','capital_social',
     'logradouro','numero','complemento','bairro','municipio','uf','cep',
     'telefone','telefone2','email','website','opcao_simples','opcao_mei','obs'];
@@ -5583,7 +5564,7 @@ function fmtDateBR(iso) {
 async function renderCertAlerts() {
   const panel = document.getElementById('cert-alert-panel');
   if (!panel) return;
-  const forns = await dbGetAll('fornecedores');
+  const forns = await listarFornecedores();
   const alerts = [];
   for (const f of forns) {
     for (const c of (f.certidoes || [])) {
@@ -5690,7 +5671,7 @@ function _renderFornCerts() { _renderFornCardCerts(); }
 async function _renderFornCardHistorico() {
   _fornTab = 'historico';
   const f = _currentForn;
-  const allProcs = await dbGetAll('processes');
+  const allProcs = await listarProcessos();
   const cnpjDigits = (f.cnpj || '').replace(/\D/g, '');
 
   // Coleta processos onde este fornecedor participou como proponente ou vencedor
@@ -5865,14 +5846,14 @@ async function saveCertEdit() {
   const obs      = document.getElementById('ce-obs').value.trim();
   if (!emissao || !validade) { toast('Informe as datas de emissão e validade.', 'error'); return; }
   const cert = { tipoId, tipoDesc, emissao, validade, obs };
-  const forn = await dbGet('fornecedores', _certEditFornId);
+  const forn = await buscarFornecedor(_certEditFornId);
   if (!forn) return;
   const certs = forn.certidoes || [];
   if (_certEditIdx === -1) certs.push(cert);
   else certs[_certEditIdx] = cert;
   forn.certidoes = certs;
   forn.updatedAt = Date.now();
-  await dbPut('fornecedores', forn);
+  await salvarFornecedor(forn);
   _currentForn = forn;
   closeCertEdit();
   toast('Certidão salva!', 'success');
@@ -5885,11 +5866,11 @@ async function saveCertEdit() {
 async function deleteCert(fornId, idx) {
   const ok = await customConfirm('Esta ação não pode ser desfeita.', { title: 'Excluir certidão?', okLabel: 'Excluir' });
   if (!ok) return;
-  const forn = await dbGet('fornecedores', fornId);
+  const forn = await buscarFornecedor(fornId);
   if (!forn) return;
   forn.certidoes = (forn.certidoes || []).filter((_,i) => i !== idx);
   forn.updatedAt = Date.now();
-  await dbPut('fornecedores', forn);
+  await salvarFornecedor(forn);
   _currentForn = forn;
   toast('Certidão removida.', 'success');
   if (document.getElementById('view-fornecedores').classList.contains('active')) await renderFornecedores();
@@ -6067,7 +6048,7 @@ async function createProcess() {
 // ══════════════════════════════════════════════════════════════
 async function openProcess(id) {
   currentId = id;
-  currentProcess = await dbGet('processes', id);
+  currentProcess = await buscarProcesso(id);
   expandedSteps.clear();
 
   // Pré-preenche campos automáticos em todas as etapas (responsável, autoridade,
@@ -6376,7 +6357,7 @@ async function _buildStepCardHtml(i, p, isNext = false) {
   // Lazy loading: só carrega arquivos/fields quando a etapa está expandida
   let files = [], certFileMap = {}, fileCount = 0, bodyHtml = '';
   if (expanded) {
-    files = await dbGetByIndex('files', 'processId', p.id + '_' + i);
+    files = await buscarArquivosPorProcesso(p.id + '_' + i);
     certFileMap = step.certidoes ? await getCertFilesMap(p.id, i) : {};
     fileCount = files.length;
     bodyHtml = `${renderStepFields(i, step, data, certFileMap)}
@@ -6398,7 +6379,7 @@ async function _buildStepCardHtml(i, p, isNext = false) {
       </div>`;
   } else {
     // Conta arquivos de forma eficiente apenas para exibir no header
-    try { files = await dbGetByIndex('files', 'processId', p.id + '_' + i); fileCount = files.length; } catch {}
+    try { files = await buscarArquivosPorProcesso(p.id + '_' + i); fileCount = files.length; } catch {}
   }
 
   const nextBadge = isNext ? `<span class="step-next-badge" title="Próxima etapa a concluir">▶ Próxima</span>` : '';
@@ -6584,7 +6565,7 @@ function renderCertidoesSection(stepIdx, data, certFileMap = {}) {
   if (forn) {
     const fornId = typeof forn === 'object' ? (forn.id || forn.cnpj_digits) : null;
     if (fornId) {
-      dbGet('fornecedores', fornId).then(fornData => {
+      buscarFornecedor(fornId).then(fornData => {
         if (!fornData?.certidoes?.length) return;
         let changed = false;
         for (const c of CERTIDOES) {
@@ -6762,7 +6743,7 @@ async function _getCertDatesFromForn(certId) {
   const fornId = typeof currentProcess.fornecedor === 'object'
     ? currentProcess.fornecedor.id || currentProcess.fornecedor.cnpj_digits : null;
   if (!fornId) return null;
-  const forn = await dbGet('fornecedores', fornId);
+  const forn = await buscarFornecedor(fornId);
   if (!forn) return null;
   const cert = (forn.certidoes || []).find(c => c.tipoId === certId);
   return cert ? { emissao: cert.emissao, validade: cert.validade } : null;
@@ -6782,7 +6763,7 @@ async function _syncCertToForn(certId, certData) {
   const fornId = typeof currentProcess.fornecedor === 'object'
     ? currentProcess.fornecedor.id || currentProcess.fornecedor.cnpj_digits : null;
   if (!fornId) return;
-  const forn = await dbGet('fornecedores', fornId);
+  const forn = await buscarFornecedor(fornId);
   if (!forn) return;
   const certs = forn.certidoes || [];
   const idx = certs.findIndex(c => c.tipoId === certId);
@@ -6796,7 +6777,7 @@ async function _syncCertToForn(certId, certData) {
   if (idx >= 0) certs[idx] = entry; else certs.push(entry);
   forn.certidoes = certs;
   forn.updatedAt = Date.now();
-  await dbPut('fornecedores', forn);
+  await salvarFornecedor(forn);
   const certNomeSinc = CERTIDOES.find(c => c.id === certId)?.nome || certId;
   await _auditEvento('CERTIDAO_SINCRONIZADA',
     `${certNomeSinc}: datas sincronizadas para o fornecedor ${forn.razao_social} (${forn.cnpj})`, currentProcess?.id);
@@ -6806,19 +6787,19 @@ async function _syncCertToForn(certId, certData) {
 // Migra IDs antigos do CERT_TIPOS para os IDs unificados do CERTIDOES
 async function _migrarStepsParecer() {
   // Insere a etapa "Parecer Jurídico" (índice 5) em processos criados antes da v1.11.3
-  const procs = await dbGetAll('processes');
+  const procs = await listarProcessos();
   for (const p of procs) {
     if (!p.steps || p.steps.length >= STEPS.length) continue;
     const emptyStep = { status: 'pending', fields: {}, completedAt: null };
     p.steps.splice(5, 0, emptyStep);
-    await dbPut('processes', p);
+    await salvarProcesso(p);
   }
 }
 
 async function _migrarFusaoAvisoPublicacao() {
   // Funde as antigas etapas 8 (Aviso) e 9 (Publicação) em uma só (v1.12.1+)
   // Processos com 16 steps precisam ter o step[8] fundido no step[7] e removido
-  const procs = await dbGetAll('processes');
+  const procs = await listarProcessos();
   for (const p of procs) {
     if (!p.steps || p.steps.length < 16) continue;
     const avisoStep  = p.steps[7] || {};
@@ -6832,12 +6813,12 @@ async function _migrarFusaoAvisoPublicacao() {
     }
     p.steps[7] = avisoStep;
     p.steps.splice(8, 1); // remove a antiga etapa de publicação
-    await dbPut('processes', p);
+    await salvarProcesso(p);
   }
 }
 
 async function _migrarCertidoesFornecedores() {
-  const forns = await dbGetAll('fornecedores');
+  const forns = await listarFornecedores();
   for (const forn of forns) {
     if (!forn.certidoes?.length) continue;
     let changed = false;
@@ -6846,12 +6827,12 @@ async function _migrarCertidoesFornecedores() {
       if (novoId) { changed = true; return { ...c, tipoId: novoId }; }
       return c;
     });
-    if (changed) { forn.updatedAt = Date.now(); await dbPut('fornecedores', forn); }
+    if (changed) { forn.updatedAt = Date.now(); await salvarFornecedor(forn); }
   }
 }
 async function getCertFilesMap(processId, stepIdx) {
   const prefix = processId + '_' + stepIdx + '_cert_';
-  const files = await dbGetByIndexPrefix('files', 'processId', prefix);
+  const files = await buscarArquivosPorPrefixo(prefix);
   const map = {};
   for (const f of files) {
     const certId = f.processId.slice(prefix.length);
@@ -6868,7 +6849,7 @@ async function processCertFileList(stepIdx, certId, fileList) {
   const p = currentProcess;
   for (const file of fileList) {
     const buf = await file.arrayBuffer();
-    await dbPut('files', {
+    await uploadArquivo({
       processId: p.id + '_' + stepIdx + '_cert_' + certId,
       stepIdx,
       name: file.name, size: file.size, type: file.type,
@@ -6881,7 +6862,7 @@ async function processCertFileList(stepIdx, certId, fileList) {
 }
 async function deleteCertFile(fileId, stepIdx) {
   if (!await customConfirm('Remover este arquivo?', { title: 'Remover Arquivo', icon: '🗑️', okLabel: 'Remover' })) return;
-  await dbDelete('files', fileId);
+  await excluirArquivo(fileId);
   toast('Arquivo removido.', '');
   expandedSteps.add(stepIdx);
   renderSingleStep(stepIdx);
@@ -7555,7 +7536,7 @@ async function updateProposta(stepIdx, pi, field, value) {
       lista.forEach((p, i) => { if (i !== pi && p.situacao === 'vencedora') p.situacao = 'aceita'; });
       const prop = lista[pi];
       if (prop.fornId) {
-        const forn = await dbGet('fornecedores', prop.fornId);
+        const forn = await buscarFornecedor(prop.fornId);
         if (forn) { currentProcess.fornecedor = forn; await saveProcess(currentProcess); }
       } else if (prop.fornecedor || prop.cnpj) {
         currentProcess.fornecedor = { razao_social: prop.fornecedor||prop.cnpj, cnpj: prop.cnpj||'', cnpj_digits: (prop.cnpj||'').replace(/\D/g,''), situacao:'' };
@@ -7634,7 +7615,7 @@ async function processFileList(stepIdx, fileList) {
       continue;
     }
     const buf = await file.arrayBuffer();
-    await dbPut('files', {
+    await uploadArquivo({
       processId: p.id + '_' + stepIdx,
       stepIdx,
       name: file.name,
@@ -7682,8 +7663,8 @@ async function deleteFile(fileId, stepIdx) {
   if (!await customConfirm('Remover este arquivo?', { title: 'Remover Arquivo', icon: '🗑️', okLabel: 'Remover' })) return;
   // Fix #8: dbGet pode falhar (ex: quota excedida); a deleção não deve depender dessa leitura
   let arq = null;
-  try { arq = await dbGet('files', fileId); } catch {}
-  await dbDelete('files', fileId);
+  try { arq = await buscarArquivoMeta(fileId); } catch {}
+  await excluirArquivo(fileId);
   if (currentProcess) {
     const p = currentProcess;
     if (!p.timeline) p.timeline = [];
@@ -7952,7 +7933,7 @@ async function gerarRelatorioFornecedores() {
   const dtGer = now.toLocaleDateString('pt-BR') + ' às ' + now.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
   const q = (document.getElementById('forn-search')?.value || '').toLowerCase();
 
-  const todos = await dbGetAll('fornecedores');
+  const todos = await listarFornecedores();
   const lista = q
     ? todos.filter(f => (f.razao_social||'').toLowerCase().includes(q) || (f.cnpj_digits||'').includes(q) || (f.nome_fantasia||'').toLowerCase().includes(q))
     : todos;
@@ -8168,7 +8149,7 @@ function fecharPickForn() {
 }
 async function renderPickFornList() {
   const q = document.getElementById('forn-pick-search').value.toLowerCase();
-  const forns = await dbGetAll('fornecedores');
+  const forns = await listarFornecedores();
   const filtered = forns.filter(f => !q || f.razao_social?.toLowerCase().includes(q) || f.cnpj?.includes(q));
   const el = document.getElementById('forn-pick-list');
   if (!filtered.length) { el.innerHTML = '<p style="color:var(--gray-500);font-size:.82rem">Nenhum fornecedor encontrado.</p>'; return; }
@@ -8180,7 +8161,7 @@ async function renderPickFornList() {
 async function pickFornForProposta(fornId) {
   if (!_pickFornTarget) return;
   const { stepIdx, pi } = _pickFornTarget;
-  const forn = await dbGet('fornecedores', fornId);
+  const forn = await buscarFornecedor(fornId);
   if (!forn) return;
   const lista = getPropostas(stepIdx);
   lista[pi].fornecedor = forn.razao_social;
@@ -10538,7 +10519,7 @@ async function _auditEvento(evento, detalhe, processId) {
     processId: processId || null,
     usuario: _getAuditor()
   };
-  try { await dbPut('auditGlobal', entry); } catch (e) { console.warn('Falha ao gravar auditoria:', e); }
+  try { await API.post('/api/audit', entry); } catch (e) { console.warn('Falha ao gravar auditoria:', e); }
   return entry;
 }
 
@@ -10554,7 +10535,7 @@ async function alterarMinhaSenha() {
   if (!nova)  { show('Digite a nova senha.', false); return; }
   if (nova !== confirma) { show('As senhas não coincidem.', false); return; }
 
-  const r = await API.req('PUT', `/api/users/${_apiUser.id}`, { old_password: atual, password: nova });
+  const r = await API.req('PUT', `/api/usuarios/${_apiUser.id}`, { old_password: atual, password: nova });
   if (!r.ok) { show((await r.json()).error || 'Erro ao alterar senha.', false); return; }
   document.getElementById('s-senha-atual').value = '';
   document.getElementById('s-senha-nova').value = '';
@@ -10906,8 +10887,8 @@ async function runDiagnostico() {
   if (!el) return;
   el.innerHTML = '<p style="color:var(--gray-400);font-style:italic">Analisando…</p>';
 
-  const procs = await dbGetAll('processes');
-  const forns = await dbGetAll('fornecedores');
+  const procs = await listarProcessos();
+  const forns = await listarFornecedores();
   const issues = [];
   const ok = [];
 
@@ -11206,7 +11187,7 @@ async function renderUsuarios() {
   const el = document.getElementById('usuarios-lista');
   if (!el) return;
   el.innerHTML = '<p style="color:var(--gray-400);font-style:italic">Carregando…</p>';
-  const r = await API.get('/api/users');
+  const r = await API.get('/api/usuarios');
   const users = await API.json(r);
   if (!users) { el.innerHTML = '<p style="color:var(--danger)">Erro ao carregar usuários.</p>'; return; }
   if (!users.length) { el.innerHTML = '<p style="color:var(--gray-400)">Nenhum usuário cadastrado.</p>'; return; }
@@ -11245,7 +11226,7 @@ function abrirModalNovoUsuario() {
   _abrirModalUsuario(null);
 }
 async function abrirModalEditarUsuario(id) {
-  const r = await API.get('/api/users');
+  const r = await API.get('/api/usuarios');
   const users = await API.json(r);
   const u = users?.find(x => x.id === id);
   if (u) _abrirModalUsuario(u);
@@ -11311,8 +11292,8 @@ function _abrirModalUsuario(u) {
     if (!payload.username) { toast('Informe o username.', 'error'); return; }
     if (isNew && !senha)   { toast('Informe a senha inicial.', 'error'); return; }
     const r = isNew
-      ? await API.post('/api/users', payload)
-      : await API.put(`/api/users/${u.id}`, payload);
+      ? await API.post('/api/usuarios', payload)
+      : await API.put(`/api/usuarios/${u.id}`, payload);
     if (r?.ok) {
       toast(isNew ? 'Usuário criado!' : 'Usuário atualizado!', 'success');
       document.body.removeChild(overlay);
@@ -11490,7 +11471,7 @@ async function abrirEmailModal() {
 
   // ── Aba Fornecedores: lista de fornecedores cadastrados com checkbox ──
   const fornList = document.getElementById('email-forn-list');
-  const todosForns = await dbGetAll('fornecedores');
+  const todosForns = await listarFornecedores();
   const fornsComEmail = todosForns.filter(f => f.email);
   const fornVinculadoId = typeof p.fornecedor === 'object' ? p.fornecedor?.id : null;
 
@@ -11968,7 +11949,7 @@ async function _buildNotificacoes() {
 
   // Certidões vencendo em 30 dias (lê fornecedores diretamente do IndexedDB)
   try {
-    const allForns = await dbGetAll('fornecedores');
+    const allForns = await listarFornecedores();
     for (const f of allForns) {
       for (const c of (f.certidoes || [])) {
         if (!c.validade) continue;
@@ -12201,7 +12182,7 @@ async function importarCsv() {
         } catch { /* ignora erro de CNPJ individual */ }
       }
 
-      await dbPut('fornecedores', forn);
+      await salvarFornecedor(forn);
       ok++;
     } catch { erros++; }
   }
@@ -12449,10 +12430,9 @@ let _fieldHistCache = { pid: null, data: [] };
 
 async function abrirFieldHist(campoNome, labelExibido, anchorEl) {
   const pid = currentProcess?.id;
-  // Usa índice processId — busca apenas eventos deste processo em vez de todo auditGlobal
   if (_fieldHistCache.pid !== pid) {
     _fieldHistCache.pid  = pid;
-    _fieldHistCache.data = pid ? await dbGetByIndex('auditGlobal', 'processId', pid) : [];
+    _fieldHistCache.data = pid ? (await listarAuditGlobal()).filter(e => e.processId === pid) : [];
   }
   const eventos = _fieldHistCache.data.filter(e =>
     e.evento === 'CAMPO_ALTERADO' &&
@@ -12527,7 +12507,7 @@ async function editarTituloCard(e, id) {
     span.removeEventListener('keydown', onKey);
     const novo = span.textContent.trim();
     if (!novo || novo === orig) { span.textContent = orig; return; }
-    const p = await dbGet('processes', id);
+    const p = await buscarProcesso(id);
     const old = p.objeto;
     p.objeto = novo;
     if (!p.auditLog) p.auditLog = [];
