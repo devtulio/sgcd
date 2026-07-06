@@ -2557,126 +2557,100 @@ async function fecharSistema() {
 // ── Camada de compatibilidade IDB → REST API ──────────────────
 // Mantém assinaturas idênticas ao código existente.
 
-async function dbGetAll(store) {
-  if (store === 'processes') {
-    const r = await API.get('/api/processes?per=2000');
-    const d = await API.json(r);
-    return d?.items || [];
-  }
-  if (store === 'fornecedores') {
-    const r = await API.get('/api/fornecedores?per=2000');
-    const d = await API.json(r);
-    return d?.items || [];
-  }
-  if (store === 'auditGlobal') {
-    const r = await API.get('/api/audit?per=2000');
-    const d = await API.json(r);
-    return (d?.items || []).map(a => ({
-      id: a.id, ts: a.ts,
-      at: a.ts ? new Date(a.ts).getTime() : Date.now(),
-      userId: a.user_id, userName: a.user_nome,
-      usuario: a.user_nome,
-      type: a.type, evento: a.type, label: a.label,
-      detail: a.detail, detalhe: a.detail,
-      processId: a.process_id,
-      processObj: a.process_obj ? JSON.parse(a.process_obj) : null
-    }));
-  }
-  if (store === 'files') {
-    return []; // arquivos são buscados por processo via dbGetByIndex
-  }
-  return [];
+// ── Acesso a dados (chama a REST API direto, sem camada intermediária) ──
+
+async function listarProcessos() {
+  const r = await API.get('/api/processes?per=2000');
+  const d = await API.json(r);
+  return d?.items || [];
+}
+async function buscarProcesso(id) {
+  const r = await API.get(`/api/processes/${id}`);
+  return r?.ok ? API.json(r) : null;
+}
+async function salvarProcesso(data) {
+  const r = await API.put(`/api/processes/${data.id}`, data);
+  return r?.ok ? API.json(r) : data;
+}
+async function excluirProcesso(id) {
+  await API.del(`/api/processes/${id}`);
 }
 
-async function dbGet(store, key) {
-  if (store === 'processes') {
-    const r = await API.get(`/api/processes/${key}`);
-    return r?.ok ? API.json(r) : null;
-  }
-  if (store === 'fornecedores') {
-    const r = await API.get(`/api/fornecedores/${key}`);
-    return r?.ok ? API.json(r) : null;
-  }
-  if (store === 'files') {
-    // Retorna apenas metadados (name/type) — conteúdo é buscado em downloadFile()
-    const r = await API.get(`/api/files/${key}/meta`);
-    if (!r?.ok) return { id: key, name: String(key) };
-    return API.json(r);
-  }
-  return null;
+async function listarFornecedores() {
+  const r = await API.get('/api/fornecedores?per=2000');
+  const d = await API.json(r);
+  return d?.items || [];
+}
+async function buscarFornecedor(id) {
+  const r = await API.get(`/api/fornecedores/${id}`);
+  return r?.ok ? API.json(r) : null;
+}
+async function salvarFornecedor(data) {
+  const r = await API.put(`/api/fornecedores/${data.id}`, data);
+  return r?.ok ? API.json(r) : data;
+}
+async function excluirFornecedor(id) {
+  await API.del(`/api/fornecedores/${id}`);
 }
 
-async function dbPut(store, data) {
-  if (store === 'processes') {
-    const r = await API.put(`/api/processes/${data.id}`, data);
-    return r?.ok ? API.json(r) : data;
-  }
-  if (store === 'fornecedores') {
-    const r = await API.put(`/api/fornecedores/${data.id}`, data);
-    return r?.ok ? API.json(r) : data;
-  }
-  if (store === 'auditGlobal') {
-    await API.post('/api/audit', data);
-    return data;
-  }
-  if (store === 'files') {
-    // data.data é ArrayBuffer; faz upload multipart
-    const form = new FormData();
-    const blob = new Blob([data.data], { type: data.type || 'application/octet-stream' });
-    form.append('file', blob, data.name);
-    form.append('process_id', data.processId || '');
-    form.append('step_index', String(data.stepIdx ?? ''));
-    form.append('nome_original', data.name || '');
-    form.append('mime', data.type || 'application/octet-stream');
-    form.append('tamanho', String(data.size || 0));
-    const r = await API.upload('/api/files', form);
-    const d = await API.json(r);
-    return d ? { ...data, id: d.id } : data;
-  }
-  return data;
+async function listarAuditGlobal() {
+  const r = await API.get('/api/audit?per=2000');
+  const d = await API.json(r);
+  return (d?.items || []).map(a => ({
+    id: a.id, ts: a.ts,
+    at: a.ts ? new Date(a.ts).getTime() : Date.now(),
+    userId: a.user_id, userName: a.user_nome,
+    usuario: a.user_nome,
+    type: a.type, evento: a.type, label: a.label,
+    detail: a.detail, detalhe: a.detail,
+    processId: a.process_id,
+    processObj: a.process_obj ? JSON.parse(a.process_obj) : null
+  }));
 }
 
-async function dbDelete(store, key) {
-  if (store === 'processes')    await API.del(`/api/processes/${key}`);
-  if (store === 'fornecedores') await API.del(`/api/fornecedores/${key}`);
-  if (store === 'files')        await API.del(`/api/files/${key}`);
-  if (store === 'auditGlobal')  { /* sem endpoint individual */ }
+async function buscarArquivoMeta(id) {
+  // Retorna apenas metadados (name/type) — conteúdo é buscado em downloadFile()
+  const r = await API.get(`/api/files/${id}/meta`);
+  if (!r?.ok) return { id, name: String(id) };
+  return API.json(r);
 }
-
-// dbGetByIndex substituto — usado para buscar arquivos por processo
-async function dbGetByIndex(store, indexName, value) {
-  if (store === 'files' && (indexName === 'processId' || indexName === 'pid')) {
-    const r = await API.get(`/api/files?process_id=${encodeURIComponent(value)}`);
-    const d = await API.json(r);
-    const items = Array.isArray(d) ? d : (d?.items || []);
-    return items.map(f => ({
-      id: f.id, processId: f.process_id, stepIdx: f.step_index,
-      name: f.nome_original, type: f.mime, size: f.tamanho,
-      _serverFile: true
-    }));
-  }
-  return [];
+async function uploadArquivo(data) {
+  // data.data é ArrayBuffer; faz upload multipart
+  const form = new FormData();
+  const blob = new Blob([data.data], { type: data.type || 'application/octet-stream' });
+  form.append('file', blob, data.name);
+  form.append('process_id', data.processId || '');
+  form.append('step_index', String(data.stepIdx ?? ''));
+  form.append('nome_original', data.name || '');
+  form.append('mime', data.type || 'application/octet-stream');
+  form.append('tamanho', String(data.size || 0));
+  const r = await API.upload('/api/files', form);
+  const d = await API.json(r);
+  return d ? { ...data, id: d.id } : data;
 }
-
-async function dbGetByIndexPrefix(store, indexName, prefix) {
-  if (store === 'files') {
-    const r = await API.get(`/api/files?process_id=${encodeURIComponent(prefix)}&prefix=1`);
-    const d = await API.json(r);
-    const items = Array.isArray(d) ? d : (d?.items || []);
-    return items.map(f => ({
-      id: f.id, processId: f.process_id, stepIdx: f.step_index,
-      name: f.nome_original, type: f.mime, size: f.tamanho,
-      _serverFile: true
-    }));
-  }
-  return dbGetByIndex(store, indexName, prefix);
+async function excluirArquivo(id) {
+  await API.del(`/api/files/${id}`);
 }
-
-// initDB não é mais necessário (SQLite no servidor), mantido como no-op
-async function initDB() { return Promise.resolve(); }
-let db = null; // compatibilidade — não usado
-
-const DB_NAME = '__sgcd_api__', DB_VER = 4; // compat stubs
+async function buscarArquivosPorProcesso(processId) {
+  const r = await API.get(`/api/files?process_id=${encodeURIComponent(processId)}`);
+  const d = await API.json(r);
+  const items = Array.isArray(d) ? d : (d?.items || []);
+  return items.map(f => ({
+    id: f.id, processId: f.process_id, stepIdx: f.step_index,
+    name: f.nome_original, type: f.mime, size: f.tamanho,
+    _serverFile: true
+  }));
+}
+async function buscarArquivosPorPrefixo(prefix) {
+  const r = await API.get(`/api/files?process_id=${encodeURIComponent(prefix)}&prefix=1`);
+  const d = await API.json(r);
+  const items = Array.isArray(d) ? d : (d?.items || []);
+  return items.map(f => ({
+    id: f.id, processId: f.process_id, stepIdx: f.step_index,
+    name: f.nome_original, type: f.mime, size: f.tamanho,
+    _serverFile: true
+  }));
+}
 
 // ── Tratamento global de erros JS ──────────────────────────────
 let _globalErrorCount = 0;
@@ -2764,7 +2738,7 @@ async function factoryReset() {
 
   // — Confirmação 3: contagem regressiva com contagem de dados —
   const [processes, fornecedores, files] = await Promise.all([
-    dbGetAll('processes'), dbGetAll('fornecedores'),
+    listarProcessos(), listarFornecedores(),
     API.json(await API.get('/api/files?per=1')).then(d => d?.total ?? 0).catch(() => 0)
   ]);
   const fileCount = files; // files é agora o count (número)
@@ -2839,7 +2813,7 @@ async function exportBackup() {
   try {
     // Obtém contagem prévia para informar o usuário
     const [processes, fornecedores] = await Promise.all([
-      dbGetAll('processes'), dbGetAll('fornecedores')
+      listarProcessos(), listarFornecedores()
     ]);
     const confirmed = await customConfirm(
       `Prestes a salvar ${processes.length} processo(s) e ${fornecedores.length} fornecedor(es).\n\n💡 Guarde o arquivo em local externo à máquina — pasta de rede, servidor municipal, OneDrive/Google Drive institucional ou repositório do POP — para garantir recuperação em caso de formatação ou falha do equipamento.`,
@@ -2997,7 +2971,7 @@ async function sincronizarBackup(file) {
 
     // Carrega estado atual
     const [procAtual, fornAtual, auditAtual] = await Promise.all([
-      dbGetAll('processes'), dbGetAll('fornecedores'), dbGetAll('auditGlobal')
+      listarProcessos(), listarFornecedores(), listarAuditGlobal()
     ]);
     const procMap  = new Map(procAtual.map(p => [p.id, p]));
     const fornMap  = new Map(fornAtual.map(f => [f.id, f]));
@@ -3062,11 +3036,11 @@ async function sincronizarBackup(file) {
     const falhas = { processos: 0, fornecedores: 0, arquivos: 0, auditoria: 0 };
     const procsMesclados = new Set();
     for (const p of procParaAplicar) {
-      try { await dbPut('processes', p); procsMesclados.add(p.id); }
+      try { await salvarProcesso(p); procsMesclados.add(p.id); }
       catch (e) { falhas.processos++; console.error('Falha ao mesclar processo', p.id, e); }
     }
     for (const f of fornParaAplicar) {
-      try { await dbPut('fornecedores', f); }
+      try { await salvarFornecedor(f); }
       catch (e) { falhas.fornecedores++; console.error('Falha ao mesclar fornecedor', f.id, e); }
     }
 
@@ -3077,12 +3051,12 @@ async function sincronizarBackup(file) {
       if (!f.process_id || !procsMesclados.has(f.process_id)) continue;
       try {
         if (!arquivosPorProcesso.has(f.process_id)) {
-          arquivosPorProcesso.set(f.process_id, await dbGetByIndex('files', 'processId', f.process_id));
+          arquivosPorProcesso.set(f.process_id, await buscarArquivosPorProcesso(f.process_id));
         }
         const jaExiste = arquivosPorProcesso.get(f.process_id)
           .some(existente => existente.name === f.nome_original && existente.size === f.tamanho);
         if (jaExiste || !f.data_b64) continue;
-        await dbPut('files', {
+        await uploadArquivo({
           processId: f.process_id,
           stepIdx:   f.step_index,
           name:      f.nome_original,
@@ -3105,7 +3079,7 @@ async function sincronizarBackup(file) {
 
     // Detecta processos com o mesmo número oficial (num_proc/num_dl) apontando para ids diferentes —
     // cada máquina sugere numeração sequencial própria, então colisão é esperada, não um bug
-    const procsFinais = await dbGetAll('processes');
+    const procsFinais = await listarProcessos();
     const porNumero = new Map();
     for (const p of procsFinais) {
       if (!p.num_proc && !p.num_dl) continue;
@@ -3683,7 +3657,7 @@ function maskMoney(el) {
 // LOAD / SAVE
 // ══════════════════════════════════════════════════════════════
 async function loadProcesses() {
-  processes = await dbGetAll('processes');
+  processes = await listarProcessos();
   processes.sort((a,b) => b.createdAt - a.createdAt);
   fracResultado = analisarFracionamento(processes);
   updateAgendaBadge();
@@ -3711,7 +3685,7 @@ async function saveProcess(p) {
   _showSaveIndicator();
   p.updatedAt = Date.now();
   try {
-    await dbPut('processes', p);
+    await salvarProcesso(p);
     updateAgendaBadge();
   } catch (e) {
     toast('Erro ao salvar. Verifique a conexão com o servidor.', 'error');
@@ -3956,12 +3930,12 @@ async function buscarCnpj(stepIdx) {
   }
 }
 async function saveFornecedor(forn, processId) {
-  const existing = await dbGet('fornecedores', forn.id);
+  const existing = await buscarFornecedor(forn.id);
   const prevProcessos = existing?.processos || [];
   const processos = processId
     ? [...new Set([...prevProcessos, processId])]
     : prevProcessos;
-  await dbPut('fornecedores', {
+  await salvarFornecedor({
     ...(existing || {}),   // preserva campos manuais (obs, email, website, qsa editado etc.)
     ...forn,               // sobrescreve com dados frescos da Receita Federal
     processos,
@@ -4028,7 +4002,7 @@ function limparBuscaForn() {
 }
 
 async function renderFornecedores() {
-  const all = await dbGetAll('fornecedores');
+  const all = await listarFornecedores();
   const q    = (document.getElementById('forn-search')?.value || '').toLowerCase();
   const sort = document.getElementById('forn-sort')?.value || 'recent';
 
@@ -4406,7 +4380,7 @@ async function renderAudit(loadMore = false) {
   const fAte  = document.getElementById('audit-filter-ate')?.value;
   const fUser = (document.getElementById('audit-filter-user')?.value || '').toLowerCase();
 
-  let todos = (await dbGetAll('auditGlobal')).sort((a, b) => b.at - a.at);
+  let todos = (await listarAuditGlobal()).sort((a, b) => b.at - a.at);
   if (fDe || fAte) {
     const tsFrom = fDe ? new Date(fDe + 'T00:00:00').getTime() : null;
     const tsTo   = fAte ? new Date(fAte + 'T23:59:59').getTime() : null;
@@ -4528,7 +4502,7 @@ async function gerarRelatorioAuditoria() {
   const fAte  = document.getElementById('audit-filter-ate')?.value;
   const fUser = (document.getElementById('audit-filter-user')?.value || '').toLowerCase();
 
-  let todos = (await dbGetAll('auditGlobal')).sort((a, b) => b.at - a.at);
+  let todos = (await listarAuditGlobal()).sort((a, b) => b.at - a.at);
   if (fDe || fAte) {
     const tsFrom = fDe ? new Date(fDe + 'T00:00:00').getTime() : null;
     const tsTo   = fAte ? new Date(fAte + 'T23:59:59').getTime() : null;
@@ -5229,7 +5203,7 @@ function _fornViewHtml(f) {
 async function toggleFornCard(id, editMode = false, tab = 'dados') {
   if (_expandedFornId && _expandedFornId !== id) _collapseFornCard(_expandedFornId);
   if (_expandedFornId === id && !editMode) { _collapseFornCard(id); return; }
-  _currentForn = await dbGet('fornecedores', id);
+  _currentForn = await buscarFornecedor(id);
   if (!_currentForn) return;
   _expandedFornId = id;
   _fornTab = tab;
@@ -5527,7 +5501,7 @@ async function _saveFornEdit() {
     entrada: row.querySelector('.fe-qsa-entrada')?.value || ''
   })).filter(s => s.nome);
 
-  await dbPut('fornecedores', _currentForn);
+  await salvarFornecedor(_currentForn);
   const _camposForn = ['razao_social','nome_fantasia','situacao','porte','natureza_juridica','capital_social',
     'logradouro','numero','complemento','bairro','municipio','uf','cep',
     'telefone','telefone2','email','website','opcao_simples','opcao_mei','obs'];
@@ -5589,7 +5563,7 @@ function fmtDateBR(iso) {
 async function renderCertAlerts() {
   const panel = document.getElementById('cert-alert-panel');
   if (!panel) return;
-  const forns = await dbGetAll('fornecedores');
+  const forns = await listarFornecedores();
   const alerts = [];
   for (const f of forns) {
     for (const c of (f.certidoes || [])) {
@@ -5696,7 +5670,7 @@ function _renderFornCerts() { _renderFornCardCerts(); }
 async function _renderFornCardHistorico() {
   _fornTab = 'historico';
   const f = _currentForn;
-  const allProcs = await dbGetAll('processes');
+  const allProcs = await listarProcessos();
   const cnpjDigits = (f.cnpj || '').replace(/\D/g, '');
 
   // Coleta processos onde este fornecedor participou como proponente ou vencedor
@@ -5871,14 +5845,14 @@ async function saveCertEdit() {
   const obs      = document.getElementById('ce-obs').value.trim();
   if (!emissao || !validade) { toast('Informe as datas de emissão e validade.', 'error'); return; }
   const cert = { tipoId, tipoDesc, emissao, validade, obs };
-  const forn = await dbGet('fornecedores', _certEditFornId);
+  const forn = await buscarFornecedor(_certEditFornId);
   if (!forn) return;
   const certs = forn.certidoes || [];
   if (_certEditIdx === -1) certs.push(cert);
   else certs[_certEditIdx] = cert;
   forn.certidoes = certs;
   forn.updatedAt = Date.now();
-  await dbPut('fornecedores', forn);
+  await salvarFornecedor(forn);
   _currentForn = forn;
   closeCertEdit();
   toast('Certidão salva!', 'success');
@@ -5891,11 +5865,11 @@ async function saveCertEdit() {
 async function deleteCert(fornId, idx) {
   const ok = await customConfirm('Esta ação não pode ser desfeita.', { title: 'Excluir certidão?', okLabel: 'Excluir' });
   if (!ok) return;
-  const forn = await dbGet('fornecedores', fornId);
+  const forn = await buscarFornecedor(fornId);
   if (!forn) return;
   forn.certidoes = (forn.certidoes || []).filter((_,i) => i !== idx);
   forn.updatedAt = Date.now();
-  await dbPut('fornecedores', forn);
+  await salvarFornecedor(forn);
   _currentForn = forn;
   toast('Certidão removida.', 'success');
   if (document.getElementById('view-fornecedores').classList.contains('active')) await renderFornecedores();
@@ -6073,7 +6047,7 @@ async function createProcess() {
 // ══════════════════════════════════════════════════════════════
 async function openProcess(id) {
   currentId = id;
-  currentProcess = await dbGet('processes', id);
+  currentProcess = await buscarProcesso(id);
   expandedSteps.clear();
 
   // Pré-preenche campos automáticos em todas as etapas (responsável, autoridade,
@@ -6382,7 +6356,7 @@ async function _buildStepCardHtml(i, p, isNext = false) {
   // Lazy loading: só carrega arquivos/fields quando a etapa está expandida
   let files = [], certFileMap = {}, fileCount = 0, bodyHtml = '';
   if (expanded) {
-    files = await dbGetByIndex('files', 'processId', p.id + '_' + i);
+    files = await buscarArquivosPorProcesso(p.id + '_' + i);
     certFileMap = step.certidoes ? await getCertFilesMap(p.id, i) : {};
     fileCount = files.length;
     bodyHtml = `${renderStepFields(i, step, data, certFileMap)}
@@ -6404,7 +6378,7 @@ async function _buildStepCardHtml(i, p, isNext = false) {
       </div>`;
   } else {
     // Conta arquivos de forma eficiente apenas para exibir no header
-    try { files = await dbGetByIndex('files', 'processId', p.id + '_' + i); fileCount = files.length; } catch {}
+    try { files = await buscarArquivosPorProcesso(p.id + '_' + i); fileCount = files.length; } catch {}
   }
 
   const nextBadge = isNext ? `<span class="step-next-badge" title="Próxima etapa a concluir">▶ Próxima</span>` : '';
@@ -6590,7 +6564,7 @@ function renderCertidoesSection(stepIdx, data, certFileMap = {}) {
   if (forn) {
     const fornId = typeof forn === 'object' ? (forn.id || forn.cnpj_digits) : null;
     if (fornId) {
-      dbGet('fornecedores', fornId).then(fornData => {
+      buscarFornecedor(fornId).then(fornData => {
         if (!fornData?.certidoes?.length) return;
         let changed = false;
         for (const c of CERTIDOES) {
@@ -6768,7 +6742,7 @@ async function _getCertDatesFromForn(certId) {
   const fornId = typeof currentProcess.fornecedor === 'object'
     ? currentProcess.fornecedor.id || currentProcess.fornecedor.cnpj_digits : null;
   if (!fornId) return null;
-  const forn = await dbGet('fornecedores', fornId);
+  const forn = await buscarFornecedor(fornId);
   if (!forn) return null;
   const cert = (forn.certidoes || []).find(c => c.tipoId === certId);
   return cert ? { emissao: cert.emissao, validade: cert.validade } : null;
@@ -6788,7 +6762,7 @@ async function _syncCertToForn(certId, certData) {
   const fornId = typeof currentProcess.fornecedor === 'object'
     ? currentProcess.fornecedor.id || currentProcess.fornecedor.cnpj_digits : null;
   if (!fornId) return;
-  const forn = await dbGet('fornecedores', fornId);
+  const forn = await buscarFornecedor(fornId);
   if (!forn) return;
   const certs = forn.certidoes || [];
   const idx = certs.findIndex(c => c.tipoId === certId);
@@ -6802,7 +6776,7 @@ async function _syncCertToForn(certId, certData) {
   if (idx >= 0) certs[idx] = entry; else certs.push(entry);
   forn.certidoes = certs;
   forn.updatedAt = Date.now();
-  await dbPut('fornecedores', forn);
+  await salvarFornecedor(forn);
   const certNomeSinc = CERTIDOES.find(c => c.id === certId)?.nome || certId;
   await _auditEvento('CERTIDAO_SINCRONIZADA',
     `${certNomeSinc}: datas sincronizadas para o fornecedor ${forn.razao_social} (${forn.cnpj})`, currentProcess?.id);
@@ -6812,19 +6786,19 @@ async function _syncCertToForn(certId, certData) {
 // Migra IDs antigos do CERT_TIPOS para os IDs unificados do CERTIDOES
 async function _migrarStepsParecer() {
   // Insere a etapa "Parecer Jurídico" (índice 5) em processos criados antes da v1.11.3
-  const procs = await dbGetAll('processes');
+  const procs = await listarProcessos();
   for (const p of procs) {
     if (!p.steps || p.steps.length >= STEPS.length) continue;
     const emptyStep = { status: 'pending', fields: {}, completedAt: null };
     p.steps.splice(5, 0, emptyStep);
-    await dbPut('processes', p);
+    await salvarProcesso(p);
   }
 }
 
 async function _migrarFusaoAvisoPublicacao() {
   // Funde as antigas etapas 8 (Aviso) e 9 (Publicação) em uma só (v1.12.1+)
   // Processos com 16 steps precisam ter o step[8] fundido no step[7] e removido
-  const procs = await dbGetAll('processes');
+  const procs = await listarProcessos();
   for (const p of procs) {
     if (!p.steps || p.steps.length < 16) continue;
     const avisoStep  = p.steps[7] || {};
@@ -6838,12 +6812,12 @@ async function _migrarFusaoAvisoPublicacao() {
     }
     p.steps[7] = avisoStep;
     p.steps.splice(8, 1); // remove a antiga etapa de publicação
-    await dbPut('processes', p);
+    await salvarProcesso(p);
   }
 }
 
 async function _migrarCertidoesFornecedores() {
-  const forns = await dbGetAll('fornecedores');
+  const forns = await listarFornecedores();
   for (const forn of forns) {
     if (!forn.certidoes?.length) continue;
     let changed = false;
@@ -6852,12 +6826,12 @@ async function _migrarCertidoesFornecedores() {
       if (novoId) { changed = true; return { ...c, tipoId: novoId }; }
       return c;
     });
-    if (changed) { forn.updatedAt = Date.now(); await dbPut('fornecedores', forn); }
+    if (changed) { forn.updatedAt = Date.now(); await salvarFornecedor(forn); }
   }
 }
 async function getCertFilesMap(processId, stepIdx) {
   const prefix = processId + '_' + stepIdx + '_cert_';
-  const files = await dbGetByIndexPrefix('files', 'processId', prefix);
+  const files = await buscarArquivosPorPrefixo(prefix);
   const map = {};
   for (const f of files) {
     const certId = f.processId.slice(prefix.length);
@@ -6874,7 +6848,7 @@ async function processCertFileList(stepIdx, certId, fileList) {
   const p = currentProcess;
   for (const file of fileList) {
     const buf = await file.arrayBuffer();
-    await dbPut('files', {
+    await uploadArquivo({
       processId: p.id + '_' + stepIdx + '_cert_' + certId,
       stepIdx,
       name: file.name, size: file.size, type: file.type,
@@ -6887,7 +6861,7 @@ async function processCertFileList(stepIdx, certId, fileList) {
 }
 async function deleteCertFile(fileId, stepIdx) {
   if (!await customConfirm('Remover este arquivo?', { title: 'Remover Arquivo', icon: '🗑️', okLabel: 'Remover' })) return;
-  await dbDelete('files', fileId);
+  await excluirArquivo(fileId);
   toast('Arquivo removido.', '');
   expandedSteps.add(stepIdx);
   renderSingleStep(stepIdx);
@@ -7561,7 +7535,7 @@ async function updateProposta(stepIdx, pi, field, value) {
       lista.forEach((p, i) => { if (i !== pi && p.situacao === 'vencedora') p.situacao = 'aceita'; });
       const prop = lista[pi];
       if (prop.fornId) {
-        const forn = await dbGet('fornecedores', prop.fornId);
+        const forn = await buscarFornecedor(prop.fornId);
         if (forn) { currentProcess.fornecedor = forn; await saveProcess(currentProcess); }
       } else if (prop.fornecedor || prop.cnpj) {
         currentProcess.fornecedor = { razao_social: prop.fornecedor||prop.cnpj, cnpj: prop.cnpj||'', cnpj_digits: (prop.cnpj||'').replace(/\D/g,''), situacao:'' };
@@ -7640,7 +7614,7 @@ async function processFileList(stepIdx, fileList) {
       continue;
     }
     const buf = await file.arrayBuffer();
-    await dbPut('files', {
+    await uploadArquivo({
       processId: p.id + '_' + stepIdx,
       stepIdx,
       name: file.name,
@@ -7688,8 +7662,8 @@ async function deleteFile(fileId, stepIdx) {
   if (!await customConfirm('Remover este arquivo?', { title: 'Remover Arquivo', icon: '🗑️', okLabel: 'Remover' })) return;
   // Fix #8: dbGet pode falhar (ex: quota excedida); a deleção não deve depender dessa leitura
   let arq = null;
-  try { arq = await dbGet('files', fileId); } catch {}
-  await dbDelete('files', fileId);
+  try { arq = await buscarArquivoMeta(fileId); } catch {}
+  await excluirArquivo(fileId);
   if (currentProcess) {
     const p = currentProcess;
     if (!p.timeline) p.timeline = [];
@@ -7958,7 +7932,7 @@ async function gerarRelatorioFornecedores() {
   const dtGer = now.toLocaleDateString('pt-BR') + ' às ' + now.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
   const q = (document.getElementById('forn-search')?.value || '').toLowerCase();
 
-  const todos = await dbGetAll('fornecedores');
+  const todos = await listarFornecedores();
   const lista = q
     ? todos.filter(f => (f.razao_social||'').toLowerCase().includes(q) || (f.cnpj_digits||'').includes(q) || (f.nome_fantasia||'').toLowerCase().includes(q))
     : todos;
@@ -8174,7 +8148,7 @@ function fecharPickForn() {
 }
 async function renderPickFornList() {
   const q = document.getElementById('forn-pick-search').value.toLowerCase();
-  const forns = await dbGetAll('fornecedores');
+  const forns = await listarFornecedores();
   const filtered = forns.filter(f => !q || f.razao_social?.toLowerCase().includes(q) || f.cnpj?.includes(q));
   const el = document.getElementById('forn-pick-list');
   if (!filtered.length) { el.innerHTML = '<p style="color:var(--gray-500);font-size:.82rem">Nenhum fornecedor encontrado.</p>'; return; }
@@ -8186,7 +8160,7 @@ async function renderPickFornList() {
 async function pickFornForProposta(fornId) {
   if (!_pickFornTarget) return;
   const { stepIdx, pi } = _pickFornTarget;
-  const forn = await dbGet('fornecedores', fornId);
+  const forn = await buscarFornecedor(fornId);
   if (!forn) return;
   const lista = getPropostas(stepIdx);
   lista[pi].fornecedor = forn.razao_social;
@@ -10544,7 +10518,7 @@ async function _auditEvento(evento, detalhe, processId) {
     processId: processId || null,
     usuario: _getAuditor()
   };
-  try { await dbPut('auditGlobal', entry); } catch (e) { console.warn('Falha ao gravar auditoria:', e); }
+  try { await API.post('/api/audit', entry); } catch (e) { console.warn('Falha ao gravar auditoria:', e); }
   return entry;
 }
 
@@ -10912,8 +10886,8 @@ async function runDiagnostico() {
   if (!el) return;
   el.innerHTML = '<p style="color:var(--gray-400);font-style:italic">Analisando…</p>';
 
-  const procs = await dbGetAll('processes');
-  const forns = await dbGetAll('fornecedores');
+  const procs = await listarProcessos();
+  const forns = await listarFornecedores();
   const issues = [];
   const ok = [];
 
@@ -11496,7 +11470,7 @@ async function abrirEmailModal() {
 
   // ── Aba Fornecedores: lista de fornecedores cadastrados com checkbox ──
   const fornList = document.getElementById('email-forn-list');
-  const todosForns = await dbGetAll('fornecedores');
+  const todosForns = await listarFornecedores();
   const fornsComEmail = todosForns.filter(f => f.email);
   const fornVinculadoId = typeof p.fornecedor === 'object' ? p.fornecedor?.id : null;
 
@@ -11974,7 +11948,7 @@ async function _buildNotificacoes() {
 
   // Certidões vencendo em 30 dias (lê fornecedores diretamente do IndexedDB)
   try {
-    const allForns = await dbGetAll('fornecedores');
+    const allForns = await listarFornecedores();
     for (const f of allForns) {
       for (const c of (f.certidoes || [])) {
         if (!c.validade) continue;
@@ -12207,7 +12181,7 @@ async function importarCsv() {
         } catch { /* ignora erro de CNPJ individual */ }
       }
 
-      await dbPut('fornecedores', forn);
+      await salvarFornecedor(forn);
       ok++;
     } catch { erros++; }
   }
@@ -12455,10 +12429,9 @@ let _fieldHistCache = { pid: null, data: [] };
 
 async function abrirFieldHist(campoNome, labelExibido, anchorEl) {
   const pid = currentProcess?.id;
-  // Usa índice processId — busca apenas eventos deste processo em vez de todo auditGlobal
   if (_fieldHistCache.pid !== pid) {
     _fieldHistCache.pid  = pid;
-    _fieldHistCache.data = pid ? await dbGetByIndex('auditGlobal', 'processId', pid) : [];
+    _fieldHistCache.data = pid ? (await listarAuditGlobal()).filter(e => e.processId === pid) : [];
   }
   const eventos = _fieldHistCache.data.filter(e =>
     e.evento === 'CAMPO_ALTERADO' &&
@@ -12533,7 +12506,7 @@ async function editarTituloCard(e, id) {
     span.removeEventListener('keydown', onKey);
     const novo = span.textContent.trim();
     if (!novo || novo === orig) { span.textContent = orig; return; }
-    const p = await dbGet('processes', id);
+    const p = await buscarProcesso(id);
     const old = p.objeto;
     p.objeto = novo;
     if (!p.auditLog) p.auditLog = [];
