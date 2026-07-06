@@ -5,6 +5,23 @@
 
 ---
 
+## [2.18.0] — 2026-07-06
+
+### Alterado — padronização arquitetural com o SGDP (mudança grande)
+- **Design tokens CSS** — `--aubergine`/`--aubergine-mid` renomeados para `--accent`/`--accent-light`; completada a escala de cinza (`--gray-600`/`--gray-800`, usados em 19 lugares mas nunca definidos) e adicionadas `--green`/`--red`/`--yellow`/`--shadow-lg`
+- **Sidebar** — `<nav id="sidebar">` virou `<aside id="sidebar">` com `<nav class="sidebar-nav">` interno (landmark semântico correto); busca global (Ctrl+K) preservada
+- **Mensagens de erro** — "Acesso negado" padronizado para "Acesso restrito" nos 403 de admin
+- **Tabela e rota de usuários** — `users` → `usuarios`, `/api/users` → `/api/usuarios`; colunas `cargo`/`matricula` preservadas; migração automática e silenciosa na inicialização, sem perda de dado
+- **Camada de acesso a dados** — removida a indireção `dbGetAll/dbGet/dbPut/dbDelete/dbGetByIndex/dbGetByIndexPrefix`; dividida em 14 funções nomeadas por entidade (processos, fornecedores, auditoria, arquivos) chamando `API.get/put/post/del` direto, sem duplicar a lógica não-trivial de cada uma (ex: upload multipart de arquivos)
+- **Busca server-side (Fase 7)** — avaliada e **não aplicada** ao Dashboard: a tela combina 6 filtros (texto, status, unidade, datas, valores, ordenação) sobre o array de processos em memória, que também alimenta análise de fracionamento, badges e notificações — mover para o servidor exigiria uma reestruturação bem maior, fora do escopo desta rodada
+
+### Corrigido
+- **Seleção de modo travava em ambiente não-interativo** — `_selecionar_modo()` esperava input do teclado mesmo quando stdin não é um terminal (scripts, automação); SGDP e SGCA já tinham o fallback `if not sys.stdin.isatty(): op = '2'`; SGCD era o único sem essa proteção
+- **`API_BASE` com porta fixa** — tinha `http://localhost:3000` fixo no código; quebrava se o servidor rodasse em outra porta. Como o SGCD usa `API_BASE` também para montar o texto do QR Code de verificação de assinatura (lido por celular) e alguns links de download, não deu para usar caminhos relativos como no SGCA — corrigido trocando para `window.location.origin`, absoluto e correto em qualquer porta
+- **Histórico de edições por campo sempre vazio** — `abrirFieldHist()` chamava uma função de busca por índice que só tratava arquivos, não auditoria; o painel "Histórico de edições por campo" mostrava "Nenhuma alteração registrada" mesmo quando havia. Corrigido buscando todos os eventos de auditoria e filtrando por processo no cliente
+
+Todas as mudanças foram testadas em ambiente isolado (cópia do projeto, banco de teste, porta separada) antes de aplicar — o banco de produção não foi tocado em nenhuma etapa. 14/14 testes automatizados passando.
+
 ## [2.17.5] — 2026-07-04
 
 ### Corrigido
