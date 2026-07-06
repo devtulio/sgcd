@@ -10,25 +10,31 @@
     --brand:        #1a3a6b;
     --brand-light:  #e8eef7;
     --brand-dark:   #102855;
-    --aubergine:    #1a3a6b;
-    --aubergine-mid:#2a5298;
+    --accent:       #1a3a6b;
+    --accent-light: #2a5298;
     --success:      #15803d;
     --success-light:#dcfce7;
     --warning:      #d97706;
     --warning-light:#fef3c7;
     --danger:       #dc2626;
     --danger-light: #fee2e2;
+    --green:  #15803d; --green-bg:  #dcfce7;
+    --red:    #dc2626; --red-bg:    #fee2e2;
+    --yellow: #d97706; --yellow-bg: #fef3c7;
     --gray-50:      #f9fafb;
     --gray-100:     #f3f4f6;
     --gray-200:     #e5e7eb;
     --gray-300:     #d1d5db;
     --gray-400:     #9ca3af;
     --gray-500:     #6b7280;
+    --gray-600:     #4b5563;
     --gray-700:     #374151;
+    --gray-800:     #1f2937;
     --gray-900:     #111827;
     --radius: 8px;
     --shadow: 0 1px 3px rgba(0,0,0,.10), 0 1px 2px rgba(0,0,0,.06);
     --shadow-md: 0 4px 6px rgba(0,0,0,.07), 0 2px 4px rgba(0,0,0,.06);
+    --shadow-lg: 0 10px 25px rgba(0,0,0,.12);
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -42,22 +48,22 @@
     --brand:        #0066CC;
     --brand-light:  #e0eeff;
     --brand-dark:   #0052a3;
-    --aubergine:    #0052a3;
-    --aubergine-mid:#0066CC;
+    --accent:       #0052a3;
+    --accent-light: #0066CC;
   }
   html.tema-verde {
     --brand:        #1a7a3c;
     --brand-light:  #dcfce7;
     --brand-dark:   #145e2d;
-    --aubergine:    #145e2d;
-    --aubergine-mid:#1a7a3c;
+    --accent:       #145e2d;
+    --accent-light: #1a7a3c;
   }
   html.tema-roxo {
     --brand:        #5E2750;
     --brand-light:  #f5edf3;
     --brand-dark:   #44193a;
-    --aubergine:    #44193a;
-    --aubergine-mid:#5E2750;
+    --accent:       #44193a;
+    --accent-light: #5E2750;
   }
 
   body {
@@ -71,7 +77,7 @@
   /* ── Sidebar (estilo SGDP) ───────────────────────────── */
   #sidebar {
     position: fixed; left: 0; top: 0; bottom: 0; width: 220px;
-    background: var(--aubergine); color: #fff;
+    background: var(--accent); color: #fff;
     display: flex; flex-direction: column; overflow-y: auto; z-index: 90;
   }
   .sidebar-logo {
@@ -472,7 +478,7 @@
   .sidebar-card h4 {
     padding: 10px 16px; font-size: .75rem; font-weight: 700; text-transform: uppercase;
     letter-spacing: .6px; color: #fff; border-bottom: 2px solid var(--brand);
-    background: var(--aubergine-mid);
+    background: var(--accent-light);
   }
   .sidebar-card .body { padding: 12px 16px; }
 
@@ -518,7 +524,7 @@
   .modal-header {
     padding: 16px 24px; display: flex; justify-content: space-between; align-items: center;
     border-bottom: 3px solid var(--brand); position: sticky; top: 0;
-    background: var(--aubergine); z-index: 1; border-radius: 12px 12px 0 0;
+    background: var(--accent); z-index: 1; border-radius: 12px 12px 0 0;
   }
   .modal-header h2, .modal-header h3 { font-size: .9rem; font-weight: 500; color: #fff; letter-spacing: .8px; }
   .modal-header .btn-ghost { color: rgba(255,255,255,.7); }
@@ -612,19 +618,19 @@
     display: flex; flex-direction: column; gap: 8px; pointer-events: none;
   }
   .toast-msg {
-    background: var(--aubergine); color: #fff; padding: 10px 16px;
+    background: var(--accent); color: #fff; padding: 10px 16px;
     border-radius: var(--radius); font-size: .8rem; box-shadow: var(--shadow-md);
     animation: slideIn .2s ease; max-width: 320px;
     border-left: 4px solid var(--brand);
   }
-  .toast-msg.success { background: var(--aubergine); border-color: var(--success); }
-  .toast-msg.error   { background: var(--aubergine); border-color: var(--danger); }
+  .toast-msg.success { background: var(--accent); border-color: var(--success); }
+  .toast-msg.error   { background: var(--accent); border-color: var(--danger); }
   @keyframes slideIn { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
   /* scrollbar */
   ::-webkit-scrollbar { width: 8px; height: 8px; }
   ::-webkit-scrollbar-track { background: var(--gray-100); }
-  ::-webkit-scrollbar-thumb { background: var(--aubergine-mid); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb { background: var(--accent-light); border-radius: 4px; }
   ::-webkit-scrollbar-thumb:hover { background: var(--brand); }
 
   /* ── Propostas ───────────────────────────────────── */
@@ -849,7 +855,7 @@
   .forn-qsa { padding: 8px 12px; border-top: 1px solid var(--gray-100); }
   .forn-qsa-title { font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--gray-500); margin-bottom: 4px; }
   .forn-qsa-item { font-size: .75rem; color: var(--gray-700); padding: 2px 0; }
-  .cnpj-strip { display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: var(--aubergine); border-radius: var(--radius); margin-bottom: 10px; }
+  .cnpj-strip { display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: var(--accent); border-radius: var(--radius); margin-bottom: 10px; }
   .cnpj-strip span { font-size: .75rem; color: rgba(255,255,255,.7); }
   .cnpj-strip strong { color: #fff; font-size: .8rem; letter-spacing: .5px; }
 
@@ -1421,7 +1427,7 @@
         <div class="detail-meta" id="d-meta"></div>
       </div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <button class="btn btn-outline btn-sm" onclick="gerarAta()" style="border-color:var(--aubergine-mid);color:var(--aubergine-mid)">&#128196; Gerar Ata</button>
+        <button class="btn btn-outline btn-sm" onclick="gerarAta()" style="border-color:var(--accent-light);color:var(--accent-light)">&#128196; Gerar Ata</button>
         <button class="btn btn-outline btn-sm" onclick="verificarConformidade()" style="border-color:#7c3aed;color:#7c3aed">✔ Conformidade</button>
         <button class="btn btn-outline btn-sm" id="btn-toggle-sidebar-detail" onclick="toggleDetailSidebar()" title="Mostrar/ocultar painel de informações">⊟ Painel</button>
         <button class="btn btn-outline btn-sm" onclick="salvarComoTemplate()" title="Salvar este processo como modelo reutilizável">⊞ Modelo</button>
@@ -1614,7 +1620,7 @@
       <div class="cfg-panel active" id="cfg-interface">
 
         <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
-          <legend style="font-size:.72rem;font-weight:700;color:var(--aubergine-mid);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Tema de aparência</legend>
+          <legend style="font-size:.72rem;font-weight:700;color:var(--accent-light);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Tema de aparência</legend>
           <div class="info-field">
             <select id="s-dark-mode">
               <option value="light">Claro — fundo branco</option>
@@ -1625,7 +1631,7 @@
         </fieldset>
 
         <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
-          <legend style="font-size:.72rem;font-weight:700;color:var(--aubergine-mid);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Largura do conteúdo</legend>
+          <legend style="font-size:.72rem;font-weight:700;color:var(--accent-light);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Largura do conteúdo</legend>
           <div class="info-field">
             <select id="s-layout-width">
               <option value="compacto">Compacta — margens laterais confortáveis</option>
@@ -1636,7 +1642,7 @@
         </fieldset>
 
         <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
-          <legend style="font-size:.72rem;font-weight:700;color:var(--aubergine-mid);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Tamanho da fonte</legend>
+          <legend style="font-size:.72rem;font-weight:700;color:var(--accent-light);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Tamanho da fonte</legend>
           <div class="info-field">
             <select id="s-font-size">
               <option value="normal">Normal — padrão do sistema</option>
@@ -1648,7 +1654,7 @@
         </fieldset>
 
         <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
-          <legend style="font-size:.72rem;font-weight:700;color:var(--aubergine-mid);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Cor de destaque</legend>
+          <legend style="font-size:.72rem;font-weight:700;color:var(--accent-light);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Cor de destaque</legend>
           <div class="info-field">
             <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px">
               <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.82rem">
@@ -1677,7 +1683,7 @@
         </fieldset>
 
         <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
-          <legend style="font-size:.72rem;font-weight:700;color:var(--aubergine-mid);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Barra lateral</legend>
+          <legend style="font-size:.72rem;font-weight:700;color:var(--accent-light);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Barra lateral</legend>
           <div class="info-field">
             <select id="s-sidebar-mode">
               <option value="compacta">Compacta — somente ícones</option>
@@ -1688,7 +1694,7 @@
         </fieldset>
 
         <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
-          <legend style="font-size:.72rem;font-weight:700;color:var(--aubergine-mid);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Painel de informações (processo)</legend>
+          <legend style="font-size:.72rem;font-weight:700;color:var(--accent-light);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Painel de informações (processo)</legend>
           <div class="info-field">
             <select id="s-detail-sidebar">
               <option value="visivel">Visível — exibe informações ao lado do checklist</option>
@@ -1704,7 +1710,7 @@
         <p style="font-size:.75rem;color:var(--gray-500);margin-bottom:20px">Estas informações serão usadas para pré-preencher os campos de responsável e para subsidiar a geração da Ata.</p>
 
         <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
-          <legend style="font-size:.72rem;font-weight:700;color:var(--aubergine-mid);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Órgão</legend>
+          <legend style="font-size:.72rem;font-weight:700;color:var(--accent-light);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Órgão</legend>
           <div class="info-field"><label>Nome do Órgão</label>
             <input type="text" id="s-orgao" placeholder="Ex: Prefeitura Municipal de Orindiúva"></div>
           <div class="info-field"><label>Município / UF</label>
@@ -1726,7 +1732,7 @@
         </fieldset>
 
         <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
-          <legend style="font-size:.72rem;font-weight:700;color:var(--aubergine-mid);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Autoridade Competente</legend>
+          <legend style="font-size:.72rem;font-weight:700;color:var(--accent-light);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Autoridade Competente</legend>
           <div class="info-field"><label>Nome Completo</label>
             <input type="text" id="s-aut-nome" placeholder="Ex: Maria Souza"></div>
           <div class="info-field"><label>Cargo</label>
@@ -1749,7 +1755,7 @@
         </fieldset>
 
         <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
-          <legend style="font-size:.72rem;font-weight:700;color:var(--aubergine-mid);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Controle de Fracionamento</legend>
+          <legend style="font-size:.72rem;font-weight:700;color:var(--accent-light);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Controle de Fracionamento</legend>
           <div class="info-field">
             <label>Janela temporal de análise</label>
             <select id="s-frac-janela">
@@ -1769,7 +1775,7 @@
       <!-- ── Aba: Comunicação ── -->
       <div class="cfg-panel" id="cfg-comunicacao">
         <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
-          <legend style="font-size:.72rem;font-weight:700;color:var(--aubergine-mid);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">E-mail (SMTP)</legend>
+          <legend style="font-size:.72rem;font-weight:700;color:var(--accent-light);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">E-mail (SMTP)</legend>
           <p style="font-size:.75rem;color:var(--gray-500);margin-bottom:12px;line-height:1.5">Configure o servidor SMTP para envio de notificações. O servidor local (<strong>server.py</strong>) deve estar em execução. As credenciais sincronizam com o servidor (admin) e ficam disponíveis em qualquer navegador da rede.<br><br>
           Assim que configurado, o sistema passa a enviar automaticamente um <strong>resumo diário por e-mail</strong> (prazos vencendo e processos parados há 15+ dias) para o e-mail interno abaixo — mesmo sem ninguém logado.</p>
           <div class="info-field"><label>Servidor SMTP (host)</label><input type="text" id="s-smtp-host" placeholder="ex: smtp.gmail.com"></div>
@@ -1798,7 +1804,7 @@
       <!-- ── Aba: Dados ── -->
       <div class="cfg-panel" id="cfg-dados">
         <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
-          <legend style="font-size:.72rem;font-weight:700;color:var(--aubergine-mid);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Backup de Dados</legend>
+          <legend style="font-size:.72rem;font-weight:700;color:var(--accent-light);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Backup de Dados</legend>
 
           <!-- Pasta de backup -->
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
@@ -1891,7 +1897,7 @@
       <!-- ── Aba: Segurança ── -->
       <div class="cfg-panel" id="cfg-seguranca">
         <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
-          <legend style="font-size:.72rem;font-weight:700;color:var(--aubergine-mid);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Alterar Minha Senha</legend>
+          <legend style="font-size:.72rem;font-weight:700;color:var(--accent-light);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Alterar Minha Senha</legend>
           <div class="info-field">
             <label>Senha atual</label>
             <input type="password" id="s-senha-atual" placeholder="••••••••" autocomplete="current-password">
@@ -1985,7 +1991,7 @@
   <div id="pin-card" style="position:relative;z-index:1;background:#fff;border-radius:16px;width:380px;overflow:hidden;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
 
     <!-- Cabeçalho institucional -->
-    <div style="background:var(--aubergine);padding:28px 32px 24px;text-align:center">
+    <div style="background:var(--accent);padding:28px 32px 24px;text-align:center">
       <div style="width:52px;height:52px;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.3);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:22px">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e8eef7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M9 8h1"/><path d="M9 12h1"/><path d="M9 16h1"/><path d="M14 8h1"/><path d="M14 12h1"/><path d="M14 16h1"/><path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"/></svg>
       </div>
@@ -2002,7 +2008,7 @@
 
       <!-- Card do órgão -->
       <div id="pin-orgao-info" style="display:flex;align-items:center;gap:9px;background:#e8eef7;border:1px solid rgba(26,58,107,.2);border-radius:8px;padding:10px 12px;margin-bottom:22px">
-        <div id="pin-orgao-avatar" style="width:30px;height:30px;border-radius:6px;background:var(--aubergine);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0">PM</div>
+        <div id="pin-orgao-avatar" style="width:30px;height:30px;border-radius:6px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0">PM</div>
         <div style="flex:1;min-width:0">
           <div id="pin-orgao-nome" style="font-size:12px;font-weight:600;color:#102855;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Prefeitura Municipal</div>
           <div style="font-size:10px;color:#666360;margin-top:1px">Agente de Contratação — área restrita</div>
@@ -2017,21 +2023,21 @@
       </div>
 
       <!-- Campo usuário -->
-      <label style="display:block;font-size:11px;font-weight:600;color:var(--aubergine);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px" for="pin-username">Usuário</label>
+      <label style="display:block;font-size:11px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px" for="pin-username">Usuário</label>
       <input type="text" id="pin-username" placeholder="Nome de usuário" autocomplete="username"
         style="width:100%;height:44px;border:1.5px solid #d9d9d9;border-radius:8px;padding:0 14px;font-size:15px;color:#1a1a1a;background:#f9f8f8;outline:none;font-family:inherit;transition:border-color .15s,box-shadow .15s;margin-bottom:14px"
         onkeydown="if(event.key==='Enter')document.getElementById('pin-input').focus()"
-        onfocus="this.style.borderColor=getComputedStyle(document.documentElement).getPropertyValue('--aubergine').trim();this.style.boxShadow='0 0 0 3px var(--brand-light)';this.style.background='#fff'"
+        onfocus="this.style.borderColor=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();this.style.boxShadow='0 0 0 3px var(--brand-light)';this.style.background='#fff'"
         onblur="this.style.borderColor='#d9d9d9';this.style.boxShadow='none';this.style.background='#f9f8f8'">
 
       <!-- Campo senha -->
-      <label style="display:block;font-size:11px;font-weight:600;color:var(--aubergine);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px" for="pin-input">Senha de acesso</label>
+      <label style="display:block;font-size:11px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px" for="pin-input">Senha de acesso</label>
       <div style="position:relative;margin-bottom:20px">
         <input type="password" id="pin-input" placeholder="Digite sua senha" autocomplete="current-password"
           style="width:100%;height:44px;border:1.5px solid #d9d9d9;border-radius:8px;padding:0 44px 0 14px;font-size:15px;color:#1a1a1a;background:#f9f8f8;outline:none;font-family:inherit;letter-spacing:.15em;transition:border-color .15s,box-shadow .15s"
           onkeydown="if(event.key==='Enter')verificarSenha();_pinCheckCaps(event)"
           onkeyup="_pinCheckCaps(event)"
-          onfocus="_pinCheckCaps(event);this.style.borderColor=getComputedStyle(document.documentElement).getPropertyValue('--aubergine').trim();this.style.boxShadow='0 0 0 3px var(--brand-light)';this.style.background='#fff'"
+          onfocus="_pinCheckCaps(event);this.style.borderColor=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();this.style.boxShadow='0 0 0 3px var(--brand-light)';this.style.background='#fff'"
           onblur="document.getElementById('pin-caps-warn').style.display='none';this.style.borderColor='#d9d9d9';this.style.boxShadow='none';this.style.background='#f9f8f8'">
         <button onclick="_pinToggleOlho()" tabindex="-1" aria-label="Mostrar ou ocultar senha"
           style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#aea79f;padding:4px;line-height:1;font-size:0">
@@ -2044,8 +2050,8 @@
       </div>
 
       <!-- Botão entrar -->
-      <button onclick="verificarSenha()" style="width:100%;height:46px;background:var(--aubergine);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.04em;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:16px;transition:background .15s"
-        onmouseover="this.style.background=getComputedStyle(document.documentElement).getPropertyValue('--brand-dark').trim()" onmouseout="this.style.background=getComputedStyle(document.documentElement).getPropertyValue('--aubergine').trim()">
+      <button onclick="verificarSenha()" style="width:100%;height:46px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.04em;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:16px;transition:background .15s"
+        onmouseover="this.style.background=getComputedStyle(document.documentElement).getPropertyValue('--brand-dark').trim()" onmouseout="this.style.background=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
         Entrar no sistema
       </button>
@@ -4381,7 +4387,7 @@ const _AUDIT_ICON_SVG = {
 const _AUDIT_EVENT_COLORS = {
   ETAPA_DONE: 'var(--success)', ETAPA_BLOCKED: 'var(--danger)', ETAPA_PENDING: 'var(--warning)',
   ARQUIVO_ANEXADO: '#0ea5e9', ARQUIVO_REMOVIDO: 'var(--danger)',
-  DOCUMENTO_GERADO: 'var(--aubergine-mid)', PROCESSO_EXCLUIDO: 'var(--danger)',
+  DOCUMENTO_GERADO: 'var(--accent-light)', PROCESSO_EXCLUIDO: 'var(--danger)',
   CERTIDAO_ATUALIZADA: '#7c3aed', CERTIDAO_SINCRONIZADA: 'var(--success)',
   FORNECEDOR_ALTERADO: '#0369a1', CAMPO_ALTERADO: 'var(--gray-500)'
 };

@@ -1896,14 +1896,17 @@ def _selecionar_modo():
     print()
     print('  [3] Diagnóstico — Verifica rede, porta e firewall')
     print()
-    while True:
-        try:
-            op = input('  Opção [1/2/3]: ').strip()
-        except (EOFError, KeyboardInterrupt):
-            op = '1'
-        if op in ('1', '2', '3'):
-            break
-        print('  Digite 1, 2 ou 3.')
+    if not sys.stdin.isatty():
+        op = '2'
+    else:
+        while True:
+            try:
+                op = input('  Opção [1/2/3]: ').strip()
+            except (EOFError, KeyboardInterrupt):
+                op = '1'
+            if op in ('1', '2', '3'):
+                break
+            print('  Digite 1, 2 ou 3.')
     if op == '3':
         import subprocess as _sp
         diag = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'diagnostico.py')
