@@ -2497,9 +2497,10 @@ const ICONS = {
 };
 
 const SGCD_VERSION = '2.17.5';
-const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-  ? 'http://localhost:3000'
-  : window.location.origin;
+// URL absoluta (não relativa) porque API_BASE também monta o texto do QR Code
+// de verificação de assinatura, lido por celular fora do navegador — precisa
+// da origem real, nunca uma porta fixa (era 'http://localhost:3000' hardcoded).
+const API_BASE = window.location.origin;
 document.title = `SGCD v${SGCD_VERSION}`;
 // ── API wrapper (REST) ────────────────────────────────────────
 let _apiToken = localStorage.getItem('sgcd-token') || null;
