@@ -444,15 +444,28 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
             self._json(200, {'items': [dict(r) for r in rows]})
 
         # Auditoria
+        # Sem restrição de admin: também usado pelo histórico de alterações por
+        # campo (abrirFieldHist), acessível a qualquer usuário logado. A tela
+        # "Auditoria" do menu é que fica restrita a admin, só no frontend.
         elif p == '/api/audit':
-            page = int(qp('page', 1)); per    = min(int(qp('per', 200)), 1000)
+            page = int(qp('page', 1)); per = min(int(qp('per', 50)), 2000)
+            q    = (qp('q') or '').strip()
+            tipo = qp('tipo') or ''
+            de   = qp('de') or ''
+            ate  = qp('ate') or ''
+            where, params = [], []
+            if q:    where.append('(user_nome LIKE ? OR detail LIKE ?)'); params += [f'%{q}%', f'%{q}%']
+            if tipo: where.append('type=?'); params.append(tipo)
+            if de:   where.append('ts >= ?'); params.append(de)
+            if ate:  where.append('ts <= ?'); params.append(ate + 'T23:59:59')
+            w = ('WHERE ' + ' AND '.join(where)) if where else ''
             with get_db() as conn:
-                total = conn.execute('SELECT COUNT(*) FROM audit_global').fetchone()[0]
+                total = conn.execute(f'SELECT COUNT(*) FROM audit_global {w}', params).fetchone()[0]
                 rows  = conn.execute(
-                    'SELECT * FROM audit_global ORDER BY ts DESC LIMIT ? OFFSET ?',
-                    (per, (page-1)*per)
+                    f'SELECT * FROM audit_global {w} ORDER BY ts DESC LIMIT ? OFFSET ?',
+                    params + [per, (page-1)*per]
                 ).fetchall()
-            self._json(200, {'total': total, 'items': [dict(r) for r in rows]})
+            self._json(200, {'total': total, 'page': page, 'per': per, 'items': [dict(r) for r in rows]})
 
         # Configurações do sistema
         elif p == '/api/settings':

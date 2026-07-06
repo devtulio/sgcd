@@ -1019,6 +1019,16 @@
     font-size: .7rem; color: var(--gray-500); margin-top: 2px;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
   }
+
+  /* ── Tabela de auditoria (padrão SGDP) ── */
+  .table-wrap { background: #fff; border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+  .audit-table { width: 100%; border-collapse: collapse; }
+  .audit-table th { background: var(--gray-50); border-bottom: 1px solid var(--gray-200);
+    padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .4px; color: var(--gray-500); white-space: nowrap; }
+  .audit-table td { padding: 11px 14px; border-bottom: 1px solid var(--gray-100); vertical-align: middle; font-size: 12px; }
+  .audit-table tr:last-child td { border-bottom: none; }
+  .audit-table tr:hover td { background: var(--gray-50); }
 </style>
 </head>
 <body>
@@ -1084,7 +1094,7 @@
       <span class="nav-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></span>
       Lixeira
     </button>
-    <button class="nav-item" id="nav-audit" onclick="showAudit()">
+    <button class="nav-item admin-only" id="nav-audit" onclick="showAudit()">
       <span class="nav-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>
       Auditoria
     </button>
@@ -1537,48 +1547,39 @@
       </div>
     </div>
     <div id="audit-inner" style="max-width:960px;margin:0 auto;padding:0 16px">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-        <button class="btn btn-outline btn-sm" id="btn-audit-filters" onclick="toggleAuditFilters()" style="display:flex;align-items:center;gap:6px;white-space:nowrap">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
-          Filtros<span id="audit-filter-badge" style="display:none;background:rgba(233,84,32,.15);color:var(--brand);border-radius:99px;font-size:.65rem;font-weight:700;padding:0 6px;line-height:1.6"></span>
-        </button>
-        <button class="btn btn-ghost btn-sm" id="btn-audit-limpar" onclick="limparFiltrosAudit()" style="display:none">✕ Limpar</button>
-        <span id="audit-count" style="font-size:.75rem;color:var(--gray-500);margin-left:auto"></span>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:flex-end">
+        <input id="aud-q" type="text" placeholder="Buscar usuário ou detalhes…"
+          style="flex:1;min-width:180px;border:1px solid var(--gray-300);border-radius:var(--radius);padding:7px 10px;font-size:13px;outline:none"
+          oninput="_auditFiltrar()">
+        <select id="aud-tipo" style="border:1px solid var(--gray-300);border-radius:var(--radius);padding:7px 10px;font-size:13px;outline:none;background:#fff"
+          onchange="_auditFiltrar()">
+          <option value="">Todos os tipos</option>
+          <option value="ETAPA_DONE">Etapa concluída</option>
+          <option value="ETAPA_BLOCKED">Etapa bloqueada</option>
+          <option value="ETAPA_PENDING">Etapa reaberta</option>
+          <option value="ARQUIVO_ANEXADO">Arquivo anexado</option>
+          <option value="ARQUIVO_REMOVIDO">Arquivo removido</option>
+          <option value="DOCUMENTO_GERADO">Documento gerado</option>
+          <option value="PROCESSO_EXCLUIDO">Processo excluído</option>
+          <option value="CERTIDAO_ATUALIZADA">Certidão atualizada</option>
+          <option value="CERTIDAO_SINCRONIZADA">Certidão sincronizada</option>
+          <option value="FORNECEDOR_ALTERADO">Fornecedor alterado</option>
+          <option value="CAMPO_ALTERADO">Campo alterado</option>
+        </select>
+        <input id="aud-de" type="date" style="border:1px solid var(--gray-300);border-radius:var(--radius);padding:7px 10px;font-size:13px;outline:none"
+          onchange="_auditFiltrar()">
+        <input id="aud-ate" type="date" style="border:1px solid var(--gray-300);border-radius:var(--radius);padding:7px 10px;font-size:13px;outline:none"
+          onchange="_auditFiltrar()">
+        <button class="btn btn-outline btn-sm" onclick="_auditLimparFiltros()">Limpar</button>
       </div>
-      <div id="audit-filters-panel" style="display:none;flex-wrap:wrap;gap:10px;margin-bottom:14px;padding:12px;background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--radius)">
-        <div>
-          <label style="font-size:.72rem;font-weight:600;color:var(--gray-500);display:block;margin-bottom:4px">Tipo de evento</label>
-          <select id="audit-filter-tipo" onchange="renderAudit();_syncAuditFilterBadge()" style="font-size:.8rem;padding:4px 8px;border:1px solid var(--gray-200);border-radius:4px;background:var(--gray-50)">
-            <option value="">Todos</option>
-            <option value="ETAPA_DONE">Etapa concluída</option>
-            <option value="ETAPA_BLOCKED">Etapa bloqueada</option>
-            <option value="ETAPA_PENDING">Etapa reaberta</option>
-            <option value="ARQUIVO_ANEXADO">Arquivo anexado</option>
-            <option value="ARQUIVO_REMOVIDO">Arquivo removido</option>
-            <option value="DOCUMENTO_GERADO">Documento gerado</option>
-            <option value="PROCESSO_EXCLUIDO">Processo excluído</option>
-            <option value="CERTIDAO_ATUALIZADA">Certidão atualizada</option>
-            <option value="CERTIDAO_SINCRONIZADA">Certidão sincronizada</option>
-            <option value="FORNECEDOR_ALTERADO">Fornecedor alterado</option>
-            <option value="CAMPO_ALTERADO">Campo alterado</option>
-          </select>
+      <div class="table-wrap">
+        <table class="audit-table">
+          <thead><tr><th>Data/hora</th><th>Usuário</th><th>Tipo</th><th>Detalhes</th></tr></thead>
+          <tbody id="audit-body"><tr><td colspan="4" style="text-align:center;padding:32px;color:var(--gray-400)">Carregando…</td></tr></tbody>
+        </table>
+        <div id="audit-mais" style="text-align:center;padding:12px;display:none">
+          <button class="btn btn-outline btn-sm" onclick="_auditCarregarMais()">Carregar mais</button>
         </div>
-        <div>
-          <label style="font-size:.72rem;font-weight:600;color:var(--gray-500);display:block;margin-bottom:4px">De</label>
-          <input type="date" id="audit-filter-de" onchange="renderAudit();_syncAuditFilterBadge()" style="font-size:.8rem;padding:4px 8px;border:1px solid var(--gray-200);border-radius:4px;background:var(--gray-50)">
-        </div>
-        <div>
-          <label style="font-size:.72rem;font-weight:600;color:var(--gray-500);display:block;margin-bottom:4px">Até</label>
-          <input type="date" id="audit-filter-ate" onchange="renderAudit();_syncAuditFilterBadge()" style="font-size:.8rem;padding:4px 8px;border:1px solid var(--gray-200);border-radius:4px;background:var(--gray-50)">
-        </div>
-        <div>
-          <label style="font-size:.72rem;font-weight:600;color:var(--gray-500);display:block;margin-bottom:4px">Usuário</label>
-          <input type="text" id="audit-filter-user" oninput="renderAuditDebounced();_syncAuditFilterBadge()" placeholder="Filtrar por usuário…" style="font-size:.8rem;padding:4px 8px;border:1px solid var(--gray-200);border-radius:4px;background:var(--gray-50);width:180px">
-        </div>
-      </div>
-      <div id="audit-timeline" style="padding-bottom:8px"></div>
-      <div id="audit-load-more" style="text-align:center;margin:16px 0;display:none">
-        <button class="btn btn-outline btn-sm" onclick="renderAudit(true)">Carregar mais registros</button>
       </div>
     </div>
   </div>
@@ -4238,15 +4239,11 @@ function renderAgenda() {
   el.innerHTML = grupo('Vencidos', venc) + grupo('Parados há mais de 15 dias', parados) + grupo('Próximos 7 dias', prox7) + grupo('Este mês', prox30) + grupo('Mais adiante', mais);
 }
 
-let _auditLastDay = null;
-const _AUDIT_PAGE_SIZE = 50;
-
 async function showAudit() {
+  if (!_apiUser?.admin) { toast('Acesso restrito a administradores.', 'error'); return; }
   _hideAllViews();
   document.getElementById('view-audit').classList.add('active');
   setNavActive('nav-audit');
-  _auditPage = 0;
-  _auditLastDay = null;
   await renderAudit();
 }
 
@@ -4283,39 +4280,23 @@ async function restoreProcess(pid) {
   showLixeira();
 }
 
-function toggleAuditFilters() {
-  const panel = document.getElementById('audit-filters-panel');
-  const btn   = document.getElementById('btn-audit-filters');
-  if (!panel) return;
-  const open = panel.style.display !== 'none';
-  panel.style.display = open ? 'none' : 'flex';
-  btn.style.background   = open ? '' : 'var(--brand)';
-  btn.style.color        = open ? '' : '#fff';
-  btn.style.borderColor  = open ? '' : 'var(--brand)';
-}
-
-function _syncAuditFilterBadge() {
-  const n = [
-    document.getElementById('audit-filter-tipo')?.value,
-    document.getElementById('audit-filter-de')?.value,
-    document.getElementById('audit-filter-ate')?.value,
-    document.getElementById('audit-filter-user')?.value,
-  ].filter(Boolean).length;
-  const badge  = document.getElementById('audit-filter-badge');
-  const limpar = document.getElementById('btn-audit-limpar');
-  if (badge)  { badge.textContent = n; badge.style.display = n > 0 ? '' : 'none'; }
-  if (limpar) limpar.style.display = n > 0 ? '' : 'none';
-}
-
-function limparFiltrosAudit() {
-  document.getElementById('audit-filter-tipo').value = '';
-  document.getElementById('audit-filter-de').value = '';
-  document.getElementById('audit-filter-ate').value = '';
-  document.getElementById('audit-filter-user').value = '';
+let _auditFiltros = { q: '', tipo: '', de: '', ate: '' };
+let _auditTimer = null;
+function _auditFiltrar() {
+  _auditFiltros.q    = document.getElementById('aud-q')?.value    || '';
+  _auditFiltros.tipo = document.getElementById('aud-tipo')?.value || '';
+  _auditFiltros.de   = document.getElementById('aud-de')?.value   || '';
+  _auditFiltros.ate  = document.getElementById('aud-ate')?.value  || '';
   _auditPage = 0;
-  _auditLastDay = null;
-  _syncAuditFilterBadge();
-  renderAudit();
+  clearTimeout(_auditTimer);
+  _auditTimer = setTimeout(_auditCarregar, 300);
+}
+
+function _auditLimparFiltros() {
+  ['aud-q','aud-tipo','aud-de','aud-ate'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  _auditFiltros = { q: '', tipo: '', de: '', ate: '' };
+  _auditPage = 0;
+  _auditCarregar();
 }
 
 const _AUDIT_EVENT_LABELS = {
@@ -4345,163 +4326,71 @@ const _AUDIT_EVENT_META = {
   CAMPO_ALTERADO:       { bg: '#EBEBEB', color: '#666360' }
 };
 
-const _AUDIT_ICON_SVG = {
-  ETAPA_DONE:           `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`,
-  ETAPA_BLOCKED:        `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
-  ETAPA_PENDING:        `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.88"/></svg>`,
-  ARQUIVO_ANEXADO:      `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>`,
-  ARQUIVO_REMOVIDO:     `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>`,
-  DOCUMENTO_GERADO:     `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`,
-  PROCESSO_EXCLUIDO:    `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
-  CERTIDAO_ATUALIZADA:  `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
-  CERTIDAO_SINCRONIZADA:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>`,
-  FORNECEDOR_ALTERADO:  `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`,
-  CAMPO_ALTERADO:       `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`
-};
 
-const _AUDIT_EVENT_COLORS = {
-  ETAPA_DONE: 'var(--success)', ETAPA_BLOCKED: 'var(--danger)', ETAPA_PENDING: 'var(--warning)',
-  ARQUIVO_ANEXADO: '#0ea5e9', ARQUIVO_REMOVIDO: 'var(--danger)',
-  DOCUMENTO_GERADO: 'var(--accent-light)', PROCESSO_EXCLUIDO: 'var(--danger)',
-  CERTIDAO_ATUALIZADA: '#7c3aed', CERTIDAO_SINCRONIZADA: 'var(--success)',
-  FORNECEDOR_ALTERADO: '#0369a1', CAMPO_ALTERADO: 'var(--gray-500)'
-};
-
-// Fix #10: debounce para evitar scan completo do IndexedDB a cada tecla digitada no filtro
-let _auditFilterTimer = null;
-function renderAuditDebounced() {
-  clearTimeout(_auditFilterTimer);
-  _auditFilterTimer = setTimeout(renderAudit, 300);
+function fmtDataHoraAudit(ts) {
+  return new Date(ts).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
-async function renderAudit(loadMore = false) {
-  if (!loadMore) { _auditPage = 0; _auditLastDay = null; }
-  const fTipo = document.getElementById('audit-filter-tipo')?.value || '';
-  const fDe   = document.getElementById('audit-filter-de')?.value;
-  const fAte  = document.getElementById('audit-filter-ate')?.value;
-  const fUser = (document.getElementById('audit-filter-user')?.value || '').toLowerCase();
+async function renderAudit() {
+  _auditFiltros = { q: '', tipo: '', de: '', ate: '' };
+  _auditPage = 0;
+  document.getElementById('aud-q').value = '';
+  document.getElementById('aud-tipo').value = '';
+  document.getElementById('aud-de').value = '';
+  document.getElementById('aud-ate').value = '';
+  await _auditCarregar();
+}
 
-  let todos = (await listarAuditGlobal()).sort((a, b) => b.at - a.at);
-  if (fDe || fAte) {
-    const tsFrom = fDe ? new Date(fDe + 'T00:00:00').getTime() : null;
-    const tsTo   = fAte ? new Date(fAte + 'T23:59:59').getTime() : null;
-    todos = todos.filter(a => (tsFrom === null || a.at >= tsFrom) && (tsTo === null || a.at <= tsTo));
-  }
+async function _auditCarregar(append = false) {
+  const { q, tipo, de, ate } = _auditFiltros;
+  const qs = new URLSearchParams({ per: 50, page: _auditPage + 1 });
+  if (q)    qs.set('q', q);
+  if (tipo) qs.set('tipo', tipo);
+  if (de)   qs.set('de', de);
+  if (ate)  qs.set('ate', ate);
+  const r = await API.get(`/api/audit?${qs}`);
+  const d = await API.json(r);
+  if (!d) return;
 
-  const filtered = todos.filter(e => {
-    if (fTipo && e.evento !== fTipo) return false;
-    if (fUser && !(e.usuario || '').toLowerCase().includes(fUser)) return false;
-    return true;
-  });
+  const tbody = document.getElementById('audit-body');
+  if (!tbody) return;
 
-  const countEl = document.getElementById('audit-count');
-  if (countEl) countEl.textContent = `${filtered.length} registro${filtered.length !== 1 ? 's' : ''}`;
+  const html = (d.items || []).map(e => {
+    const meta  = _AUDIT_EVENT_META[e.type] || { color: '#6b7280' };
+    const label = _AUDIT_EVENT_LABELS[e.type] || e.type;
+    return `<tr>
+      <td style="white-space:nowrap">${fmtDataHoraAudit(e.ts)}</td>
+      <td>${escHtml(e.user_nome || '—')}</td>
+      <td><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;color:#fff;background:${meta.color}">${escHtml(label)}</span></td>
+      <td style="max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escHtml(e.detail||'')}">
+        ${e.process_id ? `<button onclick="openProcess('${escHtml(e.process_id)}')" style="font-size:10px;color:var(--brand);background:none;border:1px solid var(--brand);border-radius:4px;padding:0 5px;cursor:pointer;font-family:inherit;margin-right:4px">Abrir</button>` : ''}
+        ${escHtml(e.detail || '—')}
+      </td>
+    </tr>`;
+  }).join('');
 
-  const limit = (_auditPage + 1) * _AUDIT_PAGE_SIZE;
-  const shown = loadMore
-    ? filtered.slice(_auditPage * _AUDIT_PAGE_SIZE, limit)
-    : filtered.slice(0, limit);
-
-  const timeline = document.getElementById('audit-timeline');
-  if (!timeline) return;
-
-  const today = new Date(); today.setHours(0,0,0,0);
-  const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
-
-  function _dayLabel(ts) {
-    const d = new Date(ts); d.setHours(0,0,0,0);
-    if (d.getTime() === today.getTime()) return 'Hoje';
-    if (d.getTime() === yesterday.getTime()) return 'Ontem';
-    return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
-  }
-
-  function _timeStr(ts) {
-    return new Date(ts).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-  }
-
-  let html = '';
-
-  if (shown.length === 0 && !loadMore) {
-    html = `<div style="padding:48px 0;text-align:center;color:var(--gray-400)">
-      <div style="font-size:2rem;margin-bottom:8px">📋</div>
-      <div>Nenhum registro de auditoria encontrado.</div>
-    </div>`;
-    timeline.innerHTML = html;
-    const moreBtn = document.getElementById('audit-load-more');
-    if (moreBtn) moreBtn.style.display = 'none';
-    return;
-  }
-
-  // Pré-calcula contagem de eventos por dia para o badge no separador
-  const _dayCount = {};
-  for (const e of filtered) {
-    const dl = _dayLabel(e.at);
-    _dayCount[dl] = (_dayCount[dl] || 0) + 1;
-  }
-
-  for (let i = 0; i < shown.length; i++) {
-    const e = shown[i];
-    const dayLabel = _dayLabel(e.at);
-    const isLast = (i === shown.length - 1) && filtered.length <= limit;
-
-    if (dayLabel !== _auditLastDay) {
-      _auditLastDay = dayLabel;
-      const cnt = _dayCount[dayLabel] || 0;
-      html += `<div style="display:flex;align-items:center;gap:10px;margin:${i === 0 && !loadMore ? '4px' : '20px'} 0 12px">
-        <div style="flex:none;width:32px"></div>
-        <div style="font-size:.7rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--gray-400);white-space:nowrap">${escHtml(dayLabel)}</div>
-        <span style="background:var(--gray-200);color:var(--gray-500);border-radius:99px;padding:0 7px;font-size:.65rem;font-weight:700;white-space:nowrap">${cnt}</span>
-        <div style="flex:1;height:1px;background:var(--gray-100)"></div>
-      </div>`;
-    }
-
-    const meta  = _AUDIT_EVENT_META[e.evento]  || { bg: '#EBEBEB', color: '#666360' };
-    const icon  = _AUDIT_ICON_SVG[e.evento]    || _AUDIT_ICON_SVG['CAMPO_ALTERADO'];
-    const label = _AUDIT_EVENT_LABELS[e.evento] || e.evento;
-    const proc  = e.processId ? processes.find(p => p.id === e.processId) : null;
-    const procLabel = proc ? (proc.num_dl || proc.num_proc || proc.objeto?.slice(0,40) || '') : '';
-
-    html += `<div style="display:flex;gap:0;align-items:stretch;min-height:48px">
-      <!-- dot + line column -->
-      <div style="flex:none;width:32px;display:flex;flex-direction:column;align-items:center">
-        <div style="flex:none;width:28px;height:28px;border-radius:50%;background:${meta.bg};color:${meta.color};display:flex;align-items:center;justify-content:center;margin-top:2px">${icon}</div>
-        ${!isLast ? `<div style="flex:1;width:2px;background:var(--gray-100);margin:4px 0"></div>` : ''}
-      </div>
-      <!-- content -->
-      <div style="flex:1;padding:0 0 ${isLast ? '4' : '16'}px 12px;padding-top:4px">
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-          <span style="font-size:.7rem;font-weight:700;color:${meta.color};background:${meta.bg};padding:2px 8px;border-radius:99px;white-space:nowrap">${escHtml(label)}</span>
-          <span style="font-size:.72rem;color:var(--gray-400);white-space:nowrap">${_timeStr(e.at)}</span>
-          ${e.usuario ? `<span style="font-size:.72rem;color:var(--gray-500)">${escHtml(e.usuario)}</span>` : ''}
-        </div>
-        ${e.detalhe ? `<div style="margin-top:4px;font-size:.8rem;color:var(--gray-700)">${escHtml(e.detalhe)}</div>` : ''}
-        ${proc ? `<div style="margin-top:5px">
-          <button onclick="openProcess('${escHtml(e.processId)}')" style="font-size:.68rem;color:var(--brand);background:none;border:1px solid var(--brand);border-radius:4px;padding:1px 8px;cursor:pointer;font-family:inherit">
-            → ${escHtml(proc.num_dl ? 'DL '+proc.num_dl : proc.num_proc ? 'PA '+proc.num_proc : proc.objeto?.slice(0,40) || 'Abrir processo')}
-          </button>
-        </div>` : ''}
-      </div>
-    </div>`;
-  }
-
-  if (loadMore) {
-    timeline.insertAdjacentHTML('beforeend', html);
+  if (append) {
+    tbody.insertAdjacentHTML('beforeend', html || '');
   } else {
-    timeline.innerHTML = html;
+    tbody.innerHTML = html || `<tr><td colspan="4" style="text-align:center;padding:32px;color:var(--gray-400)">Nenhum registro encontrado.</td></tr>`;
   }
 
-  const moreBtn = document.getElementById('audit-load-more');
-  if (moreBtn) {
-    moreBtn.style.display = filtered.length > limit ? '' : 'none';
-    if (filtered.length > limit) _auditPage++;
-  }
+  const total = d.total || 0;
+  const shown = (_auditPage + 1) * 50;
+  const maisEl = document.getElementById('audit-mais');
+  if (maisEl) maisEl.style.display = shown < total ? '' : 'none';
+  if (shown < total) _auditPage++;
+}
+
+async function _auditCarregarMais() {
+  await _auditCarregar(true);
 }
 
 async function gerarRelatorioAuditoria() {
-  const fTipo = document.getElementById('audit-filter-tipo')?.value || '';
-  const fDe   = document.getElementById('audit-filter-de')?.value;
-  const fAte  = document.getElementById('audit-filter-ate')?.value;
-  const fUser = (document.getElementById('audit-filter-user')?.value || '').toLowerCase();
+  const fTipo = document.getElementById('aud-tipo')?.value || '';
+  const fDe   = document.getElementById('aud-de')?.value;
+  const fAte  = document.getElementById('aud-ate')?.value;
+  const fUser = (document.getElementById('aud-q')?.value || '').toLowerCase();
 
   let todos = (await listarAuditGlobal()).sort((a, b) => b.at - a.at);
   if (fDe || fAte) {
@@ -10824,6 +10713,9 @@ async function _checkSenhaAcesso() {
 function _onLoginSuccess() {
   const tabUsuarios = document.getElementById('cfg-tab-usuarios');
   if (tabUsuarios) tabUsuarios.style.display = _apiUser?.admin ? '' : 'none';
+  document.querySelectorAll('.admin-only').forEach(el => {
+    el.style.display = _apiUser?.admin ? '' : 'none';
+  });
   (async () => {
     try {
       console.log('[SGCD] _onLoginSuccess: buscando GET /api/settings...');
