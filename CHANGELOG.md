@@ -5,6 +5,11 @@
 
 ---
 
+## [2.18.3] — 2026-07-06
+
+### Adicionado
+- **Rate limit de login** — bloqueia com HTTP 429 após 5 tentativas falhas em 5 minutos (janela deslizante, por usuário); login correto limpa o contador. Gap encontrado na auditoria de servidor: nenhum dos 3 sistemas tinha proteção contra força bruta
+
 ## [2.18.2] — 2026-07-06
 
 ### Corrigido
