@@ -209,6 +209,27 @@ def _verify_password(password, stored):
     except Exception:
         return False
 
+# ── Rate limit de login ─────────────────────────────────────────────────────
+# ponytail: dict em memória, sem lock — pior caso é uma contagem levemente
+# imprecisa sob concorrência, não uma falha; zera a cada reinício do servidor.
+LOGIN_MAX_ATTEMPTS   = 5
+LOGIN_LOCKOUT_WINDOW = 300   # 5 min — janela deslizante de tentativas falhas
+_login_failures = {}   # username (lower) -> [timestamps de tentativas falhas]
+
+def _login_rate_limited(username):
+    key = (username or '').strip().lower()
+    now = time.time()
+    attempts = [t for t in _login_failures.get(key, []) if now - t < LOGIN_LOCKOUT_WINDOW]
+    _login_failures[key] = attempts
+    return len(attempts) >= LOGIN_MAX_ATTEMPTS
+
+def _record_login_failure(username):
+    key = (username or '').strip().lower()
+    _login_failures.setdefault(key, []).append(time.time())
+
+def _clear_login_failures(username):
+    _login_failures.pop((username or '').strip().lower(), None)
+
 def create_session(user_id):
     token = secrets.token_urlsafe(32)
     expires = time.time() + SESSION_TTL
@@ -814,14 +835,19 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         except Exception:
             self._json(400, {'error': 'JSON inválido'}); return
 
+        if _login_rate_limited(username):
+            self._json(429, {'error': 'Muitas tentativas de login. Aguarde alguns minutos e tente novamente.'}); return
+
         with get_db() as conn:
             row = conn.execute(
                 'SELECT * FROM usuarios WHERE username=? COLLATE NOCASE AND ativo=1', (username,)
             ).fetchone()
 
         if not row or not _verify_password(password, row['senha_hash']):
+            _record_login_failure(username)
             self._json(401, {'error': 'Usuário ou senha incorretos'}); return
 
+        _clear_login_failures(username)
         global _had_session, _backup_pos_sess
         _had_session = True
         _backup_pos_sess = False  # nova sessão — permite backup ao próximo logout
