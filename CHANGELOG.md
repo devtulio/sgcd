@@ -5,6 +5,15 @@
 
 ---
 
+## [2.18.2] — 2026-07-06
+
+### Corrigido
+- **Mapa de rótulos de auditoria incompleto** — faltavam `PNCP_EXPORT` e `SYNC_BACKUP`
+- **Dropdown de filtro "Tipo de evento" desincronizado** — lista fixa no HTML não incluía `DOCUMENTO_ASSINADO`, `PROCESSO_RESTAURADO`, `PROCESSO_EXPURGADO` (apareciam na tabela mas não podiam ser filtrados); trocado para gerar as opções dinamicamente a partir do mapa de rótulos
+
+### Alterado
+- Coluna "Tipo" renomeada para "Ação" na Trilha de Auditoria, alinhando com o SGDP
+
 ## [2.18.1] — 2026-07-06
 
 ### Corrigido
