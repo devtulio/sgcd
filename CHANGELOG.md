@@ -5,6 +5,16 @@
 
 ---
 
+## [2.18.1] — 2026-07-06
+
+### Corrigido
+- **Item de menu ficava destacado junto com outros ao navegar** — `setNavActive()` procurava elementos `.nav-btn` para remover a classe `active`, mas os botões da sidebar usam `.nav-item`; o seletor nunca encontrava nada, então o item anterior nunca era desmarcado. SGCA já usava o seletor correto
+
+### Alterado
+- **Trilha de Auditoria** — timeline agrupada por dia (buscava até 2000 registros de uma vez, filtro 100% no cliente) substituída por tabela com filtros server-side (busca, tipo, período) e paginação via servidor, igual ao SGDP
+  - Menu "Auditoria" agora só aparece para administradores
+  - `/api/audit` ganhou filtros (q/tipo/de/ate), mas continua sem restrição de admin — usado também pelo histórico de alterações por campo, aberto a qualquer usuário logado
+
 ## [2.18.0] — 2026-07-06
 
 ### Alterado — padronização arquitetural com o SGDP (mudança grande)
