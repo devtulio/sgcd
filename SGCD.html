@@ -1554,17 +1554,6 @@
         <select id="aud-tipo" style="border:1px solid var(--gray-300);border-radius:var(--radius);padding:7px 10px;font-size:13px;outline:none;background:#fff"
           onchange="_auditFiltrar()">
           <option value="">Todos os tipos</option>
-          <option value="ETAPA_DONE">Etapa concluída</option>
-          <option value="ETAPA_BLOCKED">Etapa bloqueada</option>
-          <option value="ETAPA_PENDING">Etapa reaberta</option>
-          <option value="ARQUIVO_ANEXADO">Arquivo anexado</option>
-          <option value="ARQUIVO_REMOVIDO">Arquivo removido</option>
-          <option value="DOCUMENTO_GERADO">Documento gerado</option>
-          <option value="PROCESSO_EXCLUIDO">Processo excluído</option>
-          <option value="CERTIDAO_ATUALIZADA">Certidão atualizada</option>
-          <option value="CERTIDAO_SINCRONIZADA">Certidão sincronizada</option>
-          <option value="FORNECEDOR_ALTERADO">Fornecedor alterado</option>
-          <option value="CAMPO_ALTERADO">Campo alterado</option>
         </select>
         <input id="aud-de" type="date" style="border:1px solid var(--gray-300);border-radius:var(--radius);padding:7px 10px;font-size:13px;outline:none"
           onchange="_auditFiltrar()">
@@ -1574,7 +1563,7 @@
       </div>
       <div class="table-wrap">
         <table class="audit-table">
-          <thead><tr><th>Data/hora</th><th>Usuário</th><th>Tipo</th><th>Detalhes</th></tr></thead>
+          <thead><tr><th>Data/hora</th><th>Usuário</th><th>Ação</th><th>Detalhes</th></tr></thead>
           <tbody id="audit-body"><tr><td colspan="4" style="text-align:center;padding:32px;color:var(--gray-400)">Carregando…</td></tr></tbody>
         </table>
         <div id="audit-mais" style="text-align:center;padding:12px;display:none">
@@ -4306,7 +4295,8 @@ const _AUDIT_EVENT_LABELS = {
   PROCESSO_EXCLUIDO: 'Processo movido p/ lixeira',
   PROCESSO_RESTAURADO: 'Processo restaurado', PROCESSO_EXPURGADO: 'Processo excluído definitivamente',
   CERTIDAO_ATUALIZADA: 'Certidão atualizada', CERTIDAO_SINCRONIZADA: 'Certidão sincronizada',
-  FORNECEDOR_ALTERADO: 'Fornecedor alterado', CAMPO_ALTERADO: 'Campo alterado'
+  FORNECEDOR_ALTERADO: 'Fornecedor alterado', CAMPO_ALTERADO: 'Campo alterado',
+  PNCP_EXPORT: 'Exportação PNCP', SYNC_BACKUP: 'Sincronização de backup'
 };
 
 const _AUDIT_EVENT_META = {
@@ -4323,7 +4313,9 @@ const _AUDIT_EVENT_META = {
   CERTIDAO_ATUALIZADA:  { bg: '#FFF3D8', color: '#854F0B' },
   CERTIDAO_SINCRONIZADA:{ bg: '#E1F5EE', color: '#0F6E56' },
   FORNECEDOR_ALTERADO:  { bg: '#E1F5EE', color: '#0F6E56' },
-  CAMPO_ALTERADO:       { bg: '#EBEBEB', color: '#666360' }
+  CAMPO_ALTERADO:       { bg: '#EBEBEB', color: '#666360' },
+  PNCP_EXPORT:          { bg: '#e8eef7', color: '#1a3a6b' },
+  SYNC_BACKUP:          { bg: '#E1F5EE', color: '#0F6E56' }
 };
 
 
@@ -4335,7 +4327,9 @@ async function renderAudit() {
   _auditFiltros = { q: '', tipo: '', de: '', ate: '' };
   _auditPage = 0;
   document.getElementById('aud-q').value = '';
-  document.getElementById('aud-tipo').value = '';
+  const tipoEl = document.getElementById('aud-tipo');
+  tipoEl.innerHTML = '<option value="">Todos os tipos</option>' +
+    Object.entries(_AUDIT_EVENT_LABELS).map(([k, label]) => `<option value="${k}">${label}</option>`).join('');
   document.getElementById('aud-de').value = '';
   document.getElementById('aud-ate').value = '';
   await _auditCarregar();
