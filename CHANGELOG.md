@@ -5,6 +5,11 @@
 
 ---
 
+## [2.18.4] — 2026-07-07
+
+### Corrigido
+- **Manual Operacional** — capa/sumário usavam cores roxas obsoletas (`#2C001E`/`#5E2750`), resíduo de antes da unificação de tokens de marca; atualizadas para azul-marinho (`#1a3a6b`/`#2a5298`), igual ao app e ao SGCA. Removida regra CSS morta `.toc-num` (nunca usada no corpo do documento)
+
 ## [2.18.3] — 2026-07-06
 
 ### Adicionado
