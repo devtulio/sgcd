@@ -5,6 +5,11 @@
 
 ---
 
+## [2.20.4] — 2026-07-09
+
+### Corrigido
+- **Clicar fora de um modal fechava a janela e descartava os dados digitados** — todos os overlays (Fornecedor, Usuário, Certidão, Busca Global, Templates, CSV, E-mail, Vínculo, Fornecedor-picker, Conformidade) fechavam ao clicar no fundo escuro, mesmo com o formulário preenchido. Removido o fechamento por clique fora; agora só fecham pelo botão Cancelar/✕ ou pela tecla Esc
+
 ## [2.20.3] — 2026-07-09
 
 ### Corrigido
