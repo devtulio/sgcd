@@ -5,6 +5,11 @@
 
 ---
 
+## [2.20.3] — 2026-07-09
+
+### Corrigido
+- **Backup/restore perdia as assinaturas digitais** — `_build_backup_payload`/`_restore_backup` não incluíam a tabela `signatures`; um backup exportado e depois restaurado apagava todas as assinaturas registradas nos processos. Corrigido para exportar e reimportar a tabela, igual ao SGCA
+
 ## [2.20.2] — 2026-07-09
 
 ### Alterado

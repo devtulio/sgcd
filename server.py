@@ -1,4 +1,4 @@
-# SGCD v2.20.2 — Servidor local: SQLite, autenticação, REST API, proxy CNPJ, e-mail SMTP, backup automático
+# SGCD v2.20.3 — Servidor local: SQLite, autenticação, REST API, proxy CNPJ, e-mail SMTP, backup automático
 import http.server
 import socketserver
 import os
@@ -1366,6 +1366,7 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         _do_db_backup()  # backup do atual antes de substituir tudo
         with get_db() as conn:
             conn.execute('DELETE FROM audit_global')
+            conn.execute('DELETE FROM signatures')
             conn.execute('DELETE FROM files')
             conn.execute('DELETE FROM processes')
             conn.execute('DELETE FROM fornecedores')
@@ -1417,6 +1418,18 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
                     )
                 except Exception:
                     pass
+
+            for sg in data.get('signatures', []):
+                conn.execute(
+                    '''INSERT OR REPLACE INTO signatures
+                       (id,cod,process_id,doc_type,doc_filename,signer_user_id,signer_name,
+                        method,status,hash_sha256,file_id,signed_at,extra_json)
+                       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''',
+                    (sg.get('id'), sg.get('cod'), sg.get('process_id'), sg.get('doc_type'),
+                     sg.get('doc_filename'), sg.get('signer_user_id'), sg.get('signer_name'),
+                     sg.get('method'), sg.get('status'), sg.get('hash_sha256'),
+                     sg.get('file_id'), sg.get('signed_at'), sg.get('extra_json'))
+                )
 
         self._json(200, {'ok': True})
 
@@ -1877,6 +1890,7 @@ def _build_backup_payload():
         audit        = [dict(r) for r in conn.execute('SELECT * FROM audit_global').fetchall()]
         settings     = {r['key']: r['value'] for r in conn.execute('SELECT key,value FROM sys_settings').fetchall()}
         file_rows    = conn.execute('SELECT * FROM files').fetchall()
+        signatures   = [dict(r) for r in conn.execute('SELECT * FROM signatures').fetchall()]
     files_out = []
     for fr in file_rows:
         fp = os.path.join(UPLOADS_DIR, fr['nome_disco'])
@@ -1886,9 +1900,10 @@ def _build_backup_payload():
                 b64 = base64.b64encode(f.read()).decode()
         files_out.append({**dict(fr), 'data_b64': b64})
     return {
-        '_sgcd': True, 'version': 4, 'exportedAt': _now(),
+        '_sgcd': True, 'version': 5, 'exportedAt': _now(),
         'processes': processes, 'fornecedores': fornecedores,
         'auditGlobal': audit, 'settings': settings, 'files': files_out,
+        'signatures': signatures,
     }
 
 def _do_json_backup(cfg=None):
