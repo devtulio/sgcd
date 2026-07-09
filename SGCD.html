@@ -532,7 +532,7 @@
   .modal-body { padding: 20px 24px; }
   /* ── Notificações in-app ── */
   #notif-panel { position:fixed;bottom:16px;width:360px;max-height:460px;overflow-y:auto;background:#fff;border:1px solid var(--gray-200);border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.28);z-index:9999;display:none;flex-direction:column }
-  [data-theme="dark"] #notif-panel { background:#1e2028 }
+  body.dark #notif-panel { background:#1e2028 }
   #notif-panel.open { display:flex }
   .notif-header { padding:12px 16px 8px;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--gray-500);border-bottom:1px solid var(--gray-100);display:flex;justify-content:space-between;align-items:center }
   .notif-item { padding:10px 16px;border-bottom:1px solid var(--gray-100);cursor:pointer;transition:background .1s;display:flex;gap:10px;align-items:flex-start }
@@ -1022,6 +1022,7 @@
 
   /* ── Tabela de auditoria (padrão SGDP) ── */
   .table-wrap { background: #fff; border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+  body.dark .table-wrap { background: #2a2a2a; }
   .audit-table { width: 100%; border-collapse: collapse; }
   .audit-table th { background: var(--gray-50); border-bottom: 1px solid var(--gray-200);
     padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 700;
@@ -1481,6 +1482,7 @@
         <div class="sidebar-card">
           <h4>Informações do Processo</h4>
           <div class="body" id="info-fields"></div>
+          <datalist id="tags-datalist"></datalist>
         </div>
         <!-- Fracionamento -->
         <div class="sidebar-card" id="frac-card" style="display:none">
@@ -2486,7 +2488,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.18.4';
+const SGCD_VERSION = '2.19.0';
 // URL absoluta (não relativa) porque API_BASE também monta o texto do QR Code
 // de verificação de assinatura, lido por celular fora do navegador — precisa
 // da origem real, nunca uma porta fixa (era 'http://localhost:3000' hardcoded).
@@ -4624,7 +4626,7 @@ function _applyDashFilters(list, f) {
     if (f.fVmax !== null && parseValor(p.valor) > f.fVmax) return false;
     if (f.q) {
       const fn = typeof p.fornecedor === 'object' ? (p.fornecedor?.razao_social || '') : (p.fornecedor || '');
-      if (![p.num, p.num_proc, p.num_dl, p.objeto, fn, p.unidade].join(' ').toLowerCase().includes(f.q)) return false;
+      if (![p.num, p.num_proc, p.num_dl, p.objeto, fn, p.unidade, ...(p.tags || [])].join(' ').toLowerCase().includes(f.q)) return false;
     }
     return true;
   });
@@ -4852,6 +4854,8 @@ function renderDash() {
           <span>${ICONS.calendar()} ${fmt(p.createdAt)}</span>
           ${fracBadge}
         </div>
+        ${(p.tags || []).length ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px">${p.tags.map(t =>
+          `<span style="font-size:.65rem;padding:1px 6px;border-radius:8px;background:var(--brand-light);color:var(--brand)">🏷 ${escHtml(t)}</span>`).join('')}</div>` : ''}
         <div class="progress-wrap" style="margin-top:8px">
           <div class="step-indicators">${(p.steps||[]).map(s => { const cls = s.status==='done'?'done':s.status==='blocked'?'blocked':'pending'; const tip = s.status==='done'?'Concluída':s.status==='blocked'?'Bloqueada':'Pendente'; return `<div class="step-dot ${cls}" style="width:8px;height:8px" data-tip="${escHtml(s.name||tip)}" title="${escHtml(s.name||tip)}"></div>`; }).join('')}</div>
           <span class="progress-pct">${pc}%</span>
@@ -7082,6 +7086,17 @@ function renderInfoFields() {
     <div class="info-field"><label>Dotação completa</label>
       <input type="text" value="${escHtml(p.dotacao_completa||'')}" onchange="updateProcessField('dotacao_completa',this.value)" placeholder="ex: 02.004.10.301.0012.2.001.33903900.01"></div>`;
 
+  const tagsHtml = `
+    <div style="border-top:1px solid var(--gray-200);margin:10px 0 8px;padding-top:8px">
+      <p style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-500);margin-bottom:6px">Etiquetas</p>
+    </div>
+    <div class="info-field">
+      <input type="text" id="tags-input" list="tags-datalist" value="${escHtml((p.tags||[]).join(', '))}"
+        placeholder="Ex: urgente, revisar"
+        onchange="updateProcessField('tags', this.value.split(',').map(t=>t.trim()).filter(Boolean))">
+    </div>`;
+  _loadTagsDatalist();
+
   const TIPO_LABEL = { renovacao:'Renovação de', aditivo:'Aditivo de', continuidade:'Continuidade de', anterior:'Processo anterior' };
   const vincs = p.processos_relacionados || [];
   const vinculosHtml = `
@@ -7163,7 +7178,14 @@ function renderInfoFields() {
     }).join('')
   ).join('');
 
-  document.getElementById('info-fields').innerHTML = groupedHtml + dotacaoHtml + vinculosHtml + classHtml;
+  document.getElementById('info-fields').innerHTML = groupedHtml + tagsHtml + dotacaoHtml + vinculosHtml + classHtml;
+}
+
+async function _loadTagsDatalist() {
+  const r = await API.get('/api/tags');
+  const d = await API.json(r);
+  const dl = document.getElementById('tags-datalist');
+  if (dl) dl.innerHTML = (d?.items || []).map(t => `<option value="${escHtml(t)}">`).join('');
 }
 
 async function infoNaturezaChange(val) {

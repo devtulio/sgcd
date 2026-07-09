@@ -1,4 +1,4 @@
-# SGCD v2.18.4 — Servidor local: SQLite, autenticação, REST API, proxy CNPJ, e-mail SMTP, backup automático
+# SGCD v2.19.0 — Servidor local: SQLite, autenticação, REST API, proxy CNPJ, e-mail SMTP, backup automático
 import http.server
 import socketserver
 import os
@@ -150,6 +150,15 @@ def init_db():
                 key   TEXT PRIMARY KEY,
                 value TEXT
             );
+            CREATE TABLE IF NOT EXISTS tags (
+                id   INTEGER PRIMARY KEY AUTOINCREMENT,
+                nome TEXT NOT NULL UNIQUE COLLATE NOCASE
+            );
+            CREATE TABLE IF NOT EXISTS process_tags (
+                process_id TEXT NOT NULL REFERENCES processes(id) ON DELETE CASCADE,
+                tag_id     INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+                PRIMARY KEY (process_id, tag_id)
+            );
             CREATE TABLE IF NOT EXISTS signatures (
                 id             TEXT PRIMARY KEY,
                 cod            TEXT UNIQUE,
@@ -173,6 +182,7 @@ def init_db():
             CREATE INDEX IF NOT EXISTS idx_audit_ts      ON audit_global(ts);
             CREATE INDEX IF NOT EXISTS idx_sig_proc      ON signatures(process_id);
             CREATE INDEX IF NOT EXISTS idx_sig_cod       ON signatures(cod);
+            CREATE INDEX IF NOT EXISTS idx_proc_tags_tag ON process_tags(tag_id);
         ''')
         # Migração: coluna deleted_at para lixeira (soft-delete) — SQLite não suporta
         # ADD COLUMN IF NOT EXISTS, então tentamos e ignoramos se já existir
@@ -426,6 +436,10 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
             self._list_fornecedores(qs)
         elif re.fullmatch(r'/api/fornecedores/[^/]+', p):
             self._get_fornecedor(p.split('/')[-1])
+
+        # Etiquetas
+        elif p == '/api/tags':
+            self._list_tags()
 
         # Arquivos
         elif p == '/api/files':
@@ -867,6 +881,7 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         q       = qp('q', '')
         status  = qp('status', '')
         unidade = qp('unidade', '')
+        tag     = qp('tag', '')
         page    = int(qp('page', 1))
         per     = min(int(qp('per', 500)), 2000)
         trash   = qp('trash') == '1'
@@ -880,27 +895,39 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
             where.append('status=?'); params.append(status)
         if unidade:
             where.append('unidade=?'); params.append(unidade)
+        if tag:
+            where.append('id IN (SELECT pt.process_id FROM process_tags pt JOIN tags t ON pt.tag_id=t.id WHERE t.nome=? COLLATE NOCASE)')
+            params.append(tag)
 
         wc = ('WHERE ' + ' AND '.join(where)) if where else ''
         order = 'deleted_at DESC' if trash else 'updated_at DESC'
         with get_db() as conn:
             total = conn.execute(f'SELECT COUNT(*) FROM processes {wc}', params).fetchone()[0]
             rows  = conn.execute(
-                f'SELECT data,deleted_at FROM processes {wc} ORDER BY {order} LIMIT ? OFFSET ?',
+                f'SELECT id,data,deleted_at FROM processes {wc} ORDER BY {order} LIMIT ? OFFSET ?',
                 params + [per, (page-1)*per]
             ).fetchall()
+            tags_map = _tags_map(conn, 'process_tags', 'process_id', [r['id'] for r in rows])
         items = []
         for r in rows:
             item = json.loads(r['data'])
             item['deletedAt'] = r['deleted_at']
+            item['tags'] = tags_map.get(r['id'], [])
             items.append(item)
         self._json(200, {'total': total, 'items': items})
 
     def _get_process(self, pid):
         with get_db() as conn:
             row = conn.execute('SELECT data FROM processes WHERE id=?', (pid,)).fetchone()
-        if not row: self._json(404, {'error': 'Processo não encontrado'}); return
-        self._json(200, json.loads(row['data']))
+            if not row: self._json(404, {'error': 'Processo não encontrado'}); return
+            tags = _tags_map(conn, 'process_tags', 'process_id', [pid]).get(pid, [])
+        item = json.loads(row['data']); item['tags'] = tags
+        self._json(200, item)
+
+    def _list_tags(self):
+        with get_db() as conn:
+            rows = conn.execute('SELECT nome FROM tags ORDER BY nome').fetchall()
+        self._json(200, {'items': [r['nome'] for r in rows]})
 
     def _create_process(self, data, s):
         pid = data.get('id') or str(uuid.uuid4())
@@ -919,6 +946,7 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
                  data.get('num_proc'), data.get('num_dl'),
                  data.get('createdAt'), data['updatedAt'], s['user_id'])
             )
+            if 'tags' in data: _sync_tags(conn, 'process_tags', 'process_id', pid, data['tags'])
         self._json(200, data)
 
     def _update_process(self, pid, data, s):
@@ -930,6 +958,7 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
             existing = json.loads(row['data'])
             existing.update(data)
             existing['updatedAt'] = _now()
+            if 'tags' in data: _sync_tags(conn, 'process_tags', 'process_id', pid, data['tags'])
             conn.execute(
                 '''UPDATE processes SET data=?,objeto=?,status=?,unidade=?,valor=?,
                    num_proc=?,num_dl=?,updated_at=? WHERE id=?''',
@@ -1545,6 +1574,29 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
 
 def _now():
     return time.strftime('%Y-%m-%dT%H:%M:%S')
+
+def _sync_tags(conn, join_table, id_col, item_id, tag_names):
+    """Substitui as tags do registro pela lista informada (cria as que não existem)."""
+    nomes = sorted({t.strip() for t in (tag_names or []) if t.strip()})
+    conn.execute(f'DELETE FROM {join_table} WHERE {id_col}=?', (item_id,))
+    for nome in nomes:
+        conn.execute('INSERT OR IGNORE INTO tags (nome) VALUES (?)', (nome,))
+        tag_id = conn.execute('SELECT id FROM tags WHERE nome=? COLLATE NOCASE', (nome,)).fetchone()['id']
+        conn.execute(f'INSERT OR IGNORE INTO {join_table} ({id_col},tag_id) VALUES (?,?)', (item_id, tag_id))
+
+def _tags_map(conn, join_table, id_col, item_ids):
+    """Retorna {item_id: [nomes de tag]} para os ids informados."""
+    if not item_ids: return {}
+    qs = ','.join('?' * len(item_ids))
+    rows = conn.execute(
+        f'''SELECT j.{id_col} AS iid, t.nome FROM {join_table} j
+            JOIN tags t ON j.tag_id=t.id WHERE j.{id_col} IN ({qs})
+            ORDER BY t.nome''', item_ids
+    ).fetchall()
+    out = {}
+    for r in rows:
+        out.setdefault(r['iid'], []).append(r['nome'])
+    return out
 
 def _insert_audit_raw(conn, a):
     """Insere um evento de auditoria preservando autor/id/data originais do payload

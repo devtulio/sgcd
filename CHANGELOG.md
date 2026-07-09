@@ -5,6 +5,14 @@
 
 ---
 
+## [2.19.0] — 2026-07-08
+
+### Adicionado
+- **Etiquetas (tags) em processos** — tags livres por processo com autocomplete, exibidas como marcadores no card e incluídas na busca; sincronizado do modelo relacional já usado no SGDP (`tags` + `process_tags`)
+
+### Corrigido
+- **Contraste no tema escuro** — `#notif-panel` usava um seletor `[data-theme="dark"]` que nunca era ativado (a troca de tema usa a classe `body.dark`, não o atributo `data-theme`); `.table-wrap` não tinha nenhuma cobertura no tema escuro. Mesmo bug clonado no SGDP e já corrigido lá; achado ao comparar os 3 sistemas
+
 ## [2.18.4] — 2026-07-07
 
 ### Corrigido
