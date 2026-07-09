@@ -1,4 +1,4 @@
-# SGCD v2.19.0 — Servidor local: SQLite, autenticação, REST API, proxy CNPJ, e-mail SMTP, backup automático
+# SGCD v2.20.0 — Servidor local: SQLite, autenticação, REST API, proxy CNPJ, e-mail SMTP, backup automático
 import http.server
 import socketserver
 import os
@@ -92,6 +92,8 @@ def init_db():
                 id         INTEGER PRIMARY KEY AUTOINCREMENT,
                 username   TEXT NOT NULL UNIQUE COLLATE NOCASE,
                 nome       TEXT NOT NULL,
+                cpf        TEXT,
+                email      TEXT,
                 cargo      TEXT,
                 matricula  TEXT,
                 senha_hash TEXT NOT NULL,
@@ -193,6 +195,12 @@ def init_db():
                 pass
         conn.execute('CREATE INDEX IF NOT EXISTS idx_proc_deleted ON processes(deleted_at)')
         conn.execute('CREATE INDEX IF NOT EXISTS idx_forn_deleted ON fornecedores(deleted_at)')
+        # Migração: colunas cpf/email em usuarios (cadastro de dados de contato)
+        for col in ('cpf', 'email'):
+            try:
+                conn.execute(f'ALTER TABLE usuarios ADD COLUMN {col} TEXT')
+            except sqlite3.OperationalError:
+                pass
         # Sessões são descartadas a cada início do servidor (logout automático ao fechar janela)
         conn.execute('DELETE FROM sessions')
         # Cria admin padrão se não houver usuários
@@ -255,7 +263,7 @@ def get_session(token):
     with get_db() as conn:
         row = conn.execute(
             '''SELECT s.token, s.user_id, s.expires,
-                      u.nome, u.username, u.cargo, u.matricula, u.admin, u.ativo
+                      u.nome, u.username, u.cpf, u.email, u.cargo, u.matricula, u.admin, u.ativo
                FROM sessions s JOIN usuarios u ON u.id=s.user_id
                WHERE s.token=? AND s.expires>? AND u.ativo=1''',
             (token, time.time())
@@ -520,7 +528,7 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
             if not s['admin']: self._json(403, {'error': 'Acesso restrito'}); return
             with get_db() as conn:
                 rows = conn.execute(
-                    'SELECT id,username,nome,cargo,matricula,admin,ativo,criado_em FROM usuarios'
+                    'SELECT id,username,nome,cpf,email,cargo,matricula,admin,ativo,criado_em FROM usuarios'
                 ).fetchall()
             self._json(200, [dict(r) for r in rows])
 
@@ -837,6 +845,7 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
     def _user_dict(self, s):
         return {
             'id': s['user_id'], 'username': s['username'], 'nome': s['nome'],
+            'cpf': s.get('cpf'), 'email': s.get('email'),
             'cargo': s.get('cargo'), 'matricula': s.get('matricula'),
             'admin': bool(s['admin'])
         }
@@ -870,6 +879,7 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
             'token': token,
             'user': {
                 'id': row['id'], 'username': row['username'], 'nome': row['nome'],
+                'cpf': row['cpf'], 'email': row['email'],
                 'cargo': row['cargo'], 'matricula': row['matricula'], 'admin': bool(row['admin'])
             }
         })
@@ -1306,8 +1316,8 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         try:
             with get_db() as conn:
                 conn.execute(
-                    'INSERT INTO usuarios (username,nome,cargo,matricula,senha_hash,admin) VALUES (?,?,?,?,?,?)',
-                    (username, nome, data.get('cargo'), data.get('matricula'),
+                    'INSERT INTO usuarios (username,nome,cpf,email,cargo,matricula,senha_hash,admin) VALUES (?,?,?,?,?,?,?,?)',
+                    (username, nome, data.get('cpf'), data.get('email'), data.get('cargo'), data.get('matricula'),
                      _hash_password(password), int(bool(data.get('admin'))))
                 )
                 uid = conn.execute('SELECT last_insert_rowid()').fetchone()[0]
@@ -1320,7 +1330,7 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
             if not conn.execute('SELECT 1 FROM usuarios WHERE id=?', (uid,)).fetchone():
                 self._json(404, {'error': 'Usuário não encontrado'}); return
             fields, params = [], []
-            for col in ('nome', 'cargo', 'matricula'):
+            for col in ('nome', 'cpf', 'email', 'cargo', 'matricula'):
                 if col in data: fields.append(f'{col}=?'); params.append(data[col])
             if 'admin' in data: fields.append('admin=?'); params.append(int(bool(data['admin'])))
             if 'ativo' in data: fields.append('ativo=?'); params.append(int(bool(data['ativo'])))

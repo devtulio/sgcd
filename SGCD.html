@@ -2488,7 +2488,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.19.0';
+const SGCD_VERSION = '2.20.0';
 // URL absoluta (não relativa) porque API_BASE também monta o texto do QR Code
 // de verificação de assinatura, lido por celular fora do navegador — precisa
 // da origem real, nunca uma porta fixa (era 'http://localhost:3000' hardcoded).
@@ -3728,6 +3728,13 @@ function maskCnpj(input) {
   else if (v.length > 8) v = v.replace(/^(\d{2})(\d{3})(\d{3})(\d{0,4})/, '$1.$2.$3/$4');
   else if (v.length > 5) v = v.replace(/^(\d{2})(\d{3})(\d{0,3})/, '$1.$2.$3');
   else if (v.length > 2) v = v.replace(/^(\d{2})(\d{0,3})/, '$1.$2');
+  input.value = v;
+}
+function maskCpf(input) {
+  let v = input.value.replace(/\D/g, '').slice(0, 11);
+  if (v.length > 9) v = v.replace(/^(\d{3})(\d{3})(\d{3})(\d{0,2})/, '$1.$2.$3-$4');
+  else if (v.length > 6) v = v.replace(/^(\d{3})(\d{3})(\d{0,3})/, '$1.$2.$3');
+  else if (v.length > 3) v = v.replace(/^(\d{3})(\d{0,3})/, '$1.$2');
   input.value = v;
 }
 function formatCep(s) {
@@ -11165,6 +11172,12 @@ function _abrirModalUsuario(u) {
       <label style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--gray-500)">Nome completo</label>
       <input id="_u-nome" type="text" value="${escHtml(u?.nome||'')}" placeholder="Nome do usuário"
         style="width:100%;height:38px;border:1.5px solid var(--gray-200);border-radius:7px;padding:0 10px;font-size:.9rem;background:transparent;color:inherit;margin-bottom:12px">
+      <label style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--gray-500)">CPF</label>
+      <input id="_u-cpf" type="text" value="${escHtml(u?.cpf||'')}" placeholder="000.000.000-00" maxlength="14" oninput="maskCpf(this)"
+        style="width:100%;height:38px;border:1.5px solid var(--gray-200);border-radius:7px;padding:0 10px;font-size:.9rem;background:transparent;color:inherit;margin-bottom:12px">
+      <label style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--gray-500)">E-mail</label>
+      <input id="_u-email" type="email" value="${escHtml(u?.email||'')}" placeholder="usuario@orgao.gov.br"
+        style="width:100%;height:38px;border:1.5px solid var(--gray-200);border-radius:7px;padding:0 10px;font-size:.9rem;background:transparent;color:inherit;margin-bottom:12px">
       <label style="font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--gray-500)">Cargo</label>
       <input id="_u-cargo" type="text" value="${escHtml(u?.cargo||'')}" placeholder="ex: Agente de Contratação"
         style="width:100%;height:38px;border:1.5px solid var(--gray-200);border-radius:7px;padding:0 10px;font-size:.9rem;background:transparent;color:inherit;margin-bottom:12px">
@@ -11190,6 +11203,8 @@ function _abrirModalUsuario(u) {
     const payload = {
       username:  overlay.querySelector('#_u-username').value.trim(),
       nome:      overlay.querySelector('#_u-nome').value.trim(),
+      cpf:       overlay.querySelector('#_u-cpf').value.trim(),
+      email:     overlay.querySelector('#_u-email').value.trim(),
       cargo:     overlay.querySelector('#_u-cargo').value.trim(),
       matricula: overlay.querySelector('#_u-matricula').value.trim(),
       admin:     overlay.querySelector('#_u-admin').checked,
