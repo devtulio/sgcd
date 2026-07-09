@@ -96,6 +96,8 @@ Execute **`Diagnostico SGCD.bat`** (ou a opção **[3]** do `Iniciar SGCD.bat`) 
 SGCD/
 ├── SGCD.html                # Frontend — aplicação web completa
 ├── server.py                # Servidor Python (API REST + SQLite + uploads)
+├── tests/                   # Suíte de testes automatizados do backend
+│   └── test_server.py
 ├── Iniciar SGCD.bat         # Inicializa o servidor
 ├── python-3.12.9-embed-amd64.zip  # Python portátil (fallback se não houver Python instalado)
 ├── Criar Atalho SGCD.bat    # Cria atalho na área de trabalho com ícone
