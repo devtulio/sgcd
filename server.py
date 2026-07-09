@@ -1,4 +1,4 @@
-# SGCD v2.20.1 — Servidor local: SQLite, autenticação, REST API, proxy CNPJ, e-mail SMTP, backup automático
+# SGCD v2.20.2 — Servidor local: SQLite, autenticação, REST API, proxy CNPJ, e-mail SMTP, backup automático
 import http.server
 import socketserver
 import os
@@ -206,8 +206,8 @@ def init_db():
         # Cria admin padrão se não houver usuários
         if conn.execute('SELECT COUNT(*) FROM usuarios').fetchone()[0] == 0:
             conn.execute(
-                'INSERT INTO usuarios (username,nome,cargo,senha_hash,admin) VALUES (?,?,?,?,1)',
-                ('admin', 'Administrador', 'Agente de Contratação', _hash_password('admin123'))
+                'INSERT INTO usuarios (username,nome,senha_hash,admin) VALUES (?,?,?,1)',
+                ('admin', 'Administrador', _hash_password('admin123'))
             )
             conn.commit()
             print('Usuário padrão criado: admin / admin123 — troque a senha nas Configurações.')
