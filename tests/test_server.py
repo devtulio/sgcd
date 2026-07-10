@@ -196,6 +196,36 @@ class TestFornecedores(SGCDTestCase):
         status, listed = self.request('GET', '/api/fornecedores', token=token)
         self.assertTrue(any(f['id'] == fid for f in listed['items']))
 
+    def test_excluir_restaurar_e_purgar_fornecedor(self):
+        token = self.login()
+        status, created = self.request('POST', '/api/fornecedores',
+                                        {'cnpj': '33333333000191', 'razaoSocial': 'Fornecedor Para Excluir'},
+                                        token=token)
+        self.assertEqual(status, 200)
+        fid = created['id']
+
+        # soft-delete: some da listagem normal, aparece na lixeira
+        status, _ = self.request('DELETE', f'/api/fornecedores/{fid}', token=token)
+        self.assertEqual(status, 200)
+        status, listed = self.request('GET', '/api/fornecedores', token=token)
+        self.assertFalse(any(f['id'] == fid for f in listed['items']))
+        status, trashed = self.request('GET', '/api/fornecedores?trash=1', token=token)
+        self.assertTrue(any(f['id'] == fid for f in trashed['items']))
+
+        # restaurar da lixeira
+        status, _ = self.request('PUT', f'/api/fornecedores/{fid}/restore', token=token)
+        self.assertEqual(status, 200)
+        status, listed = self.request('GET', '/api/fornecedores', token=token)
+        self.assertTrue(any(f['id'] == fid for f in listed['items']))
+
+        # excluir definitivamente
+        status, _ = self.request('DELETE', f'/api/fornecedores/{fid}', token=token)
+        self.assertEqual(status, 200)
+        status, _ = self.request('DELETE', f'/api/fornecedores/{fid}?purge=1', token=token)
+        self.assertEqual(status, 200)
+        status, _ = self.request('GET', f'/api/fornecedores/{fid}', token=token)
+        self.assertEqual(status, 404)
+
 
 class TestAudit(SGCDTestCase):
 

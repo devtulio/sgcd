@@ -1641,7 +1641,7 @@
       <h2>Lixeira</h2>
     </div>
     <div style="max-width:960px;margin:0 auto;padding:0 16px 24px">
-      <p style="font-size:.75rem;color:var(--gray-500);margin-bottom:14px">Processos excluídos ficam aqui por 30 dias antes de serem apagados permanentemente. Restaure a qualquer momento.</p>
+      <p style="font-size:.75rem;color:var(--gray-500);margin-bottom:14px">Processos e fornecedores excluídos ficam aqui por 30 dias antes de serem apagados permanentemente. Restaure a qualquer momento.</p>
       <div id="lixeira-lista"></div>
     </div>
   </div>
@@ -2581,7 +2581,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.23.0';
+const SGCD_VERSION = '2.24.0';
 // URL absoluta (não relativa) porque API_BASE também monta o texto do QR Code
 // de verificação de assinatura, lido por celular fora do navegador — precisa
 // da origem real, nunca uma porta fixa (era 'http://localhost:3000' hardcoded).
@@ -2674,9 +2674,6 @@ async function buscarFornecedor(id) {
 async function salvarFornecedor(data) {
   const r = await API.put(`/api/fornecedores/${data.id}`, data);
   return r?.ok ? API.json(r) : data;
-}
-async function excluirFornecedor(id) {
-  await API.del(`/api/fornecedores/${id}`);
 }
 
 async function listarAuditGlobal() {
@@ -4344,15 +4341,24 @@ async function showLixeira() {
   setNavActive('nav-lixeira');
   const el = document.getElementById('lixeira-lista');
   el.innerHTML = '<p style="color:var(--gray-400);padding:32px 0;text-align:center">Carregando…</p>';
-  const r = await API.get('/api/processes?trash=1&per=500');
-  const d = await API.json(r);
-  const items = d?.items || [];
-  if (!items.length) {
+
+  const [rp, rf] = await Promise.all([
+    API.get('/api/processes?trash=1&per=500'),
+    API.get('/api/fornecedores?trash=1&per=500')
+  ]);
+  const [dp, df] = await Promise.all([API.json(rp), API.json(rf)]);
+  const processosLixo    = dp?.items || [];
+  const fornecedoresLixo = df?.items || [];
+
+  if (!processosLixo.length && !fornecedoresLixo.length) {
     el.innerHTML = '<p style="color:var(--gray-400);padding:32px 0;text-align:center">Lixeira vazia.</p>';
     return;
   }
-  el.innerHTML = items.map(p => {
-    const dias = p.deletedAt ? Math.max(0, 30 - Math.floor((Date.now() - new Date(p.deletedAt).getTime()) / 86400000)) : null;
+
+  const diasRestantes = deletedAt => deletedAt ? Math.max(0, 30 - Math.floor((Date.now() - new Date(deletedAt).getTime()) / 86400000)) : null;
+
+  const htmlProcessos = processosLixo.map(p => {
+    const dias = diasRestantes(p.deletedAt);
     return `<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--gray-200);border-radius:var(--radius);margin-bottom:8px;background:var(--gray-50)">
       <div style="flex:1;min-width:0">
         <div style="font-weight:600;font-size:.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(p.objeto || 'Sem objeto')}</div>
@@ -4362,12 +4368,45 @@ async function showLixeira() {
       <button class="btn btn-danger btn-sm" onclick="purgeProcess('${p.id}','${escHtml(p.num_proc || '')}','${escHtml((p.objeto||'').replace(/'/g,"\\'"))}')">Excluir definitivamente</button>
     </div>`;
   }).join('');
+
+  const htmlFornecedores = fornecedoresLixo.map(f => {
+    const dias = diasRestantes(f.deletedAt);
+    return `<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--gray-200);border-radius:var(--radius);margin-bottom:8px;background:var(--gray-50)">
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;font-size:.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(f.razao_social || 'Fornecedor')}</div>
+        <div style="font-size:.72rem;color:var(--gray-500)">Fornecedor · CNPJ ${escHtml(f.cnpj || '—')}${dias !== null ? ` · exclui definitivamente em ${dias} dia(s)` : ''}</div>
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="restoreFornecedor('${f.id}')">↩ Restaurar</button>
+      <button class="btn btn-danger btn-sm" onclick="purgeFornecedor('${f.id}','${escHtml((f.razao_social||'').replace(/'/g,"\\'"))}')">Excluir definitivamente</button>
+    </div>`;
+  }).join('');
+
+  el.innerHTML = htmlProcessos + htmlFornecedores;
 }
 
 async function restoreProcess(pid) {
   await API.put(`/api/processes/${pid}/restore`, {});
   await _auditEvento('PROCESSO_RESTAURADO', `Processo restaurado da lixeira`, pid);
   toast('Processo restaurado.', 'success');
+  showLixeira();
+}
+
+async function restoreFornecedor(fid) {
+  await API.put(`/api/fornecedores/${fid}/restore`, {});
+  await _auditEvento('FORNECEDOR_RESTAURADO', `Fornecedor restaurado da lixeira`);
+  toast('Fornecedor restaurado.', 'success');
+  showLixeira();
+}
+
+async function purgeFornecedor(fid, nome) {
+  const ok = await customConfirm(
+    `Excluir PERMANENTEMENTE o fornecedor "${nome}"? Esta ação não pode ser desfeita.`,
+    { title: '⚠️ Excluir Permanentemente', icon: '🚨', okLabel: 'Excluir', okClass: 'btn-danger' }
+  );
+  if (!ok) return;
+  await API.del(`/api/fornecedores/${fid}?purge=1`);
+  await _auditEvento('FORNECEDOR_EXPURGADO', `Fornecedor "${nome}" excluído permanentemente`);
+  toast('Fornecedor excluído permanentemente.', 'success');
   showLixeira();
 }
 
@@ -4398,6 +4437,8 @@ const _AUDIT_EVENT_LABELS = {
   PROCESSO_RESTAURADO: 'Processo restaurado', PROCESSO_EXPURGADO: 'Processo excluído definitivamente',
   CERTIDAO_ATUALIZADA: 'Certidão atualizada', CERTIDAO_SINCRONIZADA: 'Certidão sincronizada',
   FORNECEDOR_ALTERADO: 'Fornecedor alterado', CAMPO_ALTERADO: 'Campo alterado',
+  FORNECEDOR_EXCLUIDO: 'Fornecedor movido p/ lixeira', FORNECEDOR_RESTAURADO: 'Fornecedor restaurado',
+  FORNECEDOR_EXPURGADO: 'Fornecedor excluído definitivamente',
   PNCP_EXPORT: 'Exportação PNCP', SYNC_BACKUP: 'Sincronização de backup'
 };
 
@@ -4415,6 +4456,9 @@ const _AUDIT_EVENT_META = {
   CERTIDAO_ATUALIZADA:  { bg: '#FFF3D8', color: '#854F0B' },
   CERTIDAO_SINCRONIZADA:{ bg: '#E1F5EE', color: '#0F6E56' },
   FORNECEDOR_ALTERADO:  { bg: '#E1F5EE', color: '#0F6E56' },
+  FORNECEDOR_EXCLUIDO:  { bg: '#FCEBEB', color: '#A32D2D' },
+  FORNECEDOR_RESTAURADO:{ bg: '#E1F5EE', color: '#0F6E56' },
+  FORNECEDOR_EXPURGADO: { bg: '#FCEBEB', color: '#A32D2D' },
   CAMPO_ALTERADO:       { bg: '#EBEBEB', color: '#666360' },
   PNCP_EXPORT:          { bg: '#e8eef7', color: '#1a3a6b' },
   SYNC_BACKUP:          { bg: '#E1F5EE', color: '#0F6E56' }
@@ -5324,11 +5368,39 @@ function _renderFornCardEdit() {
   </div>
   <div class="forn-inline-body" style="border-top:none" onclick="event.stopPropagation()">
     ${_buildFornEditHtml(f)}
-    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid var(--gray-200)">
-      <button class="btn btn-outline" onclick="_renderFornCardView()">Cancelar</button>
-      <button class="btn btn-primary" onclick="_saveFornEdit()">Salvar alterações</button>
+    <div style="display:flex;justify-content:space-between;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid var(--gray-200)">
+      <button class="btn btn-danger btn-outline" onclick="_deleteForn('${f.id}','${escHtml(f.razao_social || '').replace(/'/g,"\\'")}')">Excluir Fornecedor</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-outline" onclick="_renderFornCardView()">Cancelar</button>
+        <button class="btn btn-primary" onclick="_saveFornEdit()">Salvar alterações</button>
+      </div>
     </div>
   </div>`, 'edit');
+}
+
+async function _fornecedorTemVinculos(fornId) {
+  const r = await API.get('/api/processes?per=2000');
+  const d = await API.json(r);
+  return (d?.items || []).filter(p => p.fornecedor?.id === fornId).length;
+}
+
+async function _deleteForn(id, nome) {
+  const vinculos = await _fornecedorTemVinculos(id);
+  if (vinculos) {
+    toast(`Não é possível excluir: fornecedor vinculado a ${vinculos} processo(s).`, 'error');
+    return;
+  }
+  const ok = await customConfirm(
+    `Excluir o fornecedor "${nome}"? Ele ficará na Lixeira por 30 dias antes da exclusão definitiva.`,
+    { title: 'Excluir Fornecedor', icon: '⚠️', okLabel: 'Excluir', okClass: 'btn-danger' }
+  );
+  if (!ok) return;
+  const r = await API.del(`/api/fornecedores/${id}`);
+  if (!r?.ok) { toast('Erro ao excluir fornecedor.', 'error'); return; }
+  await _auditEvento('FORNECEDOR_EXCLUIDO', `Fornecedor "${nome}" excluído`);
+  toast('Fornecedor excluído.', 'success');
+  closeFornDetail();
+  renderFornecedores();
 }
 function _qsaRowHtml(i, s = {}) {
   return `<div class="fe-qsa-row" style="display:grid;grid-template-columns:1fr 1fr 150px 28px;gap:6px;align-items:end;margin-bottom:6px">

@@ -5,6 +5,21 @@
 
 ---
 
+## [2.24.0] — 2026-07-09
+
+### Adicionado
+- **Exclusão de fornecedor com verificação de vínculo** — nova opção "Excluir Fornecedor" na tela de edição (mesmo padrão já usado no SGDP/SGCA). Antes de excluir, verifica se o fornecedor está vinculado a algum processo (`p.fornecedor.id`); se estiver, bloqueia com aviso do número de processos vinculados, em vez de permitir uma exclusão que quebraria a referência. Sem vínculo, segue o mesmo padrão de soft-delete já usado em processos: vai para a Lixeira por 30 dias, com restauração ou exclusão definitiva
+- **Lixeira agora lista fornecedores excluídos** — antes só mostrava processos, mesmo o backend já suportando lixeira/restauração para fornecedores desde antes. `restoreFornecedor()`/`purgeFornecedor()` seguem o mesmo padrão de `restoreProcess()`/`purgeProcess()`
+- Novos tipos de evento de auditoria: `FORNECEDOR_EXCLUIDO`, `FORNECEDOR_RESTAURADO`, `FORNECEDOR_EXPURGADO`
+- Cobertura de teste (`tests/test_server.py`): ciclo completo excluir → lixeira → restaurar → excluir definitivamente para fornecedores
+
+### Removido
+- `excluirFornecedor(id)` — função morta (nunca chamada por nenhum botão) que fazia `DELETE` direto sem nenhuma verificação de vínculo nem confirmação; substituída pela implementação segura acima
+
+Validado ao vivo: fornecedor sem vínculo é excluído/restaurado/purgado corretamente; fornecedor vinculado a um processo é bloqueado com a mensagem correta.
+
+---
+
 ## [2.23.0] — 2026-07-09
 
 ### Adicionado
