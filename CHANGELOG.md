@@ -5,6 +5,11 @@
 
 ---
 
+## [2.25.2] — 2026-07-10
+
+### Corrigido
+- **Numeração "Página X de Y" sobrepondo conteúdo real dos documentos** — em documentos com pouca margem superior (tabelas de certidão, parágrafos justificados, blocos de assinatura), o carimbo no canto superior direito ficava em cima do texto. Cada documento incluído no PDF Consolidado agora ganha um espaço reservado no topo da página (só nessa geração — os botões individuais de impressão continuam sem essa margem extra, que não fazem sentido pra eles).
+
 ## [2.25.1] — 2026-07-10
 
 ### Corrigido
