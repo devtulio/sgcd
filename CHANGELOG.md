@@ -5,6 +5,17 @@
 
 ---
 
+## [2.24.1] — 2026-07-09
+
+### Adicionado
+- **Testes E2E ampliados** (`tests/e2e/smoke.spec.js`) — dois novos cenários, além do já existente (login/criar processo/gerar documento):
+  - **Assinatura Simples de documento**: clica em "Assinar Documento" no popup do documento gerado, escolhe o nível Simples, confirma que o carimbo de assinatura aparece no documento e que a seção "Assinaturas" do processo é atualizada
+  - **Sincronização de backup entre agentes**: injeta um backup JSON sintético (representando "outro agente", sem precisar de um segundo servidor real) com um processo novo, confirma o diálogo de mesclagem e verifica que o processo aparece no dashboard
+
+Ambos os testes reutilizam o mesmo servidor/banco temporário da suíte já existente. Validado com 2 execuções consecutivas sem instabilidade.
+
+---
+
 ## [2.24.0] — 2026-07-09
 
 ### Adicionado

@@ -40,4 +40,56 @@ test('login força troca de senha, cria processo e gera documento', async ({ pag
   ]);
   await popup.waitForLoadState();
   await expect(popup.locator('.doc-title')).toContainText('Autorização de Abertura');
+
+  // Assinatura Simples: não depende de gov.br nem de certificado ICP-Brasil,
+  // só grava hash + identidade no servidor — testável de ponta a ponta sem mock.
+  await popup.getByRole('button', { name: /Assinar Documento/ }).click();
+  await popup.locator('#sig-card-simples').click();
+  await expect(popup.getByText(/Assinado eletronicamente por/)).toBeVisible();
+
+  await expect(page.locator('#sig-list')).toContainText('Autorização de Abertura');
+  await expect(page.locator('#sig-list')).toContainText('Simples');
+});
+
+test('sincroniza backup de outro agente e mescla processo novo', async ({ page }) => {
+  // Roda depois do teste acima no mesmo servidor/banco (webServer é compartilhado
+  // para toda a suíte) — a senha do admin já foi trocada lá, então usamos a nova.
+  await page.goto('/SGCD.html');
+  await page.fill('#pin-username', 'admin');
+  await page.fill('#pin-input', 'novaSenhaE2E123');
+  await page.click('#overlay-pin button[onclick="verificarSenha()"]');
+  await expect(page.locator('#overlay-pin')).toBeHidden();
+
+  // Backup sintético de um "outro agente" com um processo que não existe aqui —
+  // testa o caminho de mesclagem sem precisar de um segundo servidor de verdade.
+  const backupSintetico = {
+    _sgcd: true,
+    version: 4,
+    exportedAt: new Date().toISOString(),
+    processes: [{
+      id: 'sync-e2e-' + Date.now(),
+      objeto: 'Processo de outro agente (sync E2E)',
+      steps: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }],
+    fornecedores: [],
+    files: [],
+    auditGlobal: [],
+    settings: {},
+  };
+
+  await page.click('#nav-settings');
+  await page.click('button[onclick="switchCfgTab(\'dados\',this)"]');
+  await page.setInputFiles('input[onchange^="sincronizarBackup"]', {
+    name: 'backup-outro-agente.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(backupSintetico)),
+  });
+
+  await expect(page.locator('#confirm-overlay')).toBeVisible();
+  await page.click('#confirm-ok');
+
+  await page.click('#nav-dash');
+  await expect(page.locator('.process-card', { hasText: 'Processo de outro agente (sync E2E)' })).toBeVisible();
 });
