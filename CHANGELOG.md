@@ -5,49 +5,6 @@
 
 ---
 
-## [2.25.5] — 2026-07-10
-
-### Corrigido
-- **Servidor ainda podia encerrar sozinho mesmo após a v2.25.4** — a renovação de sessão a cada requisição não ajuda quando o usuário genuinamente não faz nenhuma requisição por um tempo (ex: só lendo um documento recém-gerado numa aba em segundo plano, com o ping congelado pelo navegador). `_check_shutdown()` agora só encerra o processo em Modo Pessoal após `SHUTDOWN_GRACE` (60s) segundos contínuos sem nenhuma sessão ativa, em vez de na primeira detecção de zero — tolera a oscilação sem deixar de encerrar quando o usuário realmente fechou o navegador.
-- **PDF Consolidado — 1ª página do dossiê saía em branco, com o conteúdo real empurrado para a página 2** — a capa tinha `min-height:100vh` mais uma margem própria (`padding:3cm`) somada à margem do documento (`_docCss`), ultrapassando a altura de uma página A4 e forçando a quebra. Removida a margem/altura redundantes da capa; ela agora usa só a margem padrão do documento.
-- **Margens de todos os documentos saíam maiores que o configurado** — faltava `@page { margin: 0; }` no CSS dos documentos, então o Chrome headless somava sua própria margem padrão de impressão em cima do padding do `body`, dobrando a margem real no PDF gerado.
-
-### Adicionado
-- **Margens dos documentos gerados agora são configuráveis** em Configurações → Organização (padrão: 2,5 cm superior/inferior, 3 cm esquerda/direita — igual aos documentos oficiais do município). Aplicado a todos os 12 documentos do sistema, inclusive o PDF Consolidado.
-
-## [2.25.4] — 2026-07-10
-
-### Corrigido
-- **Servidor encerrava sozinho (Modo Pessoal) enquanto o usuário ainda examinava um documento recém-gerado** — a sessão só era renovada pelo ping periódico do cliente (`setInterval` a cada 5s); navegadores throttlam esse tipo de timer quando a aba perde o foco, o que passou a acontecer com mais frequência desde a correção de popup do PDF Consolidado (v2.25.1), que abre uma nova janela e desloca o foco do usuário para ela. Com o ping atrasado, a sessão (TTL de 15s) podia expirar mesmo com o usuário ativo e, em Modo Pessoal, isso derrubava o servidor inteiro (`os._exit(0)`) sem aviso. Corrigido renovando a sessão em qualquer requisição autenticada, não só no ping.
-
-## [2.25.3] — 2026-07-10
-
-### Corrigido
-- **Numeração de página ainda sobrepunha texto em alguns documentos** — a causa raiz era que os documentos não tinham a mesma margem: a folha de estilo compartilhada (`_DOC_CSS`) e mais duas peças (Mapa de Preços, Ata de Sessão) zeravam ou reduziam a margem superior especificamente no modo impressão (`@media print` — exatamente o modo usado para gerar o PDF), inconsistente com a margem usada na tela. Padronizadas as margens de todos os 12 documentos do dossiê para **2,5 cm (superior/inferior) e 3 cm (esquerda/direita)**, iguais na tela e na impressão — o mesmo padrão dos documentos oficiais do município. Com a margem consistente, o espaço extra adicionado só para o PDF Consolidado (v2.25.2) deixou de ser necessário e foi removido.
-
-## [2.25.2] — 2026-07-10
-
-### Corrigido
-- **Numeração "Página X de Y" sobrepondo conteúdo real dos documentos** — em documentos com pouca margem superior (tabelas de certidão, parágrafos justificados, blocos de assinatura), o carimbo no canto superior direito ficava em cima do texto. Cada documento incluído no PDF Consolidado agora ganha um espaço reservado no topo da página (só nessa geração — os botões individuais de impressão continuam sem essa margem extra, que não fazem sentido pra eles).
-
-## [2.25.1] — 2026-07-10
-
-### Corrigido
-- **Popup bloqueado ao gerar o PDF Consolidado** — `window.open()` só era chamado depois de vários `await` (montar as peças, gerar no servidor), ponto em que o navegador não reconhece mais como ação direta do clique e bloqueia o popup silenciosamente (a geração terminava, mas nada abria). Corrigido abrindo a janela antes de qualquer espera, com uma tela de "Gerando..." até o PDF ficar pronto.
-- **Numeração de página no rodapé conflitava com o "Folha N" de cada documento** — a marca "Página X de Y" do dossiê consolidado foi movida do rodapé para o canto superior direito da página.
-
-## [2.25.0] — 2026-07-10
-
-### Adicionado
-- **PDF Consolidado do processo, agora um dossiê real com todas as páginas numeradas** (exigência do TCE-SP para envio de processos de dispensa) — o botão "📦 PDF" deixou de gerar um resumo e passou a juntar, em ordem, todas as 18 etapas do processo (do DFD até a Publicação no PNCP): os anexos enviados em cada etapa, os documentos gerados pelo sistema (usando o PDF já assinado quando existir — gov.br, ICP-Brasil ou física — em vez de recriar o documento) e a Ata de Sessão logo após a Homologação. O resultado é um único PDF com numeração de página contínua ("Página X de Y").
-- **4º método de assinatura: Física (digitalizada)** — no modal "Assinar Documento", permite anexar a digitalização de uma peça assinada no papel, sem certificado, evitando que ela entre no dossiê consolidado com a marca d'água de rascunho.
-
-### Corrigido
-- **Anexar qualquer arquivo numa etapa do processo (ou uma certidão na Habilitação) derrubava o servidor** com `sqlite3.IntegrityError: FOREIGN KEY constraint failed`. A tabela `files` tinha uma FK em `process_id` que exigia bater com um processo real, mas anexos por etapa usam uma chave sintética (`"<processId>_<etapa>"`) por desenho — a FK sempre rejeitava essas inserções. Migração automática remove a FK indevida na primeira execução; instalações existentes não perdem dados (a FK sempre bloqueou esse tipo de inserção, então não havia nenhuma linha desse tipo salva).
-
-### Técnico
-- `pyhanko` (já usada na assinatura ICP-Brasil) agora também mescla os PDFs do dossiê e numera as páginas — nenhuma dependência nova. A conversão de HTML em PDF usa o mesmo Chrome/Edge headless já exigido pelo sistema.
-
 ## [2.24.1] — 2026-07-09
 
 ### Adicionado

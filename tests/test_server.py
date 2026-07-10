@@ -10,7 +10,6 @@ import socketserver
 import sys
 import tempfile
 import threading
-import time
 import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -76,37 +75,6 @@ class SGCDTestCase(unittest.TestCase):
         status, data = self.request('POST', '/api/auth/login', {'username': username, 'password': password})
         self.assertEqual(status, 200, data)
         return data['token']
-
-    def upload_multipart(self, path, fields, token=None):
-        """POST multipart/form-data manual — só campos de texto e um único arquivo
-        binário opcional em fields['file'] = (filename, bytes, mime)."""
-        boundary = 'testboundary123456'
-        parts = []
-        for key, val in fields.items():
-            if key == 'file':
-                filename, filedata, mime = val
-                parts.append(
-                    f'--{boundary}\r\nContent-Disposition: form-data; name="file"; filename="{filename}"\r\n'
-                    f'Content-Type: {mime}\r\n\r\n'.encode('utf-8') + filedata + b'\r\n'
-                )
-            else:
-                parts.append(f'--{boundary}\r\nContent-Disposition: form-data; name="{key}"\r\n\r\n{val}\r\n'.encode('utf-8'))
-        parts.append(f'--{boundary}--\r\n'.encode('utf-8'))
-        body = b''.join(parts)
-
-        conn = http.client.HTTPConnection('127.0.0.1', PORT, timeout=5)
-        hdrs = {'Content-Type': f'multipart/form-data; boundary={boundary}'}
-        if token:
-            hdrs['Authorization'] = f'Bearer {token}'
-        conn.request('POST', path, body=body, headers=hdrs)
-        resp = conn.getresponse()
-        data = resp.read()
-        conn.close()
-        try:
-            parsed = json.loads(data) if data else None
-        except ValueError:
-            parsed = data
-        return resp.status, parsed
 
 
 class TestAuth(SGCDTestCase):
@@ -318,103 +286,12 @@ class TestBackup(SGCDTestCase):
         self.assertTrue(any(p['objeto'] == 'Processo para backup' for p in data['processes']))
 
 
-class TestFiles(SGCDTestCase):
-
-    def test_anexo_por_etapa_com_process_id_sintetico(self):
-        # Regressão: files.process_id tinha uma FK pra processes(id), mas o
-        # anexo por etapa usa uma chave sintética "<processId>_<stepIndex>"
-        # (e "<processId>_<stepIndex>_cert_<certId>" pras certidões da
-        # Habilitação) que nunca bate com processes.id — toda tentativa de
-        # anexar um arquivo numa etapa derrubava o servidor com
-        # sqlite3.IntegrityError antes da migração que remove essa FK.
-        token = self.login()
-        status, proc = self.request('POST', '/api/processes', {'objeto': 'Processo com anexo por etapa'}, token=token)
-        self.assertEqual(status, 200)
-
-        status, created = self.upload_multipart('/api/files', {
-            'process_id': f'{proc["id"]}_0',
-            'step_index': '0',
-            'nome_original': 'dfd-teste.pdf',
-            'mime': 'application/pdf',
-            'file': ('dfd-teste.pdf', b'%PDF-1.4 conteudo de teste', 'application/pdf'),
-        }, token=token)
-        self.assertEqual(status, 200, created)
-
-        status, listed = self.request('GET', f'/api/files?process_id={proc["id"]}&prefix=1', token=token)
-        self.assertEqual(status, 200)
-        self.assertTrue(any(f['id'] == created['id'] for f in listed['items']))
-
-
 class TestHealth(SGCDTestCase):
 
     def test_health_check(self):
         status, data = self.request('GET', '/health')
         self.assertEqual(status, 200)
         self.assertTrue(data['ok'])
-
-
-class TestShutdownGrace(unittest.TestCase):
-    """_check_shutdown() só encerra o processo (Modo Pessoal) após SHUTDOWN_GRACE
-    segundos contínuos sem nenhuma sessão ativa — não na primeira detecção de zero.
-    Cobre o navegador congelando o timer de ping numa aba em 2º plano (ex: usuário
-    abre o PDF Consolidado numa nova aba) sem matar o servidor por uma oscilação
-    passageira. Chama _check_shutdown() direto, sem HTTP — não usa o servidor
-    compartilhado do módulo (que roda em Modo Servidor)."""
-
-    def setUp(self):
-        self._orig = dict(
-            modo_servidor=server._modo_servidor, had_session=server._had_session,
-            zero_since=server._zero_sessions_since, backup_pos=server._backup_pos_sess,
-            grace=server.SHUTDOWN_GRACE, active_sessions=server.active_sessions,
-            get_backup_cfg=server._get_backup_cfg, os_exit=os._exit,
-        )
-        server._modo_servidor = False
-        server._had_session = True
-        server._zero_sessions_since = None
-        server._backup_pos_sess = False
-        server.SHUTDOWN_GRACE = 0.2
-        server._get_backup_cfg = lambda: {'enabled': False}
-        self._fake_sessions = 0
-        self.exit_calls = []
-        server.active_sessions = lambda: self._fake_sessions
-
-        def fake_exit(code):
-            self.exit_calls.append(code)
-            raise SystemExit(code)
-        os._exit = fake_exit
-
-    def tearDown(self):
-        server._modo_servidor = self._orig['modo_servidor']
-        server._had_session = self._orig['had_session']
-        server._zero_sessions_since = self._orig['zero_since']
-        server._backup_pos_sess = self._orig['backup_pos']
-        server.SHUTDOWN_GRACE = self._orig['grace']
-        server.active_sessions = self._orig['active_sessions']
-        server._get_backup_cfg = self._orig['get_backup_cfg']
-        os._exit = self._orig['os_exit']
-
-    def test_nao_encerra_antes_do_prazo_de_tolerancia(self):
-        server._check_shutdown()
-        self.assertEqual(self.exit_calls, [])
-        server._check_shutdown()
-        self.assertEqual(self.exit_calls, [])
-
-    def test_encerra_apos_prazo_de_tolerancia_esgotado(self):
-        server._check_shutdown()
-        time.sleep(server.SHUTDOWN_GRACE + 0.15)
-        with self.assertRaises(SystemExit):
-            server._check_shutdown()
-        self.assertEqual(self.exit_calls, [0])
-
-    def test_sessao_reaparecendo_reinicia_a_tolerancia(self):
-        server._check_shutdown()
-        self._fake_sessions = 1
-        server._check_shutdown()
-        self.assertIsNone(server._zero_sessions_since)
-        self._fake_sessions = 0
-        time.sleep(server.SHUTDOWN_GRACE + 0.15)
-        server._check_shutdown()  # zerou de novo agora, mas é uma janela NOVA
-        self.assertEqual(self.exit_calls, [])
 
 
 if __name__ == '__main__':

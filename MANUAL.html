@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Manual Operacional — SGCD v2.25.5</title>
+<title>Manual Operacional — SGCD v2.24.1</title>
 <style>
   /* Reset e base */
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -89,7 +89,7 @@
       margin: 20mm 20mm 25mm;
       size: A4;
       @top-center {
-        content: "SGCD v2.25.5 — Manual Operacional";
+        content: "SGCD v2.24.1 — Manual Operacional";
         font-family: 'Times New Roman', serif;
         font-size: 9pt;
         color: #666;
@@ -118,7 +118,7 @@
     <div class="cover-title">Manual Operacional</div>
     <div class="cover-subtitle">SGCD — Sistema de Gestão de Contratação Direta</div>
     <div class="cover-system">Gestão de Processos de Dispensa de Licitação</div>
-    <div class="cover-version">Versão v2.25.5</div>
+    <div class="cover-version">Versão v2.24.1</div>
     <br>
     <div style="font-size:11pt; color:#555; line-height:1.8;">
       Aplicação web multiusuário para agentes de contratação pública<br>
@@ -1025,9 +1025,9 @@
     <td>Botão "📄 Extrato de Contrato" na Etapa 17</td>
   </tr>
   <tr>
-    <td><strong>PDF Consolidado do Processo</strong></td>
-    <td>Dossiê único e numerado (página a página) com todas as etapas do processo, do DFD à Publicação no PNCP: anexos enviados em cada etapa, todos os documentos gerados (usando a versão já assinada quando existir) e a Ata de Sessão — pronto para envio ao Tribunal de Contas</td>
-    <td>Botão "📦 PDF" no cabeçalho do processo aberto</td>
+    <td><strong>Processo Completo (PDF único)</strong></td>
+    <td>Documento consolidado com todas as seções do processo — dados, etapas, propostas e certidões — em um único PDF</td>
+    <td>Botão "📦 Processo Completo" no cabeçalho do processo aberto</td>
   </tr>
   <tr>
     <td><strong>Relatório Geral</strong></td>
@@ -1683,39 +1683,6 @@
 
 <!-- ─────────────────────────────────────────────── SEÇÃO 30 -->
 <h2 id="sec30">30. Histórico de Versões</h2>
-
-<h3>v2.25.5 — Julho/2026</h3>
-<ul>
-  <li><strong>Correção definitiva do encerramento inesperado do servidor (Modo Pessoal):</strong> mesmo após a renovação de sessão da v2.25.4, uma pausa real de leitura (sem nenhuma requisição) ainda podia zerar as sessões ativas e derrubar o servidor instantaneamente. Adicionado um prazo de tolerância de 60s sem nenhuma sessão ativa antes do encerramento efetivo — cobre o navegador congelando o timer de ping numa aba em 2º plano sem matar o processo por uma oscilação passageira.</li>
-  <li><strong>Correção do PDF Consolidado — 1ª página em branco e margens dobradas:</strong> a capa do dossiê tinha <code>min-height:100vh</code> e uma margem própria somada à margem do documento, o que estourava para uma 2ª página. Além disso, faltava <code>@page &#123; margin: 0 &#125;</code> no CSS, fazendo o Chrome headless somar sua margem padrão de impressão em cima da margem do documento em todos os 12 documentos.</li>
-  <li><strong>Margens dos documentos gerados agora são configuráveis</strong> em Configurações → Organização (padrão: 2,5 cm / 3 cm).</li>
-</ul>
-
-<h3>v2.25.4 — Julho/2026</h3>
-<ul>
-  <li><strong>Correção de encerramento inesperado do servidor (Modo Pessoal):</strong> a sessão só era renovada pelo ping periódico do navegador, que pode atrasar quando a aba perde o foco (ex: ao abrir o PDF Consolidado numa nova janela). Isso podia expirar a sessão mesmo com o usuário ativo e derrubar o servidor. Agora qualquer requisição autenticada renova a sessão.</li>
-</ul>
-
-<h3>v2.25.3 — Julho/2026</h3>
-<ul>
-  <li><strong>Correção definitiva no PDF Consolidado:</strong> a causa raiz da numeração sobrepondo texto era margem inconsistente entre os documentos — alguns zeravam a margem superior especificamente no modo impressão. Padronizada para 2,5 cm (superior/inferior) e 3 cm (esquerda/direita) em todos os 12 documentos do dossiê, igual na tela e na impressão.</li>
-</ul>
-
-<h3>v2.25.2 — Julho/2026</h3>
-<ul>
-  <li><strong>Correção no PDF Consolidado:</strong> a numeração "Página X de Y" sobrepunha o conteúdo em documentos com pouca margem superior — cada documento do dossiê agora reserva um espaço no topo da página para o carimbo, sem alterar os documentos impressos individualmente.</li>
-</ul>
-
-<h3>v2.25.1 — Julho/2026</h3>
-<ul>
-  <li><strong>Correção no PDF Consolidado:</strong> popup bloqueado pelo navegador em alguns casos ao gerar o dossiê — corrigido. A numeração "Página X de Y" foi movida do rodapé (onde conflitava com o "Folha N" de cada documento) para o canto superior direito da página.</li>
-</ul>
-
-<h3>v2.25.0 — Julho/2026</h3>
-<ul>
-  <li><strong>PDF Consolidado do processo</strong> — o botão "📦 PDF" deixou de gerar um resumo e passou a montar um dossiê real: todas as 18 etapas em ordem (anexos de cada etapa, documentos gerados — usando a versão já assinada quando existir — e a Ata de Sessão logo após a Homologação), num único PDF com numeração de página contínua, atendendo à exigência do TCE-SP de processo consolidado e numerado.</li>
-  <li><strong>4º método de assinatura: Física (digitalizada)</strong> — permite anexar a digitalização de uma peça assinada no papel, sem certificado, para que ela entre corretamente no PDF Consolidado.</li>
-</ul>
 
 <h3>v2.24.1 — Julho/2026</h3>
 <ul>

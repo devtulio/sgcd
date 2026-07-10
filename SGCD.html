@@ -1784,17 +1784,6 @@
         </fieldset>
 
         <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
-          <legend style="font-size:.72rem;font-weight:700;color:var(--accent-light);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Margens dos documentos gerados</legend>
-          <p style="font-size:.72rem;color:var(--gray-500);margin-bottom:10px;line-height:1.5">Aplicadas a todos os documentos gerados pelo sistema, inclusive o PDF Consolidado. Padrão: 2,5 cm / 3 cm, igual aos documentos oficiais do município.</p>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-            <div class="info-field"><label>Superior/Inferior (cm)</label>
-              <input type="number" id="s-margem-vertical" min="1" max="6" step="0.1" placeholder="2.5"></div>
-            <div class="info-field"><label>Esquerda/Direita (cm)</label>
-              <input type="number" id="s-margem-horizontal" min="1" max="6" step="0.1" placeholder="3"></div>
-          </div>
-        </fieldset>
-
-        <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
           <legend style="font-size:.72rem;font-weight:700;color:var(--accent-light);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Autoridade Competente</legend>
           <div class="info-field"><label>Nome Completo</label>
             <input type="text" id="s-aut-nome" placeholder="Ex: Maria Souza"></div>
@@ -2592,7 +2581,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.25.5';
+const SGCD_VERSION = '2.24.1';
 // URL absoluta (não relativa) porque API_BASE também monta o texto do QR Code
 // de verificação de assinatura, lido por celular fora do navegador — precisa
 // da origem real, nunca uma porta fixa (era 'http://localhost:3000' hardcoded).
@@ -4586,7 +4575,7 @@ async function gerarRelatorioAuditoria() {
 
   const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
 <title>${_nomeArquivoDoc(null, 'RELATORIO DE AUDITORIA')}</title>
-<style>${_docCss()}
+<style>${_DOC_CSS}
   body { font-family: 'Times New Roman', Times, serif; font-size: 11pt; color: #000; background: #fff; padding: 2cm 2.5cm; }
   .header { text-align: center; margin-bottom: 20pt; border-bottom: 2px solid #000; padding-bottom: 12pt; }
   .header img { height: 90pt; width: auto; margin-bottom: 6pt; }
@@ -6279,7 +6268,7 @@ async function renderSignatures(processId) {
   const items = d?.items || [];
   if (!items.length) { card.style.display = 'none'; return; }
   card.style.display = '';
-  const metodoLabel = { internal: 'Simples', govbr: 'gov.br', 'icp-brasil': 'ICP-Brasil', fisica: 'Física (digitalizada)' };
+  const metodoLabel = { internal: 'Simples', govbr: 'gov.br', 'icp-brasil': 'ICP-Brasil' };
   list.innerHTML = items.map(sig => {
     const cod = (() => { try { return JSON.parse(sig.extra_json || '{}').cod || ''; } catch { return ''; } })();
     const data = sig.signed_at ? new Date(sig.signed_at).toLocaleString('pt-BR') : '';
@@ -8007,7 +7996,7 @@ function gerarRelatorio() {
 
   const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
 <title>${_nomeArquivoDoc(null, 'RELATORIO GERAL DE PROCESSOS')}</title>
-<style>${_docCss()}
+<style>${_DOC_CSS}
   body { font-family: 'Times New Roman', Times, serif; font-size: 11pt; color: #000; background: #fff; padding: 2cm 2.5cm; }
   .header { text-align: center; margin-bottom: 20pt; border-bottom: 2px solid #000; padding-bottom: 12pt; }
   .header img { height: 90pt; width: auto; margin-bottom: 6pt; }
@@ -8121,7 +8110,7 @@ async function gerarRelatorioFornecedores() {
 
   const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
 <title>${_nomeArquivoDoc(null, 'RELATORIO DE FORNECEDORES')}</title>
-<style>${_docCss()}
+<style>${_DOC_CSS}
   body { font-family: 'Times New Roman', Times, serif; font-size: 11pt; color: #000; background: #fff; padding: 2cm 2.5cm; }
   .header { text-align: center; margin-bottom: 20pt; border-bottom: 2px solid #000; padding-bottom: 12pt; }
   .header img { height: 90pt; width: auto; margin-bottom: 6pt; }
@@ -8176,7 +8165,7 @@ ${_qrFooterReport('Relatório de Fornecedores')}
 // ══════════════════════════════════════════════════════════════
 // MAPA DE PREÇOS
 // ══════════════════════════════════════════════════════════════
-function _htmlMapaPrecos(stepIdx) {
+function gerarMapaPrecos(stepIdx) {
   const p = currentProcess;
   const u = getUser();
   const data = p.steps[stepIdx];
@@ -8202,12 +8191,11 @@ function _htmlMapaPrecos(stepIdx) {
     </tr>`;
   }).join('');
 
-  const { mv, mh } = _docMargins();
   const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
 <title>${_nomeArquivoDoc(p, 'MAPA DE PRECOS')}</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Times New Roman',serif;font-size:11pt;color:#000;padding:${mv}cm ${mh}cm}
+  body{font-family:'Times New Roman',serif;font-size:11pt;color:#000;padding:2cm 2.5cm}
   .header{text-align:center;margin-bottom:18pt;border-bottom:2px solid #000;padding-bottom:10pt}
   .header img{height:90pt;width:auto;margin-bottom:6pt}
   .header h1{font-size:13pt;font-weight:700;text-transform:uppercase}
@@ -8226,8 +8214,7 @@ function _htmlMapaPrecos(stepIdx) {
   .footer-line{margin-top:30pt;border-top:1px solid #ccc;padding-top:5pt;text-align:center;font-size:8pt;color:#666}
   .btn-print{display:block;margin:0 auto 20pt;padding:8pt 24pt;background:#1a1a2e;color:#fff;border:none;border-radius:4px;font-size:11pt;cursor:pointer;letter-spacing:.5px}
   .btn-print:hover{background:#2c2c5e}
-  @media print{.no-print{display:none!important}}
-  @page{margin:0}
+  @media print{body{padding:0}.no-print{display:none!important}}
 </style></head><body>
 <button class="btn-print no-print" onclick="window.print()">🖨 Imprimir / Salvar PDF</button>
 <div class="header">
@@ -8256,11 +8243,6 @@ ${mediaRef?`<div class="ref-box">
 </div>
 ${_qrFooter(p)}
 </body></html>`;
-  return html;
-}
-function gerarMapaPrecos(stepIdx) {
-  const html = _htmlMapaPrecos(stepIdx);
-  if (!html) return;
   _gerarDocumento(window.open('','_blank','width=900,height=700'), html, 'Mapa de Preços');
 }
 
@@ -8587,7 +8569,7 @@ async function exportarFornecedoresCSV() {
 
 // AUTORIZAÇÃO DE ABERTURA — Lei 14.133/2021
 // ══════════════════════════════════════════════════════════════
-function _htmlDespachoRecusa(stepIdx, pi) {
+function gerarDespachoRecusa(stepIdx, pi) {
   const proc = currentProcess;
   const u = getUser();
   const data = proc.steps[stepIdx] || {};
@@ -8606,7 +8588,7 @@ function _htmlDespachoRecusa(stepIdx, pi) {
 <head>
 <meta charset="UTF-8">
 <title>${_nomeArquivoDoc(proc, 'DESPACHO DE RECUSA')}</title>
-<style>${_docCss()}
+<style>${_DOC_CSS}
   .section { margin-bottom: 16pt; }
   .section-title { font-size: 11pt; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 8pt; border-bottom: 1px solid #ccc; padding-bottom: 4pt; }
   .section p { line-height: 1.7; text-align: justify; margin-bottom: 8pt; }
@@ -8689,20 +8671,15 @@ ${_qrFooter(proc)}
 </body>
 </html>`;
 
-  return html;
-}
-function gerarDespachoRecusa(stepIdx, pi) {
-  const html = _htmlDespachoRecusa(stepIdx, pi);
-  if (!html) return;
   const win = window.open('', '_blank', 'width=900,height=700');
   _gerarDocumento(win, html, 'Despacho de Recusa / Desclassificação');
 }
 
-function _htmlDespachoInabilitacao(stepIdx, silent = false) {
+function gerarDespachoInabilitacao(stepIdx) {
   const proc = currentProcess;
   if (!_validarDocumento([
     { ok: _temFornecedor(proc) || !!(proc.steps?.[stepIdx]?.fields?.fornecedor), msg: 'Nenhum fornecedor identificado — consulte o CNPJ na etapa de Habilitação', bloqueia: true },
-  ], silent)) return;
+  ])) return;
   const u = getUser();
   const data = proc.steps[stepIdx] || {};
   const saved = data.fields?._certidoes ? JSON.parse(data.fields._certidoes) : {};
@@ -8733,7 +8710,7 @@ function _htmlDespachoInabilitacao(stepIdx, silent = false) {
 <head>
 <meta charset="UTF-8">
 <title>${_nomeArquivoDoc(proc, 'DESPACHO DE INABILITACAO')}</title>
-<style>${_docCss()}
+<style>${_DOC_CSS}
   .section { margin-bottom: 16pt; }
   .section-title { font-size: 11pt; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 8pt; border-bottom: 1px solid #ccc; padding-bottom: 4pt; }
   .section p { line-height: 1.7; text-align: justify; margin-bottom: 8pt; }
@@ -8820,20 +8797,15 @@ ${_qrFooter(proc)}
 </body>
 </html>`;
 
-  return html;
-}
-function gerarDespachoInabilitacao(stepIdx) {
-  const html = _htmlDespachoInabilitacao(stepIdx);
-  if (!html) return;
   const win = window.open('', '_blank', 'width=900,height=700');
   _gerarDocumento(win, html, 'Despacho de Inabilitação');
 }
 
-function _htmlDespachoHabilitacao(stepIdx, silent = false) {
+function gerarDespachoHabilitacao(stepIdx) {
   const proc = currentProcess;
   if (!_validarDocumento([
     { ok: _temFornecedor(proc) || !!(proc.steps?.[stepIdx]?.fields?.fornecedor), msg: 'Nenhum fornecedor identificado — consulte o CNPJ na etapa de Habilitação', bloqueia: true },
-  ], silent)) return;
+  ])) return;
   const u = getUser();
   const data = proc.steps[stepIdx] || {};
   const saved = data.fields?._certidoes ? JSON.parse(data.fields._certidoes) : {};
@@ -8864,7 +8836,7 @@ function _htmlDespachoHabilitacao(stepIdx, silent = false) {
 <head>
 <meta charset="UTF-8">
 <title>${_nomeArquivoDoc(proc, 'DESPACHO DE HABILITACAO')}</title>
-<style>${_docCss()}
+<style>${_DOC_CSS}
   .section { margin-bottom: 16pt; }
   .section-title { font-size: 11pt; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 8pt; border-bottom: 1px solid #ccc; padding-bottom: 4pt; }
   .section p { line-height: 1.7; text-align: justify; margin-bottom: 8pt; }
@@ -8927,23 +8899,18 @@ ${_qrFooter(proc)}
 </body>
 </html>`;
 
-  return html;
-}
-function gerarDespachoHabilitacao(stepIdx) {
-  const html = _htmlDespachoHabilitacao(stepIdx);
-  if (!html) return;
   const win = window.open('', '_blank', 'width=900,height=700');
   _gerarDocumento(win, html, 'Despacho de Habilitação');
 }
 
-function _htmlTermoAdjudicacao(silent = false) {
+function gerarTermoAdjudicacao() {
   const proc = currentProcess;
   if (!_validarDocumento([
     { ok: _temFornecedor(proc) || _temPropostaVencedora(proc), msg: 'Nenhum fornecedor vencedor identificado — vincule um fornecedor ou marque uma proposta como vencedora na etapa de Propostas', bloqueia: true },
     { ok: !!proc.objeto,  msg: 'Objeto da contratação não preenchido', bloqueia: false },
     { ok: !!proc.num_dl,  msg: 'Número da DL não informado', bloqueia: false },
     { ok: !!proc.legal,   msg: 'Base legal (Art. 75, inciso) não selecionada — o enquadramento legal ficará em branco', bloqueia: false },
-  ], silent)) return;
+  ])) return;
   const u = getUser();
   const stepIdx = STEPS.findIndex(s => s.adjudicacao);
   const propStepIdx = proc.steps.findIndex(s => s.propostas);
@@ -8966,7 +8933,7 @@ function _htmlTermoAdjudicacao(silent = false) {
 <head>
 <meta charset="UTF-8">
 <title>${_nomeArquivoDoc(proc, 'TERMO DE ADJUDICACAO')}</title>
-<style>${_docCss()}
+<style>${_DOC_CSS}
   .doc-title h3 { font-size: 14pt; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid #000; display: inline-block; padding-bottom: 4pt; }
   .section { margin-bottom: 16pt; }
   .section-title { font-size: 11pt; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 8pt; border-bottom: 1px solid #ccc; padding-bottom: 4pt; }
@@ -9033,23 +9000,18 @@ ${_qrFooter(proc)}
 </body>
 </html>`;
 
-  return html;
-}
-function gerarTermoAdjudicacao() {
-  const html = _htmlTermoAdjudicacao();
-  if (!html) return;
   const win = window.open('', '_blank', 'width=900,height=700');
   _gerarDocumento(win, html, 'Termo de Adjudicação');
 }
 
-function _htmlTermoHomologacao(silent = false) {
+function gerarTermoHomologacao() {
   const proc = currentProcess;
   if (!_validarDocumento([
     { ok: _temFornecedor(proc) || _temPropostaVencedora(proc), msg: 'Nenhum fornecedor vencedor identificado — vincule um fornecedor ou marque uma proposta como vencedora', bloqueia: true },
     { ok: !!proc.num_dl,  msg: 'Número da DL não informado', bloqueia: false },
     { ok: !!proc.objeto,  msg: 'Objeto da contratação não preenchido', bloqueia: false },
     { ok: !!proc.legal,   msg: 'Base legal (Art. 75, inciso) não selecionada — o enquadramento legal ficará em branco', bloqueia: false },
-  ], silent)) return;
+  ])) return;
   const u = getUser();
   const stepAdj = STEPS.findIndex(s => s.adjudicacao);
   const stepHom = STEPS.findIndex(s => s.homologacao);
@@ -9072,7 +9034,7 @@ function _htmlTermoHomologacao(silent = false) {
 <head>
 <meta charset="UTF-8">
 <title>${_nomeArquivoDoc(proc, 'TERMO DE HOMOLOGACAO')}</title>
-<style>${_docCss()}
+<style>${_DOC_CSS}
   .doc-title h3 { font-size: 14pt; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid #000; display: inline-block; padding-bottom: 4pt; }
   .section { margin-bottom: 16pt; }
   .section-title { font-size: 11pt; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 8pt; border-bottom: 1px solid #ccc; padding-bottom: 4pt; }
@@ -9134,23 +9096,18 @@ ${_qrFooter(proc)}
 </body>
 </html>`;
 
-  return html;
-}
-function gerarTermoHomologacao() {
-  const html = _htmlTermoHomologacao();
-  if (!html) return;
   const win = window.open('', '_blank', 'width=900,height=700');
   _gerarDocumento(win, html, 'Termo de Homologação');
 }
 
-function _htmlAvisoDispensa(silent = false) {
+function gerarAvisoDispensa() {
   const proc = currentProcess;
   if (!_validarDocumento([
     { ok: !!proc.num_dl,    msg: 'Número da DL não informado (campo "Nº DL" no painel lateral)', bloqueia: false },
     { ok: !!proc.objeto,    msg: 'Objeto da contratação não preenchido', bloqueia: true },
     { ok: !!proc.legal,     msg: 'Base legal (Art. 75, inciso) não selecionada', bloqueia: false },
     { ok: !!(proc.valor || proc.steps?.[STEPS.findIndex(s => s.cotacoes)]?.fields?.valor_estimado), msg: 'Valor estimado não informado', bloqueia: false },
-  ], silent)) return;
+  ])) return;
   const u = getUser();
   const p = i => proc.steps[i]?.fields || {};
   const v = (i, f) => p(i)[f] || '';
@@ -9197,7 +9154,7 @@ function _htmlAvisoDispensa(silent = false) {
 <head>
 <meta charset="UTF-8">
 <title>${_nomeArquivoDoc(proc, 'AVISO DE DISPENSA')}</title>
-<style>${_docCss()}
+<style>${_DOC_CSS}
   .section { margin-bottom: 16pt; }
   .section-title { font-size: 11pt; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 8pt; border-bottom: 1px solid #ccc; padding-bottom: 4pt; }
   .section p { line-height: 1.7; text-align: justify; margin-bottom: 8pt; }
@@ -9281,11 +9238,6 @@ ${_qrFooter(proc)}
 </body>
 </html>`;
 
-  return html;
-}
-function gerarAvisoDispensa() {
-  const html = _htmlAvisoDispensa();
-  if (!html) return;
   const win = window.open('', '_blank', 'width=900,height=700');
   _gerarDocumento(win, html, 'Aviso de Dispensa de Licitação');
 }
@@ -9441,7 +9393,7 @@ function exportarPNCP() {
   _auditEvento('PNCP_EXPORT', `Exportação PNCP — ${p.num_dl || p.num_proc || p.objeto?.slice(0,40)}`, p.id);
 }
 
-function _htmlExtratoContrato(silent = false) {
+function gerarExtratoContrato() {
   const proc = currentProcess;
   // BUG (corrigido): lia da etapa "Homologação" em vez de "Instrumento Contratual",
   // onde de fato vivem num_contrato/contratante/vigência/valor_contrato
@@ -9451,7 +9403,7 @@ function _htmlExtratoContrato(silent = false) {
     { ok: !!proc.num_dl,        msg: 'Número da DL não informado', bloqueia: false },
     { ok: !!(proc.steps?.[iInstrumento]?.fields?.valor_contrato || proc.valor), msg: 'Valor do contrato não preenchido (etapa de Contratação)', bloqueia: false },
     { ok: !!(proc.steps?.[iInstrumento]?.fields?.vigencia_inicial), msg: 'Vigência do contrato não informada (etapa de Contratação)', bloqueia: false },
-  ], silent)) return;
+  ])) return;
   const u = getUser();
   const data = proc.steps[iInstrumento]?.fields || {};
   const hoje = new Date().toLocaleDateString('pt-BR', { day:'numeric', month:'long', year:'numeric' });
@@ -9470,7 +9422,7 @@ function _htmlExtratoContrato(silent = false) {
 <head>
 <meta charset="UTF-8">
 <title>${_nomeArquivoDoc(proc, 'EXTRATO DE CONTRATO')}</title>
-<style>${_docCss()}
+<style>${_DOC_CSS}
   .section { margin-bottom: 16pt; }
   .section-title { font-size: 11pt; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 8pt; border-bottom: 1px solid #ccc; padding-bottom: 4pt; }
   .section p { line-height: 1.7; text-align: justify; margin-bottom: 8pt; }
@@ -9538,34 +9490,15 @@ ${_qrFooter(proc)}
 </body>
 </html>`;
 
-  return html;
-}
-function gerarExtratoContrato() {
-  const html = _htmlExtratoContrato();
-  if (!html) return;
   const win = window.open('', '_blank', 'width=900,height=700');
   _gerarDocumento(win, html, 'Extrato de Contrato');
 }
 
 // CSS compartilhado pelos documentos formais gerados (Enquadramento Legal,
 // Justificativa da Escolha do Fornecedor) — mesmo layout de despacho A4.
-// Margens dos documentos gerados, configuráveis em Configurações → Organização
-// (padrão: 2,5 cm superior/inferior e 3 cm laterais, igual aos documentos oficiais do município).
-function _docMargins() {
-  const u = getUser();
-  const mv = parseFloat(u.margem_vertical);
-  const mh = parseFloat(u.margem_horizontal);
-  return {
-    mv: (mv > 0 && mv <= 6) ? mv : 2.5,
-    mh: (mh > 0 && mh <= 6) ? mh : 3,
-  };
-}
-
-function _docCss() {
-  const { mv, mh } = _docMargins();
-  return `
+const _DOC_CSS = `
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; color: #000; background: #fff; padding: ${mv}cm ${mh}cm; }
+  body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; color: #000; background: #fff; padding: 2cm 2.5cm; }
   .header { text-align: center; margin-bottom: 24pt; border-bottom: 2px solid #000; padding-bottom: 14pt; }
   .header img { height: 90pt; width: auto; margin-bottom: 8pt; }
   .header h1 { font-size: 13pt; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
@@ -9586,15 +9519,11 @@ function _docCss() {
   .footer { margin-top: 40pt; border-top: 1px solid #ccc; padding-top: 6pt; text-align: center; font-size: 8pt; color: #666; }
   .btn-print { display: block; margin: 0 auto 20pt; padding: 8pt 24pt; background: #1a3a6b; color: #fff; border: none; border-radius: 4px; font-size: 11pt; cursor: pointer; letter-spacing: .5px; }
   .btn-print:hover { background: #102855; }
-  @media print { .no-print { display: none !important; } }
-  /* margin:0 é essencial — sem isso o Chrome headless soma sua própria
-     margem padrão de impressão (~1cm) em cima do padding do body, dobrando
-     a margem real no PDF gerado pelo PDF Consolidado. */
-  @page { margin: 0; @bottom-right { content: "Folha " counter(page); font-size: 8pt; color: #888; } }
+  @media print { body { padding: 0; } .no-print { display: none !important; } }
+  @page { @bottom-right { content: "Folha " counter(page); font-size: 8pt; color: #888; } }
 `;
-}
 
-function _htmlEnquadramentoLegal() {
+function gerarEnquadramentoLegal() {
   const p = currentProcess;
   const u = getUser();
   const hoje = new Date().toLocaleDateString('pt-BR', { day:'numeric', month:'long', year:'numeric' });
@@ -9618,7 +9547,7 @@ function _htmlEnquadramentoLegal() {
 <head>
 <meta charset="UTF-8">
 <title>${_nomeArquivoDoc(p, 'JUSTIFICATIVA DE ENQUADRAMENTO LEGAL')}</title>
-<style>${_docCss()}</style>
+<style>${_DOC_CSS}</style>
 </head>
 <body>
 <button class="btn-print no-print" onclick="window.print()">🖨 Imprimir / Salvar PDF</button>
@@ -9674,16 +9603,11 @@ ${_qrFooter(p)}
 </body>
 </html>`;
 
-  return html;
-}
-function gerarEnquadramentoLegal() {
-  const html = _htmlEnquadramentoLegal();
-  if (!html) return;
   const win = window.open('', '_blank', 'width=900,height=700');
   _gerarDocumento(win, html, 'Justificativa de Enquadramento Legal');
 }
 
-function _htmlJustificativaEscolha() {
+function gerarJustificativaEscolha() {
   const p = currentProcess;
   const u = getUser();
   const hoje = new Date().toLocaleDateString('pt-BR', { day:'numeric', month:'long', year:'numeric' });
@@ -9705,7 +9629,7 @@ function _htmlJustificativaEscolha() {
 <head>
 <meta charset="UTF-8">
 <title>${_nomeArquivoDoc(p, 'JUSTIFICATIVA DA ESCOLHA DO FORNECEDOR')}</title>
-<style>${_docCss()}</style>
+<style>${_DOC_CSS}</style>
 </head>
 <body>
 <button class="btn-print no-print" onclick="window.print()">🖨 Imprimir / Salvar PDF</button>
@@ -9760,22 +9684,17 @@ ${_qrFooter(p)}
 </body>
 </html>`;
 
-  return html;
-}
-function gerarJustificativaEscolha() {
-  const html = _htmlJustificativaEscolha();
-  if (!html) return;
   const win = window.open('', '_blank');
   _gerarDocumento(win, html, 'Justificativa da Escolha do Fornecedor');
 }
 
-function _htmlAutorizacao(silent = false) {
+function gerarAutorizacao() {
   const p = currentProcess;
   if (!_validarDocumento([
     { ok: !!p.objeto,  msg: 'Objeto da contratação não preenchido', bloqueia: true },
     { ok: !!p.legal,   msg: 'Base legal (Art. 75, inciso) não selecionada', bloqueia: false },
     { ok: !!p.num_dl,  msg: 'Número da DL não informado', bloqueia: false },
-  ], silent)) return;
+  ])) return;
   const u = getUser();
   const hoje = new Date().toLocaleDateString('pt-BR', { day:'numeric', month:'long', year:'numeric' });
   const blank = txt => txt || '_'.repeat(40);
@@ -9792,7 +9711,7 @@ function _htmlAutorizacao(silent = false) {
 <head>
 <meta charset="UTF-8">
 <title>${_nomeArquivoDoc(p, 'AUTORIZACAO DE ABERTURA')}</title>
-<style>${_docCss()}
+<style>${_DOC_CSS}
   .section p { line-height: 1.7; text-align: justify; }
   .field-table td { padding: 5pt 8pt; border: 1px solid #333; font-size: 11pt; vertical-align: top; }
   .despacho { background: #f9f9f9; border-left: 3px solid #555; padding: 10pt 14pt; margin: 16pt 0; font-size: 11pt; line-height: 1.8; text-align: justify; }
@@ -9847,11 +9766,6 @@ ${_qrFooter(p)}
 </body>
 </html>`;
 
-  return html;
-}
-function gerarAutorizacao() {
-  const html = _htmlAutorizacao();
-  if (!html) return;
   const win = window.open('', '_blank', 'width=900,height=700');
   _gerarDocumento(win, html, 'Autorização de Abertura de Processo');
 }
@@ -9864,11 +9778,12 @@ function _getBrasaoB64() {
   window._BRASAO_CACHE = m ? m[1] : '';
   return window._BRASAO_CACHE;
 }
-function _finalizarDocumentoHtml(html, docNome) {
-  // Loga auditoria + injeta marca d'água MINUTA (rascunho) + resolve o brasão
-  // (customizado ou padrão) no lugar do placeholder. Extraído de _gerarDocumento
-  // para ser reaproveitado pelo PDF Consolidado, que envia o HTML pronto pro
-  // servidor em vez de abrir popup.
+function _gerarDocumento(win, html, docNome) {
+  // Fix #1: window.open retorna null quando bloqueador de popup está ativo
+  if (!win) {
+    toast('Popup bloqueado pelo navegador. Permita popups para este site e tente novamente.', 'danger');
+    return;
+  }
   if (docNome) {
     const ref = currentProcess ? ` — ${currentProcess.num_dl || currentProcess.objeto?.slice(0, 40) || ''}` : '';
     _auditEvento('DOCUMENTO_GERADO', `${docNome}${ref}`, currentProcess?.id || null);
@@ -9890,25 +9805,19 @@ function _finalizarDocumentoHtml(html, docNome) {
     html = html.replace('</head>', watermarkCss + '</head>');
   }
   const custom = localStorage.getItem('sgcd-brasao-dataurl');
+  let finalHtml;
   if (custom) {
     // Substitui TODAS as ocorrências do placeholder (ex: cover page + header no Processo Completo)
     if (html.includes('__BRASAO_PLACEHOLDER__')) {
-      return html.replaceAll('data:image/png;base64,__BRASAO_PLACEHOLDER__', custom);
+      finalHtml = html.replaceAll('data:image/png;base64,__BRASAO_PLACEHOLDER__', custom);
+    } else {
+      // gerarAta embute o brasão diretamente — substitui todas as imagens base64 longas
+      finalHtml = html.replace(/data:image\/png;base64,[A-Za-z0-9+\/=]{200,}/g, custom);
     }
-    // gerarAta embute o brasão diretamente — substitui todas as imagens base64 longas
-    return html.replace(/data:image\/png;base64,[A-Za-z0-9+\/=]{200,}/g, custom);
+  } else {
+    // Sem brasão customizado: usa o padrão embutido no gerarAta
+    finalHtml = html.replaceAll('__BRASAO_PLACEHOLDER__', _getBrasaoB64());
   }
-  // Sem brasão customizado: usa o padrão embutido no gerarAta
-  return html.replaceAll('__BRASAO_PLACEHOLDER__', _getBrasaoB64());
-}
-
-function _gerarDocumento(win, html, docNome) {
-  // Fix #1: window.open retorna null quando bloqueador de popup está ativo
-  if (!win) {
-    toast('Popup bloqueado pelo navegador. Permita popups para este site e tente novamente.', 'danger');
-    return;
-  }
-  const finalHtml = _finalizarDocumentoHtml(html, docNome);
   win.document.write(finalHtml);
   win.document.close();
 
@@ -9929,15 +9838,103 @@ function _gerarDocumento(win, html, docNome) {
 // ══════════════════════════════════════════════════════════════
 // DOCUMENTO CONSOLIDADO DO PROCESSO (feature 7)
 // ══════════════════════════════════════════════════════════════
-function _htmlCapaConsolidado(p) {
+function gerarProcessoCompleto() {
+  const p = currentProcess;
   const u = getUser();
+  const blank = v => v || '_'.repeat(30);
+  const fmtV  = v => v ? fmtMoney(v) : '_______________';
   const hoje = new Date().toLocaleDateString('pt-BR', { day:'numeric', month:'long', year:'numeric' });
   const nums = [p.num_proc && `PA ${p.num_proc}`, p.num_dl && `DL ${p.num_dl}`].filter(Boolean).join(' · ') || p.num || '';
   const forn = p.fornecedor;
   const fornNome = typeof forn==='object'?(forn?.razao_social||''):(forn||'');
   const fornCnpj = typeof forn==='object'?(forn?.cnpj||''):(forn?'':'');
+  const numParecer = p.steps[STEPS.findIndex(s => s.parecerJuridico)]?.fields?.num_parecer || '';
+  const parecerRef = numParecer ? `, com amparo no Parecer Jurídico nº ${numParecer} da Procuradoria-Geral,` : '';
+  const s = i => p.steps?.[i]?.fields || {};
+  const iAviso        = STEPS.findIndex(st => st.avisoDispensa);
+  const iAdjudicacao   = STEPS.findIndex(st => st.adjudicacao);
+  const iHomologacao   = STEPS.findIndex(st => st.homologacao);
+  const iNotaEmpenho   = STEPS.findIndex(st => st.notaEmpenho);
+  const iInstrumento   = STEPS.findIndex(st => st.extratoContrato);
+  const iEnquadramento = STEPS.findIndex(st => st.enquadramentoLegal);
+  const vigencia = (s(iInstrumento).vigencia_inicial && s(iInstrumento).vigencia_final)
+    ? `${s(iInstrumento).vigencia_inicial} a ${s(iInstrumento).vigencia_final}` : (s(iInstrumento).vigencia_inicial || s(iInstrumento).vigencia_final || '');
+  const dotacao = p.dotacao_completa || [p.dotacao_programa, p.dotacao_elemento, p.dotacao_fonte].filter(Boolean).join(' / ');
+  const fundamento = s(iEnquadramento).fundamento || '';
+
+  function section(title, rows, body) {
+    const rowsHtml = rows ? rows.filter(r=>r).map(([l,v]) => `<tr><td class="lbl">${l}</td><td>${blank(v)}</td></tr>`).join('') : '';
+    return `<div class="doc-section">
+      <h2>${title}</h2>
+      ${body ? `<p class="body-text">${body}</p>` : ''}
+      ${rowsHtml ? `<table class="ft">${rowsHtml}</table>` : ''}
+    </div>`;
+  }
+
+  const sections = [];
+
+  // 1. Autorização
+  sections.push(section('1. Autorização de Abertura', [
+    ['Processo Administrativo', p.num_proc || p.num],
+    ['Dispensa de Licitação nº', p.num_dl || p.num],
+    ['Objeto', p.objeto],
+    ['Valor Estimado', fmtV(p.valor)],
+    ['Unidade Requisitante', p.unidade],
+    ['Fundamento Legal', p.legal],
+    dotacao ? ['Dotação Orçamentária', dotacao] : null,
+    fornNome ? ['Fornecedor Indicado', fornNome + (fornCnpj ? ` — CNPJ: ${fornCnpj}` : '')] : null,
+    ['Agente de Contratação', u.nome + (u.matricula ? ` — Matrícula: ${u.matricula}` : '')],
+  ], `Nos termos do ${p.legal ? p.legal.split(' — ')[0] + ' da Lei Federal nº 14.133/2021' : 'Art. 75 da Lei Federal nº 14.133/2021'}${parecerRef}, AUTORIZO a abertura do processo de Dispensa de Licitação.`));
+
+  // 2. Publicação
+  if (s(iAviso).data_publicacao) sections.push(section('2. Publicação (PNCP / Diário Oficial)', [
+    ['Data de publicação', s(iAviso).data_publicacao],
+    ['Data de encerramento', s(iAviso).data_encerramento],
+    s(iAviso).link_pncp ? ['Link PNCP', s(iAviso).link_pncp] : null,
+    s(iAviso).link_diario ? ['Link Diário Oficial', s(iAviso).link_diario] : null,
+    s(iAviso).link_site ? ['Link Site Oficial', s(iAviso).link_site] : null,
+  ]));
+
+  // 3. Proposta vencedora
+  if (s(iAdjudicacao).valor_adjudicado || fornNome) sections.push(section('3. Adjudicação', [
+    ['Fornecedor adjudicado', fornNome + (fornCnpj ? ` — CNPJ: ${fornCnpj}` : '')],
+    ['Valor adjudicado', fmtV(s(iAdjudicacao).valor_adjudicado)],
+    ['Data de adjudicação', s(iAdjudicacao).data_conclusao],
+    ['Responsável', s(iAdjudicacao).responsavel],
+  ]));
+
+  // 4. Homologação
+  if (s(iHomologacao).data_conclusao) sections.push(section('4. Homologação', [
+    ['Autoridade', s(iHomologacao).autoridade || u.aut_nome],
+    ['Data de homologação', s(iHomologacao).data_conclusao],
+    ['Responsável', s(iHomologacao).responsavel],
+  ]));
+
+  // 5. Nota de Empenho
+  if (s(iNotaEmpenho).num_empenho || s(iNotaEmpenho).dotacao) sections.push(section('5. Nota de Empenho', [
+    ['Nº do empenho', s(iNotaEmpenho).num_empenho],
+    ['Dotação', s(iNotaEmpenho).dotacao],
+    ['Data', s(iNotaEmpenho).data_conclusao],
+  ]));
+
+  // 6. Instrumento Contratual
+  if (s(iInstrumento).num_contrato || s(iInstrumento).valor_contrato) sections.push(section('6. Instrumento Contratual', [
+    ['Nº do instrumento', s(iInstrumento).num_contrato],
+    ['Data de assinatura', s(iInstrumento).data_assinatura],
+    ['Vigência', vigencia],
+    ['Valor do contrato', fmtV(s(iInstrumento).valor_contrato)],
+    ['Contratante', s(iInstrumento).contratante || u.orgao],
+    ['Contratado', s(iInstrumento).contratado || fornNome],
+    ['CNPJ contratado', s(iInstrumento).cnpj_contratado || fornCnpj],
+    ['Gestor do contrato', s(iInstrumento).gestor_contrato],
+    ['Fiscal do contrato', s(iInstrumento).fiscal_contrato],
+    dotacao ? ['Dotação Orçamentária', dotacao] : null,
+    fundamento ? ['Fundamento', fundamento] : null,
+  ]));
+
   const statusLabel = { todo:'Não iniciado', pending:'Em instrução', progress:'Em andamento', done:'Concluído', blocked:'Bloqueado' };
   const procStatus = processStatus(p);
+  // Usa o placeholder padrão — _gerarDocumento() substitui pelo brasão real
   const brasaoTag = `<img src="data:image/png;base64,__BRASAO_PLACEHOLDER__" alt="Brasão" style="height:80pt;width:auto;display:block;margin:0 auto 12pt">`;
 
   const coverPage = `<div class="cover-page">
@@ -9945,7 +9942,7 @@ function _htmlCapaConsolidado(p) {
     <div class="cover-orgao">${escHtml(u.orgao || '')}</div>
     <div class="cover-municipio">${escHtml(u.municipio || '')}</div>
     <div class="cover-rule"></div>
-    <div class="cover-tipo">PROCESSO DE DISPENSA DE LICITAÇÃO — DOSSIÊ CONSOLIDADO</div>
+    <div class="cover-tipo">PROCESSO DE DISPENSA DE LICITAÇÃO</div>
     <div class="cover-titulo">${escHtml(p.legal ? p.legal.split(' — ')[0] : 'Art. 75 da Lei Federal nº 14.133/2021')}</div>
     <div class="cover-nums">${escHtml(nums || 'Sem numeração')}</div>
     <div class="cover-objeto">${escHtml(p.objeto || '')}</div>
@@ -9960,159 +9957,74 @@ function _htmlCapaConsolidado(p) {
     <div class="cover-footer">SGCD — Sistema de Gestão de Contratação Direta &nbsp;·&nbsp; v${SGCD_VERSION} &nbsp;·&nbsp; Lei Federal nº 14.133/2021</div>
   </div>`;
 
-  return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
-<title>${_nomeArquivoDoc(p, 'CAPA DOSSIE CONSOLIDADO')}</title>
-<style>${_docCss()}
+  const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+<title>${_nomeArquivoDoc(p, 'PROCESSO COMPLETO')}</title>
+<style>${_DOC_CSS}
   body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; color: #000; background: #fff; }
-  /* Sem min-height:100vh nem padding próprio: o body já reserva a margem
-     configurada (_docCss). Empilhar outra margem/altura de página aqui
-     estourava para uma 2ª página, deixando a 1ª em branco. */
-  .cover-page { padding-top: 4cm; text-align:center; }
+  .content-pages { padding: 2cm 2.5cm; }
+  .cover-page { display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:3cm 3cm;text-align:center; }
   .cover-orgao { font-size: 16pt; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; margin-top:6pt; }
   .cover-municipio { font-size: 12pt; color: #444; margin-top: 4pt; }
   .cover-rule { width: 80%; height: 2px; background: #000; margin: 20pt auto; }
   .cover-tipo { font-size: 11pt; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #555; margin-bottom: 8pt; }
   .cover-titulo { font-size: 11pt; color: #333; margin-bottom: 20pt; }
   .cover-nums { font-size: 14pt; font-weight: 700; margin-bottom: 6pt; }
-  .cover-objeto { font-size: 13pt; margin: 0 auto 30pt; max-width: 80%; text-align: justify; }
+  .cover-objeto { font-size: 13pt; margin-bottom: 30pt; max-width: 80%; text-align: justify; }
   .cover-table { border-collapse: collapse; margin: 0 auto 30pt; font-size: 10.5pt; text-align: left; }
   .cover-table td { padding: 4pt 10pt; border: 1px solid #ccc; vertical-align: top; }
   .cover-table td:first-child { font-weight: 700; background: #f5f5f5; white-space: nowrap; }
-  .cover-footer { font-size: 8pt; color: #888; margin-top: 60pt; padding-top: 20pt; }
+  .cover-footer { font-size: 8pt; color: #888; margin-top: auto; padding-top: 20pt; }
+  .header { text-align: center; margin-bottom: 20pt; border-bottom: 2px solid #000; padding-bottom: 12pt; }
+  .header img { height: 70pt; width: auto; margin-bottom: 6pt; display: block; margin: 0 auto 6pt; }
+  .header h1 { font-size: 13pt; font-weight: 700; text-transform: uppercase; }
+  .doc-title { text-align: center; margin: 16pt 0 10pt; }
+  .doc-title h3 { font-size: 12pt; font-weight: 700; text-transform: uppercase; }
+  .doc-section { margin-bottom: 10pt; padding-bottom: 10pt; border-bottom: 1px solid #ccc; }
+  .doc-section:last-child { border-bottom: none; }
+  h2 { font-size: 11pt; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 6pt; padding-bottom: 4pt; border-bottom: 1px solid #000; }
+  .body-text { font-size: 11pt; line-height: 1.7; text-align: justify; margin-bottom: 8pt; }
+  .ft { width: 100%; border-collapse: collapse; margin: 6pt 0; }
+  .ft td { padding: 4pt 7pt; border: 1px solid #333; font-size: 11pt; vertical-align: top; }
+  .ft td.lbl { font-weight: 700; text-transform: uppercase; font-size: 9pt; letter-spacing: .3px; width: 38%; background: #f5f5f5; text-align: center; vertical-align: middle; }
+  .footer { margin-top: 30pt; border-top: 1px solid #ccc; padding-top: 6pt; text-align: center; font-size: 8pt; color: #666; }
+  .btn-print { display: block; margin: 0 auto 20pt; padding: 8pt 24pt; background: #1a3a6b; color: #fff; border: none; border-radius: 4px; font-size: 11pt; cursor: pointer; }
+  @media print {
+  .no-print { display: none !important; }
+  .cover-page { page-break-after: always; padding: 2cm; }
+  .content-pages { padding: 1cm 1.5cm; }
+  .doc-section { page-break-inside: avoid; }
+  /* Número de página — compatível com Chrome via elemento fixo */
+  .page-num-footer { display: block; }
+  }
+  /* Número de página no rodapé: funciona no Chrome ao imprimir */
+  .page-num-footer {
+  position: fixed; bottom: 8mm; right: 15mm;
+  font-size: 8pt; color: #888; display: none;
+  }
 </style></head><body>
+<button class="btn-print no-print" onclick="window.print()">🖨 Imprimir / Salvar PDF</button>
 ${coverPage}
+<div class="content-pages">
+<div class="header">
+  ${brasaoTag}
+  <h1>${escHtml(blank(u.orgao))}</h1>
+  <h2>${escHtml(blank(u.municipio))}</h2>
+</div>
+<div class="doc-title">
+  <h3>Processo Completo de Dispensa de Licitação</h3>
+  <p style="font-size:11pt;margin-top:4pt">${escHtml(nums)} — ${escHtml(p.objeto)}</p>
+</div>
+${sections.join('\n')}
+${_qrFooter(p)}
+</div>
 </body></html>`;
-}
 
-// Monta a lista ordenada de slots do dossiê consolidado (etapa 1/DFD → etapa
-// 18/Publicação no PNCP): anexos de cada etapa + documento gerável daquela
-// etapa (arquivo já assinado quando existir, senão HTML renderizado agora).
-// A Ata de Sessão entra logo após a Homologação (não pertence a uma etapa só).
-async function _montarSlotsConsolidado(p) {
-  const slots = [{ tipo: 'html', label: 'Capa', html: _finalizarDocumentoHtml(_htmlCapaConsolidado(p), null) }];
-
-  const [rSig, rFiles] = await Promise.all([
-    API.get(`/api/signatures?process_id=${encodeURIComponent(p.id)}`),
-    API.get(`/api/files?process_id=${encodeURIComponent(p.id)}&prefix=1`),
-  ]);
-  const sigs  = (await API.json(rSig))?.items || [];
-  const anexos = (await API.json(rFiles))?.items || [];
-
-  // Agrupa anexos pelo índice de etapa embutido no process_id sintético
-  // ("<processId>_<i>" para anexos comuns, "<processId>_<i>_cert_<certId>" para
-  // certidões da Habilitação — ambos começam com "<processId>_<i>").
-  const anexosPorEtapa = {};
-  for (const f of anexos) {
-    const resto = f.process_id.startsWith(p.id + '_') ? f.process_id.slice(p.id.length + 1) : '';
-    const m = resto.match(/^(\d+)/);
-    if (!m) continue;
-    (anexosPorEtapa[parseInt(m[1], 10)] ||= []).push(f);
-  }
-
-  function anexarEtapa(i) {
-    for (const f of (anexosPorEtapa[i] || [])) {
-      slots.push({ tipo: 'file', label: f.nome_original || `Anexo etapa ${i + 1}`, file_id: f.id });
-    }
-  }
-
-  // Doc já assinado (gov.br/ICP-Brasil/física) entra como o arquivo real;
-  // Assinatura Simples entra como HTML + carimbo; sem assinatura, HTML puro
-  // (com marca d'água MINUTA se o processo não estiver concluído).
-  function resolverDoc(docType, htmlBuilder) {
-    const sig = sigs.find(sg => sg.doc_type === docType);
-    if (sig && ['govbr', 'icp-brasil', 'fisica'].includes(sig.method) && sig.file_id) {
-      slots.push({ tipo: 'file', label: docType, file_id: sig.file_id });
-      return;
-    }
-    const html = htmlBuilder();
-    if (!html) return; // dados insuficientes para gerar — pula silenciosamente
-    let finalHtml = _finalizarDocumentoHtml(html, docType);
-    if (sig && sig.method === 'internal') {
-      const cod = (() => { try { return JSON.parse(sig.extra_json || '{}').cod || sig.cod; } catch { return sig.cod; } })();
-      const data = sig.signed_at ? new Date(sig.signed_at).toLocaleString('pt-BR') : '';
-      const carimbo = `<div style="margin-top:14pt;padding:8pt 10pt;border:1px solid #999;font-size:8pt;color:#333;background:#f9f9f9">Assinado eletronicamente por <strong>${escHtml(sig.signer_name || '')}</strong>, em ${data} — Nível: <strong>Assinatura Simples</strong> — Código: <strong>${escHtml(cod || '')}</strong></div>`;
-      finalHtml = finalHtml.replace('</body>', carimbo + '</body>');
-    }
-    slots.push({ tipo: 'html', label: docType, html: finalHtml });
-  }
-
-  for (let i = 0; i < STEPS.length; i++) {
-    anexarEtapa(i);
-    const step = STEPS[i];
-    if (step.cotacoes) {
-      const html = _htmlMapaPrecos(i);
-      if (html) slots.push({ tipo: 'html', label: 'Mapa de Preços', html: _finalizarDocumentoHtml(html, 'Mapa de Preços') });
-    }
-    if (step.autorizacao)   resolverDoc('Autorização de Abertura de Processo', () => _htmlAutorizacao(true));
-    if (step.avisoDispensa) resolverDoc('Aviso de Dispensa de Licitação', () => _htmlAvisoDispensa(true));
-    if (step.propostas) {
-      const lista = p.steps[i]?.fields?._propostas ? JSON.parse(p.steps[i].fields._propostas) : [];
-      lista.forEach((prop, pi) => {
-        if (prop.situacao !== 'recusada') return;
-        const html = _htmlDespachoRecusa(i, pi);
-        if (html) slots.push({ tipo: 'html', label: 'Despacho de Recusa / Desclassificação', html: _finalizarDocumentoHtml(html, 'Despacho de Recusa / Desclassificação') });
-      });
-    }
-    if (step.certidoes) {
-      resolverDoc('Despacho de Habilitação', () => _htmlDespachoHabilitacao(i, true));
-      resolverDoc('Despacho de Inabilitação', () => _htmlDespachoInabilitacao(i, true));
-    }
-    if (step.justificativaEscolha) {
-      const html = _htmlJustificativaEscolha();
-      if (html) slots.push({ tipo: 'html', label: 'Justificativa da Escolha do Fornecedor', html: _finalizarDocumentoHtml(html, 'Justificativa da Escolha do Fornecedor') });
-    }
-    if (step.adjudicacao) resolverDoc('Termo de Adjudicação', () => _htmlTermoAdjudicacao(true));
-    if (step.homologacao) {
-      resolverDoc('Termo de Homologação', () => _htmlTermoHomologacao(true));
-      resolverDoc('Ata de Sessão', () => _htmlAta()); // documenta até a Homologação — entra logo depois dela
-    }
-    if (step.enquadramentoLegal) {
-      const html = _htmlEnquadramentoLegal();
-      if (html) slots.push({ tipo: 'html', label: 'Justificativa de Enquadramento Legal', html: _finalizarDocumentoHtml(html, 'Justificativa de Enquadramento Legal') });
-    }
-    if (step.extratoContrato) resolverDoc('Extrato de Contrato', () => _htmlExtratoContrato(true));
-  }
-
-  return slots;
-}
-
-async function gerarProcessoCompleto() {
-  const p = currentProcess;
-  // Abre a janela ANTES de qualquer await (mesmo Fix #1 de _gerarDocumento):
-  // depois de um await o navegador não trata mais como ação direta do clique
-  // e bloqueia o popup — aqui a espera é maior ainda, por causa da geração no
-  // servidor (mescla + numeração de página), daí a tela de carregando.
-  const win = window.open('', '_blank', 'width=900,height=700');
-  if (!win) {
-    toast('Popup bloqueado pelo navegador. Permita popups para este site e tente novamente.', 'danger');
-    return;
-  }
-  win.document.write('<p style="font-family:sans-serif;padding:20px">Gerando PDF consolidado — pode levar alguns segundos…</p>');
-  win.document.close();
-
-  try {
-    const slots = await _montarSlotsConsolidado(p);
-    const r = await API.post(`/api/processes/${p.id}/pdf-consolidado`, { slots });
-    if (!r) { win.close(); toast('Erro de conexão ao gerar o PDF consolidado.', 'error'); return; }
-    if (!r.ok) {
-      const d = await API.json(r);
-      win.close();
-      toast(d?.error || 'Erro ao gerar PDF consolidado.', 'error');
-      return;
-    }
-    const blob = await r.blob();
-    const url = URL.createObjectURL(blob);
-    win.location.href = url;
-    toast('PDF consolidado gerado.', 'success');
-  } catch (e) {
-    win.close();
-    toast('Erro ao gerar PDF consolidado: ' + e.message, 'error');
-  }
+  _gerarDocumento(window.open('', '_blank', 'width=900,height=700'), html, 'Processo Completo');
 }
 
 // ATA DE SESSÃO — Lei 14.133/2021
 // ══════════════════════════════════════════════════════════════
-function _htmlAta() {
+function gerarAta() {
   const p = currentProcess;
   const u = getUser();
   const f = i => (p.steps[i] || {}).fields || {};
@@ -10194,7 +10106,9 @@ function _htmlAta() {
 <head>
 <meta charset="UTF-8">
 <title>${_nomeArquivoDoc(p, 'ATA DE SESSAO')}</title>
-<style>${_docCss()}
+<style>${_DOC_CSS}
+  body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; color: #000; background: #fff; padding: 20mm 25mm; }
+  @media print { body { padding: 15mm 20mm; } .no-print { display: none !important; } }
   .header img { height: 90pt; width: auto; margin-bottom: 8pt; display: block; margin-left: auto; margin-right: auto; }
   .header h1 { font-size: 13pt; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0; }
   h3 { font-size: 13pt; text-align: center; text-transform: uppercase; letter-spacing: .5px; margin: 20pt 0 6pt; }
@@ -10330,11 +10244,6 @@ ${_qrFooter(p)}
 </body>
 </html>`;
 
-  return html;
-}
-function gerarAta() {
-  const html = _htmlAta();
-  if (!html) return;
   const win = window.open('', '_blank', 'width=900,height=700');
   _gerarDocumento(win, html, 'Ata de Sessão');
 }
@@ -10497,20 +10406,15 @@ function abrirModalAssinatura(p, docNome, htmlContent, win) {
         <strong>2. gov.br (nível avançado)</strong>
         <p style="font-size:.72rem;color:${sub};margin-top:2px">Assine no portal público do governo com seu login gov.br, depois reenvie o PDF assinado aqui.</p>
       </div>
-      <div id="sig-card-icp" class="sig-card" style="border:1px solid var(--gray-200,#333);border-radius:8px;padding:12px 14px;margin-bottom:10px;cursor:pointer">
+      <div id="sig-card-icp" class="sig-card" style="border:1px solid var(--gray-200,#333);border-radius:8px;padding:12px 14px;margin-bottom:16px;cursor:pointer">
         <strong>3. Certificado ICP-Brasil (nível qualificado)</strong>
         <p style="font-size:.72rem;color:${sub};margin-top:2px">Assine com seu certificado A1 (.pfx) próprio. A senha não é armazenada.</p>
-      </div>
-      <div id="sig-card-fisica" class="sig-card" style="border:1px solid var(--gray-200,#333);border-radius:8px;padding:12px 14px;margin-bottom:16px;cursor:pointer">
-        <strong>4. Assinatura física (digitalizada)</strong>
-        <p style="font-size:.72rem;color:${sub};margin-top:2px">Imprima, colha a assinatura no papel e envie a digitalização (scan) aqui. Não envolve certificado.</p>
       </div>
       <div style="text-align:right"><button class="btn btn-outline btn-sm" id="sig-cancelar">Cancelar</button></div>
     `);
     overlay.querySelector('#sig-card-simples').onclick = () => { playClick(); fluxoSimples(); };
     overlay.querySelector('#sig-card-govbr').onclick   = () => { playClick(); fluxoGovBr(); };
     overlay.querySelector('#sig-card-icp').onclick     = () => { playClick(); fluxoIcp(); };
-    overlay.querySelector('#sig-card-fisica').onclick  = () => { playClick(); fluxoFisica(); };
     overlay.querySelector('#sig-cancelar').onclick     = () => { playClick(); close(); };
   }
 
@@ -10573,44 +10477,6 @@ function abrirModalAssinatura(p, docNome, htmlContent, win) {
       if (p?.id) await _auditEvento('DOCUMENTO_ASSINADO', `${docNome} — gov.br — código ${d.cod}`, p.id);
       if (p?.id) renderSignatures(p.id);
       toast('PDF assinado anexado ao processo.', 'success');
-      close();
-    };
-  }
-
-  function fluxoFisica() {
-    render(`
-      <h3 style="font-size:1rem;font-weight:700;margin-bottom:10px">Assinatura física (digitalizada)</h3>
-      <ol style="font-size:.78rem;color:${sub};line-height:1.7;padding-left:18px;margin-bottom:14px">
-        <li>Salve o PDF deste documento (botão "Imprimir / Salvar PDF" na janela do documento).</li>
-        <li>Imprima, colha a assinatura no papel e digitalize (scan) a página assinada.</li>
-        <li>Selecione o PDF digitalizado abaixo.</li>
-      </ol>
-      <input type="file" id="sig-fisica-file" accept="application/pdf" style="width:100%;margin-bottom:14px">
-      <div style="display:flex;justify-content:space-between">
-        <button class="btn btn-outline btn-sm" id="sig-voltar">Voltar</button>
-        <button class="btn btn-primary btn-sm" id="sig-enviar">Enviar digitalização</button>
-      </div>
-    `);
-    overlay.querySelector('#sig-voltar').onclick = telaEscolha;
-    overlay.querySelector('#sig-enviar').onclick = async () => {
-      const file = overlay.querySelector('#sig-fisica-file').files[0];
-      if (!file) { toast('Selecione o PDF digitalizado.', 'error'); return; }
-      const form = new FormData();
-      form.append('method', 'fisica');
-      form.append('process_id', p?.id || '');
-      form.append('doc_type', docNome);
-      form.append('pdf', file, _nomeArquivoDoc(p, docNome) + '.pdf');
-      render(`<p style="font-size:.85rem">Enviando…</p>`);
-      const r = await API.upload('/api/signatures/upload', form);
-      const d = await API.json(r);
-      if (!r || !r.ok || !d) {
-        render(`<p style="color:#dc2626">Erro ao enviar: ${escHtml(d?.error||'falha desconhecida')}</p><div style="text-align:right;margin-top:12px"><button class="btn btn-outline btn-sm" id="sig-voltar2">Voltar</button></div>`);
-        overlay.querySelector('#sig-voltar2').onclick = telaEscolha;
-        return;
-      }
-      if (p?.id) await _auditEvento('DOCUMENTO_ASSINADO', `${docNome} — física — código ${d.cod}`, p.id);
-      if (p?.id) renderSignatures(p.id);
-      toast('Digitalização anexada ao processo.', 'success');
       close();
     };
   }
@@ -11320,8 +11186,6 @@ function showSettings() {
   document.getElementById('s-codigo-ibge').value   = u.codigo_ibge   || '';
   document.getElementById('s-uf').value            = u.uf            || '';
   document.getElementById('s-frac-janela').value   = u.frac_janela   || 'exercicio';
-  document.getElementById('s-margem-vertical').value   = u.margem_vertical   || '2.5';
-  document.getElementById('s-margem-horizontal').value = u.margem_horizontal || '3';
   // Segurança — senha
   document.getElementById('s-senha-atual').value     = '';
   document.getElementById('s-senha-nova').value      = '';
@@ -11392,8 +11256,6 @@ async function saveSettings() {
     codigo_ibge:      document.getElementById('s-codigo-ibge').value.trim(),
     uf:               document.getElementById('s-uf').value.trim().toUpperCase(),
     frac_janela:      document.getElementById('s-frac-janela').value,
-    margem_vertical:   String(Math.min(6, Math.max(1, parseFloat(document.getElementById('s-margem-vertical').value)   || 2.5))),
-    margem_horizontal: String(Math.min(6, Math.max(1, parseFloat(document.getElementById('s-margem-horizontal').value) || 3))),
     dark_mode:        document.getElementById('s-dark-mode').value,
     layout_width:     document.getElementById('s-layout-width').value,
     font_size:        document.getElementById('s-font-size').value,
@@ -11429,7 +11291,6 @@ async function saveSettings() {
     orgao: u.orgao, municipio: u.municipio, aut_nome: u.aut_nome, aut_cargo: u.aut_cargo,
     site_oficial: u.site_oficial, diario_url: u.diario_url, cnpj_orgao: u.cnpj_orgao,
     codigo_ibge: u.codigo_ibge, uf: u.uf, decreto_limites: u.decreto_limites,
-    margem_vertical: u.margem_vertical, margem_horizontal: u.margem_horizontal,
   };
   console.log('[SGCD] Enviando /api/settings/org:', orgPayload);
   const rOrg = await API.put('/api/settings/org', orgPayload);
@@ -13263,23 +13124,17 @@ function _qrFooter(p, extraInfo) {
  * Checks com bloqueia=true impedem a geração completamente.
  * Checks com bloqueia=false exibem aviso mas permitem continuar.
  */
-function _validarDocumento(checks, silent = false) {
-  // silent=true: usado pelo PDF Consolidado, que percorre todos os tipos de
-  // documento sem interação — não pode travar em alert()/confirm(). Pula
-  // silenciosamente o que bloqueia, inclui o que só teria gerado um aviso.
+function _validarDocumento(checks) {
   const bloqueios  = checks.filter(c => !c.ok && c.bloqueia);
   const avisos     = checks.filter(c => !c.ok && !c.bloqueia);
 
   if (bloqueios.length > 0) {
-    if (!silent) {
-      const msgs = bloqueios.map(c => `• ${c.msg}`).join('\n');
-      alert(`Não é possível gerar este documento:\n\n${msgs}\n\nPreencha os dados indicados e tente novamente.`);
-    }
+    const msgs = bloqueios.map(c => `• ${c.msg}`).join('\n');
+    alert(`Não é possível gerar este documento:\n\n${msgs}\n\nPreencha os dados indicados e tente novamente.`);
     return false;
   }
 
   if (avisos.length > 0) {
-    if (silent) return true;
     const msgs = avisos.map(c => `• ${c.msg}`).join('\n');
     return confirm(`Atenção — o documento será gerado com campos incompletos:\n\n${msgs}\n\nDeseja continuar mesmo assim?`);
   }

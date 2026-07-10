@@ -51,53 +51,6 @@ test('login força troca de senha, cria processo e gera documento', async ({ pag
   await expect(page.locator('#sig-list')).toContainText('Simples');
 });
 
-test('gera PDF consolidado numerado do processo', async ({ page }) => {
-  // Roda depois do teste de login (que já trocou a senha do admin) no mesmo
-  // servidor/banco — usa a nova senha, sem tela de troca obrigatória.
-  await page.goto('/SGCD.html');
-  await page.fill('#pin-username', 'admin');
-  await page.fill('#pin-input', 'novaSenhaE2E123');
-  await page.click('#overlay-pin button[onclick="verificarSenha()"]');
-  await expect(page.locator('#overlay-pin')).toBeHidden();
-
-  // Monta um processo com só a Autorização preenchida — a capa e a Autorização
-  // bastam para provar o pipeline completo (headless print + merge + numeração
-  // via pyHanko) sem precisar montar as 18 etapas manualmente.
-  const procId = await page.evaluate(async () => {
-    const r = await API.post('/api/processes', {
-      id: 'e2e-consolidado-' + Date.now(),
-      objeto: 'Processo de teste do PDF consolidado',
-      num_dl: '99/2026',
-      legal: 'Art. 75, II — Lei 14.133/2021',
-      createdAt: Date.now(), updatedAt: Date.now(), steps: [],
-    });
-    const proc = await r.json();
-    proc.steps = new Array(18).fill(null).map(() => ({ status: 'pending', fields: {}, completedAt: null }));
-    proc.steps[8] = { status: 'done', fields: { responsavel: 'Fulano', data_conclusao: '2026-01-10' }, completedAt: Date.now() };
-    await salvarProcesso(proc);
-    return proc.id;
-  });
-
-  const result = await page.evaluate(async (id) => {
-    const r = await API.get(`/api/processes/${id}`);
-    // gerarProcessoCompleto() e as _htmlXxx() que ela chama leem o processo
-    // aberto via currentProcess (mesma variável que a tela de detalhe usa) —
-    // não é só um parâmetro, precisa estar setada como na navegação real.
-    currentProcess = await r.json();
-    const slots = await _montarSlotsConsolidado(currentProcess);
-    const rr = await API.post(`/api/processes/${currentProcess.id}/pdf-consolidado`, { slots });
-    if (!rr) return { ok: false, error: 'sem resposta' };
-    if (!rr.ok) return { ok: false, status: rr.status, error: (await API.json(rr))?.error };
-    const blob = await rr.blob();
-    return { ok: true, status: rr.status, contentType: blob.type, size: blob.size };
-  }, procId);
-
-  expect(result.ok, result.error).toBe(true);
-  expect(result.status).toBe(200);
-  expect(result.contentType).toBe('application/pdf');
-  expect(result.size).toBeGreaterThan(1000);
-});
-
 test('sincroniza backup de outro agente e mescla processo novo', async ({ page }) => {
   // Roda depois do teste acima no mesmo servidor/banco (webServer é compartilhado
   // para toda a suíte) — a senha do admin já foi trocada lá, então usamos a nova.
