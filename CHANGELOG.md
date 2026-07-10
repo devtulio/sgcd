@@ -5,6 +5,18 @@
 
 ---
 
+## [2.25.0] — 2026-07-10
+
+### Adicionado
+- **PDF Consolidado do processo, agora um dossiê real com todas as páginas numeradas** (exigência do TCE-SP para envio de processos de dispensa) — o botão "📦 PDF" deixou de gerar um resumo e passou a juntar, em ordem, todas as 18 etapas do processo (do DFD até a Publicação no PNCP): os anexos enviados em cada etapa, os documentos gerados pelo sistema (usando o PDF já assinado quando existir — gov.br, ICP-Brasil ou física — em vez de recriar o documento) e a Ata de Sessão logo após a Homologação. O resultado é um único PDF com numeração de página contínua ("Página X de Y").
+- **4º método de assinatura: Física (digitalizada)** — no modal "Assinar Documento", permite anexar a digitalização de uma peça assinada no papel, sem certificado, evitando que ela entre no dossiê consolidado com a marca d'água de rascunho.
+
+### Corrigido
+- **Anexar qualquer arquivo numa etapa do processo (ou uma certidão na Habilitação) derrubava o servidor** com `sqlite3.IntegrityError: FOREIGN KEY constraint failed`. A tabela `files` tinha uma FK em `process_id` que exigia bater com um processo real, mas anexos por etapa usam uma chave sintética (`"<processId>_<etapa>"`) por desenho — a FK sempre rejeitava essas inserções. Migração automática remove a FK indevida na primeira execução; instalações existentes não perdem dados (a FK sempre bloqueou esse tipo de inserção, então não havia nenhuma linha desse tipo salva).
+
+### Técnico
+- `pyhanko` (já usada na assinatura ICP-Brasil) agora também mescla os PDFs do dossiê e numera as páginas — nenhuma dependência nova. A conversão de HTML em PDF usa o mesmo Chrome/Edge headless já exigido pelo sistema.
+
 ## [2.24.1] — 2026-07-09
 
 ### Adicionado

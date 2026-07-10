@@ -1,4 +1,5 @@
-# Dependência OPCIONAL — só necessária para o módulo de assinatura ICP-Brasil
-# (certificado A1 .pfx). O restante do SGCD funciona sem instalar nada disso.
-# Instale com: pip install -r requirements.txt
+# Dependência OPCIONAL — necessária para o módulo de assinatura ICP-Brasil
+# (certificado A1 .pfx) e para o PDF Consolidado do processo (mescla os
+# documentos e numera as páginas). O restante do SGCD funciona sem instalar
+# nada disso. Instale com: pip install -r requirements.txt
 pyhanko

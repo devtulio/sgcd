@@ -1,6 +1,6 @@
 # SGCD — Sistema de Gestão de Contratação Direta
 
-![Versão](https://img.shields.io/badge/versão-v2.24.1-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-Python%20%2B%20SQLite-orange) ![Licença](https://img.shields.io/badge/licença-MIT-green) ![Multiusuário](https://img.shields.io/badge/acesso-multiusuário-blueviolet)
+![Versão](https://img.shields.io/badge/versão-v2.25.0-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-Python%20%2B%20SQLite-orange) ![Licença](https://img.shields.io/badge/licença-MIT-green) ![Multiusuário](https://img.shields.io/badge/acesso-multiusuário-blueviolet)
 
 ## Descrição
 
@@ -46,7 +46,7 @@ Funciona em rede local: um único computador executa o servidor e todos os usuá
 - **Python 3.7+** (apenas biblioteca padrão — sem dependências externas)
 - **Google Chrome** ou **Microsoft Edge** (recomendado)
 - Windows 10/11
-- Opcional: `pip install -r requirements.txt` — só necessário para o módulo de assinatura com certificado ICP-Brasil (`pyhanko`)
+- Opcional: `pip install -r requirements.txt` — necessário para o módulo de assinatura com certificado ICP-Brasil e para o PDF Consolidado do processo (`pyhanko`)
 
 > **Servidor sem Python instalado (ex.: Windows Server bloqueado por política de TI):**
 > o `Iniciar SGCD.bat` detecta automaticamente a ausência do Python e extrai uma versão portátil (embarcável, sem instalador) incluída no próprio projeto (`python-3.12.9-embed-amd64.zip`) para `C:\Python312-embed\` — não exige instalação nem privilégio de administrador. Isso resolve o caso comum de instaladores `.exe` bloqueados por AppLocker/antivírus corporativo em servidores.
@@ -116,7 +116,7 @@ SGCD/
 ├── sgcd.db                  # Banco de dados SQLite (criado automaticamente)
 ├── uploads/                 # Documentos anexados (criado automaticamente)
 ├── backups/                 # Backups automáticos (criado automaticamente)
-├── requirements.txt         # Dependência opcional (pyhanko — só p/ assinatura ICP-Brasil)
+├── requirements.txt         # Dependência opcional (pyhanko — assinatura ICP-Brasil e PDF Consolidado)
 ├── README.md
 ├── CHANGELOG.md
 └── MANUAL.html
@@ -142,6 +142,7 @@ SGCD/
 | **Extrato de Contrato** | Extrato para publicação no Diário Oficial e PNCP (Art. 94) |
 | **Relatório Geral** | Visão consolidada de todos os processos com filtros aplicados |
 | **Relatório Executivo** | KPIs, gráfico por status e alertas para gestores |
+| **PDF Consolidado do Processo** | Dossiê único e numerado com todas as etapas (anexos + documentos gerados, usando a versão já assinada quando existir, + Ata de Sessão) — pronto para envio ao TCE |
 
 Todos os documentos abrem em janela separada com botão "🖨 Imprimir / Salvar PDF".
 

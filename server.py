@@ -1,4 +1,4 @@
-# SGCD v2.24.1 — Servidor local: SQLite, autenticação, REST API, proxy CNPJ, e-mail SMTP, backup automático
+# SGCD v2.25.0 — Servidor local: SQLite, autenticação, REST API, proxy CNPJ, e-mail SMTP, backup automático
 import http.server
 import socketserver
 import os
@@ -92,6 +92,38 @@ def init_db():
         if 'users' in tables and 'usuarios' not in tables:
             conn.execute('ALTER TABLE users RENAME TO usuarios')
             conn.commit()
+        # Migração: remove a FK indevida em files.process_id → processes(id).
+        # A coluna é usada tanto com o id real do processo quanto com uma chave
+        # sintética por etapa ("<processId>_<stepIndex>", usada pelos anexos de
+        # etapa e pelas certidões da Habilitação — ver /api/files?prefix=1), que
+        # nunca bate com processes.id e sempre violava a FK (crash ao anexar
+        # qualquer arquivo numa etapa). Como a FK sempre bloqueou essas
+        # inserções, não existe linha desse tipo para preservar — só recria a
+        # tabela sem a FK.
+        if 'files' in tables:
+            fks = conn.execute("PRAGMA foreign_key_list(files)").fetchall()
+            if any(fk[2] == 'processes' for fk in fks):
+                # Cria a tabela nova primeiro e só troca o nome no fim — renomear a
+                # tabela ANTIGA direto faz o SQLite reescrever a REFERENCES de
+                # signatures.file_id para o nome temporário, deixando-a apontando
+                # para uma tabela inexistente assim que a antiga é descartada.
+                conn.execute('''
+                    CREATE TABLE files_new (
+                        id            TEXT PRIMARY KEY,
+                        process_id    TEXT,
+                        step_index    INTEGER,
+                        nome_original TEXT NOT NULL,
+                        nome_disco    TEXT NOT NULL,
+                        tamanho       INTEGER,
+                        mime          TEXT,
+                        uploaded_by   INTEGER REFERENCES usuarios(id),
+                        uploaded_em   TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M:%S','now','localtime'))
+                    )
+                ''')
+                conn.execute('INSERT INTO files_new SELECT * FROM files')
+                conn.execute('DROP TABLE files')
+                conn.execute('ALTER TABLE files_new RENAME TO files')
+                conn.commit()
         conn.executescript('''
             CREATE TABLE IF NOT EXISTS usuarios (
                 id         INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -133,7 +165,7 @@ def init_db():
             );
             CREATE TABLE IF NOT EXISTS files (
                 id            TEXT PRIMARY KEY,
-                process_id    TEXT REFERENCES processes(id) ON DELETE CASCADE,
+                process_id    TEXT,
                 step_index    INTEGER,
                 nome_original TEXT NOT NULL,
                 nome_disco    TEXT NOT NULL,
@@ -684,6 +716,9 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         elif p == '/api/signatures/upload':
             self._create_signature_upload(s)
 
+        elif re.fullmatch(r'/api/processes/[^/]+/pdf-consolidado', p):
+            self._gerar_pdf_consolidado(p.split('/')[3], data)
+
         else:
             self._json(404, {'error': 'Rota não encontrada'})
 
@@ -1173,8 +1208,8 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         self._json(200, {'id': sig_id, 'cod': cod})
 
     def _create_signature_upload(self, s):
-        """Módulos 2 (gov.br) e 3 (ICP-Brasil) — recebe PDF (já assinado, no
-        caso gov.br, ou a assinar + certificado .pfx + senha, no caso ICP-Brasil)."""
+        """Módulos 2 (gov.br), 3 (ICP-Brasil) e 4 (física digitalizada) — recebe PDF
+        já assinado (gov.br e física) ou a assinar + certificado .pfx + senha (ICP-Brasil)."""
         ct = self.headers.get('Content-Type', '')
         if 'multipart/form-data' not in ct:
             self._json(400, {'error': 'Esperado multipart/form-data'}); return
@@ -1191,8 +1226,8 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         pdf_bytes  = parts.get('pdf', {}).get('data')
         pdf_name   = parts.get('pdf', {}).get('filename') or 'documento.pdf'
 
-        if method not in ('govbr', 'icp-brasil'):
-            self._json(400, {'error': 'method deve ser "govbr" ou "icp-brasil"'}); return
+        if method not in ('govbr', 'icp-brasil', 'fisica'):
+            self._json(400, {'error': 'method deve ser "govbr", "icp-brasil" ou "fisica"'}); return
         if not pdf_bytes:
             self._json(400, {'error': 'PDF não encontrado no upload'}); return
 
@@ -1233,6 +1268,30 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
                  method, 'signed', fid, json.dumps(extra, ensure_ascii=False) if extra else None)
             )
         self._json(200, {'id': sig_id, 'cod': cod, 'file_id': fid})
+
+    def _gerar_pdf_consolidado(self, process_id, data):
+        """Monta o dossiê consolidado do processo (todas as peças em sequência,
+        páginas numeradas) — ver _montar_pdf_consolidado. Import de pyHanko é
+        tardio (dentro dela), então sem a lib instalada só esta rota falha,
+        com mensagem clara — o resto do servidor segue normal."""
+        slots = data.get('slots') or []
+        try:
+            pdf_bytes = _montar_pdf_consolidado(slots)
+        except ImportError:
+            self._json(400, {'error': 'Módulo de PDF consolidado indisponível — instale o pyHanko rodando "Instalar Assinatura ICP-Brasil.bat".'}); return
+        except ValueError as e:
+            self._json(400, {'error': str(e)}); return
+        except Exception as e:
+            _log.error('Erro ao gerar PDF consolidado: %s', e)
+            self._json(500, {'error': f'Erro ao gerar PDF consolidado: {e}'}); return
+
+        self.send_response(200)
+        self._cors()
+        self.send_header('Content-Type', 'application/pdf')
+        self.send_header('Content-Length', str(len(pdf_bytes)))
+        self.send_header('Content-Disposition', f'attachment; filename="processo-{process_id}-consolidado.pdf"')
+        self.end_headers()
+        self.wfile.write(pdf_bytes)
 
     def _serve_file(self, fid):
         with get_db() as conn:
@@ -1742,6 +1801,107 @@ def _assinar_pdf_icp(pdf_bytes, cert_bytes, senha):
         return out.getvalue(), cert_subject
     finally:
         os.remove(pfx_path)
+
+def _render_html_to_pdf(html_str):
+    """Imprime um HTML em PDF via Chrome/Edge headless — mesmo navegador que o
+    sistema já exige para o Modo Pessoal (_find_browser), sem depender de
+    nenhuma lib nova. Usado pelo PDF Consolidado para os documentos que não
+    têm um PDF já assinado salvo (rascunho ou Assinatura Simples)."""
+    import tempfile, pathlib
+    browser = _find_browser()
+    if not browser:
+        raise RuntimeError('Navegador (Chrome ou Edge) não encontrado para gerar o PDF consolidado.')
+
+    tmp_dir   = tempfile.gettempdir()
+    html_path = os.path.join(tmp_dir, f'sgcd_doc_{secrets.token_hex(8)}.html')
+    pdf_path  = os.path.join(tmp_dir, f'sgcd_doc_{secrets.token_hex(8)}.pdf')
+    try:
+        with open(html_path, 'w', encoding='utf-8') as f:
+            f.write(html_str)
+        uri = pathlib.Path(html_path).as_uri()
+        result = subprocess.run(
+            [browser, '--headless', '--disable-gpu', '--no-pdf-header-footer',
+             f'--print-to-pdf={pdf_path}', uri],
+            capture_output=True, timeout=30
+        )
+        if not os.path.isfile(pdf_path):
+            err = result.stderr.decode('utf-8', 'replace')[:300] if result.stderr else 'motivo desconhecido'
+            raise RuntimeError(f'Falha ao converter documento em PDF: {err}')
+        with open(pdf_path, 'rb') as f:
+            return f.read()
+    finally:
+        for p in (html_path, pdf_path):
+            try: os.remove(p)
+            except OSError: pass
+
+
+def _pdf_pages(pdf_handler):
+    """Lista, em ordem, os objetos /Page de um PdfFileReader ou PdfFileWriter
+    (ambos expõem .root — a árvore /Pages pode ter Kids aninhados)."""
+    out = []
+    def walk(node):
+        if node.get('/Type') == '/Pages':
+            for kid in node['/Kids']:
+                walk(kid.get_object())
+        elif node.get('/Type') == '/Page':
+            out.append(node)
+    walk(pdf_handler.root['/Pages'])
+    return out
+
+
+def _montar_pdf_consolidado(slots):
+    """Monta o dossiê consolidado do processo: mescla em sequência os PDFs de
+    cada slot (renderizado na hora ou já assinado/anexado) e numera todas as
+    páginas do resultado. Import tardio de pyHanko — mesmo padrão de
+    _assinar_pdf_icp: sem a lib instalada, só este endpoint fica indisponível.
+    `slots`: lista de dicts {tipo:'html', html:str} ou {tipo:'file', file_id:str}.
+    """
+    import io
+    from pyhanko.pdf_utils.reader import PdfFileReader
+    from pyhanko.pdf_utils.writer import PdfFileWriter
+    from pyhanko.stamp import TextStamp, TextStampStyle
+
+    pdf_blobs = []
+    for slot in slots:
+        tipo = slot.get('tipo')
+        if tipo == 'html':
+            html_str = (slot.get('html') or '').strip()
+            if html_str:
+                pdf_blobs.append(_render_html_to_pdf(html_str))
+        elif tipo == 'file':
+            with get_db() as conn:
+                row = conn.execute('SELECT nome_disco FROM files WHERE id=?', (slot.get('file_id'),)).fetchone()
+            if row:
+                fp = os.path.join(UPLOADS_DIR, row['nome_disco'])
+                if os.path.isfile(fp):
+                    with open(fp, 'rb') as f:
+                        pdf_blobs.append(f.read())
+
+    if not pdf_blobs:
+        raise ValueError('Nenhum documento disponível para consolidar — preencha ao menos uma etapa do processo.')
+
+    writer = PdfFileWriter()
+    for blob in pdf_blobs:
+        reader = PdfFileReader(io.BytesIO(blob))
+        for page in _pdf_pages(reader):
+            imported = writer.import_object(page)
+            if '/Parent' in imported:
+                del imported['/Parent']
+            writer.insert_page(imported)
+
+    paginas = _pdf_pages(writer)
+    total = len(paginas)
+    for i, pg in enumerate(paginas):
+        mb = pg.get('/MediaBox')
+        largura = float(mb[2]) - float(mb[0]) if mb else 612.0
+        style = TextStampStyle(stamp_text='Página %(page)d de %(total)d', border_width=0)
+        stamp = TextStamp(writer, style, text_params={'page': i + 1, 'total': total})
+        stamp.apply(i, largura - 140, 20)
+
+    out = io.BytesIO()
+    writer.write(out)
+    return out.getvalue()
+
 
 def _send_email_raw(smtp, frm, to, subj, html, plain=''):
     msg = MIMEMultipart('alternative')

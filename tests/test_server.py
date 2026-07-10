@@ -76,6 +76,37 @@ class SGCDTestCase(unittest.TestCase):
         self.assertEqual(status, 200, data)
         return data['token']
 
+    def upload_multipart(self, path, fields, token=None):
+        """POST multipart/form-data manual — só campos de texto e um único arquivo
+        binário opcional em fields['file'] = (filename, bytes, mime)."""
+        boundary = 'testboundary123456'
+        parts = []
+        for key, val in fields.items():
+            if key == 'file':
+                filename, filedata, mime = val
+                parts.append(
+                    f'--{boundary}\r\nContent-Disposition: form-data; name="file"; filename="{filename}"\r\n'
+                    f'Content-Type: {mime}\r\n\r\n'.encode('utf-8') + filedata + b'\r\n'
+                )
+            else:
+                parts.append(f'--{boundary}\r\nContent-Disposition: form-data; name="{key}"\r\n\r\n{val}\r\n'.encode('utf-8'))
+        parts.append(f'--{boundary}--\r\n'.encode('utf-8'))
+        body = b''.join(parts)
+
+        conn = http.client.HTTPConnection('127.0.0.1', PORT, timeout=5)
+        hdrs = {'Content-Type': f'multipart/form-data; boundary={boundary}'}
+        if token:
+            hdrs['Authorization'] = f'Bearer {token}'
+        conn.request('POST', path, body=body, headers=hdrs)
+        resp = conn.getresponse()
+        data = resp.read()
+        conn.close()
+        try:
+            parsed = json.loads(data) if data else None
+        except ValueError:
+            parsed = data
+        return resp.status, parsed
+
 
 class TestAuth(SGCDTestCase):
 
@@ -284,6 +315,33 @@ class TestBackup(SGCDTestCase):
         self.assertEqual(status, 200)
         self.assertTrue(data['_sgcd'])
         self.assertTrue(any(p['objeto'] == 'Processo para backup' for p in data['processes']))
+
+
+class TestFiles(SGCDTestCase):
+
+    def test_anexo_por_etapa_com_process_id_sintetico(self):
+        # Regressão: files.process_id tinha uma FK pra processes(id), mas o
+        # anexo por etapa usa uma chave sintética "<processId>_<stepIndex>"
+        # (e "<processId>_<stepIndex>_cert_<certId>" pras certidões da
+        # Habilitação) que nunca bate com processes.id — toda tentativa de
+        # anexar um arquivo numa etapa derrubava o servidor com
+        # sqlite3.IntegrityError antes da migração que remove essa FK.
+        token = self.login()
+        status, proc = self.request('POST', '/api/processes', {'objeto': 'Processo com anexo por etapa'}, token=token)
+        self.assertEqual(status, 200)
+
+        status, created = self.upload_multipart('/api/files', {
+            'process_id': f'{proc["id"]}_0',
+            'step_index': '0',
+            'nome_original': 'dfd-teste.pdf',
+            'mime': 'application/pdf',
+            'file': ('dfd-teste.pdf', b'%PDF-1.4 conteudo de teste', 'application/pdf'),
+        }, token=token)
+        self.assertEqual(status, 200, created)
+
+        status, listed = self.request('GET', f'/api/files?process_id={proc["id"]}&prefix=1', token=token)
+        self.assertEqual(status, 200)
+        self.assertTrue(any(f['id'] == created['id'] for f in listed['items']))
 
 
 class TestHealth(SGCDTestCase):
