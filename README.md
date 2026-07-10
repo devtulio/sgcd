@@ -1,6 +1,6 @@
 # SGCD — Sistema de Gestão de Contratação Direta
 
-![Versão](https://img.shields.io/badge/versão-v2.25.0-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-Python%20%2B%20SQLite-orange) ![Licença](https://img.shields.io/badge/licença-MIT-green) ![Multiusuário](https://img.shields.io/badge/acesso-multiusuário-blueviolet)
+![Versão](https://img.shields.io/badge/versão-v2.26.0-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-Python%20%2B%20SQLite-orange) ![Licença](https://img.shields.io/badge/licença-MIT-green) ![Multiusuário](https://img.shields.io/badge/acesso-multiusuário-blueviolet)
 
 ## Descrição
 
@@ -32,7 +32,7 @@ Funciona em rede local: um único computador executa o servidor e todos os usuá
 - **QR Code de autenticidade** em todos os documentos gerados com verificação online
 - **Assinatura eletrônica de documentos** — 3 módulos à escolha: Simples (interna), gov.br (nível avançado) e certificado ICP-Brasil A1 (nível qualificado)
 - **Exportação PNCP** — JSON estruturado no formato da API do Portal Nacional de Contratações Públicas
-- **Backup automático** ao encerrar o sistema (JSON + banco de dados SQLite) com rotação configurável
+- **Backup automático** após o último usuário sair (JSON + banco de dados SQLite) com rotação configurável — o servidor continua no ar, pronto pro próximo login
 - **Sincronização de backup entre agentes/máquinas** — mescla dados de outra instalação (soma o que é novo, revisa o que conflita) sem substituir o banco inteiro
 - **Lixeira** — processos e fornecedores excluídos ficam recuperáveis por 30 dias (processos incluem os arquivos anexados). Exclusão de fornecedor bloqueada se ele estiver vinculado a algum processo
 - **Autenticação multiusuário** com hashing PBKDF2-HMAC-SHA256 e gestão de usuários pelo admin
@@ -59,7 +59,7 @@ Funciona em rede local: um único computador executa o servidor e todos os usuá
 
 1. Copie a pasta `SGCD/` para o computador que atuará como servidor
 2. Clique duas vezes em **`Iniciar SGCD.bat`**
-3. Selecione o modo de operação no menu que aparecer
+3. Escolha **[2] Iniciar Servidor** no menu que aparecer — o navegador abre automaticamente
 4. Faça login com as credenciais iniciais abaixo e **altere a senha imediatamente**
 
 > ⚠️ **Importante:** abrir o `SGCD.html` diretamente pelo navegador (sem o servidor) impede o funcionamento do sistema. Use sempre o `Iniciar SGCD.bat`.
@@ -71,13 +71,12 @@ Funciona em rede local: um único computador executa o servidor e todos os usuá
 | Usuário | `admin`     |
 | Senha   | `admin123`  |
 
-### Modo de operação
+### Menu inicial
 
 | Opção | Descrição |
 |-------|-----------|
-| **[1] Pessoal** | Uso individual — abre o navegador automaticamente e encerra ao sair |
-| **[2] Servidor** | Máquina central em rede — fica rodando continuamente (Ctrl+C para parar) |
-| **[3] Diagnóstico** | Verifica e corrige automaticamente rede, porta e firewall (pede elevação de Administrador quando necessário) |
+| **[1] Diagnóstico** | Verifica e corrige automaticamente rede, porta e firewall (pede elevação de Administrador quando necessário) |
+| **[2] Iniciar Servidor** | Abre o navegador automaticamente e fica rodando continuamente — funciona tanto para uso individual quanto em rede. Só encerra com **Ctrl+C** no terminal |
 
 ### Acesso em rede local
 

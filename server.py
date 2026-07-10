@@ -1,4 +1,4 @@
-# SGCD v2.25.0 — Servidor local: SQLite, autenticação, REST API, proxy CNPJ, e-mail SMTP, backup automático
+# SGCD v2.26.0 — Servidor local: SQLite, autenticação, REST API, proxy CNPJ, e-mail SMTP, backup automático
 import http.server
 import socketserver
 import os
@@ -59,8 +59,7 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 os.makedirs(UPLOADS_DIR, exist_ok=True)
 
 _watchdog_paused  = False   # pausa o watchdog durante diálogos bloqueantes (ex: FolderBrowser)
-_had_session      = False   # True após primeiro login; evita encerramento antes de qualquer usuário logar
-_modo_servidor    = False   # True = modo servidor contínuo (sem encerramento automático)
+_had_session      = False   # True após primeiro login; controla quando o backup pós-sessão pode disparar
 _backup_pos_sess  = False   # True = backup pós-sessão já executado; aguarda nova sessão para resetar
 
 # ── Banco de dados ────────────────────────────────────────────────────────────
@@ -293,29 +292,27 @@ def active_sessions():
         return conn.execute('SELECT COUNT(*) FROM sessions WHERE expires>?', (time.time(),)).fetchone()[0]
 
 def _check_shutdown():
-    """Encerra o servidor quando não há mais sessões ativas (último logout).
-    No modo servidor contínuo (_modo_servidor=True), apenas faz backup sem encerrar."""
+    """O servidor nunca encerra sozinho por contagem de sessões — só via Ctrl+C
+    no terminal (ver bloco principal). Aqui só dispara um backup automático,
+    uma única vez, depois que a última sessão ativa termina.
+
+    ponytail: existia um modo "Pessoal" que fazia os._exit(0) nesta função
+    quando a última sessão caía — a ideia era encerrar sozinho ao fechar a
+    janela do navegador. Na prática, SESSION_TTL=15s é curto demais: uma aba
+    em segundo plano (ex. ao gerar um documento, que abre popup e tira o foco
+    da aba principal) sofre throttling do navegador no setInterval do ping,
+    a sessão expira sem ninguém ter saído de propósito, e o servidor se
+    autodestruía no meio do uso. Removido — se o encerramento automático por
+    inatividade real for necessário de novo, a forma correta é um timeout bem
+    mais longo (minutos, não segundos), não a contagem de sessões do ping."""
     global _backup_pos_sess
-    if _modo_servidor:
-        # Modo servidor: backup uma única vez após última sessão encerrada
-        if _had_session and active_sessions() == 0 and not _backup_pos_sess:
-            _backup_pos_sess = True
-            cfg = _get_backup_cfg()
-            if cfg['enabled']:
-                print('\nÚltima sessão encerrada. Executando backup automático...')
-                _do_json_backup(cfg)
-                _do_db_backup(cfg)
-        return
-    if not _had_session:
-        return
-    if active_sessions() > 0:
-        return
-    print('\nÚltima sessão encerrada. Executando backup e encerrando servidor...')
-    cfg = _get_backup_cfg()
-    if cfg['enabled']:
-        _do_json_backup(cfg)
-        _do_db_backup(cfg)
-    os._exit(0)
+    if _had_session and active_sessions() == 0 and not _backup_pos_sess:
+        _backup_pos_sess = True
+        cfg = _get_backup_cfg()
+        if cfg['enabled']:
+            print('\nÚltima sessão encerrada. Executando backup automático...')
+            _do_json_backup(cfg)
+            _do_db_backup(cfg)
 
 # ── HTTP Handler ──────────────────────────────────────────────────────────────
 
@@ -356,7 +353,7 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         qs = parse_qs(parsed.query)
 
         if p == '/health':
-            self._json(200, {'ok': True, 'modo_servidor': _modo_servidor})
+            self._json(200, {'ok': True})
         elif p == '/api/public/org-info':
             try:
                 with get_db() as conn:
@@ -2073,47 +2070,34 @@ def _check_db_integrity():
     except Exception as e:
         _log.error('Erro ao verificar integridade do banco: %s', e)
 
-# ── Seleção de modo ───────────────────────────────────────────────────────────
+# ── Menu inicial ──────────────────────────────────────────────────────────────
 
 def _selecionar_modo():
-    global _modo_servidor
     print()
     print('  ╔══════════════════════════════════════════════════╗')
     print('  ║   SGCD — Sistema de Gestão de Contratação Direta ║')
     print('  ╚══════════════════════════════════════════════════╝')
     print()
-    print('  Selecione o modo de operação:')
-    print()
-    print('  [1] Pessoal   — Uso individual no próprio computador')
-    print('                  Abre o app automaticamente no navegador')
-    print('                  Encerra quando o último usuário sair')
-    print()
-    print('  [2] Servidor  — Máquina central / acesso pela rede')
-    print('                  Não abre navegador automaticamente')
-    print('                  Fica rodando continuamente (Ctrl+C para parar)')
-    print()
-    print('  [3] Diagnóstico — Verifica rede, porta e firewall')
+    print('  [1] Diagnóstico     — Verifica rede, porta e firewall')
+    print('  [2] Iniciar Servidor')
     print()
     if not sys.stdin.isatty():
         op = '2'
     else:
         while True:
             try:
-                op = input('  Opção [1/2/3]: ').strip()
+                op = input('  Opção [1/2]: ').strip()
             except (EOFError, KeyboardInterrupt):
-                op = '1'
-            if op in ('1', '2', '3'):
+                op = '2'
+            if op in ('1', '2'):
                 break
-            print('  Digite 1, 2 ou 3.')
-    if op == '3':
+            print('  Digite 1 ou 2.')
+    if op == '1':
         import subprocess as _sp
         diag = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'diagnostico.py')
         _sp.run([sys.executable, diag])
         sys.exit(0)
-    _modo_servidor = (op == '2')
-    modo_label = 'SERVIDOR CONTÍNUO' if _modo_servidor else 'PESSOAL'
     print()
-    print(f'  Modo: {modo_label}')
     print('  ─────────────────────────────────────────────────')
 
 if __name__ == '__main__':
@@ -2125,39 +2109,30 @@ if __name__ == '__main__':
     socketserver.ThreadingTCPServer.allow_reuse_address = True
     with socketserver.ThreadingTCPServer(('', PORT), SGCDHandler) as httpd:
         print(f'  Servidor: http://localhost:{PORT}')
+        import socket as _socket
+        try:
+            ip_local = _socket.gethostbyname(_socket.gethostname())
+        except Exception:
+            ip_local = 'desconhecido'
+        print(f'  Rede:     http://{ip_local}:{PORT}/SGCD.html')
+        print()
 
-        if _modo_servidor:
-            # Modo servidor: exibe IP da rede e fica rodando sem abrir browser
-            import socket as _socket
-            try:
-                ip_local = _socket.gethostbyname(_socket.gethostname())
-            except Exception:
-                ip_local = 'desconhecido'
-            print(f'  Rede:     http://{ip_local}:{PORT}/SGCD.html')
-            print()
-            print('  Aguardando conexões... (Ctrl+C para encerrar)')
-            try:
-                httpd.serve_forever()
-            except KeyboardInterrupt:
-                print('\n  Encerrando servidor...')
+        browser = _find_browser()
+        if browser:
+            profile_dir = os.path.join(os.environ.get('TEMP', os.path.expanduser('~')), 'SGCD-Profile')
+            subprocess.Popen([
+                browser,
+                f'--app=http://localhost:{PORT}/SGCD.html',
+                '--start-maximized',
+                '--disable-background-mode',
+                f'--user-data-dir={profile_dir}',
+            ])
+            print('  App aberto no navegador.')
         else:
-            # Modo pessoal: abre o app no navegador
-            browser = _find_browser()
-            if browser:
-                threading.Thread(target=httpd.serve_forever, daemon=True).start()
-                time.sleep(1)
-                profile_dir = os.path.join(os.environ.get('TEMP', os.path.expanduser('~')), 'SGCD-Profile')
-                proc = subprocess.Popen([
-                    browser,
-                    f'--app=http://localhost:{PORT}/SGCD.html',
-                    '--start-maximized',
-                    '--disable-background-mode',
-                    f'--user-data-dir={profile_dir}',
-                ])
-                print('  App aberto. Feche a janela do SGCD para encerrar.')
-                proc.wait()
-                print('  Encerrando servidor...')
-                while True: time.sleep(1)
-            else:
-                print(f'  Chrome/Edge não encontrado. Abra manualmente: http://localhost:{PORT}/SGCD.html')
-                httpd.serve_forever()
+            print(f'  Chrome/Edge não encontrado. Abra manualmente: http://localhost:{PORT}/SGCD.html')
+
+        print('  Aguardando conexões... (Ctrl+C para encerrar)')
+        try:
+            httpd.serve_forever()
+        except KeyboardInterrupt:
+            print('\n  Encerrando servidor...')

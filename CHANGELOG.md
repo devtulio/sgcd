@@ -5,6 +5,19 @@
 
 ---
 
+## [2.26.0] — 2026-07-10
+
+### Corrigido
+- **Servidor encerrava sozinho no meio do uso** — o antigo modo "Pessoal" chamava `os._exit(0)` em `_check_shutdown()` quando a última sessão ativa expirava (`SESSION_TTL=15s`, renovado por ping a cada 5s). Gerar um documento abre um popup e tira o foco da aba principal — navegadores throttlam `setInterval` em abas em segundo plano, o ping atrasa, a sessão expira sem ninguém ter saído de propósito, e o servidor se desligava sozinho no meio do uso. Corrigido removendo esse caminho inteiramente: o servidor agora só encerra via **Ctrl+C** no terminal, igual ao antigo modo "Servidor Contínuo" — `_check_shutdown()` só dispara o backup automático pós-sessão, nunca mais mata o processo
+
+### Alterado
+- **Menu inicial simplificado** — de 3 opções (Pessoal / Servidor / Diagnóstico) para 2: **[1] Diagnóstico** e **[2] Iniciar Servidor**. Não existe mais escolha de "modo" — iniciar o servidor sempre abre o navegador automaticamente (sem precisar clicar no link do terminal) e sempre fica rodando continuamente, mesclando o que havia de bom nos dois modos antigos
+- Removido o botão **"Fechar Sistema"** (e a função `fecharSistema()`) — como o servidor nunca mais encerra sozinho, esse botão ficaria sempre escondido e sua promessa ("servidor desligado") nunca mais seria verdadeira. `/health` não retorna mais o campo `modo_servidor` (nada mais lê)
+
+Validado ao vivo: sessão sem nenhum ping por 22s (bem além do TTL de 15s e de vários ciclos do watchdog) — servidor continua respondendo normalmente. Suíte de testes ganhou um teste dedicado chamando `_check_shutdown()` com zero sessões ativas — se o `os._exit(0)` antigo ainda existisse, o próprio processo de teste morreria nesse ponto.
+
+---
+
 ## [2.25.0] — 2026-07-10
 
 ### Corrigido — Segurança
