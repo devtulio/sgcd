@@ -5,6 +5,11 @@
 
 ---
 
+## [2.25.3] — 2026-07-10
+
+### Corrigido
+- **Numeração de página ainda sobrepunha texto em alguns documentos** — a causa raiz era que os documentos não tinham a mesma margem: a folha de estilo compartilhada (`_DOC_CSS`) e mais duas peças (Mapa de Preços, Ata de Sessão) zeravam ou reduziam a margem superior especificamente no modo impressão (`@media print` — exatamente o modo usado para gerar o PDF), inconsistente com a margem usada na tela. Padronizadas as margens de todos os 12 documentos do dossiê para **2,5 cm (superior/inferior) e 3 cm (esquerda/direita)**, iguais na tela e na impressão — o mesmo padrão dos documentos oficiais do município. Com a margem consistente, o espaço extra adicionado só para o PDF Consolidado (v2.25.2) deixou de ser necessário e foi removido.
+
 ## [2.25.2] — 2026-07-10
 
 ### Corrigido
