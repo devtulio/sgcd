@@ -10044,21 +10044,34 @@ async function _montarSlotsConsolidado(p) {
 
 async function gerarProcessoCompleto() {
   const p = currentProcess;
-  toast('Gerando PDF consolidado — pode levar alguns segundos…', 'info');
+  // Abre a janela ANTES de qualquer await (mesmo Fix #1 de _gerarDocumento):
+  // depois de um await o navegador não trata mais como ação direta do clique
+  // e bloqueia o popup — aqui a espera é maior ainda, por causa da geração no
+  // servidor (mescla + numeração de página), daí a tela de carregando.
+  const win = window.open('', '_blank', 'width=900,height=700');
+  if (!win) {
+    toast('Popup bloqueado pelo navegador. Permita popups para este site e tente novamente.', 'danger');
+    return;
+  }
+  win.document.write('<p style="font-family:sans-serif;padding:20px">Gerando PDF consolidado — pode levar alguns segundos…</p>');
+  win.document.close();
+
   try {
     const slots = await _montarSlotsConsolidado(p);
     const r = await API.post(`/api/processes/${p.id}/pdf-consolidado`, { slots });
-    if (!r) { toast('Erro de conexão ao gerar o PDF consolidado.', 'error'); return; }
+    if (!r) { win.close(); toast('Erro de conexão ao gerar o PDF consolidado.', 'error'); return; }
     if (!r.ok) {
       const d = await API.json(r);
+      win.close();
       toast(d?.error || 'Erro ao gerar PDF consolidado.', 'error');
       return;
     }
     const blob = await r.blob();
     const url = URL.createObjectURL(blob);
-    window.open(url, '_blank');
+    win.location.href = url;
     toast('PDF consolidado gerado.', 'success');
   } catch (e) {
+    win.close();
     toast('Erro ao gerar PDF consolidado: ' + e.message, 'error');
   }
 }
