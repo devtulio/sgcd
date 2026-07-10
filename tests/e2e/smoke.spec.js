@@ -93,3 +93,40 @@ test('sincroniza backup de outro agente e mescla processo novo', async ({ page }
   await page.click('#nav-dash');
   await expect(page.locator('.process-card', { hasText: 'Processo de outro agente (sync E2E)' })).toBeVisible();
 });
+
+test('objeto/nº DL com payload de XSS não executa script no documento gerado', async ({ page, context }) => {
+  // Regressão: _nomeArquivoDoc() monta o <title> do documento e os campos do
+  // processo entram no corpo do documento sem escapar em ~15 geradores —
+  // um <img onerror=...> em objeto/nº DL executava de verdade na janela do
+  // documento, que tem acesso ao localStorage (token de sessão) e à API.
+  page.on('dialog', dialog => dialog.accept());
+
+  await page.goto('/SGCD.html');
+  await page.fill('#pin-username', 'admin');
+  await page.fill('#pin-input', 'novaSenhaE2E123');
+  await page.click('#overlay-pin button[onclick="verificarSenha()"]');
+  await expect(page.locator('#overlay-pin')).toBeHidden();
+
+  await page.click('button:has-text("Novo Processo")');
+  await page.fill('#m-obj', 'Objeto <img src=x onerror="window.__xssBody=true"> malicioso');
+  await page.fill('#m-num-dl', '<img src=x onerror="window.__xssTitle=true">');
+  await page.click('.modal-footer button:has-text("Criar Processo")');
+
+  const card = page.locator('.process-card', { hasText: 'Objeto' });
+  await card.click();
+
+  const stepCard = page.locator('.step-card', { hasText: 'Autorização da Autoridade Competente' });
+  await stepCard.locator('.step-row').click();
+
+  const [popup] = await Promise.all([
+    context.waitForEvent('page'),
+    stepCard.getByRole('button', { name: /Gerar Autorização/ }).click(),
+  ]);
+  await popup.waitForLoadState();
+
+  const xssTitle = await popup.evaluate(() => window.__xssTitle);
+  const xssBody = await popup.evaluate(() => window.__xssBody);
+  expect(xssTitle).toBeUndefined();
+  expect(xssBody).toBeUndefined();
+  await expect(popup.locator('.doc-title')).toContainText('img');
+});

@@ -5,6 +5,27 @@
 
 ---
 
+## [2.25.0] — 2026-07-10
+
+### Corrigido — Segurança
+- **XSS armazenado nos ~17 geradores de documento** (`gerarAutorizacao`, `gerarAta`, `gerarDespacho*`, `gerarTermo*`, relatórios, etc.) — campos de texto livre do processo/fornecedor/usuário (objeto, nº PA/DL, matrícula, cargo, órgão, observações, CNPJ/valor de cotações e propostas) eram inseridos nos documentos HTML sem escapar. Documentos abrem em janela mesma-origem, com acesso a `localStorage` (token de sessão) e à API autenticada — um processo malicioso criado por qualquer usuário podia executar script na sessão de quem gerasse o documento (ex. um admin). Achado mais grave: o helper `blank()` (usado em 12 lugares) e a função `_nomeArquivoDoc()` (usada no `<title>` de todos os 17 documentos) não escapavam nada. Corrigido escapando na origem (`blank()` e `_nomeArquivoDoc()` nos usos de `<title>`) e em ~20 pontos que inseriam dados sem passar por nenhum dos dois, incluindo uma tabela inteira de cotações/propostas na Ata que nunca tinha sido escapada. Validado com payload real executando em navegador de verdade (Playwright) — não executa mais
+- **Restauração de backup podia apagar tudo sem restaurar nada** — `_restore_backup` fazia `commit()` dos `DELETE` antes de validar as inserções; um item malformado no meio do JSON derrubava o banco inteiro. Agora é uma transação só (tudo ou nada), com erro claro ao cliente em vez de conexão cair
+- **Vazamento de conexões SQLite nos caminhos de backup** — 4 pontos (`sqlite3.connect()` cru em `/api/backup/db`, `_restore_db_backup`, `_do_db_backup`) não passavam pelo `_ConnAutoClose` já usado em `get_db()`, reproduzindo o mesmo vazamento corrigido na v2.17.1
+
+### Corrigido — Integridade de dados
+- **Edição concorrente de processo/fornecedor sobrescrevia silenciosamente** — dois usuários com o mesmo registro aberto: quem salvasse por último apagava a edição do outro sem aviso. Servidor agora recusa (409) quando o `updatedAt` que o cliente carregou não bate mais com o salvo, em vez de aplicar last-write-wins cego. Nova função `_now_precise()` (precisão de milissegundo) — `_now()` (precisão de segundo) colidia facilmente entre edições rápidas em sequência
+- **"✓ Salvo" aparecia mesmo quando o salvamento falhava** — `salvarProcesso()`/`salvarFornecedor()` engoliam erro de rede/servidor silenciosamente. Agora lançam exceção de verdade; indicador mostra "⚠ Não salvo" e a edição não é perdida sem aviso
+- **Painel "Limite Anual Art. 75" sempre mostrava 0%** — parser de valor monetário local não removia o prefixo "R$" antes do `parseFloat`, sempre retornando `NaN`→0. O alerta de estouro do teto legal (R$ 130.984,20 / R$ 65.492,11) nunca disparava. Corrigido reaproveitando `parseValor()`, já correto
+- **Exclusão de fornecedor não verificava propostas não-vencedoras** — só checava o fornecedor vencedor (`p.fornecedor.id`); um fornecedor com proposta em análise podia ser excluído sem aviso. Agora compara por CNPJ também dentro de `_propostas`
+
+### Corrigido — Robustez do servidor
+- **`handle_error` nunca era chamado** — estava definido na classe errada (é método de `socketserver.BaseServer`, não do request handler). Qualquer exceção não tratada em `do_GET`/`POST`/`PUT`/`DELETE` derrubava a conexão sem log nem resposta ao cliente, mascarando outros bugs. Novo `_safe_dispatch()` envolve os 4 handlers: loga em `sgcd_errors.log` e devolve um 500 JSON limpo
+- **Thread de watchdog podia morrer para sempre** — se `auto_backup_keep` fosse salvo com valor não-numérico (só possível via chamada direta à API), o `int()` quebrava dentro da thread sem `try/except`, matando limpeza de sessões/lixeira/alertas até reiniciar o servidor. Corrigido na raiz (`_get_backup_cfg`) e com proteção adicional no loop do watchdog
+
+Cobertura de teste ampliada: `tests/test_server.py` ganhou 4 testes novos (restore malformado, conflito de edição concorrente ×2, exceção não tratada); `tests/e2e/` ganhou um teste dedicado de XSS rodando payload real em Chromium.
+
+---
+
 ## [2.24.1] — 2026-07-09
 
 ### Adicionado

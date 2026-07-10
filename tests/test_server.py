@@ -10,6 +10,7 @@ import socketserver
 import sys
 import tempfile
 import threading
+import time
 import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -178,6 +179,42 @@ class TestProcesses(SGCDTestCase):
         status, data = self.request('GET', '/api/processes/id-que-nao-existe', token=token)
         self.assertEqual(status, 404)
 
+    def test_edicao_concorrente_detecta_conflito(self):
+        # Simula dois usuários com o mesmo processo aberto: A carrega, B edita e
+        # salva primeiro, depois A tenta salvar com o updatedAt que carregou —
+        # deve ser recusado (409) em vez de sobrescrever a edição de B.
+        token = self.login()
+        status, created = self.request('POST', '/api/processes', {'objeto': 'Processo original'}, token=token)
+        self.assertEqual(status, 200)
+        pid = created['id']
+        base_updated_at = created['updatedAt']
+        time.sleep(0.01)  # updatedAt tem precisão de milissegundo — garante que o próximo save gere um valor diferente
+
+        # Usuário B edita e salva primeiro
+        status, _ = self.request('PUT', f'/api/processes/{pid}',
+                                  {'objeto': 'Editado por B', '_baseUpdatedAt': base_updated_at}, token=token)
+        self.assertEqual(status, 200)
+
+        # Usuário A tenta salvar com o updatedAt antigo (de antes da edição de B)
+        status, resp = self.request('PUT', f'/api/processes/{pid}',
+                                     {'objeto': 'Editado por A', '_baseUpdatedAt': base_updated_at}, token=token)
+        self.assertEqual(status, 409)
+        self.assertEqual(resp['current']['objeto'], 'Editado por B')
+
+        # Confirma que a edição de B não foi sobrescrita
+        status, current = self.request('GET', f'/api/processes/{pid}', token=token)
+        self.assertEqual(current['objeto'], 'Editado por B')
+
+    def test_edicao_sem_baseUpdatedAt_nao_bloqueia(self):
+        # Compatibilidade: chamadas que não mandam _baseUpdatedAt (ex. criação,
+        # sincronização de backup) continuam funcionando sem checagem de conflito.
+        token = self.login()
+        status, created = self.request('POST', '/api/processes', {'objeto': 'Processo original'}, token=token)
+        pid = created['id']
+        status, updated = self.request('PUT', f'/api/processes/{pid}', {'objeto': 'Sem checagem'}, token=token)
+        self.assertEqual(status, 200)
+        self.assertEqual(updated['objeto'], 'Sem checagem')
+
 
 class TestFornecedores(SGCDTestCase):
 
@@ -285,6 +322,33 @@ class TestBackup(SGCDTestCase):
         self.assertTrue(data['_sgcd'])
         self.assertTrue(any(p['objeto'] == 'Processo para backup' for p in data['processes']))
 
+    def test_restore_com_item_malformado_nao_apaga_dados_existentes(self):
+        # Regressão: _restore_backup fazia commit() dos DELETEs antes de validar
+        # as inserções — um item malformado no meio do backup derrubava o banco
+        # inteiro sem restaurar nada. Agora tudo é uma transação só (tudo ou nada).
+        token = self.login()
+        status, created = self.request('POST', '/api/processes', {'objeto': 'Processo que não pode sumir'}, token=token)
+        self.assertEqual(status, 200)
+        pid_original = created['id']
+
+        backup_malformado = {
+            '_sgcd': True,
+            'processes': [
+                {'id': 'novo-1', 'objeto': 'Processo válido do backup', 'steps': []},
+                None,  # item malformado — quebra o loop de inserção no meio
+            ],
+        }
+        status, resp = self.request('POST', '/api/backup/restore', backup_malformado, token=token)
+        self.assertEqual(status, 500)
+        self.assertIn('nenhuma alteração foi aplicada', resp['error'])
+
+        status, listed = self.request('GET', '/api/processes', token=token)
+        self.assertEqual(status, 200)
+        self.assertTrue(any(p['id'] == pid_original for p in listed['items']),
+                         'processo original sumiu — restore parcial vazou apesar do rollback')
+        self.assertFalse(any(p.get('id') == 'novo-1' for p in listed['items']),
+                          'processo do backup malformado foi aplicado parcialmente')
+
 
 class TestHealth(SGCDTestCase):
 
@@ -292,6 +356,22 @@ class TestHealth(SGCDTestCase):
         status, data = self.request('GET', '/health')
         self.assertEqual(status, 200)
         self.assertTrue(data['ok'])
+
+
+class TestErroNaoTratado(SGCDTestCase):
+
+    def test_excecao_nao_tratada_retorna_500_em_vez_de_derrubar_conexao(self):
+        # Regressão: handle_error estava definido na classe errada (nunca era
+        # chamado de verdade) — qualquer exceção não tratada derrubava a conexão
+        # sem resposta nenhuma. Agora _safe_dispatch garante um 500 JSON limpo.
+        token = self.login()
+        status, data = self.request('GET', '/api/processes?page=nao-e-um-numero', token=token)
+        self.assertEqual(status, 500)
+        self.assertIn('error', data)
+
+        # Confirma que o servidor continua respondendo normalmente depois
+        status, _ = self.request('GET', '/health')
+        self.assertEqual(status, 200)
 
 
 if __name__ == '__main__':

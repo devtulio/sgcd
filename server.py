@@ -1,4 +1,4 @@
-# SGCD v2.24.1 — Servidor local: SQLite, autenticação, REST API, proxy CNPJ, e-mail SMTP, backup automático
+# SGCD v2.25.0 — Servidor local: SQLite, autenticação, REST API, proxy CNPJ, e-mail SMTP, backup automático
 import http.server
 import socketserver
 import os
@@ -333,7 +333,24 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
             self.send_header('Cache-Control', 'no-cache, must-revalidate')
         super().end_headers()
 
+    def _safe_dispatch(self, inner):
+        # handle_error (mais abaixo) nunca era chamado de verdade — é método de
+        # socketserver.BaseServer, não do request handler, então exceções não
+        # tratadas em qualquer do_GET/POST/PUT/DELETE só apareciam no console
+        # (nada no log, cliente só via a conexão cair). Isso escondia bugs reais.
+        try:
+            inner()
+        except Exception as e:
+            _log.error('Erro não tratado em %s %s: %s', self.command, self.path, e)
+            try:
+                self._json(500, {'error': 'Erro interno no servidor.'})
+            except Exception:
+                pass  # resposta já pode ter começado a ser enviada
+
     def do_GET(self):
+        self._safe_dispatch(self._do_GET)
+
+    def _do_GET(self):
         parsed = urlparse(self.path)
         p  = parsed.path.rstrip('/')
         qs = parse_qs(parsed.query)
@@ -374,6 +391,9 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
             super().do_GET()
 
     def do_POST(self):
+        self._safe_dispatch(self._do_POST)
+
+    def _do_POST(self):
         parsed = urlparse(self.path)
         p = parsed.path.rstrip('/')
 
@@ -410,12 +430,18 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         self._route_post(p, body, s)
 
     def do_PUT(self):
+        self._safe_dispatch(self._do_PUT)
+
+    def _do_PUT(self):
         p = urlparse(self.path).path.rstrip('/')
         s = self._auth()
         if not s: return
         self._route_put(p, self._body(), s)
 
     def do_DELETE(self):
+        self._safe_dispatch(self._do_DELETE)
+
+    def _do_DELETE(self):
         parsed = urlparse(self.path)
         p = parsed.path.rstrip('/')
         qs = parse_qs(parsed.query)
@@ -552,7 +578,7 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
             tmp = _tf.NamedTemporaryFile(suffix='.db', delete=False)
             tmp.close()
             try:
-                with sqlite3.connect(DB_PATH) as src, sqlite3.connect(tmp.name) as bk:
+                with sqlite3.connect(DB_PATH, factory=_ConnAutoClose) as src, sqlite3.connect(tmp.name, factory=_ConnAutoClose) as bk:
                     src.backup(bk)
                 with open(tmp.name, 'rb') as f:
                     data_bytes = f.read()
@@ -952,9 +978,8 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
     def _create_process(self, data, s):
         pid = data.get('id') or str(uuid.uuid4())
         data['id'] = pid
-        now = _now()
-        data.setdefault('createdAt', now)
-        data['updatedAt'] = now
+        data.setdefault('createdAt', _now())
+        data['updatedAt'] = _now_precise()
         with get_db() as conn:
             conn.execute(
                 '''INSERT OR REPLACE INTO processes
@@ -976,8 +1001,19 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
                 # Cria se não existir (upsert)
                 self._create_process({**data, 'id': pid}, s); return
             existing = json.loads(row['data'])
+            # Detecção de conflito: o cliente manda de volta o updatedAt de quando
+            # carregou o processo. Se não bater com o que está salvo agora, outro
+            # usuário editou nesse meio-tempo — recusa em vez de sobrescrever
+            # silenciosamente o que essa outra pessoa salvou (last-write-wins cego).
+            base_updated_at = data.pop('_baseUpdatedAt', None)
+            if base_updated_at is not None and base_updated_at != existing.get('updatedAt'):
+                self._json(409, {
+                    'error': 'Este processo foi alterado por outro usuário. Recarregue antes de salvar.',
+                    'current': existing,
+                })
+                return
             existing.update(data)
-            existing['updatedAt'] = _now()
+            existing['updatedAt'] = _now_precise()
             if 'tags' in data: _sync_tags(conn, 'process_tags', 'process_id', pid, data['tags'])
             conn.execute(
                 '''UPDATE processes SET data=?,objeto=?,status=?,unidade=?,valor=?,
@@ -1042,7 +1078,7 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
     def _create_fornecedor(self, data):
         fid = data.get('id') or str(uuid.uuid4())
         data['id'] = fid
-        data.setdefault('updatedAt', _now())
+        data.setdefault('updatedAt', _now_precise())
         with get_db() as conn:
             conn.execute(
                 'INSERT OR REPLACE INTO fornecedores (id,data,cnpj,razao_social,updated_at) VALUES (?,?,?,?,?)',
@@ -1057,8 +1093,15 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
             if not row:
                 self._create_fornecedor({**data, 'id': fid}); return
             existing = json.loads(row['data'])
+            base_updated_at = data.pop('_baseUpdatedAt', None)
+            if base_updated_at is not None and base_updated_at != existing.get('updatedAt'):
+                self._json(409, {
+                    'error': 'Este fornecedor foi alterado por outro usuário. Recarregue antes de salvar.',
+                    'current': existing,
+                })
+                return
             existing.update(data)
-            existing['updatedAt'] = _now()
+            existing['updatedAt'] = _now_precise()
             conn.execute(
                 'UPDATE fornecedores SET data=?,cnpj=?,razao_social=?,updated_at=? WHERE id=?',
                 (json.dumps(existing, ensure_ascii=False),
@@ -1374,14 +1417,27 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
     def _restore_backup(self, data):
         if not data.get('_sgcd'):
             self._json(400, {'error': 'Arquivo não é um backup SGCD válido'}); return
-        _do_db_backup()  # backup do atual antes de substituir tudo
+        _do_db_backup()  # backup do atual antes de substituir tudo — ponto de recuperação se o restore abaixo falhar
+        try:
+            self._restore_backup_tx(data)
+        except Exception as e:
+            _log.error('Falha ao restaurar backup: %s', e)
+            self._json(500, {'error': f'Falha ao restaurar backup — nenhuma alteração foi aplicada (banco preservado): {e}'})
+            return
+        self._json(200, {'ok': True})
+
+    def _restore_backup_tx(self, data):
+        # Sem commit() explícito no meio: tudo isto é UMA transação. Se qualquer
+        # INSERT falhar (ex.: item malformado no JSON), o `with get_db()` faz
+        # ROLLBACK de tudo — inclusive dos DELETEs acima — em vez de deixar o
+        # banco vazio sem nada restaurado (bug corrigido: commit() prematuro
+        # aqui confirmava os DELETEs antes das inserções serem validadas).
         with get_db() as conn:
             conn.execute('DELETE FROM audit_global')
             conn.execute('DELETE FROM signatures')
             conn.execute('DELETE FROM files')
             conn.execute('DELETE FROM processes')
             conn.execute('DELETE FROM fornecedores')
-            conn.commit()
 
             for p in data.get('processes', []):
                 pid = p.get('id') or str(uuid.uuid4())
@@ -1442,8 +1498,6 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
                      sg.get('file_id'), sg.get('signed_at'), sg.get('extra_json'))
                 )
 
-        self._json(200, {'ok': True})
-
     def _restore_db_backup(self, raw_bytes):
         # raw_bytes é o conteúdo bruto do arquivo .db enviado via multipart ou binário
         if len(raw_bytes) < 16 or raw_bytes[:16] != b'SQLite format 3\x00':
@@ -1453,7 +1507,7 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         try:
             tmp.write(raw_bytes); tmp.close()
             # Valida que o arquivo tem as tabelas esperadas
-            with sqlite3.connect(tmp.name) as test_conn:
+            with sqlite3.connect(tmp.name, factory=_ConnAutoClose) as test_conn:
                 tables = {r[0] for r in test_conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
             required = {'processes', 'fornecedores', 'sys_settings'}
             if not required.issubset(tables):
@@ -1461,7 +1515,7 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
             # Backup do atual antes de restaurar
             _do_db_backup()
             # Substitui o banco atual com o backup via API de backup SQLite (seguro)
-            with sqlite3.connect(tmp.name) as src, get_db() as dst:
+            with sqlite3.connect(tmp.name, factory=_ConnAutoClose) as src, get_db() as dst:
                 src.backup(dst)
             self._json(200, {'ok': True})
         except Exception as e:
@@ -1598,16 +1652,21 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(payload)
 
-    def handle_error(self, request, client_address):
-        import traceback
-        _log.error('Erro na requisição de %s:\n%s', client_address, traceback.format_exc())
-
     def log_message(self, fmt, *args): pass
 
 # ── Utilitários ───────────────────────────────────────────────────────────────
 
 def _now():
     return time.strftime('%Y-%m-%dT%H:%M:%S')
+
+def _now_precise():
+    # Com precisão de milissegundo — usado especificamente em updatedAt para
+    # a checagem de conflito de edição concorrente (_baseUpdatedAt). _now(),
+    # com precisão de segundo, colide facilmente entre duas edições rápidas em
+    # sequência (ex.: salvar duas vezes em menos de 1s), fazendo o servidor
+    # não detectar um conflito real. Formato ainda parseável por new Date() no cliente.
+    t = time.time()
+    return time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime(t)) + f'.{int((t % 1) * 1000):03d}'
 
 def _sync_tags(conn, join_table, id_col, item_id, tag_names):
     """Substitui as tags do registro pela lista informada (cria as que não existem)."""
@@ -1885,7 +1944,8 @@ def _watchdog():
             continue
         with get_db() as conn:
             conn.execute('DELETE FROM sessions WHERE expires<?', (time.time(),))
-        _check_shutdown()
+        try: _check_shutdown()
+        except Exception as e: _log.error('Erro em _check_shutdown: %s', e)
         if time.time() - _last_trash_purge > 3600:
             try: _purge_old_trash()
             except Exception as e: _log.error('Erro ao esvaziar lixeira: %s', e)
@@ -1967,10 +2027,14 @@ def _get_backup_cfg():
         cfg = {r['key']: r['value'] for r in rows}
     except Exception:
         cfg = {}
+    try:
+        keep = max(1, int(cfg.get('auto_backup_keep') or BACKUP_KEEP))
+    except (TypeError, ValueError):
+        keep = BACKUP_KEEP  # valor não-numérico salvo por engano (ex.: via chamada direta à API) — ignora em vez de derrubar o watchdog
     return {
         'path':    cfg.get('backup_path') or BACKUP_DIR,
         'enabled': cfg.get('auto_backup_enabled', '1') != '0',
-        'keep':    max(1, int(cfg.get('auto_backup_keep') or BACKUP_KEEP)),
+        'keep':    keep,
     }
 
 def _do_db_backup(cfg=None):
@@ -1981,7 +2045,7 @@ def _do_db_backup(cfg=None):
     name = time.strftime('DB_SGCD_BACKUP_%Y-%m-%d_%H-%M-%S.db')
     dst  = os.path.join(bdir, name)
     try:
-        with sqlite3.connect(DB_PATH) as src, sqlite3.connect(dst) as bk:
+        with sqlite3.connect(DB_PATH, factory=_ConnAutoClose) as src, sqlite3.connect(dst, factory=_ConnAutoClose) as bk:
             src.backup(bk)
         # Registra timestamp do último backup
         with get_db() as conn:
