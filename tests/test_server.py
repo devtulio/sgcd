@@ -10,6 +10,7 @@ import socketserver
 import sys
 import tempfile
 import threading
+import time
 import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -350,6 +351,70 @@ class TestHealth(SGCDTestCase):
         status, data = self.request('GET', '/health')
         self.assertEqual(status, 200)
         self.assertTrue(data['ok'])
+
+
+class TestShutdownGrace(unittest.TestCase):
+    """_check_shutdown() só encerra o processo (Modo Pessoal) após SHUTDOWN_GRACE
+    segundos contínuos sem nenhuma sessão ativa — não na primeira detecção de zero.
+    Cobre o navegador congelando o timer de ping numa aba em 2º plano (ex: usuário
+    abre o PDF Consolidado numa nova aba) sem matar o servidor por uma oscilação
+    passageira. Chama _check_shutdown() direto, sem HTTP — não usa o servidor
+    compartilhado do módulo (que roda em Modo Servidor)."""
+
+    def setUp(self):
+        self._orig = dict(
+            modo_servidor=server._modo_servidor, had_session=server._had_session,
+            zero_since=server._zero_sessions_since, backup_pos=server._backup_pos_sess,
+            grace=server.SHUTDOWN_GRACE, active_sessions=server.active_sessions,
+            get_backup_cfg=server._get_backup_cfg, os_exit=os._exit,
+        )
+        server._modo_servidor = False
+        server._had_session = True
+        server._zero_sessions_since = None
+        server._backup_pos_sess = False
+        server.SHUTDOWN_GRACE = 0.2
+        server._get_backup_cfg = lambda: {'enabled': False}
+        self._fake_sessions = 0
+        self.exit_calls = []
+        server.active_sessions = lambda: self._fake_sessions
+
+        def fake_exit(code):
+            self.exit_calls.append(code)
+            raise SystemExit(code)
+        os._exit = fake_exit
+
+    def tearDown(self):
+        server._modo_servidor = self._orig['modo_servidor']
+        server._had_session = self._orig['had_session']
+        server._zero_sessions_since = self._orig['zero_since']
+        server._backup_pos_sess = self._orig['backup_pos']
+        server.SHUTDOWN_GRACE = self._orig['grace']
+        server.active_sessions = self._orig['active_sessions']
+        server._get_backup_cfg = self._orig['get_backup_cfg']
+        os._exit = self._orig['os_exit']
+
+    def test_nao_encerra_antes_do_prazo_de_tolerancia(self):
+        server._check_shutdown()
+        self.assertEqual(self.exit_calls, [])
+        server._check_shutdown()
+        self.assertEqual(self.exit_calls, [])
+
+    def test_encerra_apos_prazo_de_tolerancia_esgotado(self):
+        server._check_shutdown()
+        time.sleep(server.SHUTDOWN_GRACE + 0.15)
+        with self.assertRaises(SystemExit):
+            server._check_shutdown()
+        self.assertEqual(self.exit_calls, [0])
+
+    def test_sessao_reaparecendo_reinicia_a_tolerancia(self):
+        server._check_shutdown()
+        self._fake_sessions = 1
+        server._check_shutdown()
+        self.assertIsNone(server._zero_sessions_since)
+        self._fake_sessions = 0
+        time.sleep(server.SHUTDOWN_GRACE + 0.15)
+        server._check_shutdown()  # zerou de novo agora, mas é uma janela NOVA
+        self.assertEqual(self.exit_calls, [])
 
 
 if __name__ == '__main__':

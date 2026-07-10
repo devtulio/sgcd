@@ -5,6 +5,16 @@
 
 ---
 
+## [2.25.5] — 2026-07-10
+
+### Corrigido
+- **Servidor ainda podia encerrar sozinho mesmo após a v2.25.4** — a renovação de sessão a cada requisição não ajuda quando o usuário genuinamente não faz nenhuma requisição por um tempo (ex: só lendo um documento recém-gerado numa aba em segundo plano, com o ping congelado pelo navegador). `_check_shutdown()` agora só encerra o processo em Modo Pessoal após `SHUTDOWN_GRACE` (60s) segundos contínuos sem nenhuma sessão ativa, em vez de na primeira detecção de zero — tolera a oscilação sem deixar de encerrar quando o usuário realmente fechou o navegador.
+- **PDF Consolidado — 1ª página do dossiê saía em branco, com o conteúdo real empurrado para a página 2** — a capa tinha `min-height:100vh` mais uma margem própria (`padding:3cm`) somada à margem do documento (`_docCss`), ultrapassando a altura de uma página A4 e forçando a quebra. Removida a margem/altura redundantes da capa; ela agora usa só a margem padrão do documento.
+- **Margens de todos os documentos saíam maiores que o configurado** — faltava `@page { margin: 0; }` no CSS dos documentos, então o Chrome headless somava sua própria margem padrão de impressão em cima do padding do `body`, dobrando a margem real no PDF gerado.
+
+### Adicionado
+- **Margens dos documentos gerados agora são configuráveis** em Configurações → Organização (padrão: 2,5 cm superior/inferior, 3 cm esquerda/direita — igual aos documentos oficiais do município). Aplicado a todos os 12 documentos do sistema, inclusive o PDF Consolidado.
+
 ## [2.25.4] — 2026-07-10
 
 ### Corrigido

@@ -1,4 +1,4 @@
-# SGCD v2.25.4 — Servidor local: SQLite, autenticação, REST API, proxy CNPJ, e-mail SMTP, backup automático
+# SGCD v2.25.5 — Servidor local: SQLite, autenticação, REST API, proxy CNPJ, e-mail SMTP, backup automático
 import http.server
 import socketserver
 import os
@@ -61,6 +61,10 @@ os.makedirs(UPLOADS_DIR, exist_ok=True)
 _watchdog_paused  = False   # pausa o watchdog durante diálogos bloqueantes (ex: FolderBrowser)
 _had_session      = False   # True após primeiro login; evita encerramento antes de qualquer usuário logar
 _modo_servidor    = False   # True = modo servidor contínuo (sem encerramento automático)
+_zero_sessions_since = None  # timestamp de quando active_sessions() zerou pela última vez (Modo Pessoal)
+SHUTDOWN_GRACE = 60  # segundos tolerados com 0 sessões antes de encerrar de fato — cobre o navegador
+                      # congelando o timer de ping numa aba em 2º plano (ex: usuário abre o PDF Consolidado
+                      # numa nova janela/aba e passa a olhar pra ela, sem gerar nenhuma requisição por um tempo)
 _backup_pos_sess  = False   # True = backup pós-sessão já executado; aguarda nova sessão para resetar
 
 # ── Banco de dados ────────────────────────────────────────────────────────────
@@ -325,9 +329,10 @@ def active_sessions():
         return conn.execute('SELECT COUNT(*) FROM sessions WHERE expires>?', (time.time(),)).fetchone()[0]
 
 def _check_shutdown():
-    """Encerra o servidor quando não há mais sessões ativas (último logout).
-    No modo servidor contínuo (_modo_servidor=True), apenas faz backup sem encerrar."""
-    global _backup_pos_sess
+    """Encerra o servidor quando não há mais sessões ativas por SHUTDOWN_GRACE segundos seguidos
+    (último logout de verdade, não uma oscilação passageira do ping). No modo servidor contínuo
+    (_modo_servidor=True), apenas faz backup sem encerrar."""
+    global _backup_pos_sess, _zero_sessions_since
     if _modo_servidor:
         # Modo servidor: backup uma única vez após última sessão encerrada
         if _had_session and active_sessions() == 0 and not _backup_pos_sess:
@@ -341,6 +346,12 @@ def _check_shutdown():
     if not _had_session:
         return
     if active_sessions() > 0:
+        _zero_sessions_since = None
+        return
+    if _zero_sessions_since is None:
+        _zero_sessions_since = time.time()
+        return
+    if time.time() - _zero_sessions_since < SHUTDOWN_GRACE:
         return
     print('\nÚltima sessão encerrada. Executando backup e encerrando servidor...')
     cfg = _get_backup_cfg()
@@ -739,7 +750,8 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         elif p in ('/api/settings/org', '/api/settings/org/'):
             # Dados de Organização: qualquer usuário autenticado pode salvar (não é config administrativa)
             allowed = {'orgao', 'municipio', 'aut_nome', 'aut_cargo', 'site_oficial',
-                       'diario_url', 'cnpj_orgao', 'codigo_ibge', 'uf', 'decreto_limites'}
+                       'diario_url', 'cnpj_orgao', 'codigo_ibge', 'uf', 'decreto_limites',
+                       'margem_vertical', 'margem_horizontal'}
             print(f"  [SETTINGS] PUT /api/settings/org recebido de {s.get('nome') or s.get('user_id')} (admin={s['admin']})", flush=True)
             self._save_settings({k: v for k, v in data.items() if k in allowed})
         elif p in ('/api/settings/brasao', '/api/settings/brasao/'):
@@ -2051,7 +2063,9 @@ def _purge_old_trash():
 def _watchdog():
     # Limpa sessões expiradas a cada 5s e verifica encerramento.
     # Com SESSION_TTL=15s e ping a cada 5s, um browser fechado sem logout
-    # causa encerramento do servidor em no máximo ~20 segundos.
+    # zera as sessões em poucos segundos; o encerramento efetivo em Modo
+    # Pessoal só ocorre após SHUTDOWN_GRACE segundos adicionais sem nenhuma
+    # sessão ativa (ver _check_shutdown).
     while True:
         time.sleep(5)
         if _watchdog_paused:
