@@ -1,4 +1,4 @@
-# SGCD v2.25.3 — Servidor local: SQLite, autenticação, REST API, proxy CNPJ, e-mail SMTP, backup automático
+# SGCD v2.25.4 — Servidor local: SQLite, autenticação, REST API, proxy CNPJ, e-mail SMTP, backup automático
 import http.server
 import socketserver
 import os
@@ -881,9 +881,20 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         return qs_tok
 
     def _auth(self):
-        s = get_session(self._token())
+        token = self._token()
+        s = get_session(token)
         if not s:
             self._json(401, {'error': 'Não autenticado'})
+            return s
+        # Renova a sessão em qualquer requisição autenticada, não só no ping.
+        # SESSION_TTL=15s dependia inteiramente do setInterval de ping do
+        # cliente — navegadores throttlam timers de abas em segundo plano
+        # (ex: usuário abre o PDF Consolidado numa aba nova e passa a olhar
+        # pra ela), o ping atrasa e a sessão expira mesmo com o usuário
+        # ainda ativo, e em Modo Pessoal isso derruba o servidor inteiro
+        # (_check_shutdown → os._exit(0)). Qualquer chamada autenticada já
+        # prova atividade, então renova aqui também.
+        renew_session(token)
         return s
 
     def _user_dict(self, s):

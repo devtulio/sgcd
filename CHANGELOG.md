@@ -5,6 +5,11 @@
 
 ---
 
+## [2.25.4] — 2026-07-10
+
+### Corrigido
+- **Servidor encerrava sozinho (Modo Pessoal) enquanto o usuário ainda examinava um documento recém-gerado** — a sessão só era renovada pelo ping periódico do cliente (`setInterval` a cada 5s); navegadores throttlam esse tipo de timer quando a aba perde o foco, o que passou a acontecer com mais frequência desde a correção de popup do PDF Consolidado (v2.25.1), que abre uma nova janela e desloca o foco do usuário para ela. Com o ping atrasado, a sessão (TTL de 15s) podia expirar mesmo com o usuário ativo e, em Modo Pessoal, isso derrubava o servidor inteiro (`os._exit(0)`) sem aviso. Corrigido renovando a sessão em qualquer requisição autenticada, não só no ping.
+
 ## [2.25.3] — 2026-07-10
 
 ### Corrigido
