@@ -103,6 +103,39 @@ class TestAuth(SGCDTestCase):
         self.assertEqual(status, 200)
         self.assertEqual(data['username'], 'admin')
 
+    def test_admin_padrao_nasce_com_troca_de_senha_obrigatoria(self):
+        with server.get_db() as conn:
+            row = conn.execute('SELECT must_change_password FROM usuarios WHERE username=?', ('admin',)).fetchone()
+        self.assertEqual(row['must_change_password'], 1)
+
+
+class TestForcaTrocaSenha(SGCDTestCase):
+
+    def test_flag_e_limpa_apos_trocar_senha(self):
+        # Usa um usuário próprio (não o admin compartilhado) para não afetar
+        # o login('admin', 'admin123') usado pelas outras classes de teste.
+        admin_token = self.login()
+        status, created = self.request('POST', '/api/usuarios', {
+            'username': 'precisa_trocar', 'nome': 'Precisa Trocar', 'password': 'senha123'
+        }, token=admin_token)
+        self.assertEqual(status, 200)
+        uid = created['id']
+
+        with server.get_db() as conn:
+            conn.execute('UPDATE usuarios SET must_change_password=1 WHERE id=?', (uid,))
+
+        status, data = self.request('POST', '/api/auth/login', {'username': 'precisa_trocar', 'password': 'senha123'})
+        self.assertEqual(status, 200)
+        self.assertTrue(data['user']['mustChangePassword'])
+        token = data['token']
+
+        status, _ = self.request('PUT', f'/api/usuarios/{uid}', {'password': 'novasenha456'}, token=token)
+        self.assertEqual(status, 200)
+
+        status, data = self.request('POST', '/api/auth/login', {'username': 'precisa_trocar', 'password': 'novasenha456'})
+        self.assertEqual(status, 200)
+        self.assertFalse(data['user']['mustChangePassword'])
+
 
 class TestProcesses(SGCDTestCase):
 

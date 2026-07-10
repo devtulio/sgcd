@@ -1304,6 +1304,10 @@
     <div class="dash-top">
       <h2>Fornecedores</h2>
       <div style="display:flex;gap:8px">
+        <button class="btn btn-outline" onclick="exportarFornecedoresCSV()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Exportar CSV
+        </button>
         <button class="btn btn-outline" onclick="gerarRelatorioFornecedores()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
           Relatório
@@ -1594,6 +1598,10 @@
     <div class="dash-top">
       <h2>Trilha de Auditoria</h2>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-outline btn-sm" onclick="exportarAuditoriaCSV()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Exportar CSV
+        </button>
         <button class="btn btn-outline btn-sm" onclick="gerarRelatorioAuditoria()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
           Relatório
@@ -2130,7 +2138,40 @@
   .pin-shake { animation: pin-shake .35s ease; }
   #overlay-pin { display:flex !important; }
   #overlay-pin.hidden { display:none !important; }
+  #overlay-force-pwd { display:flex !important; }
+  #overlay-force-pwd.hidden { display:none !important; }
 </style>
+
+<!-- ── Troca de senha obrigatória (primeiro acesso / senha padrão) ── -->
+<div class="overlay hidden" id="overlay-force-pwd" style="z-index:99999;background:#1a1f2e;align-items:center;justify-content:center">
+  <div style="position:relative;z-index:1;background:#fff;border-radius:16px;width:380px;overflow:hidden;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+    <div style="background:var(--accent);padding:28px 32px 24px;text-align:center">
+      <div style="width:52px;height:52px;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.3);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e8eef7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </div>
+      <div style="font-size:17px;font-weight:700;color:#fff;margin-bottom:2px">Troca de senha obrigatória</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.08em;font-weight:500">Defina uma nova senha para continuar</div>
+    </div>
+    <div style="padding:26px 32px 28px">
+      <div style="margin-bottom:14px">
+        <label style="font-size:11px;font-weight:600;color:#444;display:block;margin-bottom:6px">Nova senha</label>
+        <input type="password" id="fp-nova" placeholder="mínimo 6 caracteres" autocomplete="new-password"
+          style="width:100%;padding:10px 12px;border:1px solid #ccc;border-radius:8px;font-size:14px">
+      </div>
+      <div style="margin-bottom:6px">
+        <label style="font-size:11px;font-weight:600;color:#444;display:block;margin-bottom:6px">Confirmar nova senha</label>
+        <input type="password" id="fp-confirma" placeholder="••••••••" autocomplete="new-password"
+          style="width:100%;padding:10px 12px;border:1px solid #ccc;border-radius:8px;font-size:14px"
+          onkeydown="if(event.key==='Enter') _confirmarTrocaSenhaObrigatoria()">
+      </div>
+      <p id="fp-erro" style="font-size:.75rem;color:#dc2626;margin:8px 0 0;display:none"></p>
+      <button onclick="_confirmarTrocaSenhaObrigatoria()"
+        style="width:100%;margin-top:18px;padding:11px 0;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">
+        Definir senha e entrar
+      </button>
+    </div>
+  </div>
+</div>
 
 <!-- ── New Process Modal ── -->
 <div class="overlay hidden" id="modal-overlay">
@@ -2540,7 +2581,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.20.4';
+const SGCD_VERSION = '2.23.0';
 // URL absoluta (não relativa) porque API_BASE também monta o texto do QR Code
 // de verificação de assinatura, lido por celular fora do navegador — precisa
 // da origem real, nunca uma porta fixa (era 'http://localhost:3000' hardcoded).
@@ -4527,6 +4568,43 @@ ${_qrFooterReport('Relatório de Auditoria')}
 </body></html>`;
 
   _gerarDocumento(window.open('', '_blank', 'width=1000,height=720'), html, 'Relatório de Auditoria');
+}
+
+async function exportarAuditoriaCSV() {
+  const fTipo = document.getElementById('aud-tipo')?.value || '';
+  const fDe   = document.getElementById('aud-de')?.value;
+  const fAte  = document.getElementById('aud-ate')?.value;
+  const fUser = (document.getElementById('aud-q')?.value || '').toLowerCase();
+
+  let todos = (await listarAuditGlobal()).sort((a, b) => b.at - a.at);
+  if (fDe || fAte) {
+    const tsFrom = fDe ? new Date(fDe + 'T00:00:00').getTime() : null;
+    const tsTo   = fAte ? new Date(fAte + 'T23:59:59').getTime() : null;
+    todos = todos.filter(a => (tsFrom === null || a.at >= tsFrom) && (tsTo === null || a.at <= tsTo));
+  }
+  const lista = todos.filter(e => {
+    if (fTipo && e.evento !== fTipo) return false;
+    if (fUser && !(e.usuario || '').toLowerCase().includes(fUser)) return false;
+    return true;
+  });
+
+  const esc = v => `"${String(v||'').replace(/"/g,'""')}"`;
+  const header = ['Data/Hora','Evento','Processo','Detalhe','Usuário'];
+  const rows = lista.map(e => {
+    const label = _AUDIT_EVENT_LABELS[e.evento] || e.evento;
+    const proc = e.processId ? processes.find(p => p.id === e.processId) : null;
+    const procRef = proc ? (proc.num_dl || proc.num_proc || proc.objeto?.slice(0,30) || '') : (e.processId || '');
+    return [fmt(e.at), label, procRef, e.detalhe||'', e.usuario||''].map(esc).join(',');
+  });
+
+  const csv = '﻿' + [header.map(esc).join(','), ...rows].join('\r\n');
+  const blob = new Blob([csv], { type:'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = `SGCD_auditoria_${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+  toast(`${lista.length} registro(s) exportado(s).`, 'success');
 }
 
 function showDash() {
@@ -8386,6 +8464,37 @@ function exportarCSV() {
   toast(`${lista.length} processo(s) exportado(s).`, 'success');
 }
 
+async function exportarFornecedoresCSV() {
+  const q = (document.getElementById('forn-search')?.value || '').toLowerCase();
+  const todos = await listarFornecedores();
+  const lista = (q
+    ? todos.filter(f => f.razao_social?.toLowerCase().includes(q) || f.cnpj?.includes(q) || f.nome_fantasia?.toLowerCase().includes(q))
+    : todos
+  ).sort((a, b) => (a.razao_social||'').localeCompare(b.razao_social||'', 'pt-BR'));
+
+  const esc = v => `"${String(v||'').replace(/"/g,'""')}"`;
+  const header = ['Razão Social','Nome Fantasia','CNPJ','Porte','Situação','Município/UF','Certidões vencidas','Atualizado em'];
+  const fmtCnpj = d => d ? d.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/,'$1.$2.$3/$4-$5') : '';
+  const rows = lista.map(f => {
+    const vencidas = (f.certidoes||[]).filter(c => certStatus(c) === 'expired').length;
+    const municipioUf = [f.municipio, f.uf].filter(Boolean).join('/');
+    const atualizado = f.updatedAt || f.addedAt;
+    return [
+      f.razao_social||'', f.nome_fantasia||'', fmtCnpj(f.cnpj_digits||f.cnpj), f.porte||'', f.situacao||'',
+      municipioUf, vencidas, atualizado ? new Date(atualizado).toLocaleDateString('pt-BR') : ''
+    ].map(esc).join(',');
+  });
+
+  const csv = '﻿' + [header.map(esc).join(','), ...rows].join('\r\n');
+  const blob = new Blob([csv], { type:'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = `SGCD_fornecedores_${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+  toast(`${lista.length} fornecedor(es) exportado(s).`, 'success');
+}
+
 // AUTORIZAÇÃO DE ABERTURA — Lei 14.133/2021
 // ══════════════════════════════════════════════════════════════
 function gerarDespachoRecusa(stepIdx, pi) {
@@ -10544,9 +10653,13 @@ async function verificarSenha() {
     localStorage.setItem('sgcd-token', d.token);
     localStorage.setItem('sgcd-last-username', username);
     sessionStorage.setItem('sgcd-session-auth', '1');
-    document.getElementById('overlay-pin').classList.add('hidden');
     document.getElementById('pin-input').value = '';
     erroEl.style.display = 'none';
+    if (d.user.mustChangePassword) {
+      document.getElementById('overlay-force-pwd').classList.remove('hidden');
+      return;
+    }
+    document.getElementById('overlay-pin').classList.add('hidden');
     _loginCanvasStop();
     _onLoginSuccess();
   } else {
@@ -10560,6 +10673,25 @@ async function verificarSenha() {
     card.classList.add('pin-shake');
     setTimeout(() => document.getElementById('pin-input').focus(), 50);
   }
+}
+
+async function _confirmarTrocaSenhaObrigatoria() {
+  const nova     = document.getElementById('fp-nova').value;
+  const confirma = document.getElementById('fp-confirma').value;
+  const erroEl   = document.getElementById('fp-erro');
+  const show = msg => { erroEl.textContent = msg; erroEl.style.display = ''; };
+
+  if (!nova || nova.length < 6) { show('A senha deve ter no mínimo 6 caracteres.'); return; }
+  if (nova !== confirma) { show('As senhas não coincidem.'); return; }
+
+  const r = await API.put(`/api/usuarios/${_apiUser.id}`, { password: nova });
+  if (!r?.ok) { show((await API.json(r))?.error || 'Erro ao definir a senha.'); return; }
+
+  _apiUser.mustChangePassword = false;
+  document.getElementById('overlay-force-pwd').classList.add('hidden');
+  document.getElementById('overlay-pin').classList.add('hidden');
+  _loginCanvasStop();
+  _onLoginSuccess();
 }
 
 let _lcRaf = null, _lcNodes = [], _lcMouse = { x: -9999, y: -9999 };

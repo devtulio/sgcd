@@ -5,6 +5,34 @@
 
 ---
 
+## [2.23.0] — 2026-07-09
+
+### Adicionado
+- **Exportar CSV em Fornecedores e Auditoria** — as duas telas ganharam o mesmo botão "Exportar CSV" que já existia em Processos (`exportarFornecedoresCSV()`, `exportarAuditoriaCSV()`), reaproveitando a mesma lógica de escape/BOM e respeitando a busca/filtros já ativos na tela. Validado ao vivo, inclusive com nome de fornecedor contendo aspas e vírgula (escape correto)
+- **`Instalar Assinatura ICP-Brasil.bat`** — script opcional que habilita o pip (via `get-pip.py`, agora incluído no projeto) e instala o `pyhanko` quando o servidor usa o Python embarcável (`Iniciar SGCD.bat`), que não vem com pip nem com `ensurepip`. `Iniciar SGCD.bat` agora também habilita o módulo `site` na extração do Python embarcável (pré-requisito para qualquer pacote instalado nele funcionar depois)
+
+Validado de ponta a ponta numa cópia isolada do Python embarcável (não a instalação real do sistema): extração → habilitação de `site` → bootstrap do pip → `pip install pyhanko` → import real do `pyhanko`, tudo funcionando. Fica pendente apenas a validação no servidor Windows Server real da prefeitura (acesso à máquina não disponível nesta sessão).
+
+---
+
+## [2.22.0] — 2026-07-09
+
+### Adicionado
+- **Suíte de testes E2E** (`tests/e2e/`, Playwright) — sobe o servidor real e dirige um Chromium de verdade pelo fluxo completo: login → troca de senha obrigatória (banco novo a cada run) → criar processo → expandir etapa → gerar documento (Autorização de Abertura) → confirmar conteúdo do popup gerado. Roda contra banco/uploads/backups temporários, nunca o `sgcd.db` real. Instruções no README (`npm run test:e2e`)
+
+### Corrigido
+- **`server.py` não tinha como isolar dados de teste sem rodar a partir de outra pasta** — `DB_PATH`/`UPLOADS_DIR`/`BACKUP_DIR` agora respeitam a variável de ambiente opcional `SGCD_DATA_DIR` (usada pelos testes E2E); sem ela, comportamento idêntico ao de sempre. Porta também configurável via `SGCD_PORT` (default 3000, inalterado)
+
+---
+
+## [2.21.0] — 2026-07-09
+
+### Adicionado
+- **Troca de senha obrigatória no primeiro acesso** — o admin padrão (criado com `admin/admin123`) e qualquer usuário futuro marcado dessa forma agora são obrigados a definir uma nova senha antes de acessar o sistema, em vez de depender só do aviso impresso no terminal. Nova coluna `must_change_password` em `usuarios` (migração automática, instalações existentes não são afetadas — só novos usuários nascem com a flag ligada); nova tela bloqueante no frontend reaproveitando o endpoint de troca de senha já existente (`PUT /api/usuarios/:id`)
+- Cobertura de teste (`tests/test_server.py`): flag nasce ligada no admin padrão, aparece no login, e é limpa automaticamente ao trocar a senha
+
+---
+
 ## [2.20.4] — 2026-07-09
 
 ### Corrigido

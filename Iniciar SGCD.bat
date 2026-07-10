@@ -32,6 +32,14 @@ if not exist "%EMBED_PY%" (
     exit /b 1
 )
 
+rem Habilita o pacote "site" (vem desligado por padrao no Python embarcavel) —
+rem sem isso, nem "pip" nem pacotes instalados nele funcionam depois. So preciso
+rem para quem for rodar "Instalar Assinatura ICP-Brasil.bat" nesta maquina depois;
+rem nao baixa nada da internet, so libera a opcao para o futuro.
+for %%F in ("%EMBED_DIR%\python3*._pth") do (
+    powershell -NoProfile -ExecutionPolicy Bypass -Command "(Get-Content '%%F') -replace '^#import site$','import site' | Set-Content '%%F'"
+)
+
 set "PYEXE=%EMBED_PY%"
 echo  Python embarcado pronto em %EMBED_DIR%
 echo.

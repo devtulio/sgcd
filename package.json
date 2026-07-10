@@ -3,11 +3,13 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "Ferramentas de desenvolvimento do SGCD (lint apenas — não afeta o runtime do sistema, que continua zero-dependência)",
+  "description": "Ferramentas de desenvolvimento do SGCD (lint e testes — não afeta o runtime do sistema, que continua zero-dependência)",
   "scripts": {
-    "lint": "node scripts/lint.mjs"
+    "lint": "node scripts/lint.mjs",
+    "test:e2e": "playwright test"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
     "eslint": "^9.15.0",
     "globals": "^14.0.0"
   }

@@ -25,5 +25,7 @@ _tmp_check.js
 nul
 *.log
 
-# Ferramentas de desenvolvimento (lint) — não fazem parte do runtime
+# Ferramentas de desenvolvimento (lint, testes) — não fazem parte do runtime
 node_modules/
+test-results/
+playwright-report/

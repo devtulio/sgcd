@@ -1,6 +1,6 @@
 # SGCD — Sistema de Gestão de Contratação Direta
 
-![Versão](https://img.shields.io/badge/versão-v2.20.4-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-Python%20%2B%20SQLite-orange) ![Licença](https://img.shields.io/badge/licença-MIT-green) ![Multiusuário](https://img.shields.io/badge/acesso-multiusuário-blueviolet)
+![Versão](https://img.shields.io/badge/versão-v2.23.0-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-Python%20%2B%20SQLite-orange) ![Licença](https://img.shields.io/badge/licença-MIT-green) ![Multiusuário](https://img.shields.io/badge/acesso-multiusuário-blueviolet)
 
 ## Descrição
 
@@ -22,6 +22,7 @@ Funciona em rede local: um único computador executa o servidor e todos os usuá
 - **Controle de limites anuais** Art. 75, I e II com painel de acumulado e alerta ao atingir o teto legal
 - **Cálculo automático de prazos** (Art. 75 §3°) — data mínima de encerramento com alerta visual
 - **Trilha de auditoria global** com timeline agrupada por dia, filtros por tipo de evento, período e usuário
+- **Exportação para CSV** de processos, fornecedores e trilha de auditoria — respeita os filtros/busca ativos na tela
 - **Agenda de Vencimentos** — prazos de propostas, contratos e processos parados em um único painel
 - **Vinculação entre processos** — vínculos relacionais (renovação, aditivo, continuidade) bidirecionais e clicáveis
 - **Visualização Kanban** por fase (Instrução / Publicado / Análise / Adjudicação / Contratação / Concluído)
@@ -49,6 +50,8 @@ Funciona em rede local: um único computador executa o servidor e todos os usuá
 
 > **Servidor sem Python instalado (ex.: Windows Server bloqueado por política de TI):**
 > o `Iniciar SGCD.bat` detecta automaticamente a ausência do Python e extrai uma versão portátil (embarcável, sem instalador) incluída no próprio projeto (`python-3.12.9-embed-amd64.zip`) para `C:\Python312-embed\` — não exige instalação nem privilégio de administrador. Isso resolve o caso comum de instaladores `.exe` bloqueados por AppLocker/antivírus corporativo em servidores.
+>
+> Essa versão portátil não vem com `pip` pronto (limitação do próprio pacote embarcável do Python). Se esse servidor precisar do módulo de assinatura ICP-Brasil, rode **`Instalar Assinatura ICP-Brasil.bat`** depois — ele habilita o pip e instala o `pyhanko` (requer acesso à internet só nesse momento, para baixar do PyPI). Validado de ponta a ponta (extração → habilitação do pip → instalação do pyhanko) numa cópia isolada do Python embarcável.
 
 ---
 
@@ -97,9 +100,12 @@ SGCD/
 ├── SGCD.html                # Frontend — aplicação web completa
 ├── server.py                # Servidor Python (API REST + SQLite + uploads)
 ├── tests/                   # Suíte de testes automatizados do backend
-│   └── test_server.py
+│   ├── test_server.py
+│   └── e2e/                 # Testes E2E (Playwright) — navegador real de ponta a ponta
 ├── Iniciar SGCD.bat         # Inicializa o servidor
 ├── python-3.12.9-embed-amd64.zip  # Python portátil (fallback se não houver Python instalado)
+├── Instalar Assinatura ICP-Brasil.bat  # Opcional — instala pip + pyhanko no Python embarcável
+├── get-pip.py               # Usado só pelo script acima (Python embarcável não vem com pip)
 ├── Criar Atalho SGCD.bat    # Cria atalho na área de trabalho com ícone
 ├── Criar Atalho SGCD.ps1    # Script PowerShell de criação do atalho
 ├── Diagnostico SGCD.bat     # Roda o diagnóstico de rede (clique duplo)
@@ -191,6 +197,16 @@ Há também uma suíte de testes automatizados do backend (`server.py`), usando 
 ```bash
 python -m unittest discover -s tests -v
 ```
+
+Há também uma suíte de testes E2E (`tests/e2e/`), usando Playwright — sobe o servidor real e dirige um Chromium de verdade pelo fluxo completo (login com troca de senha obrigatória, criar processo, gerar documento):
+
+```bash
+npm install
+npx playwright install chromium   # uma vez, baixa o navegador de teste
+npm run test:e2e
+```
+
+Roda contra um banco/uploads/backups temporários (nunca o `sgcd.db` real), criados e descartados automaticamente a cada execução.
 
 ---
 

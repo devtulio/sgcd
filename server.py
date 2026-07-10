@@ -1,4 +1,4 @@
-# SGCD v2.20.4 — Servidor local: SQLite, autenticação, REST API, proxy CNPJ, e-mail SMTP, backup automático
+# SGCD v2.23.0 — Servidor local: SQLite, autenticação, REST API, proxy CNPJ, e-mail SMTP, backup automático
 import http.server
 import socketserver
 import os
@@ -32,17 +32,22 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from urllib.parse import urlparse, parse_qs
 
-PORT          = 3000
+PORT          = int(os.environ.get('SGCD_PORT', 3000))
 _BASE         = os.path.dirname(os.path.abspath(__file__))
-DB_PATH       = os.path.join(_BASE, 'sgcd.db')
-UPLOADS_DIR   = os.path.join(_BASE, 'uploads')
-BACKUP_DIR    = os.path.join(_BASE, 'backups')
-LOG_PATH      = os.path.join(_BASE, 'sgcd_errors.log')
+# SGCD_DATA_DIR: usado pelos testes E2E para isolar banco/uploads/backups do
+# sgcd.db real sem precisar rodar o servidor a partir de outra pasta (os
+# arquivos estáticos como SGCD.html continuam servidos a partir de _BASE).
+_DATA_DIR     = os.environ.get('SGCD_DATA_DIR', _BASE)
+DB_PATH       = os.path.join(_DATA_DIR, 'sgcd.db')
+UPLOADS_DIR   = os.path.join(_DATA_DIR, 'uploads')
+BACKUP_DIR    = os.path.join(_DATA_DIR, 'backups')
+LOG_PATH      = os.path.join(_DATA_DIR, 'sgcd_errors.log')
 BACKUP_KEEP   = 7        # número de backups automáticos mantidos
 SESSION_TTL   = 15   # 15s — renovado pelo ping a cada 5s; expira rápido se browser fechar
 MAX_UPLOAD    = 50 * 1024 * 1024   # 50 MB — limite de tamanho por upload
 ALLOWED_EXTS  = {'.pdf','.docx','.doc','.xlsx','.xls','.odt','.ods','.png','.jpg','.jpeg','.gif','.webp','.txt','.csv','.zip'}
 
+os.makedirs(_DATA_DIR, exist_ok=True)
 logging.basicConfig(
     filename=LOG_PATH, level=logging.ERROR,
     format='%(asctime)s %(levelname)s %(message)s',
@@ -201,16 +206,20 @@ def init_db():
                 conn.execute(f'ALTER TABLE usuarios ADD COLUMN {col} TEXT')
             except sqlite3.OperationalError:
                 pass
+        try:
+            conn.execute('ALTER TABLE usuarios ADD COLUMN must_change_password INTEGER DEFAULT 0')
+        except sqlite3.OperationalError:
+            pass
         # Sessões são descartadas a cada início do servidor (logout automático ao fechar janela)
         conn.execute('DELETE FROM sessions')
         # Cria admin padrão se não houver usuários
         if conn.execute('SELECT COUNT(*) FROM usuarios').fetchone()[0] == 0:
             conn.execute(
-                'INSERT INTO usuarios (username,nome,senha_hash,admin) VALUES (?,?,?,1)',
+                'INSERT INTO usuarios (username,nome,senha_hash,admin,must_change_password) VALUES (?,?,?,1,1)',
                 ('admin', 'Administrador', _hash_password('admin123'))
             )
             conn.commit()
-            print('Usuário padrão criado: admin / admin123 — troque a senha nas Configurações.')
+            print('Usuário padrão criado: admin / admin123 — troque a senha no primeiro acesso.')
 
 # ── Segurança ─────────────────────────────────────────────────────────────────
 
@@ -880,7 +889,8 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
             'user': {
                 'id': row['id'], 'username': row['username'], 'nome': row['nome'],
                 'cpf': row['cpf'], 'email': row['email'],
-                'cargo': row['cargo'], 'matricula': row['matricula'], 'admin': bool(row['admin'])
+                'cargo': row['cargo'], 'matricula': row['matricula'], 'admin': bool(row['admin']),
+                'mustChangePassword': bool(row['must_change_password'])
             }
         })
 
@@ -1342,6 +1352,7 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
                     if not row or not _verify_password(data['old_password'], row['senha_hash']):
                         self._json(403, {'error': 'Senha atual incorreta'}); return
                 fields.append('senha_hash=?'); params.append(_hash_password(data['password']))
+                fields.append('must_change_password=0')
             if fields:
                 conn.execute(f'UPDATE usuarios SET {",".join(fields)} WHERE id=?', params + [uid])
         self._json(200, {'ok': True})
