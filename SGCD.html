@@ -2578,7 +2578,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.26.0';
+const SGCD_VERSION = '2.26.1';
 // URL absoluta (não relativa) porque API_BASE também monta o texto do QR Code
 // de verificação de assinatura, lido por celular fora do navegador — precisa
 // da origem real, nunca uma porta fixa (era 'http://localhost:3000' hardcoded).
@@ -13410,9 +13410,7 @@ function carregarDashboard() {
 
 _checkSenhaAcesso().catch(err => { console.error('Erro ao inicializar SGCD:', err); });
 
-// "Encerrar sistema" só desliga o servidor de fato em modo Pessoal — em modo Servidor
-// Contínuo o botão deslogaria sem avisar que o sistema continua no ar para os demais.
-// Ping a cada 5s para renovar a sessão (SESSION_TTL=15s no servidor) — o
+// Ping a cada 5s para renovar a sessão (SESSION_TTL=60s no servidor) — o
 // servidor em si nunca encerra sozinho (só via Ctrl+C no terminal), isso só
 // evita que a SESSÃO deste usuário expire enquanto a aba estiver aberta.
 setInterval(() => {

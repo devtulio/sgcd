@@ -5,6 +5,15 @@
 
 ---
 
+## [2.26.1] — 2026-07-10
+
+### Corrigido
+- **Sessão expirava sozinha no meio do uso normal, voltando pra tela de login** — achado real reportado logo após a v2.26.0: abrir um processo e clicar na primeira etapa já bastava para cair de volta no login pedindo senha. Causa raiz: `SESSION_TTL=15s` era propositalmente curto para o antigo modo "Pessoal" detectar rápido que o navegador tinha fechado (mecanismo removido na v2.26.0) — sem esse motivo, 15s virou uma margem perigosamente curta para o uso normal: múltiplas chamadas de API concorrendo por conexão HTTP logo no login/abertura de processo, ou a aba principal perdendo foco ao abrir um popup de documento, já eram suficientes para a primeira renovação do ping (a cada 5s) atrasar além dos 15s e expirar a sessão sem ninguém ter saído de propósito. `SESSION_TTL` aumentado para **60s** (12× o intervalo do ping, folga generosa)
+
+Validado ao vivo reproduzindo o cenário exato relatado: login → criar processo → esperar 20s (tempo que já derrubaria a sessão antiga) → abrir o processo → clicar na etapa 1 (DFD) — sessão sobrevive, sem redirecionar para o login. Teste novo em `tests/test_server.py` confirmado que falha sob o TTL antigo e passa sob o novo.
+
+---
+
 ## [2.26.0] — 2026-07-10
 
 ### Corrigido

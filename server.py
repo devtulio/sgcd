@@ -1,4 +1,4 @@
-# SGCD v2.26.0 — Servidor local: SQLite, autenticação, REST API, proxy CNPJ, e-mail SMTP, backup automático
+# SGCD v2.26.1 — Servidor local: SQLite, autenticação, REST API, proxy CNPJ, e-mail SMTP, backup automático
 import http.server
 import socketserver
 import os
@@ -43,7 +43,7 @@ UPLOADS_DIR   = os.path.join(_DATA_DIR, 'uploads')
 BACKUP_DIR    = os.path.join(_DATA_DIR, 'backups')
 LOG_PATH      = os.path.join(_DATA_DIR, 'sgcd_errors.log')
 BACKUP_KEEP   = 7        # número de backups automáticos mantidos
-SESSION_TTL   = 15   # 15s — renovado pelo ping a cada 5s; expira rápido se browser fechar
+SESSION_TTL   = 60   # renovado pelo ping a cada 5s (ver comentário em _watchdog mais abaixo)
 MAX_UPLOAD    = 50 * 1024 * 1024   # 50 MB — limite de tamanho por upload
 ALLOWED_EXTS  = {'.pdf','.docx','.doc','.xlsx','.xls','.odt','.ods','.png','.jpg','.jpeg','.gif','.webp','.txt','.csv','.zip'}
 
@@ -298,11 +298,7 @@ def _check_shutdown():
 
     ponytail: existia um modo "Pessoal" que fazia os._exit(0) nesta função
     quando a última sessão caía — a ideia era encerrar sozinho ao fechar a
-    janela do navegador. Na prática, SESSION_TTL=15s é curto demais: uma aba
-    em segundo plano (ex. ao gerar um documento, que abre popup e tira o foco
-    da aba principal) sofre throttling do navegador no setInterval do ping,
-    a sessão expira sem ninguém ter saído de propósito, e o servidor se
-    autodestruía no meio do uso. Removido — se o encerramento automático por
+    janela do navegador. Removido — se o encerramento automático por
     inatividade real for necessário de novo, a forma correta é um timeout bem
     mais longo (minutos, não segundos), não a contagem de sessões do ping."""
     global _backup_pos_sess
@@ -1932,9 +1928,13 @@ def _purge_old_trash():
         conn.execute("DELETE FROM fornecedores WHERE deleted_at IS NOT NULL AND deleted_at < ?", (limite_iso,))
 
 def _watchdog():
-    # Limpa sessões expiradas a cada 5s e verifica encerramento.
-    # Com SESSION_TTL=15s e ping a cada 5s, um browser fechado sem logout
-    # causa encerramento do servidor em no máximo ~20 segundos.
+    # Limpa sessões expiradas a cada 5s e dispara o backup pós-sessão
+    # (_check_shutdown — não encerra mais o servidor, só faz backup).
+    # SESSION_TTL=60s dá folga de sobra sobre o ping a cada 5s: um TTL curto
+    # (era 15s) expirava sessões à toa quando o ping atrasava por qualquer
+    # motivo comum — carregamento inicial da página disputando conexão HTTP
+    # com várias outras chamadas simultâneas (settings, dashboard, processo),
+    # ou a aba principal perdendo foco ao abrir um popup de documento.
     while True:
         time.sleep(5)
         if _watchdog_paused:

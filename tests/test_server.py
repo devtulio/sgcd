@@ -377,9 +377,7 @@ class TestNuncaEncerraSozinho(SGCDTestCase):
 
     def test_ultima_sessao_expirar_nao_derruba_o_processo(self):
         # Regressão: existia um modo "Pessoal" em que _check_shutdown() chamava
-        # os._exit(0) quando a última sessão ativa expirava — SESSION_TTL=15s é
-        # curto o bastante para isso disparar sozinho (aba em 2º plano ao abrir
-        # um popup de documento sofre throttling do ping). os._exit(0) mata o
+        # os._exit(0) quando a última sessão ativa expirava. os._exit(0) mata o
         # processo Python na hora, sem exceção capturável — se ainda existisse,
         # o processo deste teste morreria aqui e nada abaixo executaria.
         token = self.login()
@@ -393,6 +391,25 @@ class TestNuncaEncerraSozinho(SGCDTestCase):
         # ainda responde normalmente (não travou nem morreu).
         status, _ = self.request('GET', '/health')
         self.assertEqual(status, 200)
+
+    def test_sessao_sobrevive_atraso_maior_que_o_ttl_antigo(self):
+        # Regressão: SESSION_TTL era 15s (renovado pelo ping a cada 5s) — margem
+        # curta o bastante para uma sessão expirar sozinha no uso normal (várias
+        # chamadas de API concorrentes disputando conexão HTTP logo no login,
+        # ou a aba principal perdendo foco ao abrir um popup de documento),
+        # derrubando o usuário de volta pro login no meio do trabalho sem
+        # ninguém ter saído de propósito.
+        #
+        # Simula 20s "consumidos" do TTL sem nenhum ping renovar a sessão —
+        # sob o TTL antigo (15s) isso já teria expirado; sob o atual (60s)
+        # ainda sobra bastante margem.
+        self.assertGreater(server.SESSION_TTL, 20,
+                            'SESSION_TTL muito curto — sessão expira sozinha em uso normal sem ping')
+        token = self.login()
+        with server.get_db() as conn:
+            conn.execute('UPDATE sessions SET expires=expires-20 WHERE token=?', (token,))
+        status, _ = self.request('GET', '/api/processes', token=token)
+        self.assertEqual(status, 200, 'sessão expirou com atraso que o TTL antigo (15s) não sobreviveria')
 
 
 if __name__ == '__main__':
