@@ -1,4 +1,4 @@
-# SGCD v2.25.0 — Servidor local: SQLite, autenticação, REST API, proxy CNPJ, e-mail SMTP, backup automático
+# SGCD v2.25.1 — Servidor local: SQLite, autenticação, REST API, proxy CNPJ, e-mail SMTP, backup automático
 import http.server
 import socketserver
 import os
@@ -1894,9 +1894,11 @@ def _montar_pdf_consolidado(slots):
     for i, pg in enumerate(paginas):
         mb = pg.get('/MediaBox')
         largura = float(mb[2]) - float(mb[0]) if mb else 612.0
+        altura  = float(mb[3]) - float(mb[1]) if mb else 792.0
         style = TextStampStyle(stamp_text='Página %(page)d de %(total)d', border_width=0)
         stamp = TextStamp(writer, style, text_params={'page': i + 1, 'total': total})
-        stamp.apply(i, largura - 140, 20)
+        # Canto superior direito — o rodapé já é usado pelo "Folha N" de cada documento
+        stamp.apply(i, largura - 140, altura - 40)
 
     out = io.BytesIO()
     writer.write(out)

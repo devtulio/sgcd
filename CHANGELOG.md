@@ -5,6 +5,12 @@
 
 ---
 
+## [2.25.1] — 2026-07-10
+
+### Corrigido
+- **Popup bloqueado ao gerar o PDF Consolidado** — `window.open()` só era chamado depois de vários `await` (montar as peças, gerar no servidor), ponto em que o navegador não reconhece mais como ação direta do clique e bloqueia o popup silenciosamente (a geração terminava, mas nada abria). Corrigido abrindo a janela antes de qualquer espera, com uma tela de "Gerando..." até o PDF ficar pronto.
+- **Numeração de página no rodapé conflitava com o "Folha N" de cada documento** — a marca "Página X de Y" do dossiê consolidado foi movida do rodapé para o canto superior direito da página.
+
 ## [2.25.0] — 2026-07-10
 
 ### Adicionado
