@@ -5,6 +5,18 @@
 
 ---
 
+## [2.27.0] — 2026-07-10
+
+### Adicionado — Acessibilidade (WCAG 2.1 AA)
+Correções de uma auditoria de acessibilidade dedicada (leitura de código + cálculo de contraste, 8 frentes: contraste de cor, texto alternativo, associação de rótulos, teclado, foco, alvo de toque, modais, landmarks). Mesma auditoria já aplicada ao SGDP e ao SGCA.
+
+- **Navegação por teclado** — cards de estatística do dashboard, cards de processo, itens de fornecedor/notificação/busca global, linhas de agenda, itens de kanban e outros elementos que usavam `<div onclick>` agora têm `role="button"` + `tabindex="0"`, ativados por Enter/Espaço via um único listener delegado
+- **Rótulos de formulário associados** — `<label for>` adicionado em mais de 100 campos que dependiam só de proximidade visual: modal de Novo Processo, Fornecedor, Usuário, Certidão, e-mail (Fornecedor/Interno), vínculo de processo, campos de etapa do checklist, propostas, cotações, dotação orçamentária, e todas as abas de Configurações
+- **Contraste de texto corrigido** — `--gray-400` (usado como cor de texto em ~50 pontos) tinha 2,54:1 de contraste sobre branco; unificado com `--gray-500` (4,83:1) no modo claro. No modo escuro, `--gray-400`, `--gray-600` e `--gray-800` não tinham sobrescrita própria e ficavam praticamente ilegíveis (`--gray-600` chegava a ~1,9:1); corrigido reaproveitando os tons já usados por `--gray-500`/`--gray-900`. Texto secundário da barra lateral e ícones em `--gray-300` também ajustados
+- **Indicador de foco visível** — adicionado `box-shadow` de foco nos campos que só trocavam a cor da borda ao focar (etapas do checklist, campos de informação, busca de fornecedor, filtros de auditoria, campo de confirmação de exclusão, busca global, campos em modo escuro)
+- **Modais com semântica de diálogo** — `role="dialog"` + `aria-modal="true"` + `aria-labelledby` nos 14 modais do sistema; foco automático no primeiro campo ao abrir; Tab preso dentro do modal enquanto aberto; foco devolvido a quem acionou o modal ao fechar — via `MutationObserver` genérico, sem alterar as funções de abrir/fechar de cada modal
+- **Alt text e área de toque** — imagem de prévia do brasão nas Configurações com texto alternativo; botões de fechar (✕), editar efeito de fundo e mostrar/ocultar senha com área clicável ampliada sem alterar o tamanho visual do ícone; região de conteúdo principal agora é um landmark `<main>`
+
 ## [2.26.1] — 2026-07-10
 
 ### Corrigido

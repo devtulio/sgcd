@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Manual Operacional — SGCD v2.26.1</title>
+<title>Manual Operacional — SGCD v2.27.0</title>
 <style>
   /* Reset e base */
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -89,7 +89,7 @@
       margin: 20mm 20mm 25mm;
       size: A4;
       @top-center {
-        content: "SGCD v2.26.1 — Manual Operacional";
+        content: "SGCD v2.27.0 — Manual Operacional";
         font-family: 'Times New Roman', serif;
         font-size: 9pt;
         color: #666;
@@ -118,7 +118,7 @@
     <div class="cover-title">Manual Operacional</div>
     <div class="cover-subtitle">SGCD — Sistema de Gestão de Contratação Direta</div>
     <div class="cover-system">Gestão de Processos de Dispensa de Licitação</div>
-    <div class="cover-version">Versão v2.26.1</div>
+    <div class="cover-version">Versão v2.27.0</div>
     <br>
     <div style="font-size:11pt; color:#555; line-height:1.8;">
       Aplicação web multiusuário para agentes de contratação pública<br>
@@ -1683,6 +1683,17 @@
 
 <!-- ─────────────────────────────────────────────── SEÇÃO 30 -->
 <h2 id="sec30">30. Histórico de Versões</h2>
+
+<h3>v2.27.0 — Julho/2026</h3>
+<ul>
+  <li><strong>Acessibilidade — WCAG 2.1 AA</strong> — auditoria dedicada (leitura de código + cálculo de contraste, 8 frentes: contraste de cor, texto alternativo, associação de rótulos, teclado, foco, alvo de toque, modais, landmarks)</li>
+  <li><strong>Navegação por teclado</strong> — cards de estatística do dashboard, cards de processo, itens de fornecedor/notificação/busca global, linhas de agenda, itens de kanban e outros elementos que usavam <code>&lt;div onclick&gt;</code> agora têm <code>role="button"</code> + <code>tabindex="0"</code>, ativados por Enter/Espaço via um único listener delegado</li>
+  <li><strong>Rótulos de formulário associados</strong> — <code>&lt;label for&gt;</code> adicionado em mais de 100 campos que dependiam só de proximidade visual: modal de Novo Processo, Fornecedor, Usuário, Certidão, e-mail (Fornecedor/Interno), vínculo de processo, campos de etapa do checklist, propostas, cotações, dotação orçamentária, e todas as abas de Configurações</li>
+  <li><strong>Contraste de texto corrigido</strong> — <code>--gray-400</code> (usado como cor de texto em ~50 pontos) tinha 2,54:1 de contraste sobre branco; unificado com <code>--gray-500</code> (4,83:1) no modo claro. No modo escuro, <code>--gray-400</code>, <code>--gray-600</code> e <code>--gray-800</code> não tinham sobrescrita própria e ficavam praticamente ilegíveis (<code>--gray-600</code> chegava a ~1,9:1); corrigido reaproveitando os tons já usados por <code>--gray-500</code>/<code>--gray-900</code>. Texto secundário da barra lateral e ícones em <code>--gray-300</code> também ajustados</li>
+  <li><strong>Indicador de foco visível</strong> — adicionado <code>box-shadow</code> de foco nos campos que só trocavam a cor da borda ao focar (etapas do checklist, campos de informação, busca de fornecedor, filtros de auditoria, campo de confirmação de exclusão, busca global, campos em modo escuro)</li>
+  <li><strong>Modais com semântica de diálogo</strong> — <code>role="dialog"</code> + <code>aria-modal="true"</code> + <code>aria-labelledby</code> nos 14 modais do sistema; foco automático no primeiro campo ao abrir; Tab preso dentro do modal enquanto aberto; foco devolvido a quem acionou o modal ao fechar — via <code>MutationObserver</code> genérico, sem alterar as funções de abrir/fechar de cada modal</li>
+  <li><strong>Alt text e área de toque</strong> — imagem de prévia do brasão nas Configurações com texto alternativo; botões de fechar (✕), editar efeito de fundo e mostrar/ocultar senha com área clicável ampliada sem alterar o tamanho visual do ícone; região de conteúdo principal agora é um landmark <code>&lt;main&gt;</code></li>
+</ul>
 
 <h3>v2.26.1 — Julho/2026</h3>
 <ul>

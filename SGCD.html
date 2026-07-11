@@ -25,7 +25,7 @@
     --gray-100:     #f3f4f6;
     --gray-200:     #e5e7eb;
     --gray-300:     #d1d5db;
-    --gray-400:     #9ca3af;
+    --gray-400:     #6b7280; /* igual ao --gray-500: #9ca3af sobre branco só tem 2.54:1 de contraste (falha WCAG AA) */
     --gray-500:     #6b7280;
     --gray-600:     #4b5563;
     --gray-700:     #374151;
@@ -90,7 +90,7 @@
   .sidebar-logo .s-muni  { font-size: 11px; opacity: .85; margin-top: 6px; line-height: 1.3; }
   .sidebar-nav { flex: 1; padding: 8px 0; }
   .nav-section { font-size: 10px; font-weight: 700; text-transform: uppercase;
-    letter-spacing: .8px; opacity: .5; padding: 14px 18px 6px; }
+    letter-spacing: .8px; opacity: .65; padding: 14px 18px 6px; }
   .nav-item {
     display: flex; align-items: center; gap: 10px; padding: 9px 18px;
     font-size: 13px; font-weight: 500; color: rgba(255,255,255,.8);
@@ -143,7 +143,7 @@
   }
   .sidebar-date {
     padding: 8px 18px 10px;
-    font-size: .7rem; color: rgba(255,255,255,.5);
+    font-size: .7rem; color: rgba(255,255,255,.65);
     border-bottom: 1px solid rgba(255,255,255,.08);
     line-height: 1.4;
   }
@@ -232,6 +232,7 @@
   .stat:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
   .stat[data-filter] { cursor: pointer; }
   .stat[data-filter].stat-active { outline: 2px solid var(--brand); outline-offset: 2px; }
+  [role="button"]:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
   .stat.done    { border-left-color: var(--success); }
   .stat.prog    { border-left-color: var(--warning); }
   .stat.blocked { border-left-color: var(--danger); }
@@ -270,6 +271,7 @@
   }
   .filters input { flex: 1; min-width: 180px; }
   .filters input:focus, .filters select:focus { border-color: var(--brand); outline: 2px solid rgba(233,84,32,.2); }
+  #aud-q:focus, #aud-tipo:focus, #aud-de:focus, #aud-ate:focus { border-color: var(--brand); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 25%, transparent); }
 
   /* process cards */
   .process-list { display: flex; flex-direction: column; gap: 10px; }
@@ -302,7 +304,7 @@
   .process-card .meta span { display: flex; align-items: center; gap: 3px; }
 
   /* ── Drag-and-drop step reorder ── */
-  .step-drag-handle { cursor: grab; color: var(--gray-300); padding: 0 4px 0 0; display: flex; align-items: center; flex-shrink: 0; }
+  .step-drag-handle { cursor: grab; color: var(--gray-500); padding: 0 4px 0 0; display: flex; align-items: center; flex-shrink: 0; }
   .step-drag-handle:active { cursor: grabbing; }
   .step-card.drag-over { border-color: var(--brand) !important; background: var(--brand-light) !important; }
 
@@ -311,6 +313,7 @@
   .gsearch-box { background: #fff; border-radius: 10px; width: min(640px,90vw); max-height: 72vh; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 8px 32px rgba(0,0,0,.22); }
   body.dark .gsearch-box { background: #2a2a2a; }
   .gsearch-input-wrap { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--gray-100); }
+  .gsearch-input-wrap:focus-within { box-shadow: inset 0 -2px 0 var(--brand); }
   .gsearch-input-wrap input { flex: 1; border: none; outline: none; font-size: .95rem; background: transparent; color: var(--gray-900); }
   .gsearch-results { overflow-y: auto; max-height: calc(72vh - 56px); }
   .gsearch-item { padding: 10px 16px; cursor: pointer; border-bottom: 1px solid var(--gray-100); }
@@ -442,7 +445,7 @@
     padding: 7px 10px; font-size: .85rem; font-family: inherit; color: var(--gray-900);
     outline: none; resize: vertical;
   }
-  .step-body textarea:focus, .step-body input:focus { border-color: var(--brand); }
+  .step-body textarea:focus, .step-body input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 25%, transparent); }
   .step-body textarea { min-height: 70px; }
   .kanban-board { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 16px; align-items: flex-start; }
   .kanban-col { min-width: 260px; max-width: 300px; flex-shrink: 0; background: var(--gray-50); border-radius: 10px; padding: 10px; }
@@ -490,7 +493,7 @@
     padding: 7px 10px; font-size: .85rem; font-family: inherit; color: var(--gray-900);
     outline: none;
   }
-  .info-field input:focus, .info-field select:focus, .info-field textarea:focus { border-color: var(--brand); }
+  .info-field input:focus, .info-field select:focus, .info-field textarea:focus { border-color: var(--brand); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 25%, transparent); }
   .info-field textarea { min-height: 60px; resize: vertical; }
 
   /* timeline */
@@ -572,7 +575,7 @@
   ._etb:hover { background:var(--gray-200); }
   ._etb-sep { display:inline-block;width:1px;background:var(--gray-300);margin:2px 3px;align-self:stretch; }
   ._etb-sel { background:var(--gray-50);border:1px solid var(--gray-200);border-radius:4px;padding:3px 4px;font-size:.78rem;cursor:pointer;color:var(--gray-700);height:auto;line-height:1.4; }
-  #email-body-forn:focus { border-color:var(--brand); box-shadow:0 0 0 2px rgba(233,84,32,.15); }
+  #email-body-forn:focus, #email-body-int:focus { border-color:var(--brand); box-shadow:0 0 0 2px rgba(233,84,32,.15); }
 
   .modal-footer {
     padding: 14px 24px; border-top: 1px solid var(--gray-200);
@@ -599,7 +602,9 @@
   .btn-ghost { background: transparent; color: var(--gray-500); padding: 6px 10px; }
   .btn-ghost:hover { background: var(--gray-100); color: var(--gray-900); }
   .btn-sm { padding: 5px 12px; font-size: .78rem; }
-  .btn-icon { padding: 6px; border-radius: 6px; }
+  .btn-icon { padding: 6px; border-radius: 6px; position: relative; }
+  .btn-icon::after { content: ''; position: absolute; inset: -6px; }
+  .icon-touch-target::after { content: ''; position: absolute; inset: -6px; }
   .btn[disabled] { opacity: .45; cursor: not-allowed; }
 
   /* file upload zone */
@@ -649,7 +654,7 @@
   .proposta-card .del-btn {
     position: absolute; top: 8px; right: 8px;
     background: none; border: none; cursor: pointer;
-    color: var(--gray-300); font-size: 1rem; line-height: 1; padding: 2px 6px;
+    color: var(--gray-500); font-size: 1rem; line-height: 1; padding: 2px 6px;
     border-radius: 4px;
   }
   .proposta-card .del-btn:hover { color: var(--danger); background: var(--danger-light); }
@@ -722,8 +727,11 @@
     --gray-100:     #242424;
     --gray-200:     #323232;
     --gray-300:     #555550;
+    --gray-400:     #9ca3af; /* valor claro original do root — sobre fundo escuro já passa 5.65:1 */
     --gray-500:     #9a9691;
+    --gray-600:     #9a9691; /* original #4b5563 é escuro demais sobre fundo escuro (~1.9:1); reaproveita o tom já usado no --gray-500 */
     --gray-700:     #c8c3bc;
+    --gray-800:     #f0ece8; /* original #1f2937 é quase invisível sobre fundo escuro; reaproveita o tom já usado no --gray-900 */
     --gray-900:     #f0ece8;
     --shadow:       0 1px 4px rgba(0,0,0,.5), 0 1px 2px rgba(0,0,0,.3);
     --shadow-md:    0 4px 12px rgba(0,0,0,.6), 0 2px 4px rgba(0,0,0,.3);
@@ -748,6 +756,7 @@
   }
   body.dark input:focus, body.dark textarea:focus, body.dark select:focus {
     border-color: var(--brand); background: #3a3a3a;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 35%, transparent);
   }
   body.dark .filters input, body.dark .filters select { background: #2a2a2a; }
   body.dark .step-body { border-top-color: #383838; }
@@ -837,7 +846,8 @@
   .forn-lookup { margin-top: 12px; margin-bottom: 14px; padding: 12px; background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: var(--radius); }
   .forn-input-row { display: flex; gap: 8px; align-items: center; }
   .forn-input-row input { flex: 1; border: 1px solid var(--gray-200); border-radius: 6px; padding: 7px 10px; font-size: .85rem; font-family: inherit; color: var(--gray-900); outline: none; }
-  .forn-input-row input:focus { border-color: var(--brand); }
+  .forn-input-row input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 25%, transparent); }
+  .wipe-confirm-inp:focus { box-shadow: 0 0 0 3px rgba(220,38,38,.3); }
   .forn-card { margin-top: 10px; background: #fff; border: 1px solid var(--gray-200); border-radius: var(--radius); overflow: hidden; }
   .forn-card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--gray-100); }
   .forn-razao { font-size: .85rem; font-weight: 700; color: var(--gray-900); }
@@ -1047,7 +1057,7 @@
       ✅ Use sempre o arquivo <strong>Iniciar SGCD.bat</strong><br>
       <span style="color:#888;font-size:.78rem">localizado na mesma pasta deste arquivo</span>
     </div>
-    <p style="font-size:.75rem;color:#aaa">Esta tela impede a criação acidental de dados duplicados.</p>
+    <p style="font-size:.75rem;color:#6b7280">Esta tela impede a criação acidental de dados duplicados.</p>
   </div>
 </div>
 
@@ -1122,7 +1132,7 @@
   </div>
 </aside>
 
-<div id="app">
+<main id="app">
   <!-- ── Dashboard ── -->
   <div id="view-dash" class="view active">
 
@@ -1181,7 +1191,7 @@
 
     <div class="stats">
       <!-- Total -->
-      <div class="stat brand" data-filter="" onclick="filtrarPorStat(this,'')" title="Mostrar todos os processos">
+      <div class="stat brand" data-filter="" onclick="filtrarPorStat(this,'')" title="Mostrar todos os processos" role="button" tabindex="0">
         <div class="stat-top">
           <div class="stat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></div>
           <span class="stat-badge" id="st-total-badge">—</span>
@@ -1191,7 +1201,7 @@
         <div class="stat-sub" id="st-total-sub">—</div>
       </div>
       <!-- Em andamento -->
-      <div class="stat prog" data-filter="progress" onclick="filtrarPorStat(this,'progress')" title="Filtrar: Em andamento">
+      <div class="stat prog" data-filter="progress" onclick="filtrarPorStat(this,'progress')" title="Filtrar: Em andamento" role="button" tabindex="0">
         <div class="stat-top">
           <div class="stat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
           <span class="stat-badge" id="st-prog-badge">—</span>
@@ -1201,7 +1211,7 @@
         <div class="stat-sub" id="st-prog-sub">—</div>
       </div>
       <!-- Concluídos -->
-      <div class="stat done" data-filter="done" onclick="filtrarPorStat(this,'done')" title="Filtrar: Concluídos">
+      <div class="stat done" data-filter="done" onclick="filtrarPorStat(this,'done')" title="Filtrar: Concluídos" role="button" tabindex="0">
         <div class="stat-top">
           <div class="stat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
           <span class="stat-badge" id="st-done-badge">—</span>
@@ -1211,7 +1221,7 @@
         <div class="stat-sub" id="st-done-sub">—</div>
       </div>
       <!-- Não iniciados -->
-      <div class="stat pend" data-filter="todo" onclick="filtrarPorStat(this,'todo')" title="Filtrar: Não iniciados">
+      <div class="stat pend" data-filter="todo" onclick="filtrarPorStat(this,'todo')" title="Filtrar: Não iniciados" role="button" tabindex="0">
         <div class="stat-top">
           <div class="stat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="10" y1="15" x2="10" y2="9"/><line x1="14" y1="15" x2="14" y2="9"/></svg></div>
           <span class="stat-badge" id="st-pend-badge">—</span>
@@ -1221,7 +1231,7 @@
         <div class="stat-sub" id="st-pend-sub">—</div>
       </div>
       <!-- Bloqueados -->
-      <div class="stat blocked" data-filter="blocked" onclick="filtrarPorStat(this,'blocked')" title="Filtrar: Bloqueados">
+      <div class="stat blocked" data-filter="blocked" onclick="filtrarPorStat(this,'blocked')" title="Filtrar: Bloqueados" role="button" tabindex="0">
         <div class="stat-top">
           <div class="stat-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
           <span class="stat-badge" id="st-block-badge">—</span>
@@ -1338,10 +1348,10 @@
   </div>
 
   <!-- ── Fornecedor Pick (propostas) ── -->
-  <div class="overlay hidden" id="forn-pick-overlay">
+  <div class="overlay hidden" id="forn-pick-overlay" role="dialog" aria-modal="true" aria-labelledby="forn-pick-titulo">
     <div class="modal" style="max-width:440px">
       <div class="modal-header">
-        <h2>Selecionar Fornecedor</h2>
+        <h2 id="forn-pick-titulo">Selecionar Fornecedor</h2>
         <button class="btn btn-ghost btn-icon" onclick="fecharPickForn()">✕</button>
       </div>
       <div class="modal-body" style="padding-top:8px">
@@ -1352,10 +1362,10 @@
   </div>
 
   <!-- ── Conformidade ── -->
-  <div class="overlay hidden" id="conf-overlay">
+  <div class="overlay hidden" id="conf-overlay" role="dialog" aria-modal="true" aria-labelledby="conf-titulo">
     <div class="modal" style="max-width:480px">
       <div class="modal-header">
-        <h2>Verificação de Conformidade</h2>
+        <h2 id="conf-titulo">Verificação de Conformidade</h2>
         <button class="btn btn-ghost btn-icon" onclick="fecharConformidade()">✕</button>
       </div>
       <div class="modal-body" id="conf-body"></div>
@@ -1366,15 +1376,15 @@
   </div>
 
   <!-- ── Fornecedor Modal ── -->
-  <div class="overlay hidden" id="forn-modal-overlay">
+  <div class="overlay hidden" id="forn-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="forn-modal-titulo">
     <div class="modal" style="max-width:520px">
       <div class="modal-header">
-        <h2>Novo Fornecedor</h2>
+        <h2 id="forn-modal-titulo">Novo Fornecedor</h2>
         <button class="btn btn-ghost btn-icon" onclick="closeFornModal()">✕</button>
       </div>
       <div class="modal-body">
         <div class="forn-lookup" style="margin-top:0">
-          <label style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-500);display:block;margin-bottom:6px">CNPJ do Fornecedor</label>
+          <label for="forn-modal-cnpj" style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-500);display:block;margin-bottom:6px">CNPJ do Fornecedor</label>
           <div class="forn-input-row">
             <input type="text" id="forn-modal-cnpj" placeholder="00.000.000/0000-00" oninput="maskCnpj(this)" maxlength="18">
             <button class="btn btn-primary btn-sm" onclick="buscarCnpjModal()">🔍 Consultar</button>
@@ -1390,7 +1400,7 @@
   </div>
 
   <!-- ── Modal de Usuário ── -->
-  <div class="overlay hidden" id="usuario-modal-overlay">
+  <div class="overlay hidden" id="usuario-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="usuario-modal-titulo">
     <div class="modal" style="max-width:420px">
       <div class="modal-header">
         <h2 id="usuario-modal-titulo">Novo Usuário</h2>
@@ -1398,31 +1408,31 @@
       </div>
       <div class="modal-body">
         <div class="info-field">
-          <label>Username *</label>
+          <label for="_u-username">Username *</label>
           <input id="_u-username" type="text" placeholder="login" autocomplete="off">
         </div>
         <div class="info-field">
-          <label id="_u-senha-label">Senha *</label>
+          <label id="_u-senha-label" for="_u-senha">Senha *</label>
           <input id="_u-senha" type="password" placeholder="senha inicial" autocomplete="new-password">
         </div>
         <div class="info-field">
-          <label>Nome completo</label>
+          <label for="_u-nome">Nome completo</label>
           <input id="_u-nome" type="text" placeholder="Nome do usuário">
         </div>
         <div class="info-field">
-          <label>CPF</label>
+          <label for="_u-cpf">CPF</label>
           <input id="_u-cpf" type="text" placeholder="000.000.000-00" maxlength="14" oninput="maskCpf(this)">
         </div>
         <div class="info-field">
-          <label>E-mail</label>
+          <label for="_u-email">E-mail</label>
           <input id="_u-email" type="email" placeholder="usuario@orgao.gov.br">
         </div>
         <div class="info-field">
-          <label>Cargo</label>
+          <label for="_u-cargo">Cargo</label>
           <input id="_u-cargo" type="text" placeholder="ex: Agente de Contratação">
         </div>
         <div class="info-field">
-          <label>Matrícula</label>
+          <label for="_u-matricula">Matrícula</label>
           <input id="_u-matricula" type="text" placeholder="Matrícula funcional">
         </div>
         <div style="display:flex;gap:16px;margin-top:6px">
@@ -1442,7 +1452,7 @@
   </div>
 
   <!-- ── Certidão Edit Modal ── -->
-  <div class="overlay hidden" id="cert-edit-overlay">
+  <div class="overlay hidden" id="cert-edit-overlay" role="dialog" aria-modal="true" aria-labelledby="cert-edit-title">
     <div class="modal" style="max-width:460px">
       <div class="modal-header">
         <h2 id="cert-edit-title">Certidão</h2>
@@ -1450,25 +1460,25 @@
       </div>
       <div class="modal-body">
         <div class="info-field">
-          <label>Tipo de Certidão</label>
+          <label for="ce-tipo">Tipo de Certidão</label>
           <select id="ce-tipo" onchange="onCeTipoChange()"></select>
         </div>
         <div class="info-field" id="ce-tipo-outro-wrap" style="display:none">
-          <label>Descrição</label>
+          <label for="ce-tipo-outro">Descrição</label>
           <input type="text" id="ce-tipo-outro" placeholder="Descreva a certidão…">
         </div>
         <div class="cert-add-row">
           <div class="info-field">
-            <label>Data de Emissão</label>
+            <label for="ce-emissao">Data de Emissão</label>
             <input type="date" id="ce-emissao" oninput="onCeEmissaoChange()">
           </div>
           <div class="info-field">
-            <label>Data de Validade</label>
+            <label for="ce-validade">Data de Validade</label>
             <input type="date" id="ce-validade">
           </div>
         </div>
         <div class="info-field">
-          <label>Observações</label>
+          <label for="ce-obs">Observações</label>
           <textarea id="ce-obs" rows="2" placeholder="Número, órgão emissor, etc…"></textarea>
         </div>
       </div>
@@ -1760,31 +1770,31 @@
 
         <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
           <legend style="font-size:.72rem;font-weight:700;color:var(--accent-light);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Órgão</legend>
-          <div class="info-field"><label>Nome do Órgão</label>
+          <div class="info-field"><label for="s-orgao">Nome do Órgão</label>
             <input type="text" id="s-orgao" placeholder="Ex: Prefeitura Municipal de Orindiúva"></div>
-          <div class="info-field"><label>Município / UF</label>
+          <div class="info-field"><label for="s-municipio">Município / UF</label>
             <input type="text" id="s-municipio" placeholder="Ex: Orindiúva/SP"></div>
-          <div class="info-field"><label>CNPJ do Órgão <span style="color:var(--gray-400);font-weight:400">(para exportação PNCP)</span></label>
+          <div class="info-field"><label for="s-cnpj-orgao">CNPJ do Órgão <span style="color:var(--gray-400);font-weight:400">(para exportação PNCP)</span></label>
             <input type="text" id="s-cnpj-orgao" placeholder="Ex: 45.678.901/0001-00" maxlength="18"></div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-            <div class="info-field"><label>Código IBGE do Município <span style="color:var(--gray-400);font-weight:400">(PNCP)</span></label>
+            <div class="info-field"><label for="s-codigo-ibge">Código IBGE do Município <span style="color:var(--gray-400);font-weight:400">(PNCP)</span></label>
               <input type="text" id="s-codigo-ibge" placeholder="Ex: 3534005" maxlength="7"></div>
-            <div class="info-field"><label>UF <span style="color:var(--gray-400);font-weight:400">(sigla)</span></label>
+            <div class="info-field"><label for="s-uf">UF <span style="color:var(--gray-400);font-weight:400">(sigla)</span></label>
               <input type="text" id="s-uf" placeholder="Ex: SP" maxlength="2" style="text-transform:uppercase"></div>
           </div>
-          <div class="info-field"><label>Site Oficial</label>
+          <div class="info-field"><label for="s-site-oficial">Site Oficial</label>
             <input type="url" id="s-site-oficial" placeholder="Ex: https://orindiuva.sp.gov.br/"></div>
-          <div class="info-field"><label>URL do Diário Oficial Eletrônico</label>
+          <div class="info-field"><label for="s-diario-url">URL do Diário Oficial Eletrônico</label>
             <input type="url" id="s-diario-url" placeholder="Ex: https://imprensaoficialmunicipal.com.br/orindiuva"></div>
-          <div class="info-field"><label>Decreto de Atualização dos Limites de Dispensa <span style="color:var(--gray-400);font-weight:400">(usado nos documentos gerados — atualize a cada novo decreto)</span></label>
+          <div class="info-field"><label for="s-decreto-limites">Decreto de Atualização dos Limites de Dispensa <span style="color:var(--gray-400);font-weight:400">(usado nos documentos gerados — atualize a cada novo decreto)</span></label>
             <input type="text" id="s-decreto-limites" placeholder="Ex: Decreto Federal nº 12.807, de 29 de dezembro de 2025"></div>
         </fieldset>
 
         <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
           <legend style="font-size:.72rem;font-weight:700;color:var(--accent-light);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Autoridade Competente</legend>
-          <div class="info-field"><label>Nome Completo</label>
+          <div class="info-field"><label for="s-aut-nome">Nome Completo</label>
             <input type="text" id="s-aut-nome" placeholder="Ex: Maria Souza"></div>
-          <div class="info-field"><label>Cargo</label>
+          <div class="info-field"><label for="s-aut-cargo">Cargo</label>
             <input type="text" id="s-aut-cargo" placeholder="Ex: Prefeita Municipal"></div>
         </fieldset>
 
@@ -1792,7 +1802,7 @@
           <legend style="font-size:.72rem;font-weight:700;color:var(--brand);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Brasão do Município</legend>
           <p style="font-size:.72rem;color:var(--gray-500);margin-bottom:10px;line-height:1.5">Substitua o brasão padrão pelo do seu município. Será usado em todos os documentos gerados.</p>
           <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
-            <img id="s-brasao-preview" style="height:56px;width:auto;display:none;border:1px solid var(--gray-200);border-radius:4px;padding:2px">
+            <img id="s-brasao-preview" alt="Prévia do brasão selecionado" style="height:56px;width:auto;display:none;border:1px solid var(--gray-200);border-radius:4px;padding:2px">
             <div style="display:flex;gap:8px">
               <label class="btn btn-outline btn-sm" style="cursor:pointer">
                 📁 Selecionar imagem
@@ -1806,7 +1816,7 @@
         <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
           <legend style="font-size:.72rem;font-weight:700;color:var(--accent-light);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Controle de Fracionamento</legend>
           <div class="info-field">
-            <label>Janela temporal de análise</label>
+            <label for="s-frac-janela">Janela temporal de análise</label>
             <select id="s-frac-janela">
               <option value="exercicio">Exercício financeiro — 1º jan a 31 dez (recomendado)</option>
               <option value="12">Período móvel — últimos 12 meses</option>
@@ -1827,8 +1837,8 @@
           <legend style="font-size:.72rem;font-weight:700;color:var(--accent-light);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">E-mail (SMTP)</legend>
           <p style="font-size:.75rem;color:var(--gray-500);margin-bottom:12px;line-height:1.5">Configure o servidor SMTP para envio de notificações. O servidor local (<strong>server.py</strong>) deve estar em execução. As credenciais sincronizam com o servidor (admin) e ficam disponíveis em qualquer navegador da rede.<br><br>
           Assim que configurado, o sistema passa a enviar automaticamente um <strong>resumo diário por e-mail</strong> (prazos vencendo e processos parados há 15+ dias) para o e-mail interno abaixo — mesmo sem ninguém logado.</p>
-          <div class="info-field"><label>Servidor SMTP (host)</label><input type="text" id="s-smtp-host" placeholder="ex: smtp.gmail.com"></div>
-          <div class="info-field"><label>Porta</label><input type="number" id="s-smtp-port" placeholder="587" style="max-width:120px"></div>
+          <div class="info-field"><label for="s-smtp-host">Servidor SMTP (host)</label><input type="text" id="s-smtp-host" placeholder="ex: smtp.gmail.com"></div>
+          <div class="info-field"><label for="s-smtp-port">Porta</label><input type="number" id="s-smtp-port" placeholder="587" style="max-width:120px"></div>
           <div style="display:flex;gap:20px;margin:8px 0">
             <label style="display:flex;align-items:center;gap:6px;font-size:.82rem;cursor:pointer"><input type="checkbox" id="s-smtp-tls" style="width:15px;height:15px"> Usar STARTTLS (porta 587)</label>
             <label style="display:flex;align-items:center;gap:6px;font-size:.82rem;cursor:pointer"><input type="checkbox" id="s-smtp-ssl" style="width:15px;height:15px"> Usar SSL direto (porta 465)</label>
@@ -1839,10 +1849,10 @@
               Ignorar verificação de certificado SSL <span style="font-size:.75rem;color:var(--warning,#b45309)">(apenas para servidores internos / autoassinados)</span>
             </label>
           </div>
-          <div class="info-field"><label>Usuário (e-mail de envio)</label><input type="email" id="s-smtp-user" placeholder="ex: licitacao@municipio.sp.gov.br"></div>
-          <div class="info-field"><label>Senha</label><input type="password" id="s-smtp-pass" autocomplete="new-password"></div>
-          <div class="info-field"><label>Nome do remetente</label><input type="text" id="s-smtp-from-name" placeholder="SGCD — Contratações Diretas"></div>
-          <div class="info-field"><label>E-mail interno (destinatário padrão)</label><input type="email" id="s-smtp-to" placeholder="ex: chefia@municipio.sp.gov.br"></div>
+          <div class="info-field"><label for="s-smtp-user">Usuário (e-mail de envio)</label><input type="email" id="s-smtp-user" placeholder="ex: licitacao@municipio.sp.gov.br"></div>
+          <div class="info-field"><label for="s-smtp-pass">Senha</label><input type="password" id="s-smtp-pass" autocomplete="new-password"></div>
+          <div class="info-field"><label for="s-smtp-from-name">Nome do remetente</label><input type="text" id="s-smtp-from-name" placeholder="SGCD — Contratações Diretas"></div>
+          <div class="info-field"><label for="s-smtp-to">E-mail interno (destinatário padrão)</label><input type="email" id="s-smtp-to" placeholder="ex: chefia@municipio.sp.gov.br"></div>
           <div style="margin-top:8px;display:flex;align-items:center;gap:10px">
             <button class="btn btn-outline btn-sm" onclick="testSmtp()">🔌 Testar conexão com servidor</button>
             <span id="smtp-test-result" style="font-size:.8rem"></span>
@@ -1857,7 +1867,7 @@
 
           <!-- Pasta de backup -->
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-            <label style="font-size:.8rem;color:var(--gray-600);white-space:nowrap;min-width:120px">Pasta de backup</label>
+            <label for="s-backup-path" style="font-size:.8rem;color:var(--gray-600);white-space:nowrap;min-width:120px">Pasta de backup</label>
             <input id="s-backup-path" type="text" class="input" style="flex:1;font-size:.8rem;background:var(--gray-50)" readonly placeholder="Nenhuma pasta selecionada">
             <button class="btn btn-outline btn-sm" onclick="selecionarPastaBackup()" style="white-space:nowrap">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
@@ -1919,7 +1929,7 @@
               <p style="font-size:.7rem;color:var(--gray-500);margin:3px 0 8px;line-height:1.5">Cria um backup do banco (sgcd.db) sempre que o sistema for encerrado pelo botão Fechar Sistema ou pelo X da janela.</p>
               <div id="s-auto-backup-sub" style="display:flex;flex-direction:column;gap:8px;padding:10px 12px;background:var(--gray-50);border-radius:var(--radius);border:1px solid var(--gray-100);transition:opacity .15s">
                 <div style="display:flex;align-items:center;gap:8px">
-                  <label style="font-size:.78rem;color:var(--gray-600);white-space:nowrap">Backups mantidos</label>
+                  <label for="s-auto-backup-keep" style="font-size:.78rem;color:var(--gray-600);white-space:nowrap">Backups mantidos</label>
                   <input id="s-auto-backup-keep" type="number" class="input" style="width:64px;font-size:.8rem" value="7" min="1" max="99">
                   <span style="font-size:.75rem;color:var(--gray-500)">arquivos mais recentes</span>
                 </div>
@@ -1948,15 +1958,15 @@
         <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
           <legend style="font-size:.72rem;font-weight:700;color:var(--accent-light);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Alterar Minha Senha</legend>
           <div class="info-field">
-            <label>Senha atual</label>
+            <label for="s-senha-atual">Senha atual</label>
             <input type="password" id="s-senha-atual" placeholder="••••••••" autocomplete="current-password">
           </div>
           <div class="info-field">
-            <label>Nova senha</label>
+            <label for="s-senha-nova">Nova senha</label>
             <input type="password" id="s-senha-nova" placeholder="mínimo 6 caracteres" autocomplete="new-password">
           </div>
           <div class="info-field">
-            <label>Confirmar nova senha</label>
+            <label for="s-senha-confirmar">Confirmar nova senha</label>
             <input type="password" id="s-senha-confirmar" placeholder="••••••••" autocomplete="new-password">
           </div>
           <div style="margin-top:6px">
@@ -1993,16 +2003,16 @@
 
     </div>
   </div>
-</div>
+</main>
 
 <!-- ── PIN / Senha de acesso overlay ── -->
-<div class="overlay hidden" id="overlay-pin" style="z-index:99999;background:#1a1f2e;align-items:center;justify-content:center">
+<div class="overlay hidden" id="overlay-pin" role="dialog" aria-modal="true" aria-labelledby="overlay-pin-titulo" style="z-index:99999;background:#1a1f2e;align-items:center;justify-content:center">
   <canvas id="pin-canvas" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none"></canvas>
 
   <!-- Configurações do efeito de fundo -->
   <div style="position:absolute;bottom:18px;right:18px;z-index:2">
-    <button onclick="_lcToggleConfig()" title="Configurar efeito de fundo"
-      style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);color:rgba(255,255,255,.55);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;font-size:0;padding:0"
+    <button onclick="_lcToggleConfig()" title="Configurar efeito de fundo" class="icon-touch-target"
+      style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);color:rgba(255,255,255,.55);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;font-size:0;padding:0;position:relative"
       onmouseover="this.style.background='rgba(255,255,255,.16)'" onmouseout="this.style.background='rgba(255,255,255,.08)'">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
     </button>
@@ -2044,7 +2054,7 @@
       <div style="width:52px;height:52px;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.3);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:22px">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e8eef7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M9 8h1"/><path d="M9 12h1"/><path d="M9 16h1"/><path d="M14 8h1"/><path d="M14 12h1"/><path d="M14 16h1"/><path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"/></svg>
       </div>
-      <div style="font-size:17px;font-weight:700;color:#fff;letter-spacing:.01em;margin-bottom:2px">SGCD — Acesso Restrito</div>
+      <div id="overlay-pin-titulo" style="font-size:17px;font-weight:700;color:#fff;letter-spacing:.01em;margin-bottom:2px">SGCD — Acesso Restrito</div>
       <div style="font-size:11px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.08em;font-weight:500">Sistema de Gestão de Contratação Direta</div>
       <div style="display:inline-flex;align-items:center;gap:5px;margin-top:12px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:rgba(255,255,255,.8);font-size:10px;font-weight:600;padding:3px 10px;border-radius:20px;letter-spacing:.04em">
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
@@ -2088,7 +2098,7 @@
           onkeyup="_pinCheckCaps(event)"
           onfocus="_pinCheckCaps(event);this.style.borderColor=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();this.style.boxShadow='0 0 0 3px var(--brand-light)';this.style.background='#fff'"
           onblur="document.getElementById('pin-caps-warn').style.display='none';this.style.borderColor='#d9d9d9';this.style.boxShadow='none';this.style.background='#f9f8f8'">
-        <button onclick="_pinToggleOlho()" tabindex="-1" aria-label="Mostrar ou ocultar senha"
+        <button onclick="_pinToggleOlho()" tabindex="-1" aria-label="Mostrar ou ocultar senha" class="icon-touch-target"
           style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#aea79f;padding:4px;line-height:1;font-size:0">
           <svg id="pin-eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
         </button>
@@ -2140,23 +2150,23 @@
 </style>
 
 <!-- ── Troca de senha obrigatória (primeiro acesso / senha padrão) ── -->
-<div class="overlay hidden" id="overlay-force-pwd" style="z-index:99999;background:#1a1f2e;align-items:center;justify-content:center">
+<div class="overlay hidden" id="overlay-force-pwd" role="dialog" aria-modal="true" aria-labelledby="overlay-force-pwd-titulo" style="z-index:99999;background:#1a1f2e;align-items:center;justify-content:center">
   <div style="position:relative;z-index:1;background:#fff;border-radius:16px;width:380px;overflow:hidden;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
     <div style="background:var(--accent);padding:28px 32px 24px;text-align:center">
       <div style="width:52px;height:52px;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.3);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e8eef7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
       </div>
-      <div style="font-size:17px;font-weight:700;color:#fff;margin-bottom:2px">Troca de senha obrigatória</div>
+      <div id="overlay-force-pwd-titulo" style="font-size:17px;font-weight:700;color:#fff;margin-bottom:2px">Troca de senha obrigatória</div>
       <div style="font-size:11px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.08em;font-weight:500">Defina uma nova senha para continuar</div>
     </div>
     <div style="padding:26px 32px 28px">
       <div style="margin-bottom:14px">
-        <label style="font-size:11px;font-weight:600;color:#444;display:block;margin-bottom:6px">Nova senha</label>
+        <label for="fp-nova" style="font-size:11px;font-weight:600;color:#444;display:block;margin-bottom:6px">Nova senha</label>
         <input type="password" id="fp-nova" placeholder="mínimo 6 caracteres" autocomplete="new-password"
           style="width:100%;padding:10px 12px;border:1px solid #ccc;border-radius:8px;font-size:14px">
       </div>
       <div style="margin-bottom:6px">
-        <label style="font-size:11px;font-weight:600;color:#444;display:block;margin-bottom:6px">Confirmar nova senha</label>
+        <label for="fp-confirma" style="font-size:11px;font-weight:600;color:#444;display:block;margin-bottom:6px">Confirmar nova senha</label>
         <input type="password" id="fp-confirma" placeholder="••••••••" autocomplete="new-password"
           style="width:100%;padding:10px 12px;border:1px solid #ccc;border-radius:8px;font-size:14px"
           onkeydown="if(event.key==='Enter') _confirmarTrocaSenhaObrigatoria()">
@@ -2171,10 +2181,10 @@
 </div>
 
 <!-- ── New Process Modal ── -->
-<div class="overlay hidden" id="modal-overlay">
+<div class="overlay hidden" id="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-overlay-titulo">
   <div class="modal">
     <div class="modal-header">
-      <h2>Novo Processo de Dispensa</h2>
+      <h2 id="modal-overlay-titulo">Novo Processo de Dispensa</h2>
       <button class="btn btn-ghost btn-icon" onclick="closeModal()">✕</button>
     </div>
     <div class="modal-body" style="padding-top:12px">
@@ -2188,16 +2198,16 @@
       <p style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--brand);margin-bottom:8px">Identificação</p>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
         <div class="info-field" style="margin:0">
-          <label>Processo Administrativo</label>
+          <label for="m-num-proc">Processo Administrativo</label>
           <input type="text" id="m-num-proc" placeholder="Ex: 30/2026">
         </div>
         <div class="info-field" style="margin:0">
-          <label>Dispensa de Licitação</label>
+          <label for="m-num-dl">Dispensa de Licitação</label>
           <input type="text" id="m-num-dl" placeholder="Ex: 15/2026">
         </div>
       </div>
       <div class="info-field">
-        <label>Objeto (descrição resumida) *</label>
+        <label for="m-obj">Objeto (descrição resumida) *</label>
         <input type="text" id="m-obj" placeholder="Ex: Aquisição de material de limpeza" maxlength="500">
       </div>
 
@@ -2206,7 +2216,7 @@
         <p style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--brand);margin-bottom:8px">Base Legal e Critério</p>
       </div>
       <div class="info-field">
-        <label>Fundamentação Legal (Art. 75, inciso)</label>
+        <label for="m-legal">Fundamentação Legal (Art. 75, inciso)</label>
         <select id="m-legal">
           <option value="">Selecionar…</option>
           <option value="Art. 75, I — Valor (até R$ 130.984,20 — obras/serv. engenharia)">Art. 75, I — Valor (até R$ 130.984,20 — obras/serv. engenharia)</option>
@@ -2217,7 +2227,7 @@
         </select>
       </div>
       <div class="info-field">
-        <label>Critério de Seleção (Art. 33, Lei 14.133/2021)</label>
+        <label for="m-criterio">Critério de Seleção (Art. 33, Lei 14.133/2021)</label>
         <select id="m-criterio">
           <option value="">Selecionar…</option>
           <option value="menor_preco" selected>Menor preço (Art. 33, I)</option>
@@ -2234,15 +2244,15 @@
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;align-items:end">
         <div class="info-field" style="margin:0">
-          <label>Valor Estimado (R$)</label>
+          <label for="m-valor">Valor Estimado (R$)</label>
           <input type="text" id="m-valor" placeholder="0,00" oninput="maskMoney(this)">
         </div>
         <div class="info-field" style="margin:0">
-          <label>Unidade Solicitante</label>
+          <label for="m-unidade">Unidade Solicitante</label>
           <input type="text" id="m-unidade" placeholder="Ex: Sec. de Saúde" maxlength="120">
         </div>
         <div class="info-field" style="margin:0">
-          <label>Prazo para conclusão</label>
+          <label for="m-prazo">Prazo para conclusão</label>
           <input type="date" id="m-prazo">
         </div>
       </div>
@@ -2255,26 +2265,26 @@
       </div>
       <div id="modal-classif-body" style="display:none">
         <div class="info-field">
-          <label>Natureza</label>
+          <label for="m-natureza">Natureza</label>
           <select id="m-natureza" onchange="onModalNaturezaChange()">
             <option value="">Selecionar…</option>
           </select>
         </div>
         <div class="info-field">
-          <label>Categoria</label>
+          <label for="m-categoria">Categoria</label>
           <select id="m-categoria" disabled onchange="onModalCategoriaChange()">
             <option value="">Selecione a natureza primeiro</option>
           </select>
         </div>
         <div class="info-field">
-          <label>Subcategoria</label>
+          <label for="m-subcategoria">Subcategoria</label>
           <select id="m-subcategoria" disabled>
             <option value="">Selecione a categoria primeiro</option>
           </select>
         </div>
       </div>
       <div class="info-field">
-        <label>Observações iniciais</label>
+        <label for="m-obs">Observações iniciais</label>
         <textarea id="m-obs" placeholder="Contexto, prioridade, prazos…" maxlength="1000"></textarea>
       </div>
     </div>
@@ -2286,11 +2296,11 @@
 </div>
 
 <!-- ── Global Search Overlay ── -->
-<div class="overlay hidden" id="global-search-overlay">
+<div class="overlay hidden" id="global-search-overlay" role="dialog" aria-modal="true" aria-label="Busca global de processos">
   <div class="gsearch-box">
     <div class="gsearch-input-wrap">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--gray-500);flex-shrink:0"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input type="text" id="global-search-input" placeholder="Buscar por PA, DL, objeto, fornecedor, unidade…" oninput="_debouncedGlobalSearch(this.value)">
+      <input type="text" id="global-search-input" aria-label="Buscar por PA, DL, objeto, fornecedor, unidade…" placeholder="Buscar por PA, DL, objeto, fornecedor, unidade…" oninput="_debouncedGlobalSearch(this.value)">
       <kbd style="font-size:.7rem;color:var(--gray-500);background:var(--gray-100);padding:2px 6px;border-radius:4px;flex-shrink:0">Esc</kbd>
     </div>
     <div class="gsearch-results" id="global-search-results"></div>
@@ -2307,10 +2317,10 @@
 </div>
 
 <!-- ── Modal Templates ── -->
-<div class="overlay hidden" id="modal-templates">
+<div class="overlay hidden" id="modal-templates" role="dialog" aria-modal="true" aria-labelledby="modal-templates-titulo">
   <div class="modal" style="max-width:520px">
     <div class="modal-header">
-      <h3>Modelos de Processo</h3>
+      <h3 id="modal-templates-titulo">Modelos de Processo</h3>
       <button class="btn btn-ghost btn-sm" onclick="fecharModalTemplates()">✕</button>
     </div>
     <div class="modal-body">
@@ -2324,10 +2334,10 @@
 </div>
 
 <!-- ── Modal CSV Import ── -->
-<div class="overlay hidden" id="modal-csv">
+<div class="overlay hidden" id="modal-csv" role="dialog" aria-modal="true" aria-labelledby="modal-csv-titulo">
   <div class="modal" style="max-width:680px;width:96vw">
     <div class="modal-header">
-      <h3>Importar Fornecedores via CSV</h3>
+      <h3 id="modal-csv-titulo">Importar Fornecedores via CSV</h3>
       <button class="btn btn-ghost btn-sm" onclick="fecharModalCsv()">✕</button>
     </div>
     <div class="modal-body">
@@ -2345,7 +2355,7 @@
             </button>
           </div>
         </div>
-        <div style="border:2px dashed var(--gray-300);border-radius:8px;padding:32px;text-align:center;cursor:pointer" onclick="document.getElementById('csv-file-input').click()">
+        <div style="border:2px dashed var(--gray-300);border-radius:8px;padding:32px;text-align:center;cursor:pointer" onclick="document.getElementById('csv-file-input').click()" role="button" tabindex="0">
           <div style="font-size:2rem;margin-bottom:8px">📂</div>
           <div style="font-size:.85rem;color:var(--gray-600)">Clique para selecionar o arquivo CSV</div>
           <input type="file" id="csv-file-input" accept=".csv,text/csv" style="display:none" onchange="carregarCsv(this)">
@@ -2387,10 +2397,10 @@
 </div>
 
 <!-- ── E-mail Modal ── -->
-<div class="overlay hidden" id="email-modal">
+<div class="overlay hidden" id="email-modal" role="dialog" aria-modal="true" aria-labelledby="email-modal-titulo">
   <div class="modal" style="max-width:880px;width:96vw">
     <div class="modal-header">
-      <h3>✉ Enviar Notificação</h3>
+      <h3 id="email-modal-titulo">✉ Enviar Notificação</h3>
       <button class="btn btn-ghost btn-sm" onclick="fecharEmailModal()">✕</button>
     </div>
     <div class="modal-body">
@@ -2410,9 +2420,9 @@
           </label>
           <div id="email-forn-list" style="max-height:160px;overflow-y:auto;border:1px solid var(--gray-200);border-radius:6px;padding:6px;background:var(--bg-card)"></div>
         </div>
-        <div class="info-field"><label>Assunto</label><input type="text" id="email-subj-forn"></div>
+        <div class="info-field"><label for="email-subj-forn">Assunto</label><input type="text" id="email-subj-forn"></div>
         <div class="info-field">
-          <label>Mensagem</label>
+          <label id="email-body-forn-label">Mensagem</label>
           <div id="email-editor-toolbar" style="display:flex;flex-wrap:wrap;gap:2px;padding:5px 6px;background:var(--gray-100);border:1px solid var(--gray-200);border-bottom:none;border-radius:6px 6px 0 0">
             <button type="button" class="_etb" onclick="document.execCommand('bold')" title="Negrito (Ctrl+B)"><b>B</b></button>
             <button type="button" class="_etb" onclick="document.execCommand('italic')" title="Itálico (Ctrl+I)"><i>I</i></button>
@@ -2451,15 +2461,15 @@
             <button type="button" class="_etb" onclick="document.execCommand('undo')" title="Desfazer (Ctrl+Z)">&#8634;</button>
             <button type="button" class="_etb" onclick="document.execCommand('redo')" title="Refazer (Ctrl+Y)">&#8635;</button>
           </div>
-          <div id="email-body-forn" contenteditable="true" spellcheck="true"
+          <div id="email-body-forn" contenteditable="true" spellcheck="true" role="textbox" aria-multiline="true" aria-labelledby="email-body-forn-label"
             style="min-height:220px;max-height:380px;overflow-y:auto;border:1px solid var(--gray-200);border-radius:0 0 6px 6px;padding:12px 14px;background:var(--bg-card);font-family:Verdana,sans-serif;font-size:13px;line-height:1.7;text-align:justify;outline:none"></div>
         </div>
       </div>
       <div id="email-tab-int-body" style="display:none">
-        <div class="info-field"><label>Para</label><input type="email" id="email-to-int"></div>
-        <div class="info-field"><label>Assunto</label><input type="text" id="email-subj-int"></div>
+        <div class="info-field"><label for="email-to-int">Para</label><input type="email" id="email-to-int"></div>
+        <div class="info-field"><label for="email-subj-int">Assunto</label><input type="text" id="email-subj-int"></div>
         <div class="info-field">
-          <label>Mensagem</label>
+          <label id="email-body-int-label">Mensagem</label>
           <div id="email-editor-toolbar-int" style="display:flex;flex-wrap:wrap;gap:2px;padding:5px 6px;background:var(--gray-100);border:1px solid var(--gray-200);border-bottom:none;border-radius:6px 6px 0 0">
             <button type="button" class="_etb" onclick="_etbCmd('int','bold')" title="Negrito"><b>B</b></button>
             <button type="button" class="_etb" onclick="_etbCmd('int','italic')" title="Itálico"><i>I</i></button>
@@ -2498,7 +2508,7 @@
             <button type="button" class="_etb" onclick="_etbCmd('int','undo')" title="Desfazer">&#8634;</button>
             <button type="button" class="_etb" onclick="_etbCmd('int','redo')" title="Refazer">&#8635;</button>
           </div>
-          <div id="email-body-int" contenteditable="true" spellcheck="true"
+          <div id="email-body-int" contenteditable="true" spellcheck="true" role="textbox" aria-multiline="true" aria-labelledby="email-body-int-label"
             style="min-height:220px;max-height:380px;overflow-y:auto;border:1px solid var(--gray-200);border-radius:0 0 6px 6px;padding:12px 14px;background:var(--bg-card);font-family:Verdana,sans-serif;font-size:13px;line-height:1.7;text-align:justify;outline:none"></div>
         </div>
       </div>
@@ -2511,21 +2521,21 @@
 </div>
 
 <!-- ── Vincular Processo Modal ── -->
-<div class="overlay hidden" id="vinculo-modal">
+<div class="overlay hidden" id="vinculo-modal" role="dialog" aria-modal="true" aria-labelledby="vinculo-modal-titulo">
   <div class="modal" style="max-width:480px">
     <div class="modal-header">
-      <h3>Vincular Processo</h3>
+      <h3 id="vinculo-modal-titulo">Vincular Processo</h3>
       <button class="btn btn-ghost btn-sm" onclick="fecharVinculoModal()">✕</button>
     </div>
     <div class="modal-body">
-      <label style="display:block;font-size:.75rem;font-weight:700;color:var(--gray-500);text-transform:uppercase;margin-bottom:4px">Tipo de vínculo</label>
+      <label for="vinculo-tipo" style="display:block;font-size:.75rem;font-weight:700;color:var(--gray-500);text-transform:uppercase;margin-bottom:4px">Tipo de vínculo</label>
       <select id="vinculo-tipo" style="width:100%;margin-bottom:12px;padding:7px 10px;border:1px solid var(--gray-200);border-radius:6px;background:var(--bg-card);color:var(--gray-900)">
         <option value="renovacao">Renovação de</option>
         <option value="aditivo">Aditivo de</option>
         <option value="continuidade">Continuidade de</option>
         <option value="anterior">Processo anterior</option>
       </select>
-      <label style="display:block;font-size:.75rem;font-weight:700;color:var(--gray-500);text-transform:uppercase;margin-bottom:4px">Buscar processo</label>
+      <label for="vinculo-search" style="display:block;font-size:.75rem;font-weight:700;color:var(--gray-500);text-transform:uppercase;margin-bottom:4px">Buscar processo</label>
       <input type="text" id="vinculo-search" placeholder="Digite objeto, PA ou DL..." oninput="renderVinculoSearch(this.value)"
         style="width:100%;padding:7px 10px;border:1px solid var(--gray-200);border-radius:6px;margin-bottom:8px;background:var(--bg-card);color:var(--gray-900)">
       <div id="vinculo-results" style="max-height:220px;overflow-y:auto;border:1px solid var(--gray-200);border-radius:6px"></div>
@@ -2534,7 +2544,7 @@
 </div>
 
 <!-- ── Confirm Modal ── -->
-<div class="overlay hidden" id="confirm-overlay">
+<div class="overlay hidden" id="confirm-overlay" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
   <div class="modal" style="max-width:420px">
     <div class="modal-header" style="gap:12px">
       <div style="display:flex;align-items:center;gap:10px">
@@ -2578,7 +2588,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.26.1';
+const SGCD_VERSION = '2.27.0';
 // URL absoluta (não relativa) porque API_BASE também monta o texto do QR Code
 // de verificação de assinatura, lido por celular fora do navegador — precisa
 // da origem real, nunca uma porta fixa (era 'http://localhost:3000' hardcoded).
@@ -4081,7 +4091,7 @@ function renderFornecedorLookup(stepIdx) {
   }
 
   return `<div class="forn-lookup">
-    <label style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-500);display:block;margin-bottom:6px">CNPJ do Fornecedor</label>
+    <label for="cnpj-fld-${stepIdx}" style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-500);display:block;margin-bottom:6px">CNPJ do Fornecedor</label>
     <div class="forn-input-row">
       <input type="text" id="cnpj-fld-${stepIdx}" value="${cnpjVal}" placeholder="00.000.000/0000-00" oninput="maskCnpj(this)" maxlength="18">
       <button class="btn btn-primary btn-sm" onclick="buscarCnpj(${stepIdx})">🔍 Consultar</button>
@@ -4191,7 +4201,7 @@ async function renderFornecedores() {
   el.innerHTML = lista.map(f => {
     const sitCls = cnpjSitClass(f.situacao);
     const nProcs = (f.processos || []).filter(pid => _procMap.has(pid)).length;
-    return `<div class="forn-list-item" data-forn-id="${f.id}" onclick="toggleFornCard('${f.id}')">
+    return `<div class="forn-list-item" data-forn-id="${f.id}" onclick="toggleFornCard('${f.id}')" role="button" tabindex="0">
       <div class="forn-list-header">
         <div>
           <div class="forn-razao" style="display:flex;align-items:center;gap:8px">
@@ -4312,7 +4322,7 @@ function renderAgenda() {
           parado:       `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A32D2D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
         }[e.tipo] || `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gray-400)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg>`;
         const _iconBg = { encerramento:'#E6F1FB', contrato:'#F3EDF8', prazo:'#FFF3D8', parado:'#FCEBEB' }[e.tipo] || 'var(--gray-100)';
-        return `<div onclick="openProcess('${e.pid}')" style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid ${e.urgente?'var(--danger)':'var(--gray-200)'};border-radius:8px;margin-bottom:8px;cursor:pointer;background:${e.urgente&&e.parado?'#fff1f0':'var(--bg-card)'}">
+        return `<div onclick="openProcess('${e.pid}')" role="button" tabindex="0" style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid ${e.urgente?'var(--danger)':'var(--gray-200)'};border-radius:8px;margin-bottom:8px;cursor:pointer;background:${e.urgente&&e.parado?'#fff1f0':'var(--bg-card)'}">
           <div style="flex-shrink:0;width:30px;height:30px;border-radius:50%;background:${_iconBg};display:flex;align-items:center;justify-content:center">${_agendaIcon}</div>
           <div style="flex:1">
             <div style="font-size:.85rem;font-weight:500;color:${e.urgente?'var(--danger)':'var(--gray-900)'}">${escHtml(e.label)}</div>
@@ -4616,7 +4626,7 @@ async function gerarRelatorioAuditoria() {
 </div>
 <table>
   <thead><tr><th style="width:110pt">Data/Hora</th><th style="width:100pt">Evento</th><th style="width:85pt">Processo</th><th>Detalhe</th><th style="width:120pt">Usuário</th></tr></thead>
-  <tbody>${tbody || '<tr><td colspan="5" style="text-align:center;color:#aaa;padding:20pt">Nenhum registro encontrado.</td></tr>'}</tbody>
+  <tbody>${tbody || '<tr><td colspan="5" style="text-align:center;color:#6b7280;padding:20pt">Nenhum registro encontrado.</td></tr>'}</tbody>
 </table>
 ${_qrFooterReport('Relatório de Auditoria')}
 </body></html>`;
@@ -5011,7 +5021,7 @@ function renderDash() {
     const stallBar = diasParado > 15
       ? `<div class="pc-stall-bar">⚠ Parado há ${diasParado} dias — última atualização: ${new Date(p.updatedAt||p.createdAt).toLocaleDateString('pt-BR')}</div>`
       : '';
-    return `<div class="process-card pc-${st}" onclick="openProcess('${p.id}')">
+    return `<div class="process-card pc-${st}" onclick="openProcess('${p.id}')" role="button" tabindex="0">
       <button class="pc-quick-open" onclick="event.stopPropagation();openProcess('${p.id}')" title="Abrir processo">Abrir →</button>
       <div class="pc-stripe"></div>
       <div class="pc-body">
@@ -5199,7 +5209,7 @@ function _fornViewHtml(f) {
 
   const procLinks = (f.processos || []).map(pid => {
     const p = processes.find(x => x.id === pid);
-    return p ? `<span class="forn-proc-link" onclick="_collapseFornCard(_expandedFornId);openProcess('${escHtml(pid)}')">${escHtml(p.num_proc ? `PA ${p.num_proc}` : p.num || p.objeto.slice(0,25))}</span>` : '';
+    return p ? `<span class="forn-proc-link" onclick="_collapseFornCard(_expandedFornId);openProcess('${escHtml(pid)}')" role="button" tabindex="0">${escHtml(p.num_proc ? `PA ${p.num_proc}` : p.num || p.objeto.slice(0,25))}</span>` : '';
   }).filter(Boolean).join('');
 
   return `<div style="padding:0">
@@ -5370,7 +5380,7 @@ function _renderFornCardEdit() {
   _setFornCardBody(`<div class="forn-inline-edit-header" onclick="event.stopPropagation()">
     <div style="font-size:.78rem;font-weight:600;color:var(--gray-700)">Editando: ${escHtml(f.razao_social)}</div>
     <div class="forn-lookup" style="margin-top:8px;margin-bottom:0">
-      <label style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-500);display:block;margin-bottom:6px">Reconsultar CNPJ (atualiza dados da Receita Federal)</label>
+      <label for="forn-edit-cnpj" style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-500);display:block;margin-bottom:6px">Reconsultar CNPJ (atualiza dados da Receita Federal)</label>
       <div class="forn-input-row">
         <input type="text" id="forn-edit-cnpj" value="${escHtml(f.cnpj)}" oninput="maskCnpj(this)" maxlength="18">
         <button class="btn btn-outline btn-sm" onclick="_reconsultarForn()">🔄 Atualizar</button>
@@ -5438,12 +5448,12 @@ async function _deleteForn(id, nome) {
 }
 function _qsaRowHtml(i, s = {}) {
   return `<div class="fe-qsa-row" style="display:grid;grid-template-columns:1fr 1fr 150px 28px;gap:6px;align-items:end;margin-bottom:6px">
-    <div class="info-field" style="margin:0"><label style="font-size:.68rem">Nome</label>
-      <input type="text" class="fe-qsa-nome" value="${escHtml(s.nome || '')}" placeholder="Nome do sócio/administrador"></div>
-    <div class="info-field" style="margin:0"><label style="font-size:.68rem">Qualificação</label>
-      <input type="text" class="fe-qsa-qual" value="${escHtml(s.qual || '')}" placeholder="Ex: Sócio-Administrador"></div>
-    <div class="info-field" style="margin:0"><label style="font-size:.68rem">Entrada</label>
-      <input type="date" class="fe-qsa-entrada" value="${escHtml(s.entrada || '')}"></div>
+    <div class="info-field" style="margin:0"><label for="fe-qsa-nome-${i}" style="font-size:.68rem">Nome</label>
+      <input type="text" id="fe-qsa-nome-${i}" class="fe-qsa-nome" value="${escHtml(s.nome || '')}" placeholder="Nome do sócio/administrador"></div>
+    <div class="info-field" style="margin:0"><label for="fe-qsa-qual-${i}" style="font-size:.68rem">Qualificação</label>
+      <input type="text" id="fe-qsa-qual-${i}" class="fe-qsa-qual" value="${escHtml(s.qual || '')}" placeholder="Ex: Sócio-Administrador"></div>
+    <div class="info-field" style="margin:0"><label for="fe-qsa-entrada-${i}" style="font-size:.68rem">Entrada</label>
+      <input type="date" id="fe-qsa-entrada-${i}" class="fe-qsa-entrada" value="${escHtml(s.entrada || '')}"></div>
     <button onclick="this.closest('.fe-qsa-row').remove()" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:1rem;padding:0 4px;margin-bottom:2px" title="Remover">✕</button>
   </div>`;
 }
@@ -5455,18 +5465,18 @@ function _addQsaRow() {
 function _buildFornEditHtml(f) {
   return `
     <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-400);margin:10px 0 6px">Identificação</div>
-    <div class="info-field"><label>Razão Social</label>
+    <div class="info-field"><label for="fe-razao">Razão Social</label>
       <input type="text" id="fe-razao" value="${escHtml(f.razao_social || '')}"></div>
-    <div class="info-field"><label>Nome Fantasia</label>
+    <div class="info-field"><label for="fe-fantasia">Nome Fantasia</label>
       <input type="text" id="fe-fantasia" value="${escHtml(f.nome_fantasia || '')}"></div>
-    <div class="info-field"><label>Situação Cadastral</label>
+    <div class="info-field"><label for="fe-situacao">Situação Cadastral</label>
       <input type="text" id="fe-situacao" value="${escHtml(f.situacao || '')}"></div>
-    <div class="info-field"><label>Porte</label>
+    <div class="info-field"><label for="fe-porte">Porte</label>
       <select id="fe-porte">
         <option value="">— selecione —</option>
         ${['MICRO EMPRESA','EMPRESA DE PEQUENO PORTE','EMPRESA DE MÉDIO PORTE','EMPRESA DE GRANDE PORTE','DEMAIS'].map(o=>`<option value="${o}" ${(f.porte||'').toUpperCase()===o||f.porte===o?'selected':''}>${o}</option>`).join('')}
       </select></div>
-    <div class="info-field"><label>Natureza Jurídica</label>
+    <div class="info-field"><label for="fe-nat-jur">Natureza Jurídica</label>
       <select id="fe-nat-jur">
         <option value="">— selecione —</option>
         ${[
@@ -5523,7 +5533,7 @@ function _buildFornEditHtml(f) {
           return `<option value="${escHtml(o)}" ${selected?'selected':''}>${escHtml(o)}</option>`;
         }).join('')}
       </select></div>
-    <div class="info-field"><label>Capital Social</label>
+    <div class="info-field"><label for="fe-capital">Capital Social</label>
       <input type="text" id="fe-capital" value="${f.capital_social != null ? 'R$ ' + f.capital_social.toLocaleString('pt-BR', {minimumFractionDigits:2,maximumFractionDigits:2}) : ''}" oninput="maskMoney(this)" placeholder="R$ 0,00"></div>
     <div style="display:flex;gap:16px;margin:4px 0 8px">
       <label style="display:flex;align-items:center;gap:6px;font-size:.8rem;cursor:pointer">
@@ -5536,21 +5546,21 @@ function _buildFornEditHtml(f) {
 
     <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-400);margin:10px 0 6px">Endereço</div>
     <div style="display:grid;grid-template-columns:1fr auto;gap:8px">
-      <div class="info-field" style="margin:0"><label>Logradouro</label>
+      <div class="info-field" style="margin:0"><label for="fe-logradouro">Logradouro</label>
         <input type="text" id="fe-logradouro" value="${escHtml(f.logradouro || '')}"></div>
-      <div class="info-field" style="margin:0;width:80px"><label>Número</label>
+      <div class="info-field" style="margin:0;width:80px"><label for="fe-numero">Número</label>
         <input type="text" id="fe-numero" value="${escHtml(f.numero || '')}"></div>
     </div>
-    <div class="info-field"><label>Complemento</label>
+    <div class="info-field"><label for="fe-complemento">Complemento</label>
       <input type="text" id="fe-complemento" value="${escHtml(f.complemento || '')}"></div>
-    <div class="info-field"><label>Bairro</label>
+    <div class="info-field"><label for="fe-bairro">Bairro</label>
       <input type="text" id="fe-bairro" value="${escHtml(f.bairro || '')}"></div>
     <div style="display:grid;grid-template-columns:1fr 60px 170px;gap:8px">
-      <div class="info-field" style="margin:0"><label>Município</label>
+      <div class="info-field" style="margin:0"><label for="fe-municipio">Município</label>
         <input type="text" id="fe-municipio" value="${escHtml(f.municipio || '')}"></div>
-      <div class="info-field" style="margin:0"><label>UF</label>
+      <div class="info-field" style="margin:0"><label for="fe-uf">UF</label>
         <input type="text" id="fe-uf" value="${escHtml(f.uf || '')}" maxlength="2" style="text-transform:uppercase"></div>
-      <div class="info-field" style="margin:0"><label>CEP</label>
+      <div class="info-field" style="margin:0"><label for="fe-cep">CEP</label>
         <div style="display:flex;gap:4px;align-items:center">
           <input type="text" id="fe-cep" value="${escHtml(formatCep(f.cep || ''))}" oninput="maskCep(this)" maxlength="10" placeholder="00.000-000" style="flex:1">
           <button class="btn btn-outline btn-sm" onclick="buscarCep('fe-cep','fe')" title="Preencher endereço pelo CEP (ViaCEP)" style="white-space:nowrap">🔍 CEP</button>
@@ -5559,14 +5569,14 @@ function _buildFornEditHtml(f) {
 
     <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-400);margin:10px 0 6px">Contato</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-      <div class="info-field" style="margin:0"><label>Telefone</label>
+      <div class="info-field" style="margin:0"><label for="fe-telefone">Telefone</label>
         <input type="text" id="fe-telefone" value="${escHtml(formatPhone(f.telefone || ''))}" oninput="maskPhone(this)" maxlength="15" placeholder="(00) 00000-0000"></div>
-      <div class="info-field" style="margin:0"><label>Telefone 2</label>
+      <div class="info-field" style="margin:0"><label for="fe-telefone2">Telefone 2</label>
         <input type="text" id="fe-telefone2" value="${escHtml(formatPhone(f.telefone2 || ''))}" oninput="maskPhone(this)" maxlength="15" placeholder="(00) 00000-0000"></div>
     </div>
-    <div class="info-field"><label>E-mail</label>
+    <div class="info-field"><label for="fe-email">E-mail</label>
       <input type="email" id="fe-email" value="${escHtml(f.email || '')}"></div>
-    <div class="info-field"><label>Website</label>
+    <div class="info-field"><label for="fe-website">Website</label>
       <input type="url" id="fe-website" value="${escHtml(f.website || '')}" placeholder="https://"></div>
 
     <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-400);margin:10px 0 6px">Quadro Societário (QSA)</div>
@@ -5576,7 +5586,7 @@ function _buildFornEditHtml(f) {
     <button class="btn btn-ghost btn-sm" onclick="_addQsaRow()" style="margin:4px 0 10px;font-size:.75rem">+ Adicionar sócio</button>
 
     <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-400);margin:10px 0 6px">Observações</div>
-    <div class="info-field"><label>Observações internas</label>
+    <div class="info-field"><label for="fe-obs">Observações internas</label>
       <textarea id="fe-obs" rows="2">${escHtml(f.obs || '')}</textarea></div>`;
 }
 async function _reconsultarForn() {
@@ -5724,7 +5734,7 @@ async function renderCertAlerts() {
     </div>
     <div class="cert-alert-grid">
       ${alerts.map(a => `
-        <div class="cert-alert-item ${a.status}" onclick="openFornDetail('${escHtml(a.forn.id)}',false,'certs')">
+        <div class="cert-alert-item ${a.status}" onclick="openFornDetail('${escHtml(a.forn.id)}',false,'certs')" role="button" tabindex="0">
           <div class="cert-alert-forn">${escHtml(a.forn.razao_social)}</div>
           <div class="cert-alert-tipo">${escHtml(certTipoLabel(a.cert))}</div>
           <span class="cert-alert-badge ${a.status}">${certStatusLabel(a.status, a.days)}</span>
@@ -5781,7 +5791,7 @@ function renderStallAlerts() {
   panel.innerHTML = `<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:10px 14px">
     <div style="font-size:.78rem;font-weight:700;color:#856404;margin-bottom:8px">⚠ Processos que precisam de atenção (${items.length})</div>
     <div style="display:flex;flex-wrap:wrap;gap:8px">
-      ${items.map(it => `<div onclick="openProcess('${escHtml(it.p.id)}')" style="cursor:pointer;background:#fff;border:1px solid ${it.type==='overdue'?'#dc2626':'#ffc107'};border-radius:6px;padding:6px 10px;font-size:.78rem">
+      ${items.map(it => `<div onclick="openProcess('${escHtml(it.p.id)}')" role="button" tabindex="0" style="cursor:pointer;background:#fff;border:1px solid ${it.type==='overdue'?'#dc2626':'#ffc107'};border-radius:6px;padding:6px 10px;font-size:.78rem">
         <div style="font-weight:700;color:${it.type==='overdue'?'#dc2626':'#92400e'}">${escHtml(it.numLbl)}</div>
         <div style="color:#555;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px">${escHtml(it.p.objeto)}</div>
         <div style="font-size:.7rem;color:${it.type==='overdue'?'#dc2626':'#b45309'};margin-top:2px">${it.msg}</div>
@@ -5885,25 +5895,25 @@ function _buildCertFormHtml(c) {
   const outroSel = c && c.tipoId === 'outro';
   return `
     <div class="info-field">
-      <label style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-500)">Tipo de Certidão</label>
+      <label for="ce-tipo" style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-500)">Tipo de Certidão</label>
       <select id="ce-tipo" onchange="onCeTipoChange()">${tiposHtml}</select>
     </div>
     <div class="info-field" id="ce-tipo-outro-wrap" style="display:${outroSel ? 'block' : 'none'}">
-      <label style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-500)">Descrição</label>
+      <label for="ce-tipo-outro" style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-500)">Descrição</label>
       <input type="text" id="ce-tipo-outro" value="${escHtml(c && outroSel ? c.tipoDesc || '' : '')}" placeholder="Descreva a certidão…">
     </div>
     <div class="cert-add-row">
       <div class="info-field">
-        <label style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-500)">Data de Emissão</label>
+        <label for="ce-emissao" style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-500)">Data de Emissão</label>
         <input type="date" id="ce-emissao" value="${escHtml(c ? c.emissao || '' : '')}" oninput="onCeEmissaoChange()">
       </div>
       <div class="info-field">
-        <label style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-500)">Data de Validade</label>
+        <label for="ce-validade" style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-500)">Data de Validade</label>
         <input type="date" id="ce-validade" value="${escHtml(c ? c.validade || '' : '')}">
       </div>
     </div>
     <div class="info-field">
-      <label style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-500)">Observações</label>
+      <label for="ce-obs" style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-500)">Observações</label>
       <textarea id="ce-obs" rows="2" placeholder="Número, órgão emissor, etc…">${escHtml(c ? c.obs || '' : '')}</textarea>
     </div>`;
 }
@@ -6353,7 +6363,7 @@ function renderFracPanel() {
     const razaoTag = (!isAtual && q._razao)
       ? `<span style="font-size:.65rem;color:var(--gray-500);font-style:normal;text-transform:none;display:block;margin-top:1px">${escHtml(q._razao)}</span>`
       : '';
-    return `<div class="frac-group-item" onclick="${isAtual ? '' : `openProcess('${q.id}')`}" style="${isAtual ? 'cursor:default;background:color-mix(in srgb,var(--brand) 10%,transparent);border-color:var(--brand)' : ''}">
+    return `<div class="frac-group-item" onclick="${isAtual ? '' : `openProcess('${q.id}')`}" ${isAtual ? '' : 'role="button" tabindex="0"'} style="${isAtual ? 'cursor:default;background:color-mix(in srgb,var(--brand) 10%,transparent);border-color:var(--brand)' : ''}">
       <div>
         <div class="fgi-num">${escHtml(q.num_dl ? `DL ${q.num_dl}` : q.num_proc ? `PA ${q.num_proc}` : q.num || '—')}${isAtual ? ' <em style="color:var(--brand);font-style:normal;text-transform:none">(este processo)</em>' : ''}</div>
         <div class="fgi-obj">${escHtml(q.objeto)}</div>
@@ -6509,7 +6519,7 @@ async function _buildStepCardHtml(i, p, isNext = false) {
       ${step.certidoes ? '' : `<div style="margin-top:12px">
         <label style="display:block;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-500);margin-bottom:4px">Documentos anexos</label>
         ${renderFileList(files, i)}
-        <div class="upload-zone" onclick="triggerUpload(${i})" id="dz-${i}"
+        <div class="upload-zone" onclick="triggerUpload(${i})" id="dz-${i}" role="button" tabindex="0"
              ondragover="event.preventDefault();this.classList.add('dragover')"
              ondragleave="this.classList.remove('dragover')"
              ondrop="handleDrop(event,${i})">
@@ -6529,9 +6539,9 @@ async function _buildStepCardHtml(i, p, isNext = false) {
 
   const nextBadge = isNext ? `<span class="step-next-badge" title="Próxima etapa a concluir">▶ Próxima</span>` : '';
   return `<div class="step-card ${isDone?'completed':''} ${isBlocked?'blocked':''} ${expanded?'expanded':''}" id="step-card-${i}" draggable="true" ondragstart="onStepDragStart(event,${i})" ondragover="onStepDragOver(event,${i})" ondragleave="onStepDragLeave(${i})" ondrop="onStepDrop(event,${i})">
-      <div class="step-row" onclick="toggleStep(${i})">
+      <div class="step-row" onclick="toggleStep(${i})" role="button" tabindex="0">
         <div class="step-drag-handle" onclick="event.stopPropagation()" title="Arraste para reordenar">⠿</div>
-        <div class="step-check ${isDone?'checked':''} ${isBlocked?'blocked':''}" onclick="event.stopPropagation();cycleStatus(${i})" title="Clique para alternar: Pendente → Concluída → Bloqueada → Pendente">
+        <div class="step-check ${isDone?'checked':''} ${isBlocked?'blocked':''}" onclick="event.stopPropagation();cycleStatus(${i})" role="button" tabindex="0" title="Clique para alternar: Pendente → Concluída → Bloqueada → Pendente">
           ${isDone ? `<svg width="11" height="9" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1.5" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>` : ''}
           ${isBlocked ? `<svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 2l6 6M8 2l-6 6" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>` : ''}
         </div>
@@ -6610,34 +6620,35 @@ function renderStepFields(i, step, data, certFileMap = {}) {
   let html = step.fields.map(f => {
     const label = FIELD_LABELS[f] || f;
     const val   = escHtml(data.fields[f] || autoDefaults[f] || '');
+    const fid = `step-fld-${i}-${f}`;
     if (f === 'observacoes' || f === 'justificativa_escolha') {
-      return `<label>${label}</label>
-        <textarea rows="2" onchange="updateField(${i},'${f}',this.value)">${val}</textarea>`;
+      return `<label for="${fid}">${label}</label>
+        <textarea id="${fid}" rows="2" onchange="updateField(${i},'${f}',this.value)">${val}</textarea>`;
     }
     if (DATE_FIELDS.has(f)) {
       if (i === STEPS.findIndex(s => s.avisoDispensa) && f === 'data_publicacao') {
-        return `<label>${label}</label>
-          <input type="date" value="${data.fields[f]||''}" onchange="onPublicacaoChange(${i},this.value)">`;
+        return `<label for="${fid}">${label}</label>
+          <input type="date" id="${fid}" value="${data.fields[f]||''}" onchange="onPublicacaoChange(${i},this.value)">`;
       }
-      return `<label>${label}</label>
-        <input type="date" value="${data.fields[f]||''}" onchange="updateField(${i},'${f}',this.value)">`;
+      return `<label for="${fid}">${label}</label>
+        <input type="date" id="${fid}" value="${data.fields[f]||''}" onchange="updateField(${i},'${f}',this.value)">`;
     }
     if (MONEY_FIELDS.has(f)) {
-      return `<label>${label}</label>
-        <input type="text" value="${val}" oninput="maskMoney(this)" onchange="updateField(${i},'${f}',this.value)" style="font-variant-numeric:tabular-nums">`;
+      return `<label for="${fid}">${label}</label>
+        <input type="text" id="${fid}" value="${val}" oninput="maskMoney(this)" onchange="updateField(${i},'${f}',this.value)" style="font-variant-numeric:tabular-nums">`;
     }
     if (SELECT_FIELDS[f]) {
       const opts = SELECT_FIELDS[f];
       const rawVal = data.fields[f] || '';
       const optHtml = opts.map(o => `<option value="${escHtml(o.v)}" ${rawVal === o.v ? 'selected' : ''}>${escHtml(o.l)}</option>`).join('');
-      return `<label>${label}</label>
-        <select onchange="updateField(${i},'${f}',this.value)">
+      return `<label for="${fid}">${label}</label>
+        <select id="${fid}" onchange="updateField(${i},'${f}',this.value)">
           <option value="">— Selecione —</option>
           ${optHtml}
         </select>`;
     }
-    const fieldHtml = `<label>${label}</label>
-      <input type="text" value="${val}" onchange="updateField(${i},'${f}',this.value)">`;
+    const fieldHtml = `<label for="${fid}">${label}</label>
+      <input type="text" id="${fid}" value="${val}" onchange="updateField(${i},'${f}',this.value)">`;
     // Inject CNPJ lookup right after the fornecedor field
     if (f === 'fornecedor' && step.certidoes) {
       return fieldHtml + renderFornecedorLookup(i);
@@ -6697,8 +6708,8 @@ function renderStepFields(i, step, data, certFileMap = {}) {
   }
   const notaVal = escHtml(data.fields['_notas_internas'] || '');
   html += `<div class="nota-interna-wrap">
-    <label>🔒 Nota interna (não aparece nos documentos)</label>
-    <textarea rows="2" onchange="updateField(${i},'_notas_internas',this.value)">${notaVal}</textarea>
+    <label for="step-nota-${i}">🔒 Nota interna (não aparece nos documentos)</label>
+    <textarea id="step-nota-${i}" rows="2" onchange="updateField(${i},'_notas_internas',this.value)">${notaVal}</textarea>
   </div>`;
   return html;
 }
@@ -6743,7 +6754,7 @@ function renderCertidoesSection(stepIdx, data, certFileMap = {}) {
     const certFiles = certFileMap[c.id] || [];
     const fileChips = certFiles.map(f =>
       `<span class="cert-file-chip" title="${escHtml(f.name)}">
-        <span onclick="downloadFile(${f.id})" style="cursor:pointer">📄 ${escHtml(f.name.length > 20 ? f.name.slice(0,18)+'…' : f.name)}</span>
+        <span onclick="downloadFile(${f.id})" role="button" tabindex="0" style="cursor:pointer">📄 ${escHtml(f.name.length > 20 ? f.name.slice(0,18)+'…' : f.name)}</span>
         <button onclick="deleteCertFile(${f.id},${stepIdx})" title="Remover">✕</button>
       </span>`
     ).join('');
@@ -7030,37 +7041,37 @@ function renderPropostasSection(stepIdx, data) {
       <button class="del-btn" onclick="removeProposta(${stepIdx},${pi})" title="Remover">✕</button>
       <div class="proposta-grid">
         <div class="full">
-          <label>Fornecedor</label>
+          <label for="prop-${stepIdx}-${pi}-fornecedor">Fornecedor</label>
           <div style="display:flex;gap:4px">
-            <input type="text" style="flex:1" value="${escHtml(p.fornecedor||'')}" onchange="updateProposta(${stepIdx},${pi},'fornecedor',this.value)">
+            <input type="text" id="prop-${stepIdx}-${pi}-fornecedor" style="flex:1" value="${escHtml(p.fornecedor||'')}" onchange="updateProposta(${stepIdx},${pi},'fornecedor',this.value)">
             <button class="btn btn-outline btn-sm" onclick="abrirPickFornProposta(${stepIdx},${pi})" title="Buscar do cadastro" style="padding:0 8px;white-space:nowrap">📋</button>
           </div>
         </div>
         <div>
-          <label>CNPJ</label>
-          <input type="text" value="${escHtml(p.cnpj||'')}" placeholder="00.000.000/0000-00" onchange="updateProposta(${stepIdx},${pi},'cnpj',this.value)">
+          <label for="prop-${stepIdx}-${pi}-cnpj">CNPJ</label>
+          <input type="text" id="prop-${stepIdx}-${pi}-cnpj" value="${escHtml(p.cnpj||'')}" placeholder="00.000.000/0000-00" onchange="updateProposta(${stepIdx},${pi},'cnpj',this.value)">
         </div>
         <div>
-          <label>Valor proposto (R$)</label>
-          <input type="text" value="${escHtml(p.valor||'')}" oninput="maskMoney(this)" onchange="updateProposta(${stepIdx},${pi},'valor',this.value)">
+          <label for="prop-${stepIdx}-${pi}-valor">Valor proposto (R$)</label>
+          <input type="text" id="prop-${stepIdx}-${pi}-valor" value="${escHtml(p.valor||'')}" oninput="maskMoney(this)" onchange="updateProposta(${stepIdx},${pi},'valor',this.value)">
         </div>
         <div>
-          <label>Data da proposta</label>
-          <input type="date" value="${p.data_proposta||''}" onchange="updateProposta(${stepIdx},${pi},'data_proposta',this.value)">
+          <label for="prop-${stepIdx}-${pi}-data">Data da proposta</label>
+          <input type="date" id="prop-${stepIdx}-${pi}-data" value="${p.data_proposta||''}" onchange="updateProposta(${stepIdx},${pi},'data_proposta',this.value)">
         </div>
         <div>
-          <label>Validade</label>
-          <input type="date" value="${p.validade||''}" onchange="updateProposta(${stepIdx},${pi},'validade',this.value)">
+          <label for="prop-${stepIdx}-${pi}-validade">Validade</label>
+          <input type="date" id="prop-${stepIdx}-${pi}-validade" value="${p.validade||''}" onchange="updateProposta(${stepIdx},${pi},'validade',this.value)">
         </div>
         <div>
-          <label>Situação</label>
-          <select onchange="updateProposta(${stepIdx},${pi},'situacao',this.value)">
+          <label for="prop-${stepIdx}-${pi}-situacao">Situação</label>
+          <select id="prop-${stepIdx}-${pi}-situacao" onchange="updateProposta(${stepIdx},${pi},'situacao',this.value)">
             ${Object.entries(sitLabels).map(([v,l]) => `<option value="${v}" ${p.situacao===v?'selected':''}>${l}</option>`).join('')}
           </select>
         </div>
         <div class="full">
-          <label>Observações</label>
-          <input type="text" value="${escHtml(p.obs||'')}" onchange="updateProposta(${stepIdx},${pi},'obs',this.value)">
+          <label for="prop-${stepIdx}-${pi}-obs">Observações</label>
+          <input type="text" id="prop-${stepIdx}-${pi}-obs" value="${escHtml(p.obs||'')}" onchange="updateProposta(${stepIdx},${pi},'obs',this.value)">
         </div>
       </div>
       ${p.situacao === 'recusada' ? `<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--gray-200)">
@@ -7134,16 +7145,16 @@ function renderDotacaoSection(stepIdx, data) {
   return `
   <div style="margin-top:12px;padding:12px 14px;background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--radius)">
     <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-500);margin-bottom:10px">Dotação Orçamentária</div>
-    <label>Programa/Ação</label>
-    <input type="text" value="${v('programa_acao')}" placeholder="ex: 04.122.0045.2004.0000"
+    <label for="dotacao-programa-${stepIdx}">Programa/Ação</label>
+    <input type="text" id="dotacao-programa-${stepIdx}" value="${v('programa_acao')}" placeholder="ex: 04.122.0045.2004.0000"
       oninput="updateDotacaoField(${stepIdx},'programa_acao',this.value)">
-    <label style="margin-top:8px">Elemento de Despesa</label>
-    <input type="text" value="${v('elemento_despesa')}" placeholder="ex: 3.90.39.00 Outros Serviços de Terceiros"
+    <label for="dotacao-elemento-${stepIdx}" style="margin-top:8px">Elemento de Despesa</label>
+    <input type="text" id="dotacao-elemento-${stepIdx}" value="${v('elemento_despesa')}" placeholder="ex: 3.90.39.00 Outros Serviços de Terceiros"
       oninput="updateDotacaoField(${stepIdx},'elemento_despesa',this.value)">
-    <label style="margin-top:8px">Fonte de Recursos</label>
-    <input type="text" value="${v('fonte_recursos')}" placeholder="ex: 01 - Tesouro"
+    <label for="dotacao-fonte-${stepIdx}" style="margin-top:8px">Fonte de Recursos</label>
+    <input type="text" id="dotacao-fonte-${stepIdx}" value="${v('fonte_recursos')}" placeholder="ex: 01 - Tesouro"
       oninput="updateDotacaoField(${stepIdx},'fonte_recursos',this.value)">
-    <label style="margin-top:8px">Dotação Completa</label>
+    <label for="dotacao-completa-${stepIdx}" style="margin-top:8px">Dotação Completa</label>
     <input type="text" id="dotacao-completa-${stepIdx}" value="${v('dotacao_completa')}" placeholder="Preenchida automaticamente ou manualmente"
       onchange="updateField(${stepIdx},'dotacao_completa',this.value)">
   </div>`;
@@ -7179,30 +7190,30 @@ function renderCotacoesSection(stepIdx, data) {
       <button class="del-btn" onclick="removeCotacao(${stepIdx},${ci})" title="Remover">✕</button>
       <div class="proposta-grid">
         <div>
-          <label>Fornecedor</label>
-          <input type="text" value="${escHtml(c.fornecedor||'')}" onchange="updateCotacao(${stepIdx},${ci},'fornecedor',this.value)">
+          <label for="cot-${stepIdx}-${ci}-fornecedor">Fornecedor</label>
+          <input type="text" id="cot-${stepIdx}-${ci}-fornecedor" value="${escHtml(c.fornecedor||'')}" onchange="updateCotacao(${stepIdx},${ci},'fornecedor',this.value)">
         </div>
         <div>
-          <label>CNPJ</label>
-          <input type="text" value="${escHtml(c.cnpj||'')}" placeholder="00.000.000/0000-00" onchange="updateCotacao(${stepIdx},${ci},'cnpj',this.value)">
+          <label for="cot-${stepIdx}-${ci}-cnpj">CNPJ</label>
+          <input type="text" id="cot-${stepIdx}-${ci}-cnpj" value="${escHtml(c.cnpj||'')}" placeholder="00.000.000/0000-00" onchange="updateCotacao(${stepIdx},${ci},'cnpj',this.value)">
         </div>
         <div>
-          <label>Valor cotado (R$)</label>
-          <input type="text" value="${escHtml(c.valor||'')}" oninput="maskMoney(this)" onchange="updateCotacao(${stepIdx},${ci},'valor',this.value)">
+          <label for="cot-${stepIdx}-${ci}-valor">Valor cotado (R$)</label>
+          <input type="text" id="cot-${stepIdx}-${ci}-valor" value="${escHtml(c.valor||'')}" oninput="maskMoney(this)" onchange="updateCotacao(${stepIdx},${ci},'valor',this.value)">
         </div>
         <div>
-          <label>Data da cotação</label>
-          <input type="date" value="${c.data||''}" onchange="updateCotacao(${stepIdx},${ci},'data',this.value)">
+          <label for="cot-${stepIdx}-${ci}-data">Data da cotação</label>
+          <input type="date" id="cot-${stepIdx}-${ci}-data" value="${c.data||''}" onchange="updateCotacao(${stepIdx},${ci},'data',this.value)">
         </div>
         <div>
-          <label>Situação</label>
-          <select onchange="updateCotacao(${stepIdx},${ci},'situacao',this.value)">
+          <label for="cot-${stepIdx}-${ci}-situacao">Situação</label>
+          <select id="cot-${stepIdx}-${ci}-situacao" onchange="updateCotacao(${stepIdx},${ci},'situacao',this.value)">
             ${Object.entries(sitLabels).map(([v,l]) => `<option value="${v}" ${(c.situacao||'valida')===v?'selected':''}>${l}</option>`).join('')}
           </select>
         </div>
         <div class="full">
-          <label>Observações</label>
-          <input type="text" value="${escHtml(c.obs||'')}" onchange="updateCotacao(${stepIdx},${ci},'obs',this.value)">
+          <label for="cot-${stepIdx}-${ci}-obs">Observações</label>
+          <input type="text" id="cot-${stepIdx}-${ci}-obs" value="${escHtml(c.obs||'')}" onchange="updateCotacao(${stepIdx},${ci},'obs',this.value)">
         </div>
       </div>
     </div>`).join('');
@@ -7324,25 +7335,25 @@ function renderInfoFields() {
     <div style="border-top:1px solid var(--gray-200);margin:10px 0 8px;padding-top:8px">
       <p style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-500);margin-bottom:6px">Classificação do objeto</p>
     </div>
-    <div class="info-field"><label>Natureza</label>
-      <select onchange="infoNaturezaChange(this.value)">${natOpts}</select></div>
-    <div class="info-field"><label>Categoria</label>
-      <select ${!p.natureza?'disabled':''} onchange="infoCategoriaChange(this.value)">${catOpts}</select></div>
-    <div class="info-field"><label>Subcategoria</label>
-      <select ${!p.categoria?'disabled':''} onchange="updateProcessField('subcategoria',this.value)">${subOpts}</select></div>`;
+    <div class="info-field"><label for="info-natureza">Natureza</label>
+      <select id="info-natureza" onchange="infoNaturezaChange(this.value)">${natOpts}</select></div>
+    <div class="info-field"><label for="info-categoria">Categoria</label>
+      <select id="info-categoria" ${!p.natureza?'disabled':''} onchange="infoCategoriaChange(this.value)">${catOpts}</select></div>
+    <div class="info-field"><label for="info-subcategoria">Subcategoria</label>
+      <select id="info-subcategoria" ${!p.categoria?'disabled':''} onchange="updateProcessField('subcategoria',this.value)">${subOpts}</select></div>`;
 
   const dotacaoHtml = `
     <div style="border-top:1px solid var(--gray-200);margin:10px 0 8px;padding-top:8px">
       <p style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-500);margin-bottom:6px">Dotação orçamentária</p>
     </div>
-    <div class="info-field"><label>Programa/Ação</label>
-      <input type="text" value="${escHtml(p.dotacao_programa||'')}" onchange="updateProcessField('dotacao_programa',this.value)"></div>
-    <div class="info-field"><label>Elemento de Despesa</label>
-      <input type="text" value="${escHtml(p.dotacao_elemento||'')}" onchange="updateProcessField('dotacao_elemento',this.value)"></div>
-    <div class="info-field"><label>Fonte de Recursos</label>
-      <input type="text" value="${escHtml(p.dotacao_fonte||'')}" onchange="updateProcessField('dotacao_fonte',this.value)"></div>
-    <div class="info-field"><label>Dotação completa</label>
-      <input type="text" value="${escHtml(p.dotacao_completa||'')}" onchange="updateProcessField('dotacao_completa',this.value)" placeholder="ex: 02.004.10.301.0012.2.001.33903900.01"></div>`;
+    <div class="info-field"><label for="info-dotacao-programa">Programa/Ação</label>
+      <input type="text" id="info-dotacao-programa" value="${escHtml(p.dotacao_programa||'')}" onchange="updateProcessField('dotacao_programa',this.value)"></div>
+    <div class="info-field"><label for="info-dotacao-elemento">Elemento de Despesa</label>
+      <input type="text" id="info-dotacao-elemento" value="${escHtml(p.dotacao_elemento||'')}" onchange="updateProcessField('dotacao_elemento',this.value)"></div>
+    <div class="info-field"><label for="info-dotacao-fonte">Fonte de Recursos</label>
+      <input type="text" id="info-dotacao-fonte" value="${escHtml(p.dotacao_fonte||'')}" onchange="updateProcessField('dotacao_fonte',this.value)"></div>
+    <div class="info-field"><label for="info-dotacao-completa">Dotação completa</label>
+      <input type="text" id="info-dotacao-completa" value="${escHtml(p.dotacao_completa||'')}" onchange="updateProcessField('dotacao_completa',this.value)" placeholder="ex: 02.004.10.301.0012.2.001.33903900.01"></div>`;
 
   const tagsHtml = `
     <div style="border-top:1px solid var(--gray-200);margin:10px 0 8px;padding-top:8px">
@@ -7384,14 +7395,15 @@ function renderInfoFields() {
 
   function _renderField(f) {
     const val = escHtml(p[f.key] || '');
+    const fid = `info-${f.key}`;
     const histBtn = `<button class="field-hist-btn" onclick="abrirFieldHist('${f.key}','${escHtml(f.label)}',this)" title="Ver histórico de alterações deste campo">🕐</button>`;
     if (f.type === 'textarea') {
-      return `<div class="info-field"><label style="display:flex;justify-content:space-between;align-items:center">${f.label}${histBtn}</label>
-        <textarea rows="2" onchange="updateProcessField('${f.key}',this.value)">${val}</textarea></div>`;
+      return `<div class="info-field"><label for="${fid}" style="display:flex;justify-content:space-between;align-items:center">${f.label}${histBtn}</label>
+        <textarea id="${fid}" rows="2" onchange="updateProcessField('${f.key}',this.value)">${val}</textarea></div>`;
     }
     if (f.type === 'money') {
-      return `<div class="info-field"><label style="display:flex;justify-content:space-between;align-items:center">${f.label}${histBtn}</label>
-        <input type="text" value="${val}" oninput="maskMoney(this)" onchange="updateProcessField('${f.key}',this.value)"></div>`;
+      return `<div class="info-field"><label for="${fid}" style="display:flex;justify-content:space-between;align-items:center">${f.label}${histBtn}</label>
+        <input type="text" id="${fid}" value="${val}" oninput="maskMoney(this)" onchange="updateProcessField('${f.key}',this.value)"></div>`;
     }
     if (f.type === 'select') {
       const opts = [
@@ -7403,8 +7415,8 @@ function renderInfoFields() {
         'Outro'
       ];
       const options = opts.map(o => `<option value="${o}" ${p[f.key]===o?'selected':''}>${o || 'Selecionar…'}</option>`).join('');
-      return `<div class="info-field"><label style="display:flex;justify-content:space-between;align-items:center">${f.label}${histBtn}</label>
-        <select onchange="updateProcessField('${f.key}',this.value)">${options}</select></div>`;
+      return `<div class="info-field"><label for="${fid}" style="display:flex;justify-content:space-between;align-items:center">${f.label}${histBtn}</label>
+        <select id="${fid}" onchange="updateProcessField('${f.key}',this.value)">${options}</select></div>`;
     }
     if (f.type === 'criterio') {
       const criterios = [
@@ -7416,17 +7428,17 @@ function renderInfoFields() {
       ];
       const cur = p[f.key] || 'menor_preco';
       const options = criterios.map(c => `<option value="${c.v}" ${cur===c.v?'selected':''}>${c.l}</option>`).join('');
-      return `<div class="info-field"><label style="display:flex;justify-content:space-between;align-items:center">${f.label}${histBtn}</label>
-        <select onchange="updateProcessField('${f.key}',this.value)">${options}</select></div>`;
+      return `<div class="info-field"><label for="${fid}" style="display:flex;justify-content:space-between;align-items:center">${f.label}${histBtn}</label>
+        <select id="${fid}" onchange="updateProcessField('${f.key}',this.value)">${options}</select></div>`;
     }
     if (f.type === 'date') {
-      return `<div class="info-field"><label style="display:flex;justify-content:space-between;align-items:center">${f.label}${histBtn}</label>
-        <input type="date" value="${escHtml(p[f.key] || '')}" onchange="updateProcessField('${f.key}',this.value||null)"></div>`;
+      return `<div class="info-field"><label for="${fid}" style="display:flex;justify-content:space-between;align-items:center">${f.label}${histBtn}</label>
+        <input type="date" id="${fid}" value="${escHtml(p[f.key] || '')}" onchange="updateProcessField('${f.key}',this.value||null)"></div>`;
     }
     const ML = { objeto: 500, num_proc: 40, num_dl: 40, unidade: 120, obs: 1000 };
     const ml = ML[f.key] ? `maxlength="${ML[f.key]}"` : 'maxlength="200"';
-    return `<div class="info-field"><label style="display:flex;justify-content:space-between;align-items:center">${f.label}${histBtn}</label>
-      <input type="text" value="${val}" ${ml} onchange="updateProcessField('${f.key}',this.value)"></div>`;
+    return `<div class="info-field"><label for="${fid}" style="display:flex;justify-content:space-between;align-items:center">${f.label}${histBtn}</label>
+      <input type="text" id="${fid}" value="${val}" ${ml} onchange="updateProcessField('${f.key}',this.value)"></div>`;
   }
 
   const groupedHtml = fieldGroups.map(g =>
@@ -7885,7 +7897,7 @@ async function purgeProcess(pid, numProc, objeto) {
           Para confirmar a exclusão definitiva, digite o número do processo:<br>
           <strong style="color:${txt};font-family:monospace;letter-spacing:1px">${escHtml(frase)}</strong>
         </p>
-        <input id="_del-confirm-input" type="text" placeholder="Digite aqui..."
+        <input id="_del-confirm-input" type="text" placeholder="Digite aqui..." class="wipe-confirm-inp"
           style="width:100%;padding:10px 12px;border:2px solid #dc2626;border-radius:6px;font-size:.9rem;background:${inpBg};color:${txt};outline:none;margin-bottom:16px">
         <div style="display:flex;gap:10px;justify-content:flex-end">
           <button id="_del-cancel" class="btn btn-outline btn-sm">Cancelar</button>
@@ -8313,7 +8325,7 @@ async function renderPickFornList() {
   const filtered = forns.filter(f => !q || f.razao_social?.toLowerCase().includes(q) || f.cnpj?.includes(q));
   const el = document.getElementById('forn-pick-list');
   if (!filtered.length) { el.innerHTML = '<p style="color:var(--gray-500);font-size:.82rem">Nenhum fornecedor encontrado.</p>'; return; }
-  el.innerHTML = filtered.map(f => `<div style="padding:8px 12px;border:1px solid var(--gray-200);border-radius:6px;cursor:pointer" onmouseover="this.style.borderColor='var(--brand)';this.style.background='var(--brand-light)'" onmouseout="this.style.borderColor='var(--gray-200)';this.style.background=''" onclick="pickFornForProposta('${escHtml(f.id)}')">
+  el.innerHTML = filtered.map(f => `<div style="padding:8px 12px;border:1px solid var(--gray-200);border-radius:6px;cursor:pointer" role="button" tabindex="0" onmouseover="this.style.borderColor='var(--brand)';this.style.background='var(--brand-light)'" onmouseout="this.style.borderColor='var(--gray-200)';this.style.background=''" onclick="pickFornForProposta('${escHtml(f.id)}')">
     <div style="font-weight:600;font-size:.88rem">${escHtml(f.razao_social)}</div>
     <div style="font-size:.73rem;color:var(--gray-500)">${escHtml(f.cnpj)}${f.situacao?' · '+escHtml(f.situacao):''}</div>
   </div>`).join('');
@@ -8463,7 +8475,7 @@ function renderKanban(procs) {
         const hasFrac = ['alerta','atencao'].includes(fracResultado.get(p.id)?.nivel);
         const st = processStatus(p);
         const stl = { todo:'badge-todo', progress:'badge-progress', done:'badge-done', blocked:'badge-blocked' }[st];
-        return `<div class="kanban-card" onclick="openProcess('${p.id}')">
+        return `<div class="kanban-card" onclick="openProcess('${p.id}')" role="button" tabindex="0">
           <div class="kc-num">${escHtml(nums)}</div>
           <div class="kc-obj">${escHtml(p.objeto)}${hasFrac?' <span title="Alerta de fracionamento" style="color:var(--warning)">⚠</span>':''}</div>
           <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
@@ -10531,11 +10543,11 @@ function abrirModalAssinatura(p, docNome, htmlContent, win) {
     render(`
       <h3 style="font-size:1rem;font-weight:700;margin-bottom:10px">ICP-Brasil — nível qualificado</h3>
       <p style="font-size:.78rem;color:${sub};margin-bottom:12px">Salve o PDF deste documento (ainda sem assinar) e selecione-o abaixo, junto com seu certificado A1 (.pfx) e a senha. A senha não é armazenada.</p>
-      <label style="font-size:.72rem;font-weight:600;display:block;margin-bottom:4px">PDF do documento</label>
+      <label for="sig-icp-pdf" style="font-size:.72rem;font-weight:600;display:block;margin-bottom:4px">PDF do documento</label>
       <input type="file" id="sig-icp-pdf" accept="application/pdf" style="width:100%;margin-bottom:10px">
-      <label style="font-size:.72rem;font-weight:600;display:block;margin-bottom:4px">Certificado (.pfx)</label>
+      <label for="sig-icp-cert" style="font-size:.72rem;font-weight:600;display:block;margin-bottom:4px">Certificado (.pfx)</label>
       <input type="file" id="sig-icp-cert" accept=".pfx,.p12" style="width:100%;margin-bottom:10px">
-      <label style="font-size:.72rem;font-weight:600;display:block;margin-bottom:4px">Senha do certificado</label>
+      <label for="sig-icp-senha" style="font-size:.72rem;font-weight:600;display:block;margin-bottom:4px">Senha do certificado</label>
       <input type="password" id="sig-icp-senha" style="width:100%;padding:6px 8px;margin-bottom:14px">
       <div style="display:flex;justify-content:space-between">
         <button class="btn btn-outline btn-sm" id="sig-voltar">Voltar</button>
@@ -12063,9 +12075,9 @@ function renderModalTemplatBar() {
   if (tpls.length === 0) { bar.style.display = 'none'; return; }
   bar.style.display = '';
   list.innerHTML = tpls.map(t => `
-    <span class="template-chip" onclick="applyTemplate('${t.id}')">
+    <span class="template-chip" onclick="applyTemplate('${t.id}')" role="button" tabindex="0">
       <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(t.nome)}</span>
-      <span class="template-chip-del" onclick="event.stopPropagation();deleteTemplate('${t.id}')" title="Remover modelo">✕</span>
+      <span class="template-chip-del" onclick="event.stopPropagation();deleteTemplate('${t.id}')" role="button" tabindex="0" title="Remover modelo">✕</span>
     </span>`).join('');
 }
 
@@ -12195,7 +12207,7 @@ async function renderNotificacoes() {
   const _bg   = { prazo:'#FFF3CD', vencido:'#FCEBEB', parado:'#F3F4F6', cert:'#EFF6FF', vigencia:'#FFF3CD', 'vigencia-vencida':'#FCEBEB' };
   window._notifItens = itens;
   list.innerHTML = itens.map((it, i) => `
-    <div class="notif-item" style="cursor:pointer" onclick="_notifClick(${i})">
+    <div class="notif-item" style="cursor:pointer" onclick="_notifClick(${i})" role="button" tabindex="0">
       <div class="notif-icon" style="background:${_bg[it.tipo]}">${_icon[it.tipo]}</div>
       <div class="notif-body">
         <div class="notif-title">${escHtml(it.titulo)}</div>
@@ -12791,7 +12803,7 @@ function renderVinculoSearch(q) {
   if (!results.length) { el.innerHTML = `<p style="padding:10px;font-size:.8rem;color:var(--gray-500)">Nenhum processo encontrado.</p>`; return; }
   el.innerHTML = results.map(pr => {
     const nums = [pr.num_proc && 'PA '+pr.num_proc, pr.num_dl && 'DL '+pr.num_dl].filter(Boolean).join(' · ');
-    return `<div onclick="selecionarVinculo('${pr.id}')" style="padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--gray-100)" onmouseover="this.style.background='var(--gray-50)'" onmouseout="this.style.background=''">
+    return `<div onclick="selecionarVinculo('${pr.id}')" role="button" tabindex="0" style="padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--gray-100)" onmouseover="this.style.background='var(--gray-50)'" onmouseout="this.style.background=''">
       <div style="font-size:.72rem;color:var(--gray-500)">${escHtml(nums)}</div>
       <div style="font-size:.85rem;font-weight:500">${escHtml(pr.objeto)}</div>
     </div>`;
@@ -12858,7 +12870,7 @@ function renderGlobalSearch(q) {
     const nums = [p.num_proc && 'PA ' + p.num_proc, p.num_dl && 'DL ' + p.num_dl].filter(Boolean).join(' · ');
     const st = processStatus(p);
     const stl = { todo:'badge-todo', progress:'badge-progress', done:'badge-done', blocked:'badge-blocked' }[st];
-    return `<div class="gsearch-item" onclick="fecharGlobalSearch();openProcess('${p.id}')">
+    return `<div class="gsearch-item" onclick="fecharGlobalSearch();openProcess('${p.id}')" role="button" tabindex="0">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
         <span style="font-size:.7rem;color:var(--gray-500)">${escHtml(nums)}</span>
         <span class="badge ${stl}" style="font-size:.62rem">${statusLabel(st)}</span>
@@ -13344,11 +13356,65 @@ document.addEventListener('keydown', e => {
   if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); abrirGlobalSearch(); }
   if (e.key === 'Escape') {
     // Fecha o primeiro modal aberto encontrado, em ordem de prioridade
+    // (overlay-pin e overlay-force-pwd ficam de fora de propósito — são telas
+    // de acesso obrigatório, não devem ser fecháveis por Esc)
     if (!document.getElementById('global-search-overlay').classList.contains('hidden')) { fecharGlobalSearch(); return; }
     if (!document.getElementById('cert-edit-overlay').classList.contains('hidden')) { closeCertEdit(); return; }
     if (!document.getElementById('forn-modal-overlay').classList.contains('hidden')) { closeFornModal(); return; }
+    if (!document.getElementById('forn-pick-overlay').classList.contains('hidden')) { fecharPickForn(); return; }
+    if (!document.getElementById('conf-overlay').classList.contains('hidden')) { fecharConformidade(); return; }
+    if (!document.getElementById('usuario-modal-overlay').classList.contains('hidden')) { fecharModalUsuario(); return; }
+    if (!document.getElementById('modal-templates').classList.contains('hidden')) { fecharModalTemplates(); return; }
+    if (!document.getElementById('modal-csv').classList.contains('hidden')) { fecharModalCsv(); return; }
+    if (!document.getElementById('email-modal').classList.contains('hidden')) { fecharEmailModal(); return; }
+    if (!document.getElementById('vinculo-modal').classList.contains('hidden')) { fecharVinculoModal(); return; }
+    if (!document.getElementById('confirm-overlay').classList.contains('hidden')) { document.getElementById('confirm-cancel').click(); return; }
     if (!document.getElementById('modal-overlay').classList.contains('hidden')) { closeModal(); return; }
   }
+
+  // Ativa por Enter/Espaço elementos não-nativos com role="button" (divs/spans clicáveis)
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.getAttribute('role') === 'button') {
+    e.preventDefault();
+    e.target.click();
+  }
+});
+
+// ── Foco automático e devolução de foco para todos os modais (.overlay) ──
+// Genérico, via MutationObserver na classe de cada overlay — não exige tocar
+// nas funções de abrir/fechar de cada modal individualmente.
+(() => {
+  const FOCUSABLE_SEL = 'input:not([type=hidden]):not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])';
+  const _returnFocus = new WeakMap();
+
+  document.querySelectorAll('.overlay').forEach(overlay => {
+    const obs = new MutationObserver(() => {
+      const isOpen = !overlay.classList.contains('hidden');
+      if (isOpen) {
+        if (!_returnFocus.has(overlay)) _returnFocus.set(overlay, document.activeElement);
+        const body  = overlay.querySelector('.modal-body') || overlay;
+        const alvo  = body.querySelector(FOCUSABLE_SEL) || overlay.querySelector(FOCUSABLE_SEL);
+        if (alvo) alvo.focus();
+      } else {
+        const prev = _returnFocus.get(overlay);
+        if (prev && document.body.contains(prev)) prev.focus();
+        _returnFocus.delete(overlay);
+      }
+    });
+    obs.observe(overlay, { attributes: true, attributeFilter: ['class'] });
+  });
+})();
+
+// ── Prende o Tab dentro do modal aberto ──
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Tab') return;
+  const overlay = document.querySelector('.overlay:not(.hidden)');
+  if (!overlay) return;
+  const FOCUSABLE_SEL = 'input:not([type=hidden]):not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])';
+  const focusables = Array.from(overlay.querySelectorAll(FOCUSABLE_SEL)).filter(el => el.offsetParent !== null);
+  if (!focusables.length) return;
+  const first = focusables[0], last = focusables[focusables.length - 1];
+  if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+  else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
 });
 
 if (location.protocol === 'file:') {
