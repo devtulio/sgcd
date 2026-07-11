@@ -5,6 +5,14 @@
 
 ---
 
+## [2.28.0] — 2026-07-11
+
+### Corrigido
+- **Painel de "Histórico do Registro" (e a lista da Agenda) apareciam transparentes** — o token `--bg-card` nunca tinha sido definido em nenhum tema (claro ou escuro), deixando esses painéis sem fundo. Mesmo bug corrigido antes no SGCA (v0.23.2); portado aqui para manter os 3 sistemas sincronizados
+
+### Adicionado
+- **Exportação PNCP ganha diálogo nativo de "Salvar como"** — `exportarPNCP()` agora usa a File System Access API (`showSaveFilePicker`) no Chrome/Edge para deixar escolher onde salvar o JSON, com fallback automático para o download tradicional em navegadores sem suporte. Mesma melhoria já aplicada às exportações PNCP do SGCA (v0.23.2)
+
 ## [2.27.0] — 2026-07-10
 
 ### Adicionado — Acessibilidade (WCAG 2.1 AA)

@@ -31,6 +31,7 @@
     --gray-700:     #374151;
     --gray-800:     #1f2937;
     --gray-900:     #111827;
+    --bg-card: #fff;
     --radius: 8px;
     --shadow: 0 1px 3px rgba(0,0,0,.10), 0 1px 2px rgba(0,0,0,.06);
     --shadow-md: 0 4px 6px rgba(0,0,0,.07), 0 2px 4px rgba(0,0,0,.06);
@@ -733,6 +734,7 @@
     --gray-700:     #c8c3bc;
     --gray-800:     #f0ece8; /* original #1f2937 é quase invisível sobre fundo escuro; reaproveita o tom já usado no --gray-900 */
     --gray-900:     #f0ece8;
+    --bg-card:      #2a2a2a;
     --shadow:       0 1px 4px rgba(0,0,0,.5), 0 1px 2px rgba(0,0,0,.3);
     --shadow-md:    0 4px 12px rgba(0,0,0,.6), 0 2px 4px rgba(0,0,0,.3);
   }
@@ -2588,7 +2590,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.27.0';
+const SGCD_VERSION = '2.28.0';
 // URL absoluta (não relativa) porque API_BASE também monta o texto do QR Code
 // de verificação de assinatura, lido por celular fora do navegador — precisa
 // da origem real, nunca uma porta fixa (era 'http://localhost:3000' hardcoded).
@@ -9300,10 +9302,42 @@ ${_qrFooter(proc)}
   _gerarDocumento(win, html, 'Aviso de Dispensa de Licitação');
 }
 
+// Salva um arquivo texto pedindo ao usuário onde salvar (File System Access API,
+// suportada no Chrome/Edge — navegadores recomendados pelo sistema); em
+// navegadores sem suporte, cai no download tradicional (pasta padrão do navegador).
+// Retorna false se o usuário cancelou o diálogo, para o chamador não seguir
+// como se o arquivo tivesse sido salvo (ex.: não registrar auditoria).
+async function _salvarArquivoComo(conteudo, nomeArquivo, mimeType) {
+  if (window.showSaveFilePicker) {
+    try {
+      const ext = '.' + nomeArquivo.split('.').pop();
+      const handle = await window.showSaveFilePicker({
+        suggestedName: nomeArquivo,
+        types: [{ description: 'Arquivo', accept: { [mimeType]: [ext] } }],
+      });
+      const writable = await handle.createWritable();
+      await writable.write(conteudo);
+      await writable.close();
+      return true;
+    } catch (e) {
+      if (e.name === 'AbortError') return false; // usuário cancelou o diálogo
+      // outros erros (ex.: navegador bloqueou por política): cai no fallback abaixo
+    }
+  }
+  const blob = new Blob([conteudo], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = nomeArquivo;
+  link.click();
+  URL.revokeObjectURL(url);
+  return true;
+}
+
 // ══════════════════════════════════════════════════════════════
 // EXPORTAR JSON PNCP — Portal Nacional de Contratações Públicas
 // ══════════════════════════════════════════════════════════════
-function exportarPNCP() {
+async function exportarPNCP() {
   const p = currentProcess;
   const u = getUser();
   if (!p) return;
@@ -9435,13 +9469,9 @@ function exportarPNCP() {
   };
 
   const json = JSON.stringify(payload, null, 2);
-  const blob = new Blob([json], { type: 'application/json' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href = url;
-  a.download = `PNCP_${p.num_dl || p.num_proc || 'dispensa'}_${new Date().toISOString().slice(0,10)}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
+  const nomeArquivo = `PNCP_${p.num_dl || p.num_proc || 'dispensa'}_${new Date().toISOString().slice(0,10)}.json`;
+  const salvo = await _salvarArquivoComo(json, nomeArquivo, 'application/json');
+  if (!salvo) return;
 
   if (nullFields.length) {
     toast(`JSON exportado com ${nullFields.length} campo(s) pendente(s) — veja "_pendencias" no arquivo.`, 'warn');
