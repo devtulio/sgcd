@@ -145,6 +145,7 @@
     <div class="toc-item h3"><a href="#sec1-2">1.2 Para quem é destinado</a></div>
     <div class="toc-item h3"><a href="#sec1-3">1.3 Requisitos mínimos</a></div>
     <div class="toc-item h3"><a href="#sec1-4">1.4 Aviso sobre armazenamento de dados</a></div>
+    <div class="toc-item h3"><a href="#sec1-5">1.5 Uso em rede local</a></div>
 
     <div class="toc-item h2"><a href="#sec2">2. Primeiro Acesso — Configuração Inicial</a></div>
     <div class="toc-item h3"><a href="#sec2-1">2.1 Acessando as configurações</a></div>
@@ -274,6 +275,23 @@
   <strong>Importante:</strong> A partir da versão 2.0, todos os dados do SGCD (processos, fornecedores, configurações e anexos) são armazenados no arquivo <strong><code>sgcd.db</code></strong> (SQLite), localizado na mesma pasta do sistema. Os dados <strong>não dependem do navegador</strong> e não serão perdidos ao limpar o cache ou trocar de navegador.<br><br>
   O sistema opera em <code>http://localhost:3000</code> (iniciado pelo <strong>Iniciar SGCD.bat</strong>). Nunca abra o arquivo <code>SGCD.html</code> diretamente pelo navegador — sem o servidor, o sistema não funciona.<br><br>
   <strong>Atenção:</strong> Faça <strong>backups regulares</strong> do arquivo <code>sgcd.db</code> ou use a função de exportação em Configurações → Backup de Dados. A perda ou exclusão do arquivo <code>sgcd.db</code> implica perda permanente dos dados.
+</div>
+
+<h3 id="sec1-5">1.5 Uso em rede local</h3>
+<p>O SGCD foi projetado para uso <strong>multiusuário em rede local (LAN)</strong>: uma única máquina executa o servidor (e guarda o banco de dados <code>sgcd.db</code>) e as demais acessam pelo navegador, sem instalar nada.</p>
+<p><strong>Na máquina servidora (configuração única):</strong></p>
+<ol>
+  <li>Execute o arquivo <strong><code>Liberar Porta SGCD.bat</code></strong> como Administrador (botão direito → <em>Executar como administrador</em>). Ele cria a regra no Firewall do Windows liberando a porta <strong>3000</strong> para conexões de entrada — precisa ser feito apenas uma vez</li>
+  <li>Inicie o sistema normalmente pelo <code>Iniciar SGCD.bat</code> e deixe a máquina ligada. Ao iniciar, o console exibe o endereço de rede pronto para distribuir aos usuários (ex.: <code>Rede: http://192.168.x.x:3000/SGCD.html</code>)</li>
+</ol>
+<p><strong>Nas demais máquinas:</strong> basta abrir o navegador (Chrome ou Edge) no endereço do servidor:</p>
+<p style="text-align:center"><code>http://192.168.x.x:3000/SGCD.html</code></p>
+<p>Cada usuário faz login com sua própria conta — o servidor atende acessos simultâneos e todos trabalham sobre os mesmos dados.</p>
+<div class="dica">
+  <strong>Conexão não funciona?</strong> Execute o <code>Diagnostico SGCD.bat</code> (ou a opção <strong>[3]</strong> do <code>Iniciar SGCD.bat</code>) na máquina servidora: ele descobre o IP, verifica e corrige automaticamente firewall, perfil de rede e antivírus de terceiros, e testa a acessibilidade pela LAN. Veja também a seção <a href="#sec23">23 — Painel de Diagnóstico</a>.
+</div>
+<div class="aviso">
+  <strong>Uso restrito à rede interna.</strong> A comunicação entre as máquinas é HTTP simples (sem criptografia de transporte) — adequado para uma rede interna confiável do órgão, mas <strong>nunca exponha a porta do sistema à internet</strong> (redirecionamento de porta no roteador, DMZ etc.). Para acesso remoto, utilize a VPN institucional.
 </div>
 
 <hr class="section-divider">
