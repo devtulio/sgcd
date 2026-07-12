@@ -80,15 +80,26 @@ Funciona em rede local: um único computador executa o servidor e todos os usuá
 
 ### Acesso em rede local
 
-Outros usuários acessam pelo IP do computador servidor:
+O sistema foi projetado para uso multiusuário em rede local (LAN): **uma única máquina executa o servidor** (e guarda o banco de dados) e as demais acessam pelo navegador, sem instalar nada.
+
+**Na máquina servidora (uma vez só):**
+
+1. Execute **`Liberar Porta SGCD.bat`** como Administrador (botão direito → *Executar como administrador*) — cria a regra no Firewall do Windows liberando a porta 3000 para conexões de entrada
+2. Inicie o sistema pelo `Iniciar SGCD.bat` e deixe a máquina ligada — ao iniciar, o console mostra o endereço de rede pronto para distribuir (`Rede: http://<IP>:3000/SGCD.html`)
+
+**Nas outras máquinas:** basta abrir o navegador (Chrome ou Edge) no endereço do servidor:
 
 ```
 http://192.168.x.x:3000/SGCD.html
 ```
 
-Execute **`Diagnostico SGCD.bat`** (ou a opção **[3]** do `Iniciar SGCD.bat`) para descobrir o IP, verificar e corrigir automaticamente firewall, perfil de rede e antivírus de terceiros. Ele também testa se há outros dispositivos alcançáveis na rede — útil para identificar isolamento de cliente (Wi-Fi) ou VLANs separadas, casos que exigem intervenção do time de TI.
+Cada usuário faz login com sua própria conta — o servidor atende acessos simultâneos e todos enxergam os mesmos dados.
+
+Se a conexão não funcionar, execute **`Diagnostico SGCD.bat`** (ou a opção **[3]** do `Iniciar SGCD.bat`) na máquina servidora: ele descobre o IP, verifica e corrige automaticamente firewall, perfil de rede e antivírus de terceiros. Ele também testa se há outros dispositivos alcançáveis na rede — útil para identificar isolamento de cliente (Wi-Fi) ou VLANs separadas, casos que exigem intervenção do time de TI.
 
 > Se o diagnóstico indicar tudo certo mas outra máquina ainda não conseguir acessar, é sinal de bloqueio fora do alcance do Windows (isolamento de rede corporativa, VLAN, ou firewall de outro dispositivo/roteador) — nesse caso, use o teste indicado pelo próprio diagnóstico (`ping` e `Test-NetConnection`) a partir da outra máquina para confirmar e leve essa evidência ao TI.
+
+> ⚠️ **Uso restrito à rede interna.** A comunicação é HTTP simples (sem criptografia de transporte) — adequado para uma LAN interna confiável, mas **nunca exponha a porta do sistema à internet** (redirecionamento de porta no roteador, DMZ etc.). Para acesso remoto, use a VPN institucional.
 
 ---
 
