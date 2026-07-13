@@ -5,6 +5,12 @@
 
 ---
 
+## [2.29.3] — 2026-07-13
+
+### Adicionado
+- **Relatório de Backup e Integridade** — novo botão na aba Dados de Configurações gera um documento imprimível com status do backup automático, tamanhos em disco, contagens gerais do sistema (processos, fornecedores, arquivos, usuários, etiquetas, assinaturas) e os eventos recentes de backup/restauração/reset, no mesmo padrão do SGDP
+- **Auditoria de restauração e reset de fábrica** — restaurar um backup (JSON ou .db) e o reset de fábrica agora registram um evento na trilha de auditoria, o que antes não acontecia
+
 ## [2.29.2] — 2026-07-13
 
 ### Alterado

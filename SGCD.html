@@ -1879,6 +1879,7 @@
             </button>
           </div>
           <p style="font-size:.7rem;color:var(--gray-500);margin-bottom:12px;line-height:1.5">Backups automáticos e manuais do banco são salvos nesta pasta.</p>
+          <button class="btn btn-outline btn-sm" onclick="gerarRelatorioIntegridade()" style="margin-bottom:12px">📊 Relatório de Backup e Integridade</button>
 
           <hr style="border:none;border-top:1px solid var(--gray-100);margin:4px 0 12px">
 
@@ -2592,7 +2593,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.29.2';
+const SGCD_VERSION = '2.29.3';
 // URL absoluta (não relativa) porque API_BASE também monta o texto do QR Code
 // de verificação de assinatura, lido por celular fora do navegador — precisa
 // da origem real, nunca uma porta fixa (era 'http://localhost:3000' hardcoded).
@@ -4463,7 +4464,8 @@ const _AUDIT_EVENT_LABELS = {
   FORNECEDOR_ALTERADO: 'Fornecedor alterado', CAMPO_ALTERADO: 'Campo alterado',
   FORNECEDOR_EXCLUIDO: 'Fornecedor movido p/ lixeira', FORNECEDOR_RESTAURADO: 'Fornecedor restaurado',
   FORNECEDOR_EXPURGADO: 'Fornecedor excluído definitivamente',
-  PNCP_EXPORT: 'Exportação PNCP', SYNC_BACKUP: 'Sincronização de backup'
+  PNCP_EXPORT: 'Exportação PNCP', SYNC_BACKUP: 'Sincronização de backup',
+  RESTAURAR_BACKUP: 'Backup restaurado (JSON)', RESTAURAR_DB: 'Banco restaurado (.db)', FACTORY_RESET: 'Reset de fábrica'
 };
 
 const _AUDIT_EVENT_META = {
@@ -4485,7 +4487,10 @@ const _AUDIT_EVENT_META = {
   FORNECEDOR_EXPURGADO: { bg: '#FCEBEB', color: '#A32D2D' },
   CAMPO_ALTERADO:       { bg: '#EBEBEB', color: '#666360' },
   PNCP_EXPORT:          { bg: '#e8eef7', color: '#1a3a6b' },
-  SYNC_BACKUP:          { bg: '#E1F5EE', color: '#0F6E56' }
+  SYNC_BACKUP:          { bg: '#E1F5EE', color: '#0F6E56' },
+  RESTAURAR_BACKUP:     { bg: '#FFF3D8', color: '#854F0B' },
+  RESTAURAR_DB:         { bg: '#FFF3D8', color: '#854F0B' },
+  FACTORY_RESET:        { bg: '#FCEBEB', color: '#A32D2D' }
 };
 
 
@@ -4636,6 +4641,86 @@ ${_qrFooterReport('Relatório de Auditoria')}
 </body></html>`;
 
   _gerarDocumento(window.open('', '_blank', 'width=1000,height=720'), html, 'Relatório de Auditoria');
+}
+
+async function gerarRelatorioIntegridade() {
+  const r = await API.get('/api/relatorio/integridade');
+  if (!r.ok) { toast('Erro ao gerar relatório (acesso restrito a administradores).', 'error'); return; }
+  const d = await API.json(r);
+
+  const u = getUser();
+  const orgao = u.orgao || 'Órgão Público';
+  const municipio = u.municipio || '';
+
+  const c = d.contagens;
+  const linhasContagem = [
+    ['Processos ativos', c.processos_ativos], ['Processos na lixeira', c.na_lixeira],
+    ['Fornecedores cadastrados', c.fornecedores], ['PDFs anexados', c.arquivos],
+    ['Usuários ativos', c.usuarios_ativos], ['Etiquetas', c.etiquetas],
+    ['Assinaturas digitais registradas', c.assinaturas],
+  ].map(([lbl, n]) => `<tr><td>${escHtml(lbl)}</td><td style="text-align:right;font-weight:700">${n}</td></tr>`).join('');
+
+  const dias = d.last_backup ? Math.floor((Date.now() - new Date(d.last_backup).getTime()) / 86400000) : null;
+  const statusBackup = !d.auto_backup_enabled
+    ? '<span style="color:#dc2626;font-weight:700">Backup automático desativado</span>'
+    : dias === null ? '<span style="color:#dc2626;font-weight:700">Nenhum backup registrado</span>'
+    : dias >= 3 ? `<span style="color:#dc2626;font-weight:700">Último backup há ${dias} dia(s)</span>`
+    : `<span style="color:#16a34a">Último backup: ${fmtDataHoraAudit(d.last_backup)}</span>`;
+
+  const linhasEventos = (d.eventos_recentes || []).map(e =>
+    `<tr><td>${fmtDataHoraAudit(e.ts)}</td><td>${escHtml(e.user_nome || '—')}</td><td>${escHtml(_AUDIT_EVENT_LABELS[e.type] || e.type)}</td><td>${escHtml(e.detail || '—')}</td></tr>`
+  ).join('');
+
+  const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+<title>${escHtml(_nomeArquivoDoc(null, 'RELATORIO DE BACKUP E INTEGRIDADE'))}</title>
+<style>${_DOC_CSS}
+  body { font-family: 'Times New Roman', Times, serif; font-size: 11pt; color: #000; background: #fff; padding: 2cm 2.5cm; }
+  .header { text-align: center; margin-bottom: 20pt; border-bottom: 2px solid #000; padding-bottom: 12pt; }
+  .header img { height: 90pt; width: auto; margin-bottom: 6pt; }
+  .header h1 { font-size: 13pt; font-weight: 700; text-transform: uppercase; }
+  .doc-title { text-align: center; margin: 14pt 0 10pt; }
+  .doc-title h3 { font-size: 13pt; font-weight: 700; text-transform: uppercase; }
+  .doc-title .sub { font-size: 10pt; color: #444; margin-top: 4pt; }
+  table { width: 100%; border-collapse: collapse; margin-top: 8pt; font-size: 9pt; }
+  th { background: #1a1a2e; color: #fff; padding: 5pt 7pt; text-align: center; vertical-align: middle; font-weight: 700; }
+  td { padding: 4pt 7pt; vertical-align: middle; font-size: 8.5pt; border-bottom: 1px solid #e0e0e0; }
+  tr:nth-child(even) td { background: #f7f7f7; }
+</style></head><body>
+<button class="btn-print no-print" onclick="window.print()">🖨 Imprimir / Salvar PDF</button>
+<div class="header">
+  <img src="data:image/png;base64,__BRASAO_PLACEHOLDER__" alt="Brasão">
+  <h1>${escHtml(orgao)}</h1>
+  <h2>${escHtml(municipio)}</h2>
+</div>
+<div class="doc-title">
+  <h3>Relatório de Backup e Integridade</h3>
+  <div class="sub">Sistema de Gestão de Contratação Direta — SGCD &nbsp;·&nbsp; Lei Federal nº 14.133/2021</div>
+</div>
+
+<h4 style="font-size:11pt;margin-bottom:6pt">Status do backup automático</h4>
+<p style="font-size:10.5pt;margin-bottom:4pt">${statusBackup}</p>
+<table>
+  <tr><td>Pasta de backup</td><td style="font-size:8pt">${escHtml(d.backup_path)}</td></tr>
+  <tr><td>Backups mantidos (config.)</td><td>${d.auto_backup_keep}</td></tr>
+  <tr><td>Backups .db no disco</td><td>${d.backups_db_count} arquivo(s) — ${fmtSize(d.backups_db_size_bytes)}</td></tr>
+  <tr><td>Backups .json no disco</td><td>${d.backups_json_count} arquivo(s)</td></tr>
+  <tr><td>Tamanho do banco de dados</td><td>${fmtSize(d.db_size_bytes)}</td></tr>
+  <tr><td>Tamanho da pasta de PDFs</td><td>${fmtSize(d.uploads_size_bytes)} (${d.uploads_count} arquivo(s))</td></tr>
+</table>
+
+<h4 style="font-size:11pt;margin:16pt 0 6pt">Contagens gerais</h4>
+<table>${linhasContagem}</table>
+
+<h4 style="font-size:11pt;margin:16pt 0 6pt">Eventos recentes de backup/restauração</h4>
+${d.eventos_recentes?.length ? `<table>
+  <thead><tr><th style="width:110pt">Data/hora</th><th style="width:100pt">Usuário</th><th style="width:110pt">Ação</th><th>Detalhes</th></tr></thead>
+  <tbody>${linhasEventos}</tbody>
+</table>` : '<p style="font-size:10pt;color:#666">Nenhum evento de backup/restauração registrado.</p>'}
+
+${_qrFooterReport('Relatório de Backup e Integridade')}
+</body></html>`;
+
+  _gerarDocumento(window.open('', '_blank', 'width=900,height=720'), html, 'Relatório de Backup e Integridade');
 }
 
 async function exportarAuditoriaCSV() {
