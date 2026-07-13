@@ -1734,7 +1734,7 @@
                 Verde
               </label>
               <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.82rem">
-                <input type="radio" name="s-tema-cor" value="roxo" style="accent-color:#1a3a6b">
+                <input type="radio" name="s-tema-cor" value="roxo" style="accent-color:#5E2750">
                 <span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:#5E2750;vertical-align:middle" title="Roxo"></span>
                 Roxo
               </label>
@@ -1846,7 +1846,7 @@
             <label style="display:flex;align-items:center;gap:6px;font-size:.82rem;cursor:pointer"><input type="checkbox" id="s-smtp-ssl" style="width:15px;height:15px"> Usar SSL direto (porta 465)</label>
           </div>
           <div style="margin-top:6px">
-            <label style="display:flex;align-items:center;gap:6px;font-size:.82rem;cursor:pointer;color:var(--text-secondary)">
+            <label style="display:flex;align-items:center;gap:6px;font-size:.82rem;cursor:pointer;color:var(--gray-500)">
               <input type="checkbox" id="s-smtp-ignore-ssl" style="width:15px;height:15px">
               Ignorar verificação de certificado SSL <span style="font-size:.75rem;color:var(--warning,#b45309)">(apenas para servidores internos / autoassinados)</span>
             </label>
@@ -2590,7 +2590,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.29.0';
+const SGCD_VERSION = '2.29.1';
 // URL absoluta (não relativa) porque API_BASE também monta o texto do QR Code
 // de verificação de assinatura, lido por celular fora do navegador — precisa
 // da origem real, nunca uma porta fixa (era 'http://localhost:3000' hardcoded).
