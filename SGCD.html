@@ -1403,7 +1403,7 @@
 
   <!-- ── Modal de Usuário ── -->
   <div class="overlay hidden" id="usuario-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="usuario-modal-titulo">
-    <div class="modal" style="max-width:420px">
+    <div class="modal">
       <div class="modal-header">
         <h2 id="usuario-modal-titulo">Novo Usuário</h2>
         <button class="btn btn-ghost btn-icon" onclick="fecharModalUsuario()">✕</button>
@@ -1441,6 +1441,8 @@
           <label style="display:flex;align-items:center;gap:6px;font-size:.85rem;cursor:pointer">
             <input type="checkbox" id="_u-admin"> Administrador
           </label>
+        </div>
+        <div id="_u-ativo-row" style="display:none;margin-top:6px">
           <label style="display:flex;align-items:center;gap:6px;font-size:.85rem;cursor:pointer">
             <input type="checkbox" id="_u-ativo"> Ativo
           </label>
@@ -2590,7 +2592,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.29.1';
+const SGCD_VERSION = '2.29.2';
 // URL absoluta (não relativa) porque API_BASE também monta o texto do QR Code
 // de verificação de assinatura, lido por celular fora do navegador — precisa
 // da origem real, nunca uma porta fixa (era 'http://localhost:3000' hardcoded).
@@ -11499,6 +11501,7 @@ function abrirModalNovoUsuario() {
   document.getElementById('_u-matricula').value = '';
   document.getElementById('_u-admin').checked = false;
   document.getElementById('_u-ativo').checked = true;
+  document.getElementById('_u-ativo-row').style.display = 'none';
   document.getElementById('usuario-modal-overlay').classList.remove('hidden');
 }
 
@@ -11522,6 +11525,7 @@ async function abrirModalEditarUsuario(id) {
   document.getElementById('_u-matricula').value = u.matricula || '';
   document.getElementById('_u-admin').checked = !!u.admin;
   document.getElementById('_u-ativo').checked = !!u.ativo;
+  document.getElementById('_u-ativo-row').style.display = '';
   document.getElementById('usuario-modal-overlay').classList.remove('hidden');
 }
 

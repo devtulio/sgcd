@@ -5,6 +5,11 @@
 
 ---
 
+## [2.29.2] — 2026-07-13
+
+### Alterado
+- **Modal de "Novo Usuário"/"Editar Usuário" sincronizado com o padrão do SGDP** — largura ampliada de 420px para 560px, e a opção "Ativo" agora fica escondida ao criar um usuário novo (só aparece ao editar), igual aos demais sistemas da família
+
 ## [2.29.1] — 2026-07-13
 
 ### Corrigido — Auditoria de consistência visual (P3)
