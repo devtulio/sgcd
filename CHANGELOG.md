@@ -5,6 +5,11 @@
 
 ---
 
+## [2.29.0] — 2026-07-13
+
+### Corrigido — Auditoria de consistência visual (P1)
+- **Resquícios do laranja da marca antiga removidos** — 7 pontos ainda usavam `rgba(233,84,32,…)` (#E95420, identidade anterior) em anéis de foco e brilhos: pulso do botão Salvar em Configurações, foco dos filtros, card de etapa expandido (incl. fundos quentes claro/escuro) e foco do editor de e-mail. Agora derivam do brand via `color-mix(in srgb, var(--brand) N%, …)` — e passam a acompanhar automaticamente o tema de cor escolhido (azul/verde/roxo)
+
 ## [2.28.0] — 2026-07-11
 
 ### Corrigido

@@ -181,8 +181,8 @@
   .cfg-panel.active { display:block; min-height:calc(100vh - 56px - 48px - 130px); }
   #view-settings.active { display:block; }
   #settings-inner { width:100%; }
-  #btn-save-settings.has-changes { animation: cfg-pulse 1.8s ease-in-out infinite; box-shadow: 0 0 0 3px rgba(233,84,32,.25); }
-  @keyframes cfg-pulse { 0%,100% { box-shadow:0 0 0 3px rgba(233,84,32,.25); } 50% { box-shadow:0 0 0 6px rgba(233,84,32,.08); } }
+  #btn-save-settings.has-changes { animation: cfg-pulse 1.8s ease-in-out infinite; box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 25%, transparent); }
+  @keyframes cfg-pulse { 0%,100% { box-shadow:0 0 0 3px color-mix(in srgb, var(--brand) 25%, transparent); } 50% { box-shadow:0 0 0 6px color-mix(in srgb, var(--brand) 8%, transparent); } }
 
   /* ── Skeleton loading ────────────────────────────── */
   @keyframes skeleton-pulse {
@@ -271,7 +271,7 @@
     color: var(--gray-900); outline: none;
   }
   .filters input { flex: 1; min-width: 180px; }
-  .filters input:focus, .filters select:focus { border-color: var(--brand); outline: 2px solid rgba(233,84,32,.2); }
+  .filters input:focus, .filters select:focus { border-color: var(--brand); outline: 2px solid color-mix(in srgb, var(--brand) 20%, transparent); }
   #aud-q:focus, #aud-tipo:focus, #aud-de:focus, #aud-ate:focus { border-color: var(--brand); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 25%, transparent); }
 
   /* process cards */
@@ -410,9 +410,9 @@
   }
   .step-card.completed { border-color: var(--success); border-left-color: var(--success); }
   .step-card.blocked   { border-color: var(--danger);  border-left-color: var(--danger); }
-  .step-card.expanded  { border-color: var(--brand); border-left-color: var(--brand); box-shadow: 0 0 0 3px rgba(233,84,32,.12), var(--shadow-md); background: #fffaf8; }
-  body.dark .step-card.expanded { background: #2a1f1a; border-color: var(--brand); border-left-color: var(--brand); box-shadow: 0 0 0 3px rgba(233,84,32,.18), var(--shadow-md); }
-  .step-card.expanded .step-row { background: rgba(233,84,32,.04); }
+  .step-card.expanded  { border-color: var(--brand); border-left-color: var(--brand); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 12%, transparent), var(--shadow-md); background: color-mix(in srgb, var(--brand) 3%, #fff); }
+  body.dark .step-card.expanded { background: color-mix(in srgb, var(--brand) 15%, #1a1a1a); border-color: var(--brand); border-left-color: var(--brand); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 18%, transparent), var(--shadow-md); }
+  .step-card.expanded .step-row { background: color-mix(in srgb, var(--brand) 4%, transparent); }
 
   .step-row {
     display: flex; align-items: center; gap: 12px; padding: 12px 14px;
@@ -576,7 +576,7 @@
   ._etb:hover { background:var(--gray-200); }
   ._etb-sep { display:inline-block;width:1px;background:var(--gray-300);margin:2px 3px;align-self:stretch; }
   ._etb-sel { background:var(--gray-50);border:1px solid var(--gray-200);border-radius:4px;padding:3px 4px;font-size:.78rem;cursor:pointer;color:var(--gray-700);height:auto;line-height:1.4; }
-  #email-body-forn:focus, #email-body-int:focus { border-color:var(--brand); box-shadow:0 0 0 2px rgba(233,84,32,.15); }
+  #email-body-forn:focus, #email-body-int:focus { border-color:var(--brand); box-shadow:0 0 0 2px color-mix(in srgb, var(--brand) 15%, transparent); }
 
   .modal-footer {
     padding: 14px 24px; border-top: 1px solid var(--gray-200);
@@ -2590,7 +2590,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.28.0';
+const SGCD_VERSION = '2.29.0';
 // URL absoluta (não relativa) porque API_BASE também monta o texto do QR Code
 // de verificação de assinatura, lido por celular fora do navegador — precisa
 // da origem real, nunca uma porta fixa (era 'http://localhost:3000' hardcoded).
