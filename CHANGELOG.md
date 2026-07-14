@@ -5,6 +5,11 @@
 
 ---
 
+## [2.29.4] — 2026-07-13
+
+### Alterado
+- **Migração para o esqueleto compartilhado da família** (`_esqueleto/base.css`/`base.js`/`sgx_base.py`, vendorizados via `sync.py`) — remove duplicação de CSS/JS/backend entre SGCD/SGCA/SGDP/SGEA (tokens, tema de cor, sidebar, modal, tela de login, toast, busca global, notificações, `get_db`, hashing, sessões, watchdog, e-mail). Sem mudança de comportamento visível; funções com divergência genuína (segurança de sessão, e-mail, configurações) continuam locais a cada sistema.
+
 ## [2.29.3] — 2026-07-13
 
 ### Adicionado
