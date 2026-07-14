@@ -1,4 +1,4 @@
-# SGCD v2.29.7 — Servidor local: SQLite, autenticação, REST API, proxy CNPJ, e-mail SMTP, backup automático
+# SGCD v2.29.8 — Servidor local: SQLite, autenticação, REST API, proxy CNPJ, e-mail SMTP, backup automático
 import http.server
 import socketserver
 import os
@@ -227,17 +227,13 @@ _record_login_failure = _rate_limiter.record_failure
 _clear_login_failures = _rate_limiter.clear
 
 # ── Sessões ──────────────────────────────────────────────────────────────────
-# Mantidas locais (não no sgx_base): get_session() faz um SELECT de colunas
-# explícito (não u.*) por segurança — nunca deve devolver a coluna de hash de
-# senha junto com os dados da sessão.
+# create_session/delete_session/renew_session/active_sessions delegam pro
+# sgx_base (mecânica idêntica nos 4 sistemas). get_session() fica local: faz
+# um SELECT de colunas explícito (não u.*) por segurança — nunca deve devolver
+# a coluna de hash de senha junto com os dados da sessão — e as colunas
+# selecionadas divergem por sistema (schema de usuarios não é idêntico).
 def create_session(user_id):
-    token = secrets.token_urlsafe(32)
-    expires = time.time() + SESSION_TTL
-    with get_db() as conn:
-        conn.execute('DELETE FROM sessions WHERE expires < ?', (time.time(),))
-        conn.execute('INSERT INTO sessions (token,user_id,expires) VALUES (?,?,?)',
-                     (token, user_id, expires))
-    return token
+    return sgx_base.create_session(get_db, user_id, SESSION_TTL)
 
 def get_session(token):
     if not token:
@@ -253,17 +249,13 @@ def get_session(token):
     return dict(row) if row else None
 
 def delete_session(token):
-    with get_db() as conn:
-        conn.execute('DELETE FROM sessions WHERE token=?', (token,))
+    sgx_base.delete_session(get_db, token)
 
 def renew_session(token):
-    with get_db() as conn:
-        conn.execute('UPDATE sessions SET expires=? WHERE token=?',
-                     (time.time() + SESSION_TTL, token))
+    sgx_base.renew_session(get_db, token, SESSION_TTL)
 
 def active_sessions():
-    with get_db() as conn:
-        return conn.execute('SELECT COUNT(*) FROM sessions WHERE expires>?', (time.time(),)).fetchone()[0]
+    return sgx_base.active_sessions(get_db)
 
 def _check_shutdown():
     """O servidor nunca encerra sozinho por contagem de sessões — só via Ctrl+C

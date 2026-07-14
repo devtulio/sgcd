@@ -5,6 +5,11 @@
 
 ---
 
+## [2.29.8] — 2026-07-14
+
+### Removido
+- **`create_session`/`delete_session`/`renew_session`/`active_sessions` reimplementadas localmente**, mecanicamente idênticas ao esqueleto compartilhado (`_esqueleto/sgx_base.py`) — agora delegam pro `sgx_base`, mantendo a mesma assinatura local. `get_session()` permanece local (SELECT de colunas explícito por segurança, colunas divergem por sistema)
+
 ## [2.29.7] — 2026-07-14
 
 ### Corrigido
