@@ -32,6 +32,8 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from urllib.parse import urlparse, parse_qs
 
+import sgx_base   # esqueleto compartilhado da família — ver _esqueleto/README.md
+
 PORT          = int(os.environ.get('SGCD_PORT', 3000))
 _BASE         = os.path.dirname(os.path.abspath(__file__))
 # SGCD_DATA_DIR: usado pelos testes E2E para isolar banco/uploads/backups do
@@ -63,24 +65,17 @@ _had_session      = False   # True após primeiro login; controla quando o backu
 _backup_pos_sess  = False   # True = backup pós-sessão já executado; aguarda nova sessão para resetar
 
 # ── Banco de dados ────────────────────────────────────────────────────────────
+# _ConnAutoClose vem do sgx_base (esqueleto compartilhado da família) — mantido
+# como alias de módulo porque o nome é referenciado diretamente em vários pontos
+# do arquivo (backup/restore/integrity check), não só dentro de get_db().
+_ConnAutoClose = sgx_base.ConnAutoClose
 
-class _ConnAutoClose(sqlite3.Connection):
-    """sqlite3.Connection.__exit__ só faz commit/rollback da transação — não fecha
-    a conexão. Sem isso, todo `with get_db() as conn:` (63 pontos no arquivo) vaza
-    uma conexão aberta por chamada. Fecha a conexão junto, sem precisar alterar
-    nenhum call site."""
-    def __exit__(self, exc_type, exc, tb):
-        try:
-            return super().__exit__(exc_type, exc, tb)
-        finally:
-            self.close()
-
+# get_db() fica local (não um valor capturado no import) porque os testes
+# reatribuem DB_PATH depois do import (setUpModule isola o banco num dir
+# temporário) — get_db() precisa reler esse global a cada chamada, não uma
+# closure de DB_PATH.
 def get_db():
-    conn = sqlite3.connect(DB_PATH, factory=_ConnAutoClose)
-    conn.row_factory = sqlite3.Row
-    conn.execute('PRAGMA journal_mode=WAL')
-    conn.execute('PRAGMA foreign_keys=ON')
-    return conn
+    return sgx_base.connect_db(DB_PATH)
 
 def init_db():
     with get_db() as conn:
@@ -221,41 +216,20 @@ def init_db():
             print('Usuário padrão criado: admin / admin123 — troque a senha no primeiro acesso.')
 
 # ── Segurança ─────────────────────────────────────────────────────────────────
+# hash/verify de senha vêm do sgx_base (esqueleto compartilhado da família)
+_hash_password   = sgx_base.hash_password
+_verify_password = sgx_base.verify_password
 
-def _hash_password(password, salt=None):
-    if salt is None:
-        salt = secrets.token_hex(16)
-    dk = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt.encode('utf-8'), 100_000)
-    return f'{salt}:{dk.hex()}'
+# ── Rate limit de login (vem do sgx_base) ───────────────────────────────────
+_rate_limiter = sgx_base.LoginRateLimiter(max_attempts=5, lockout_window=300)
+_login_rate_limited   = _rate_limiter.is_locked
+_record_login_failure = _rate_limiter.record_failure
+_clear_login_failures = _rate_limiter.clear
 
-def _verify_password(password, stored):
-    try:
-        salt, _ = stored.split(':', 1)
-        return secrets.compare_digest(_hash_password(password, salt), stored)
-    except Exception:
-        return False
-
-# ── Rate limit de login ─────────────────────────────────────────────────────
-# ponytail: dict em memória, sem lock — pior caso é uma contagem levemente
-# imprecisa sob concorrência, não uma falha; zera a cada reinício do servidor.
-LOGIN_MAX_ATTEMPTS   = 5
-LOGIN_LOCKOUT_WINDOW = 300   # 5 min — janela deslizante de tentativas falhas
-_login_failures = {}   # username (lower) -> [timestamps de tentativas falhas]
-
-def _login_rate_limited(username):
-    key = (username or '').strip().lower()
-    now = time.time()
-    attempts = [t for t in _login_failures.get(key, []) if now - t < LOGIN_LOCKOUT_WINDOW]
-    _login_failures[key] = attempts
-    return len(attempts) >= LOGIN_MAX_ATTEMPTS
-
-def _record_login_failure(username):
-    key = (username or '').strip().lower()
-    _login_failures.setdefault(key, []).append(time.time())
-
-def _clear_login_failures(username):
-    _login_failures.pop((username or '').strip().lower(), None)
-
+# ── Sessões ──────────────────────────────────────────────────────────────────
+# Mantidas locais (não no sgx_base): get_session() faz um SELECT de colunas
+# explícito (não u.*) por segurança — nunca deve devolver a coluna de hash de
+# senha junto com os dados da sessão.
 def create_session(user_id):
     token = secrets.token_urlsafe(32)
     expires = time.time() + SESSION_TTL
@@ -1860,32 +1834,8 @@ def _assinar_pdf_icp(pdf_bytes, cert_bytes, senha):
     finally:
         os.remove(pfx_path)
 
-def _send_email_raw(smtp, frm, to, subj, html, plain=''):
-    msg = MIMEMultipart('alternative')
-    msg['Subject'] = subj
-    msg['From']    = f"{frm['name']} <{frm['email']}>"
-    msg['To']      = to if isinstance(to, str) else ', '.join(to)
-    if plain: msg.attach(MIMEText(plain, 'plain', 'utf-8'))
-    msg.attach(MIMEText(html, 'html', 'utf-8'))
-
-    port = int(smtp.get('port', 587))
-    host = smtp['host']
-    user = smtp['auth']['user']
-    pw   = smtp['auth']['pass']
-
-    ctx = ssl.create_default_context()
-    if smtp.get('ignoreSSL'):
-        ctx.check_hostname = False
-        ctx.verify_mode    = ssl.CERT_NONE
-
-    if smtp.get('secure'):
-        with smtplib.SMTP_SSL(host, port, context=ctx) as s:
-            s.login(user, pw); s.send_message(msg)
-    else:
-        with smtplib.SMTP(host, port) as s:
-            s.ehlo()
-            if smtp.get('requireTLS', True): s.starttls(context=ctx)
-            s.login(user, pw); s.send_message(msg)
+# _send_email_raw vem do sgx_base (esqueleto compartilhado da família)
+_send_email_raw = sgx_base.send_email_raw
 
 def _send_daily_alerts():
     """Resumo diário por e-mail de prazos vencendo e processos parados.
@@ -2004,8 +1954,7 @@ def _watchdog():
         time.sleep(5)
         if _watchdog_paused:
             continue
-        with get_db() as conn:
-            conn.execute('DELETE FROM sessions WHERE expires<?', (time.time(),))
+        sgx_base.purge_expired_sessions(get_db)
         try: _check_shutdown()
         except Exception as e: _log.error('Erro em _check_shutdown: %s', e)
         if time.time() - _last_trash_purge > 3600:

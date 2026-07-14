@@ -5,184 +5,32 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SGCD</title>
 <link rel="icon" type="image/x-icon" href="sgcd.ico">
+<link rel="stylesheet" href="base.css">
 <style>
+  /* Cor institucional real do SGCD (base.css só traz um neutro de bootstrap) */
   :root {
     --brand:        #1a3a6b;
     --brand-light:  #e8eef7;
     --brand-dark:   #102855;
     --accent:       #1a3a6b;
     --accent-light: #2a5298;
-    --success:      #15803d;
-    --success-light:#dcfce7;
-    --warning:      #d97706;
-    --warning-light:#fef3c7;
-    --danger:       #dc2626;
-    --danger-light: #fee2e2;
     --green:  #15803d; --green-bg:  #dcfce7;
     --red:    #dc2626; --red-bg:    #fee2e2;
     --yellow: #d97706; --yellow-bg: #fef3c7;
-    --gray-50:      #f9fafb;
-    --gray-100:     #f3f4f6;
-    --gray-200:     #e5e7eb;
-    --gray-300:     #d1d5db;
-    --gray-400:     #6b7280; /* igual ao --gray-500: #9ca3af sobre branco só tem 2.54:1 de contraste (falha WCAG AA) */
-    --gray-500:     #6b7280;
-    --gray-600:     #4b5563;
-    --gray-700:     #374151;
-    --gray-800:     #1f2937;
-    --gray-900:     #111827;
-    --bg-card: #fff;
-    --radius: 8px;
-    --shadow: 0 1px 3px rgba(0,0,0,.10), 0 1px 2px rgba(0,0,0,.06);
-    --shadow-md: 0 4px 6px rgba(0,0,0,.07), 0 2px 4px rgba(0,0,0,.06);
-    --shadow-lg: 0 10px 25px rgba(0,0,0,.12);
   }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  html { font-size: 16px; }
-  html.font-pequena { font-size: 14px; }
-  html.font-grande  { font-size: 18px; }
-
-  /* Temas de cor alternativos */
-  html.tema-azul {
-    --brand:        #0066CC;
-    --brand-light:  #e0eeff;
-    --brand-dark:   #0052a3;
-    --accent:       #0052a3;
-    --accent-light: #0066CC;
-  }
-  html.tema-verde {
-    --brand:        #1a7a3c;
-    --brand-light:  #dcfce7;
-    --brand-dark:   #145e2d;
-    --accent:       #145e2d;
-    --accent-light: #1a7a3c;
-  }
-  html.tema-roxo {
-    --brand:        #5E2750;
-    --brand-light:  #f5edf3;
-    --brand-dark:   #44193a;
-    --accent:       #44193a;
-    --accent-light: #5E2750;
-  }
-
-  body {
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: var(--gray-50);
-    color: var(--gray-900);
-    min-height: 100vh;
-  }
-
-  /* ── Sidebar ─────────────────────────────────────── */
-  /* ── Sidebar (estilo SGDP) ───────────────────────────── */
-  #sidebar {
-    position: fixed; left: 0; top: 0; bottom: 0; width: 220px;
-    background: var(--accent); color: #fff;
-    display: flex; flex-direction: column; overflow-y: auto; z-index: 90;
-  }
-  .sidebar-logo {
-    padding: 16px 18px 14px; border-bottom: 1px solid rgba(255,255,255,.12);
-    text-align: center;
-  }
-  .sidebar-brasao { width: 80px; height: 80px; object-fit: contain; display: block; margin: 0 auto 10px; filter: drop-shadow(0 2px 4px rgba(0,0,0,.4)); }
-  .sidebar-logo .s-title { font-size: 20px; font-weight: 800; letter-spacing: -.5px; }
-  .sidebar-logo .s-sub   { font-size: 10px; opacity: .7; text-transform: uppercase; letter-spacing: .5px; margin-top: 2px; }
-  .sidebar-logo .s-muni  { font-size: 11px; opacity: .85; margin-top: 6px; line-height: 1.3; }
-  .sidebar-nav { flex: 1; padding: 8px 0; }
-  .nav-section { font-size: 10px; font-weight: 700; text-transform: uppercase;
-    letter-spacing: .8px; opacity: .65; padding: 14px 18px 6px; }
-  .nav-item {
-    display: flex; align-items: center; gap: 10px; padding: 9px 18px;
-    font-size: 13px; font-weight: 500; color: rgba(255,255,255,.8);
-    cursor: pointer; transition: all .15s; border-left: 3px solid transparent;
-    border: none; background: none; width: 100%; text-align: left;
-    border-left: 3px solid transparent;
-  }
-  .nav-item:hover { background: rgba(255,255,255,.08); color: #fff; }
-  .nav-item.active { background: rgba(255,255,255,.14); color: #fff;
-    border-left-color: var(--brand); font-weight: 600; }
-  .nav-item .nav-ico { width: 18px; text-align: center; flex-shrink: 0; opacity: .85;
-    display: flex; align-items: center; justify-content: center; }
-  .nav-badge { margin-left: auto; background: rgba(255,255,255,.2);
-    border-radius: 10px; padding: 1px 7px; font-size: 11px; font-weight: 700; }
-  .nav-badge.danger { background: var(--danger); }
-  .sidebar-user {
-    padding: 14px 18px; border-top: 1px solid rgba(255,255,255,.12);
-    display: flex; align-items: center; gap: 10px; flex-shrink: 0;
-  }
-  .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,.2);
-    display: flex; align-items: center; justify-content: center;
-    font-weight: 700; font-size: 13px; flex-shrink: 0; }
-  .user-info { flex: 1; min-width: 0; }
-  .user-nome  { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .user-cargo { font-size: 10px; opacity: .6; }
-  .btn-sair { background: none; border: none; color: rgba(255,255,255,.6);
-    padding: 4px; border-radius: 4px; cursor: pointer; transition: color .15s; }
-  .btn-sair:hover { color: #fff; }
 
   /* compat stubs — removidos do HTML mas podem ser referenciados por JS */
   .nav-btn { display: none; }
   #app.sidebar-expanded-app { padding-left: calc(220px + 24px); }
 
-  /* ── Sidebar search + date ───────────────────────── */
-  .sidebar-search {
-    padding: 10px 12px;
-    border-bottom: 1px solid rgba(255,255,255,.1);
-  }
-  .sidebar-search button {
-    width: 100%; display: flex; align-items: center; gap: 8px;
-    background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15);
-    color: rgba(255,255,255,.75); border-radius: 6px;
-    padding: 7px 10px; font-size: .78rem; cursor: pointer;
-    transition: background .15s;
-  }
-  .sidebar-search button:hover { background: rgba(255,255,255,.18); color: #fff; }
-  .sidebar-search .search-shortcut {
-    margin-left: auto; font-size: .65rem; opacity: .6;
-    background: rgba(255,255,255,.15); padding: 1px 5px; border-radius: 3px;
-  }
-  .sidebar-date {
-    padding: 8px 18px 10px;
-    font-size: .7rem; color: rgba(255,255,255,.65);
-    border-bottom: 1px solid rgba(255,255,255,.08);
-    line-height: 1.4;
-  }
-
-  /* ── Layout ──────────────────────────────────────── */
-  #app { padding: 24px 32px 24px calc(220px + 24px); }
-  @media (max-width: 760px) { #sidebar { display: none; } #app { padding-left: 16px; } footer { padding-left: 16px !important; } }
-  #app.layout-expanded { padding: 24px 24px 24px calc(220px + 24px); }
   #app.layout-expanded #agenda-body   { max-width: none !important; padding: 0 0 32px !important; }
   #app.layout-expanded #audit-inner   { max-width: none !important; padding: 0 0 16px !important; }
-  #app.layout-expanded #settings-inner { max-width: none !important; }
 
   /* Modo compacto: limita largura do dashboard, detalhe, fornecedores e configurações */
   #app:not(.layout-expanded) #view-dash,
   #app:not(.layout-expanded) #view-detail,
   #app:not(.layout-expanded) #view-fornecedores,
   #app:not(.layout-expanded) #view-settings { max-width: 960px; margin: 0 auto; }
-
-  /* ── Views ───────────────────────────────────────── */
-  .view { display: none; }
-  .view.active { display: block; }
-
-  /* ── Settings Tabs ──────────────────────────────── */
-  .cfg-tabs { display:flex; gap:2px; border-bottom:2px solid var(--gray-200); margin-bottom:24px; }
-  .cfg-tab {
-    padding:8px 18px; font-size:.78rem; font-weight:600; letter-spacing:.4px;
-    text-transform:uppercase; color:var(--gray-500); cursor:pointer;
-    border:none; background:none; border-bottom:2px solid transparent;
-    margin-bottom:-2px; border-radius:4px 4px 0 0; transition:color .15s, border-color .15s;
-  }
-  .cfg-tab:hover { color:var(--gray-700); }
-  .cfg-tab.active { color:var(--brand); border-bottom-color:var(--brand); }
-  .cfg-panel { display:none; }
-  .cfg-panel.active { display:block; min-height:calc(100vh - 56px - 48px - 130px); }
-  #view-settings.active { display:block; }
-  #settings-inner { width:100%; }
-  #btn-save-settings.has-changes { animation: cfg-pulse 1.8s ease-in-out infinite; box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 25%, transparent); }
-  @keyframes cfg-pulse { 0%,100% { box-shadow:0 0 0 3px color-mix(in srgb, var(--brand) 25%, transparent); } 50% { box-shadow:0 0 0 6px color-mix(in srgb, var(--brand) 8%, transparent); } }
 
   /* ── Skeleton loading ────────────────────────────── */
   @keyframes skeleton-pulse {
@@ -353,24 +201,11 @@
   .progress-fill.done { background: var(--success); }
   .progress-pct { font-size: .75rem; font-weight: 600; color: var(--gray-500); white-space: nowrap; }
 
-  .badge {
-    display: inline-block; padding: 2px 9px; border-radius: 99px;
-    font-size: .7rem; font-weight: 600; text-transform: uppercase; letter-spacing: .4px;
-  }
   .badge-todo     { background: var(--gray-100); color: var(--gray-500); }
   .badge-progress { background: var(--warning-light); color: var(--warning); }
   .badge-done     { background: var(--success-light); color: var(--success); }
   .badge-blocked  { background: var(--danger-light); color: var(--danger); }
 
-  /* empty state */
-  .empty {
-    text-align: center; padding: 64px 24px; color: var(--gray-500);
-    display: flex; flex-direction: column; align-items: center; gap: 12px;
-  }
-  .empty svg { opacity: .2; }
-  .empty p { font-size: .95rem; line-height: 1.6; }
-  .empty .empty-title { font-size: 1.05rem; font-weight: 600; color: var(--gray-700); }
-  .empty .empty-btn { margin-top: 4px; }
 
   /* ── Process detail ──────────────────────────────── */
   .detail-header {
@@ -486,17 +321,6 @@
   }
   .sidebar-card .body { padding: 12px 16px; }
 
-  /* info fields */
-  .info-field { margin-bottom: 12px; }
-  .info-field label { display: block; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--gray-500); margin-bottom: 3px; }
-  .info-field input, .info-field select, .info-field textarea {
-    width: 100%; border: 1px solid var(--gray-200); border-radius: 6px;
-    padding: 7px 10px; font-size: .85rem; font-family: inherit; color: var(--gray-900);
-    outline: none;
-  }
-  .info-field input:focus, .info-field select:focus, .info-field textarea:focus { border-color: var(--brand); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 25%, transparent); }
-  .info-field textarea { min-height: 60px; resize: vertical; }
-
   /* timeline */
   .timeline { display: flex; flex-direction: column; gap: 0; }
   .tl-item { display: flex; gap: 10px; padding: 8px 0; position: relative; }
@@ -514,41 +338,7 @@
   .tl-action { font-size: .8rem; font-weight: 600; }
   .tl-time   { font-size: .72rem; color: var(--gray-500); }
 
-  /* ── Modal / Overlay ─────────────────────────────── */
-  .overlay {
-    position: fixed; inset: 0; background: rgba(0,0,0,.45);
-    display: flex; align-items: center; justify-content: center;
-    z-index: 200; padding: 16px;
-  }
-  .overlay.hidden { display: none; }
-  .modal {
-    background: #fff; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,.2);
-    width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto;
-  }
-  .modal-header {
-    padding: 16px 24px; display: flex; justify-content: space-between; align-items: center;
-    border-bottom: 3px solid var(--brand); position: sticky; top: 0;
-    background: var(--accent); z-index: 1; border-radius: 12px 12px 0 0;
-  }
-  .modal-header h2, .modal-header h3 { font-size: .9rem; font-weight: 500; color: #fff; letter-spacing: .8px; }
-  .modal-header .btn-ghost { color: rgba(255,255,255,.7); }
-  .modal-header .btn-ghost:hover { background: rgba(255,255,255,.1); color: #fff; }
-  .modal-body { padding: 20px 24px; }
-  /* ── Notificações in-app ── */
-  #notif-panel { position:fixed;bottom:16px;width:360px;max-height:460px;overflow-y:auto;background:#fff;border:1px solid var(--gray-200);border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.28);z-index:9999;display:none;flex-direction:column }
-  body.dark #notif-panel { background:#1e2028 }
-  #notif-panel.open { display:flex }
-  .notif-header { padding:12px 16px 8px;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--gray-500);border-bottom:1px solid var(--gray-100);display:flex;justify-content:space-between;align-items:center }
-  .notif-item { padding:10px 16px;border-bottom:1px solid var(--gray-100);cursor:pointer;transition:background .1s;display:flex;gap:10px;align-items:flex-start }
-  .notif-item:hover { background:var(--gray-50) }
-  .notif-item:last-child { border-bottom:none }
-  .notif-icon { width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px }
-  .notif-body { flex:1;min-width:0 }
-  .notif-title { font-size:.8rem;font-weight:600;color:var(--gray-800);white-space:nowrap;overflow:hidden;text-overflow:ellipsis }
-  .notif-sub { font-size:.72rem;color:var(--gray-500);margin-top:2px }
-  .notif-empty { padding:24px 16px;text-align:center;font-size:.82rem;color:var(--gray-500) }
   #btn-notif { position:relative }
-  #notif-count { display:none }
 
   /* ── Templates de processo ── */
   .template-chip { display:inline-flex;align-items:center;gap:6px;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:99px;padding:3px 10px;font-size:.75rem;cursor:pointer;transition:background .12s;max-width:100%;overflow:hidden }
@@ -578,36 +368,6 @@
   ._etb-sel { background:var(--gray-50);border:1px solid var(--gray-200);border-radius:4px;padding:3px 4px;font-size:.78rem;cursor:pointer;color:var(--gray-700);height:auto;line-height:1.4; }
   #email-body-forn:focus, #email-body-int:focus { border-color:var(--brand); box-shadow:0 0 0 2px color-mix(in srgb, var(--brand) 15%, transparent); }
 
-  .modal-footer {
-    padding: 14px 24px; border-top: 1px solid var(--gray-200);
-    display: flex; justify-content: flex-end; gap: 10px;
-    position: sticky; bottom: 0; background: #fff;
-  }
-
-  /* ── Buttons ─────────────────────────────────────── */
-  .btn {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 8px 16px; border-radius: var(--radius); font-size: .85rem; font-weight: 600;
-    border: none; cursor: pointer; transition: all .15s; font-family: inherit;
-  }
-  .btn-primary { background: var(--brand); color: #fff; }
-  .btn-primary:hover { background: var(--brand-dark); }
-  .btn-success { background: var(--success); color: #fff; }
-  .btn-success:hover { background: #155e32; }
-  .btn-danger  { background: var(--danger); color: #fff; }
-  .btn-danger:hover  { background: #991b1b; }
-  .btn-outline {
-    background: #fff; color: var(--gray-700); border: 1px solid var(--gray-200);
-  }
-  .btn-outline:hover { border-color: var(--brand); color: var(--brand); }
-  .btn-ghost { background: transparent; color: var(--gray-500); padding: 6px 10px; }
-  .btn-ghost:hover { background: var(--gray-100); color: var(--gray-900); }
-  .btn-sm { padding: 5px 12px; font-size: .78rem; }
-  .btn-icon { padding: 6px; border-radius: 6px; position: relative; }
-  .btn-icon::after { content: ''; position: absolute; inset: -6px; }
-  .icon-touch-target::after { content: ''; position: absolute; inset: -6px; }
-  .btn[disabled] { opacity: .45; cursor: not-allowed; }
-
   /* file upload zone */
   .upload-zone {
     border: 2px dashed var(--gray-300); border-radius: var(--radius);
@@ -617,27 +377,6 @@
   }
   .upload-zone:hover, .upload-zone.dragover { border-color: var(--brand); color: var(--brand); background: var(--brand-light); }
   .upload-zone input { display: none; }
-
-  /* toast */
-  #toast {
-    position: fixed; bottom: 24px; right: 24px; z-index: 300;
-    display: flex; flex-direction: column; gap: 8px; pointer-events: none;
-  }
-  .toast-msg {
-    background: var(--accent); color: #fff; padding: 10px 16px;
-    border-radius: var(--radius); font-size: .8rem; box-shadow: var(--shadow-md);
-    animation: slideIn .2s ease; max-width: 320px;
-    border-left: 4px solid var(--brand);
-  }
-  .toast-msg.success { background: var(--accent); border-color: var(--success); }
-  .toast-msg.error   { background: var(--accent); border-color: var(--danger); }
-  @keyframes slideIn { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-
-  /* scrollbar */
-  ::-webkit-scrollbar { width: 8px; height: 8px; }
-  ::-webkit-scrollbar-track { background: var(--gray-100); }
-  ::-webkit-scrollbar-thumb { background: var(--accent-light); border-radius: 4px; }
-  ::-webkit-scrollbar-thumb:hover { background: var(--brand); }
 
   /* ── Propostas ───────────────────────────────────── */
   .propostas-wrap { margin-top: 14px; }
@@ -721,24 +460,8 @@
   .cert-file-chip button { background: none; border: none; cursor: pointer; color: var(--gray-500); font-size: .72rem; padding: 0; line-height: 1; flex-shrink: 0; }
   .cert-file-chip button:hover { color: var(--danger); }
 
-  /* ── Dark mode (Yaru Dark) ───────────────────────── */
-  body.dark {
-    --brand-light:  #3d1a0a; /* laranja — sobrescrito pelos temas abaixo */
-    --gray-50:      #1a1a1a;
-    --gray-100:     #242424;
-    --gray-200:     #323232;
-    --gray-300:     #555550;
-    --gray-400:     #9ca3af; /* valor claro original do root — sobre fundo escuro já passa 5.65:1 */
-    --gray-500:     #9a9691;
-    --gray-600:     #9a9691; /* original #4b5563 é escuro demais sobre fundo escuro (~1.9:1); reaproveita o tom já usado no --gray-500 */
-    --gray-700:     #c8c3bc;
-    --gray-800:     #f0ece8; /* original #1f2937 é quase invisível sobre fundo escuro; reaproveita o tom já usado no --gray-900 */
-    --gray-900:     #f0ece8;
-    --bg-card:      #2a2a2a;
-    --shadow:       0 1px 4px rgba(0,0,0,.5), 0 1px 2px rgba(0,0,0,.3);
-    --shadow-md:    0 4px 12px rgba(0,0,0,.6), 0 2px 4px rgba(0,0,0,.3);
-  }
-  body.dark { background: #1a1a1a; color: #f0ece8; }
+  /* ── Dark mode (Yaru Dark) — só o que é específico do SGCD;
+     tokens/componentes genéricos vêm do base.css ── */
   body.dark .stat          { background: #2a2a2a; border-color: #383838; }
   body.dark .stat.done     { background: #0d2e15; border-color: var(--success); }
   body.dark .stat.prog     { background: #2e1e00; border-color: var(--warning); }
@@ -747,19 +470,9 @@
   body.dark .process-card,
   body.dark .step-card,
   body.dark .sidebar-card,
-  body.dark .modal,
   body.dark .proposta-card { background: #2a2a2a; border-color: #383838; }
   body.dark .step-body,
-  body.dark .modal-body,
-  body.dark .modal-footer,
   body.dark .sidebar-card .body { background: #2a2a2a; }
-  body.dark input, body.dark textarea, body.dark select {
-    background: #323232; border-color: #444; color: #f0ece8;
-  }
-  body.dark input:focus, body.dark textarea:focus, body.dark select:focus {
-    border-color: var(--brand); background: #3a3a3a;
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 35%, transparent);
-  }
   body.dark .filters input, body.dark .filters select { background: #2a2a2a; }
   body.dark .step-body { border-top-color: #383838; }
   body.dark .tl-item:not(:last-child)::before { background: #383838; }
@@ -769,34 +482,10 @@
   body.dark .badge-todo { background: #323232; }
   body.dark .proposta-card.vencedora { background: #0d2e15; }
   body.dark .proposta-card.recusada  { background: #2e0d12; }
-  body.dark .modal-footer { border-top-color: #383838; }
-
-  /* brand-light adaptado por tema em dark */
-  body.dark html.tema-azul,  html.tema-azul  body.dark { --brand-light: #0a1e3d; }
-  body.dark html.tema-verde, html.tema-verde body.dark { --brand-light: #0a2418; }
-  body.dark html.tema-roxo,  html.tema-roxo  body.dark { --brand-light: #1e0a1a; }
-  /* seletor correto: html carrega a classe, body.dark é filho */
-  html.tema-azul  body.dark { --brand-light: #0a1e3d; }
-  html.tema-verde body.dark { --brand-light: #0a2418; }
-  html.tema-roxo  body.dark { --brand-light: #1e0a1a; }
-
-  /* cfg-tabs em dark */
-  body.dark .cfg-tabs  { border-bottom-color: #383838; }
-  body.dark .cfg-tab   { color: var(--gray-500); }
-  body.dark .cfg-tab.active { color: var(--brand); border-bottom-color: var(--brand); }
-  body.dark .cfg-tab:hover  { background: #2a2a2a; }
 
   /* ── Cursor & accessibility ──────────────────────── */
   .process-card, .forn-list-item, .step-row, .cert-alert-item,
   .forn-proc-link, .frac-group-item, .forn-cert-item { cursor: pointer; }
-
-  .skip-link {
-    position: absolute; top: -100%; left: 16px; z-index: 999;
-    background: var(--brand); color: #fff; padding: 8px 16px;
-    border-radius: 0 0 6px 6px; font-size: .85rem; font-weight: 600;
-    text-decoration: none; transition: top .15s;
-  }
-  .skip-link:focus { top: 0; }
 
   /* ── Theme toggle button ─────────────────────────── */
   .theme-toggle {
@@ -2011,8 +1700,8 @@
 </main>
 
 <!-- ── PIN / Senha de acesso overlay ── -->
-<div class="overlay hidden" id="overlay-pin" role="dialog" aria-modal="true" aria-labelledby="overlay-pin-titulo" style="z-index:99999;background:#1a1f2e;align-items:center;justify-content:center">
-  <canvas id="pin-canvas" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none"></canvas>
+<div class="overlay hidden" id="overlay-pin" role="dialog" aria-modal="true" aria-labelledby="overlay-pin-titulo">
+  <canvas id="pin-canvas"></canvas>
 
   <!-- Configurações do efeito de fundo -->
   <div style="position:absolute;bottom:18px;right:18px;z-index:2">
@@ -2052,107 +1741,80 @@
     </div>
   </div>
 
-  <div id="pin-card" style="position:relative;z-index:1;background:#fff;border-radius:16px;width:380px;overflow:hidden;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+  <div id="pin-card">
 
-    <!-- Cabeçalho institucional -->
-    <div style="background:var(--accent);padding:28px 32px 24px;text-align:center">
-      <div style="width:52px;height:52px;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.3);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:22px">
+    <div class="pin-header">
+      <div class="pin-icon">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e8eef7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M9 8h1"/><path d="M9 12h1"/><path d="M9 16h1"/><path d="M14 8h1"/><path d="M14 12h1"/><path d="M14 16h1"/><path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"/></svg>
       </div>
-      <div id="overlay-pin-titulo" style="font-size:17px;font-weight:700;color:#fff;letter-spacing:.01em;margin-bottom:2px">SGCD — Acesso Restrito</div>
-      <div style="font-size:11px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.08em;font-weight:500">Sistema de Gestão de Contratação Direta</div>
-      <div style="display:inline-flex;align-items:center;gap:5px;margin-top:12px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:rgba(255,255,255,.8);font-size:10px;font-weight:600;padding:3px 10px;border-radius:20px;letter-spacing:.04em">
+      <div id="overlay-pin-titulo" class="pin-title">SGCD — Acesso Restrito</div>
+      <div class="pin-subtitle">Sistema de Gestão de Contratação Direta</div>
+      <div class="pin-badge">
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
         Lei Federal nº 14.133/2021
       </div>
     </div>
 
-    <!-- Corpo -->
-    <div style="padding:26px 32px 28px">
+    <div class="pin-body">
 
-      <!-- Card do órgão -->
-      <div id="pin-orgao-info" style="display:flex;align-items:center;gap:9px;background:#e8eef7;border:1px solid rgba(26,58,107,.2);border-radius:8px;padding:10px 12px;margin-bottom:22px">
-        <div id="pin-orgao-avatar" style="width:30px;height:30px;border-radius:6px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0">PM</div>
+      <div id="pin-orgao-info" class="pin-org-card">
+        <div id="pin-orgao-avatar" class="pin-org-avatar">PM</div>
         <div style="flex:1;min-width:0">
-          <div id="pin-orgao-nome" style="font-size:12px;font-weight:600;color:#102855;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Prefeitura Municipal</div>
-          <div style="font-size:10px;color:#666360;margin-top:1px">Agente de Contratação — área restrita</div>
+          <div id="pin-orgao-nome" class="pin-org-nome">Prefeitura Municipal</div>
+          <div class="pin-org-sub">Agente de Contratação — área restrita</div>
         </div>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e8eef7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
       </div>
 
-      <!-- Erro -->
-      <div id="pin-erro" style="display:none;align-items:center;gap:7px;background:#fef2f2;border:1px solid #fca5a5;border-radius:6px;padding:8px 12px;font-size:12px;color:#991b1b;margin-bottom:14px">
+      <div id="pin-erro" role="alert">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
         <span id="pin-erro-text">Senha incorreta. Tente novamente.</span>
       </div>
 
-      <!-- Campo usuário -->
-      <label style="display:block;font-size:11px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px" for="pin-username">Usuário</label>
-      <input type="text" id="pin-username" placeholder="Nome de usuário" autocomplete="username"
-        style="width:100%;height:44px;border:1.5px solid #d9d9d9;border-radius:8px;padding:0 14px;font-size:15px;color:#1a1a1a;background:#f9f8f8;outline:none;font-family:inherit;transition:border-color .15s,box-shadow .15s;margin-bottom:14px"
-        onkeydown="if(event.key==='Enter')document.getElementById('pin-input').focus()"
-        onfocus="this.style.borderColor=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();this.style.boxShadow='0 0 0 3px var(--brand-light)';this.style.background='#fff'"
-        onblur="this.style.borderColor='#d9d9d9';this.style.boxShadow='none';this.style.background='#f9f8f8'">
-
-      <!-- Campo senha -->
-      <label style="display:block;font-size:11px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px" for="pin-input">Senha de acesso</label>
-      <div style="position:relative;margin-bottom:20px">
-        <input type="password" id="pin-input" placeholder="Digite sua senha" autocomplete="current-password"
-          style="width:100%;height:44px;border:1.5px solid #d9d9d9;border-radius:8px;padding:0 44px 0 14px;font-size:15px;color:#1a1a1a;background:#f9f8f8;outline:none;font-family:inherit;letter-spacing:.15em;transition:border-color .15s,box-shadow .15s"
-          onkeydown="if(event.key==='Enter')verificarSenha();_pinCheckCaps(event)"
-          onkeyup="_pinCheckCaps(event)"
-          onfocus="_pinCheckCaps(event);this.style.borderColor=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();this.style.boxShadow='0 0 0 3px var(--brand-light)';this.style.background='#fff'"
-          onblur="document.getElementById('pin-caps-warn').style.display='none';this.style.borderColor='#d9d9d9';this.style.boxShadow='none';this.style.background='#f9f8f8'">
-        <button onclick="_pinToggleOlho()" tabindex="-1" aria-label="Mostrar ou ocultar senha" class="icon-touch-target"
-          style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#aea79f;padding:4px;line-height:1;font-size:0">
-          <svg id="pin-eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-        </button>
+      <div class="info-field">
+        <label for="pin-username">Usuário</label>
+        <input type="text" id="pin-username" placeholder="Nome de usuário" autocomplete="username"
+          onkeydown="if(event.key==='Enter')document.getElementById('pin-input').focus()">
       </div>
-      <div id="pin-caps-warn" style="display:none;align-items:center;gap:6px;font-size:12px;color:#92400e;background:#fef3c7;border:1px solid #fcd34d;border-radius:6px;padding:6px 10px;margin-top:-12px;margin-bottom:14px">
+
+      <div class="info-field">
+        <label for="pin-input">Senha de acesso</label>
+        <div class="pin-field-wrap">
+          <input type="password" id="pin-input" placeholder="Digite sua senha" autocomplete="current-password"
+            onkeydown="if(event.key==='Enter')verificarSenha();_pinCheckCaps(event)"
+            onkeyup="_pinCheckCaps(event)" onfocus="_pinCheckCaps(event)"
+            onblur="document.getElementById('pin-caps-warn').style.display='none'">
+          <button id="pin-toggle-olho" onclick="_pinToggleOlho()" tabindex="-1" aria-label="Mostrar ou ocultar senha" class="icon-touch-target">
+            <svg id="pin-eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+      <div id="pin-caps-warn">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
         Caps Lock ativo — as letras estão sendo digitadas em maiúsculas
       </div>
 
-      <!-- Botão entrar -->
-      <button onclick="verificarSenha()" style="width:100%;height:46px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.04em;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:16px;transition:background .15s"
-        onmouseover="this.style.background=getComputedStyle(document.documentElement).getPropertyValue('--brand-dark').trim()" onmouseout="this.style.background=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()">
+      <button onclick="verificarSenha()" class="btn btn-primary" style="width:100%;height:46px;justify-content:center;margin-bottom:16px">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
         Entrar no sistema
       </button>
 
-      <!-- Último acesso -->
-      <div style="display:flex;align-items:center;gap:9px;background:#f7f7f7;border:1px solid #ebebeb;border-radius:8px;padding:10px 12px">
+      <div class="pin-footer-access">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#aea79f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
         <div style="flex:1;min-width:0">
-          <div style="font-size:11px;font-weight:600;color:#3c3b37">Último backup exportado</div>
-          <div id="pin-last-access" style="font-size:10px;color:#666360;margin-top:1px">—</div>
+          <div class="pin-footer-access-title">Último backup exportado</div>
+          <div id="pin-last-access" class="pin-footer-access-sub">—</div>
         </div>
-        <div id="pin-days-ago" style="font-size:10px;color:#aea79f;white-space:nowrap"></div>
+        <div id="pin-days-ago" style="font-size:10px;color:var(--gray-400);white-space:nowrap"></div>
       </div>
     </div>
 
-    <!-- Rodapé -->
-    <div style="background:#f7f7f7;border-top:1px solid #ebebeb;padding:10px 32px;display:flex;align-items:center;justify-content:space-between">
-      <div style="font-size:10px;color:#aea79f"><strong style="color:#1a3a6b">SGCD</strong> — Contratação Direta</div>
-      <div style="font-size:10px;color:#aea79f;background:#ebebeb;padding:2px 7px;border-radius:10px">v<span class="sgcd-version-badge">1.17.0</span></div>
+    <div class="pin-footer">
+      <div><strong>SGCD</strong> — Contratação Direta</div>
+      <div class="pin-version">v<span class="sgcd-version-badge">1.17.0</span></div>
     </div>
   </div>
 </div>
-
-<style>
-  @keyframes pin-shake {
-    0%,100% { transform:translateX(0); }
-    20% { transform:translateX(-6px); }
-    40% { transform:translateX(6px); }
-    60% { transform:translateX(-4px); }
-    80% { transform:translateX(4px); }
-  }
-  .pin-shake { animation: pin-shake .35s ease; }
-  #overlay-pin { display:flex !important; }
-  #overlay-pin.hidden { display:none !important; }
-  #overlay-force-pwd { display:flex !important; }
-  #overlay-force-pwd.hidden { display:none !important; }
-</style>
 
 <!-- ── Troca de senha obrigatória (primeiro acesso / senha padrão) ── -->
 <div class="overlay hidden" id="overlay-force-pwd" role="dialog" aria-modal="true" aria-labelledby="overlay-force-pwd-titulo" style="z-index:99999;background:#1a1f2e;align-items:center;justify-content:center">
@@ -2576,6 +2238,8 @@
   <button onclick="document.getElementById('backup-alert-banner').style.display='none'" style="background:transparent;color:#fca97d;border:1px solid #fca97d;padding:5px 10px;border-radius:6px;font-size:.8rem;cursor:pointer;white-space:nowrap">Lembrar depois</button>
 </div>
 
+<script>const SGX_APP_ID = 'sgcd';</script>
+<script src="base.js"></script>
 <script>
 // ══════════════════════════════════════════════════════════════
 // SVG ICON LIBRARY (Lucide — stroke, 2px, round)
@@ -2603,37 +2267,8 @@ document.title = `SGCD v${SGCD_VERSION}`;
 let _apiToken = localStorage.getItem('sgcd-token') || null;
 let _apiUser  = null;
 
-const API = {
-  async req(method, path, body, isForm = false) {
-    const headers = {};
-    if (_apiToken) headers['Authorization'] = `Bearer ${_apiToken}`;
-    if (body && !isForm) headers['Content-Type'] = 'application/json';
-    const opts = { method, headers };
-    if (body) opts.body = isForm ? body : JSON.stringify(body);
-    try {
-      const r = await fetch(`${API_BASE}${path}`, opts);
-      if (r.status === 401) { _apiLogout(); return null; }
-      return r;
-    } catch(e) {
-      console.error('[API]', method, path, e.message);
-      return null;
-    }
-  },
-  get:    (p)       => API.req('GET',    p),
-  post:   (p, b)    => API.req('POST',   p, b),
-  put:    (p, b)    => API.req('PUT',    p, b),
-  del:    (p)       => API.req('DELETE', p),
-  upload: (p, form) => API.req('POST',   p, form, true),
-  async json(r) { try { return r ? await r.json() : null; } catch { return null; } },
-};
-
-function _apiLogout() {
-  if (_apiToken) fetch('/api/auth/logout', { method: 'POST', headers: { Authorization: `Bearer ${_apiToken}` } }).catch(() => {});
-  _apiToken = null; _apiUser = null;
-  localStorage.removeItem('sgcd-token');
-  sessionStorage.removeItem('sgcd-session-auth');
-  _showLoginOverlay();
-}
+// API/toast/customConfirm/_debounce/_hideAllViews/setNavActive/login canvas
+// vêm do base.js (esqueleto compartilhado da família) — ver _esqueleto/README.md
 
 // ── Camada de compatibilidade IDB → REST API ──────────────────
 // Mantém assinaturas idênticas ao código existente.
@@ -4229,14 +3864,7 @@ async function renderFornecedores() {
   }).join('');
 }
 
-function setNavActive(id) {
-  document.querySelectorAll('#sidebar .nav-item[id]').forEach(b => b.classList.remove('active'));
-  const el = document.getElementById(id);
-  if (el) el.classList.add('active');
-}
-
-const _ALL_VIEWS = ['view-dash','view-detail','view-fornecedores','view-audit','view-settings','view-agenda','view-lixeira'];
-function _hideAllViews() { _ALL_VIEWS.forEach(id => document.getElementById(id)?.classList.remove('active')); }
+// setNavActive()/_hideAllViews() vêm do base.js (todas as 7 views já têm class="view")
 
 let _auditPage = 0;
 // ══════════════════════════════════════════════════════════════
@@ -4837,11 +4465,7 @@ function filtrarPorStat(card, status) {
   renderDash();
 }
 
-// ── Utilitário debounce ─────────────────────────────────────────
-function _debounce(fn, ms) {
-  let t;
-  return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
-}
+// _debounce() vem do base.js
 
 // ── Cache de elementos DOM estáticos ────────────────────────────
 // Inicializado na primeira chamada para evitar getElementById em hot paths
@@ -10863,25 +10487,7 @@ async function alterarMinhaSenha() {
   show('Senha alterada com sucesso!', true);
 }
 
-function _pinCheckCaps(e) {
-  const warn = document.getElementById('pin-caps-warn');
-  if (!warn) return;
-  // getModifierState funciona em keydown/keyup/focus com teclado
-  const caps = e.getModifierState && e.getModifierState('CapsLock');
-  warn.style.display = caps ? 'flex' : 'none';
-}
-
-function _pinToggleOlho() {
-  const inp = document.getElementById('pin-input');
-  const ico = document.getElementById('pin-eye-icon');
-  if (inp.type === 'password') {
-    inp.type = 'text';
-    ico.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>';
-  } else {
-    inp.type = 'password';
-    ico.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
-  }
-}
+// _pinCheckCaps()/_pinToggleOlho() vêm do base.js
 
 async function verificarSenha() {
   const username = (document.getElementById('pin-username')?.value || '').trim();
@@ -10941,167 +10547,9 @@ async function _confirmarTrocaSenhaObrigatoria() {
   _onLoginSuccess();
 }
 
-let _lcRaf = null, _lcNodes = [], _lcMouse = { x: -9999, y: -9999 };
-const _LC_DEFAULTS = { count: 60, dist: 110, speed: 4 };
-const _LC = Object.assign({}, _LC_DEFAULTS);
-
-function _lcLoadConfig() {
-  try {
-    const s = JSON.parse(localStorage.getItem('sgcd_lc_config') || '{}');
-    if (s.count) _LC.count = s.count;
-    if (s.dist)  _LC.dist  = s.dist;
-    if (s.speed) _LC.speed = s.speed;
-  } catch {}
-  const sl = id => document.getElementById(id);
-  if (sl('lc-sl-nodes')) { sl('lc-sl-nodes').value = _LC.count; sl('lc-out-nodes').textContent = _LC.count; }
-  if (sl('lc-sl-dist'))  { sl('lc-sl-dist').value  = _LC.dist;  sl('lc-out-dist').textContent  = _LC.dist;  }
-  if (sl('lc-sl-speed')) { sl('lc-sl-speed').value = _LC.speed; sl('lc-out-speed').textContent = _LC.speed; }
-}
-
-function _lcSaveConfig() {
-  localStorage.setItem('sgcd_lc_config', JSON.stringify({ count: _LC.count, dist: _LC.dist, speed: _LC.speed }));
-}
-
-function _lcToggleConfig() {
-  const p = document.getElementById('lc-config-panel');
-  if (p) p.style.display = p.style.display === 'none' ? 'block' : 'none';
-}
-
-function _lcParam(key, val, outId) {
-  document.getElementById(outId).textContent = val;
-  if (key === 'count') {
-    _LC.count = val;
-    while (_lcNodes.length < val) {
-      const c = document.getElementById('pin-canvas');
-      _lcNodes.push({ x: Math.random()*(c?.width||800), y: Math.random()*(c?.height||600),
-        vx: (Math.random()-.5)*_lcSpeedVal(), vy: (Math.random()-.5)*_lcSpeedVal(), r: Math.random()*1.6+1 });
-    }
-    while (_lcNodes.length > val) _lcNodes.pop();
-  } else if (key === 'dist') {
-    _LC.dist = val;
-  } else if (key === 'speed') {
-    _LC.speed = val;
-    const s = _lcSpeedVal();
-    for (const n of _lcNodes) {
-      const a = Math.atan2(n.vy, n.vx);
-      const m = Math.random() * s + s * .3;
-      n.vx = Math.cos(a) * m; n.vy = Math.sin(a) * m;
-    }
-  }
-  _lcSaveConfig();
-}
-
-function _lcResetConfig() {
-  Object.assign(_LC, _LC_DEFAULTS);
-  _lcSaveConfig();
-  _lcLoadConfig();
-  _lcNodes = [];
-}
-
-function _lcSpeedVal() { return _LC.speed * 0.08; }
-
-function _loginCanvasStart() {
-  const canvas = document.getElementById('pin-canvas');
-  if (!canvas) return;
-  const overlay = document.getElementById('overlay-pin');
-  const ctx = canvas.getContext('2d');
-
-  _lcLoadConfig();
-
-  function resize() {
-    canvas.width  = overlay.offsetWidth;
-    canvas.height = overlay.offsetHeight;
-  }
-  resize();
-
-  if (_lcNodes.length === 0) {
-    for (let i = 0; i < _LC.count; i++) {
-      const s = _lcSpeedVal();
-      _lcNodes.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        vx: (Math.random() - .5) * s * 2,
-        vy: (Math.random() - .5) * s * 2,
-        r: Math.random() * 1.6 + 1
-      });
-    }
-  }
-
-  function onMove(e) {
-    const r = overlay.getBoundingClientRect();
-    const src = e.touches ? e.touches[0] : e;
-    _lcMouse.x = src.clientX - r.left;
-    _lcMouse.y = src.clientY - r.top;
-  }
-  function onLeave() { _lcMouse.x = -9999; _lcMouse.y = -9999; }
-  overlay.addEventListener('mousemove', onMove);
-  overlay.addEventListener('touchmove', onMove, { passive: true });
-  overlay.addEventListener('mouseleave', onLeave);
-  canvas._lcCleanup = () => {
-    overlay.removeEventListener('mousemove', onMove);
-    overlay.removeEventListener('touchmove', onMove);
-    overlay.removeEventListener('mouseleave', onLeave);
-  };
-
-  function frame() {
-    const W = canvas.width, H = canvas.height;
-    ctx.clearRect(0, 0, W, H);
-    const ns = _lcNodes;
-    const D = _LC.dist, mx = _lcMouse.x, my = _lcMouse.y;
-
-    for (let i = 0; i < ns.length; i++) {
-      const a = ns[i];
-      for (let j = i + 1; j < ns.length; j++) {
-        const b = ns[j];
-        const dx = a.x - b.x, dy = a.y - b.y;
-        const d = Math.sqrt(dx*dx + dy*dy);
-        if (d < D) {
-          ctx.beginPath();
-          ctx.moveTo(a.x, a.y);
-          ctx.lineTo(b.x, b.y);
-          ctx.strokeStyle = `rgba(180,190,210,${(1 - d / D) * 0.35})`;
-          ctx.lineWidth = .7;
-          ctx.stroke();
-        }
-      }
-      const mdx = a.x - mx, mdy = a.y - my;
-      const md = Math.sqrt(mdx*mdx + mdy*mdy);
-      if (md < D * 1.5) {
-        ctx.beginPath();
-        ctx.moveTo(a.x, a.y);
-        ctx.lineTo(mx, my);
-        ctx.strokeStyle = `rgba(180,190,210,${(1 - md / (D * 1.5)) * 0.65})`;
-        ctx.lineWidth = 1;
-        ctx.stroke();
-      }
-    }
-
-    for (const n of ns) {
-      const mdx = n.x - mx, mdy = n.y - my;
-      const near = Math.sqrt(mdx*mdx + mdy*mdy) < D * 1.2;
-      ctx.beginPath();
-      ctx.arc(n.x, n.y, n.r * (near ? 1.5 : 1), 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(180,190,210,${near ? 0.9 : 0.45})`;
-      ctx.fill();
-      n.x += n.vx; n.y += n.vy;
-      if (n.x < 0 || n.x > W) { n.vx *= -1; n.x = Math.max(0, Math.min(W, n.x)); }
-      if (n.y < 0 || n.y > H) { n.vy *= -1; n.y = Math.max(0, Math.min(H, n.y)); }
-    }
-
-    _lcRaf = requestAnimationFrame(frame);
-  }
-
-  if (_lcRaf) cancelAnimationFrame(_lcRaf);
-  _lcRaf = requestAnimationFrame(frame);
-}
-
-function _loginCanvasStop() {
-  if (_lcRaf) { cancelAnimationFrame(_lcRaf); _lcRaf = null; }
-  const canvas = document.getElementById('pin-canvas');
-  if (canvas?._lcCleanup) { canvas._lcCleanup(); canvas._lcCleanup = null; }
-  _lcNodes = [];
-  _lcMouse = { x: -9999, y: -9999 };
-}
+// Motor de partículas do login (_lcRaf/_LC/_lcLoadConfig/_lcSaveConfig/
+// _lcToggleConfig/_lcParam/_lcResetConfig/_lcSpeedVal/_loginCanvasStart/Stop)
+// vem do base.js — usa a chave de localStorage `${SGX_APP_ID}_lc_config`.
 
 function _showLoginOverlay() {
   _applyTemaCor(localStorage.getItem('sgcd_tema_cor') || 'laranja');

@@ -14,6 +14,13 @@ if (!scripts.length) {
   process.exit(1);
 }
 
+// base.js (esqueleto compartilhado, ver _esqueleto/README.md) é carregado via
+// <script src="base.js">, então o regex acima não pega — inclui o arquivo de
+// verdade no bundle lintado, senão toda função que ele define (API, toast,
+// customConfirm, etc.) aparece como "no-undef" no script principal.
+const baseJsPath = join(import.meta.dirname, '..', 'base.js');
+scripts.unshift(readFileSync(baseJsPath, 'utf-8'));
+
 const tmpDir = mkdtempSync(join(tmpdir(), 'sgcd-lint-'));
 const tmpFile = join(tmpDir, 'sgcd.js');
 writeFileSync(tmpFile, scripts.join('\n;\n'));
