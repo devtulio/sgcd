@@ -2257,7 +2257,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.29.5';
+const SGCD_VERSION = '2.29.6';
 // URL absoluta (não relativa) porque API_BASE também monta o texto do QR Code
 // de verificação de assinatura, lido por celular fora do navegador — precisa
 // da origem real, nunca uma porta fixa (era 'http://localhost:3000' hardcoded).
@@ -12938,12 +12938,7 @@ document.addEventListener('keydown', e => {
     if (!document.getElementById('confirm-overlay').classList.contains('hidden')) { document.getElementById('confirm-cancel').click(); return; }
     if (!document.getElementById('modal-overlay').classList.contains('hidden')) { closeModal(); return; }
   }
-
-  // Ativa por Enter/Espaço elementos não-nativos com role="button" (divs/spans clicáveis)
-  if ((e.key === 'Enter' || e.key === ' ') && e.target.getAttribute('role') === 'button') {
-    e.preventDefault();
-    e.target.click();
-  }
+  // Enter/Espaço em role="button" é o listener genérico do base.js.
 });
 
 // ── Foco automático e devolução de foco para todos os modais (.overlay) ──
@@ -12971,18 +12966,7 @@ document.addEventListener('keydown', e => {
   });
 })();
 
-// ── Prende o Tab dentro do modal aberto ──
-document.addEventListener('keydown', e => {
-  if (e.key !== 'Tab') return;
-  const overlay = document.querySelector('.overlay:not(.hidden)');
-  if (!overlay) return;
-  const FOCUSABLE_SEL = 'input:not([type=hidden]):not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])';
-  const focusables = Array.from(overlay.querySelectorAll(FOCUSABLE_SEL)).filter(el => el.offsetParent !== null);
-  if (!focusables.length) return;
-  const first = focusables[0], last = focusables[focusables.length - 1];
-  if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
-  else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
-});
+// Tab-trap dentro do modal aberto é o listener genérico do base.js.
 
 if (location.protocol === 'file:') {
   document.getElementById('origin-block').style.display = 'flex';

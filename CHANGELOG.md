@@ -5,6 +5,11 @@
 
 ---
 
+## [2.29.6] — 2026-07-14
+
+### Removido
+- **Handlers locais de Tab-trap e Enter/Espaço em `role="button"`, duplicados dos listeners genéricos do esqueleto compartilhado (`base.js`)** — o handler local de Enter/Espaço estava embutido no mesmo listener de Ctrl+K/Escape (que continua local, pois fecha modais nomeados chamando suas funções próprias de fechamento); o handler local de Tab-trap era um bloco separado, cópia idêntica do genérico. Mesmo padrão já adotado pelo SGDP ao migrar para o esqueleto
+
 ## [2.29.5] — 2026-07-14
 
 ### Corrigido
