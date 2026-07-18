@@ -5,6 +5,11 @@
 
 ---
 
+## [2.29.10] — 2026-07-17
+
+### Removido
+- **Limpeza de CSS morto** — removidas 37 regras de estilo (~99 linhas) que definiam classes nunca usadas no HTML/JS (restos de uma sidebar/cabeçalho antigos: `theme-toggle`, `settings-btn`, `nav-btn`, `user-name-badge`, `sidebar-expanded-app`, entre outras). Sem qualquer efeito visual — as classes não eram referenciadas em lugar nenhum. Verificado com lint, testes unitários e E2E.
+
 ## [2.29.9] — 2026-07-17
 
 ### Alterado

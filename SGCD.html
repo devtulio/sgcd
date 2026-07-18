@@ -17,13 +17,7 @@
     --green:  #15803d; --green-bg:  #dcfce7;
     --red:    #dc2626; --red-bg:    #fee2e2;
     --yellow: #d97706; --yellow-bg: #fef3c7;
-  }
-
-  /* compat stubs — removidos do HTML mas podem ser referenciados por JS */
-  .nav-btn { display: none; }
-  #app.sidebar-expanded-app { padding-left: calc(220px + 24px); }
-
-  #app.layout-expanded #agenda-body   { max-width: none !important; padding: 0 0 32px !important; }
+  }  #app.layout-expanded #agenda-body   { max-width: none !important; padding: 0 0 32px !important; }
   #app.layout-expanded #audit-inner   { max-width: none !important; padding: 0 0 16px !important; }
 
   /* Modo compacto: limita largura do dashboard, detalhe, fornecedores e configurações */
@@ -127,14 +121,7 @@
     overflow: hidden;
   }
   .process-card:hover { box-shadow: var(--shadow-md); border-color: var(--brand); }
-  .process-card .pc-stripe { border-radius: var(--radius) 0 0 var(--radius); background: var(--gray-300); }
-  .process-card.pc-progress .pc-stripe { background: var(--warning); }
-  .process-card.pc-done     .pc-stripe { background: var(--success); }
-  .process-card.pc-blocked  .pc-stripe { background: var(--danger); }
-  .process-card.pc-todo     .pc-stripe { background: var(--gray-300); }
-  .process-card .pc-body { padding: 14px 16px; }
-  .process-card .pc-right { padding: 14px 16px 14px 0; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 8px; }
-  .process-card .num { font-size: .72rem; font-weight: 600; color: var(--brand); text-transform: uppercase; letter-spacing: .3px; }
+  .process-card .pc-stripe { border-radius: var(--radius) 0 0 var(--radius); background: var(--gray-300); }.process-card .pc-body { padding: 14px 16px; }  .process-card .num { font-size: .72rem; font-weight: 600; color: var(--brand); text-transform: uppercase; letter-spacing: .3px; }
   .process-card .title { font-weight: 600; font-size: .95rem; margin: 2px 0 4px; display: flex; align-items: baseline; gap: 6px; text-align: justify; }
   .process-card .title-text[contenteditable="true"] { outline: 2px solid var(--brand); border-radius: 2px; padding: 0 2px; cursor: text; }
   .title-edit-btn { opacity: 0; border: none; background: none; cursor: pointer; color: var(--gray-400); padding: 0; font-size: .8rem; flex-shrink: 0; line-height: 1; transition: opacity .15s, color .15s; }
@@ -200,7 +187,6 @@
   .badge-progress { background: var(--warning-light); color: var(--warning); }
   .badge-done     { background: var(--success-light); color: var(--success); }
   .badge-blocked  { background: var(--danger-light); color: var(--danger); }
-
 
   /* ── Process detail ──────────────────────────────── */
   .detail-header {
@@ -392,18 +378,7 @@
     color: var(--gray-500); font-size: 1rem; line-height: 1; padding: 2px 6px;
     border-radius: 4px;
   }
-  .proposta-card .del-btn:hover { color: var(--danger); background: var(--danger-light); }
-  .proposta-situacao {
-    display: inline-block; padding: 2px 10px; border-radius: 99px;
-    font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .5px;
-    margin-top: 6px;
-  }
-  .sit-analise  { background: var(--warning-light); color: var(--warning); }
-  .sit-aceita   { background: var(--brand-light);   color: var(--brand); }
-  .sit-vencedora{ background: var(--success-light);  color: var(--success); }
-  .sit-recusada { background: var(--danger-light);   color: var(--danger); }
-
-  /* ── Certidões ──────────────────────────────────── */
+  .proposta-card .del-btn:hover { color: var(--danger); background: var(--danger-light); }/* ── Certidões ──────────────────────────────────── */
   .cert-header {
     display: flex; align-items: center; justify-content: space-between;
     margin-top: 14px; margin-bottom: 8px;
@@ -480,30 +455,7 @@
 
   /* ── Cursor & accessibility ──────────────────────── */
   .process-card, .forn-list-item, .step-row, .cert-alert-item,
-  .forn-proc-link, .frac-group-item, .forn-cert-item { cursor: pointer; }
-
-  /* ── Theme toggle button ─────────────────────────── */
-  .theme-toggle {
-    background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15);
-    color: #fff; border-radius: 20px; padding: 4px 12px;
-    font-size: .72rem; font-weight: 500; cursor: pointer;
-    display: flex; align-items: center; gap: 6px; transition: all .2s;
-    font-family: inherit; letter-spacing: .5px;
-  }
-  .theme-toggle:hover { background: rgba(255,255,255,.16); border-color: var(--brand); }
-  .theme-toggle .icon { font-size: .9rem; }
-
-  .settings-btn {
-    background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15);
-    color: #fff; border-radius: 20px; padding: 4px 12px;
-    font-size: .72rem; font-weight: 500; cursor: pointer;
-    display: flex; align-items: center; gap: 6px; transition: all .2s;
-    font-family: inherit; letter-spacing: .5px;
-  }
-  .settings-btn:hover { background: rgba(255,255,255,.16); border-color: var(--brand); }
-  .user-name-badge { max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-  /* ── Fracionamento ──────────────────────────────────── */
+  .forn-proc-link, .frac-group-item, .forn-cert-item { cursor: pointer; }/* ── Fracionamento ──────────────────────────────────── */
   .frac-badge { font-size: .65rem; font-weight: 700; padding: 2px 7px; border-radius: 3px; white-space: nowrap; letter-spacing: .3px; }
   .step-atual { display: inline-flex; align-items: center; gap: 5px; font-size: .72rem; color: var(--warning); font-weight: 600; background: var(--warning-light); border-radius: 4px; padding: 2px 8px; margin-bottom: 6px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .frac-badge.atencao { background: #fff3cd; color: #7a5800; border: 1px solid #f99b11; }
@@ -610,27 +562,10 @@
   .forn-cert-badge.expiring { background: var(--warning-light); color: #856404; }
   .forn-cert-badge.expired  { background: var(--danger-light); color: var(--danger); }
   .forn-cert-badge.none     { background: var(--gray-100); color: var(--gray-500); }
-  .forn-cert-actions { display: flex; gap: 4px; flex-shrink: 0; }
-
-  /* Add cert form */
-  .cert-add-form { background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 12px; margin-top: 8px; }
-  .cert-add-form .info-field { margin-bottom: 8px; }
-  .cert-add-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-
-  /* Cert status badge on forn card list */
-  .forn-cert-summary { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
-  .forn-cert-summary-badge { font-size: .62rem; font-weight: 700; padding: 1px 8px; border-radius: 12px; }
-  .forn-cert-summary-badge.ok      { background: var(--success-light); color: var(--success); }
-  .forn-cert-summary-badge.warn    { background: var(--warning-light); color: #856404; }
-  .forn-cert-summary-badge.danger  { background: var(--danger-light); color: var(--danger); }
-  .forn-cert-summary-badge.missing { background: var(--gray-100); color: var(--gray-500); }
-
-  body.dark .cert-alert-item { background: #2a2a2a; border-color: #444; }
+  .forn-cert-actions { display: flex; gap: 4px; flex-shrink: 0; }.cert-add-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }body.dark .cert-alert-item { background: #2a2a2a; border-color: #444; }
   body.dark .cert-alert-item.expired { background: #3a1a1a; }
   body.dark .cert-alert-item.expiring { background: #3a2a00; }
   body.dark .forn-cert-item { background: #2a2a2a; border-color: #444; }
-  body.dark .cert-add-form { background: #2a2a2a; border-color: #444; }
-
   /* ── Proc table (dash table view) ───────────────── */
   .proc-table-wrap { overflow-x: auto; }
   .proc-table { width:100%; border-collapse:collapse; font-size:.83rem; white-space:nowrap; }
@@ -682,11 +617,7 @@
     padding: 4px 8px; border-radius: 4px; white-space: nowrap; pointer-events: none;
     opacity: 0; transition: opacity .15s; z-index: 500; transform: translateX(-50%);
   }
-  #step-dot-tooltip.visible { opacity: 1; }
-
-  /* ── Dropdown "Mais ações" ── */
-  .more-actions-wrap { position: relative; display: inline-flex; }
-  .more-actions-menu {
+  #step-dot-tooltip.visible { opacity: 1; }  .more-actions-menu {
     display: none; position: absolute; top: calc(100% + 6px); right: 0;
     background: #fff; border: 1px solid var(--gray-200); border-radius: 8px;
     box-shadow: var(--shadow-md); min-width: 200px; z-index: 300;
@@ -748,7 +679,6 @@
 </div>
 
 <a href="#app" class="skip-link">Ir para o conteúdo principal</a>
-
 
 <aside id="sidebar" aria-label="Navegação principal">
   <div class="sidebar-logo">
@@ -2248,7 +2178,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.29.9';
+const SGCD_VERSION = '2.29.10';
 // URL absoluta (não relativa) porque API_BASE também monta o texto do QR Code
 // de verificação de assinatura, lido por celular fora do navegador — precisa
 // da origem real, nunca uma porta fixa (era 'http://localhost:3000' hardcoded).
@@ -2403,7 +2333,6 @@ window.addEventListener('unhandledrejection', (e) => {
 });
 // Reset do contador a cada 30s para permitir novos alertas após período de estabilidade
 setInterval(() => { _globalErrorCount = 0; }, 30000);
-
 
 // ══════════════════════════════════════════════════════════════
 // BACKUP / RESTORE
@@ -4112,7 +4041,6 @@ const _AUDIT_EVENT_META = {
   FACTORY_RESET:        { bg: '#FCEBEB', color: '#A32D2D' }
 };
 
-
 function fmtDataHoraAudit(ts) {
   return new Date(ts).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
@@ -4236,9 +4164,7 @@ async function gerarRelatorioAuditoria() {
   th { background: #1a1a2e; color: #fff; padding: 5pt 7pt; text-align: center; vertical-align: middle; font-weight: 700; }
   td { padding: 4pt 7pt; vertical-align: middle; font-size: 8.5pt; border-bottom: 1px solid #e0e0e0; }
   tr:nth-child(even) td { background: #f7f7f7; }
-  tr:hover td { background: #fafafa; }
-  .footer-line { margin-top: 30pt; border-top: 1px solid #ccc; padding-top: 5pt; text-align: center; font-size: 8pt; color: #666; }
-</style></head><body>
+  tr:hover td { background: #fafafa; }</style></head><body>
 <button class="btn-print no-print" onclick="window.print()">🖨 Imprimir / Salvar PDF</button>
 <div class="header">
   <img src="data:image/png;base64,__BRASAO_PLACEHOLDER__" alt="Brasão">
@@ -7773,9 +7699,7 @@ function gerarRelatorio() {
   tr.group-header td { background: #e8eaf0; font-weight: 700; font-size: 9.5pt; padding: 5pt 7pt; border-bottom: none; border-top: 1px solid #aaa; }
   tr.subtotal td { background: #f0f4ff; font-weight: 600; }
   tr:hover td { background: #fafafa; }
-  .total-row { margin-top: 12pt; text-align: right; font-weight: 700; font-size: 11pt; border-top: 2px solid #000; padding-top: 6pt; }
-  .footer-line { margin-top: 30pt; border-top: 1px solid #ccc; padding-top: 5pt; text-align: center; font-size: 8pt; color: #666; }
-</style></head><body>
+  .total-row { margin-top: 12pt; text-align: right; font-weight: 700; font-size: 11pt; border-top: 2px solid #000; padding-top: 6pt; }</style></head><body>
 <button class="btn-print no-print" onclick="window.print()">🖨 Imprimir / Salvar PDF</button>
 <div class="header">
   <img src="data:image/png;base64,__BRASAO_PLACEHOLDER__" alt="Brasão">
@@ -7885,9 +7809,7 @@ async function gerarRelatorioFornecedores() {
   th { background: #1a1a2e; color: #fff; padding: 5pt 7pt; text-align: left; vertical-align: middle; font-weight: 700; font-size: 9.5pt; }
   td { padding: 4pt 7pt; vertical-align: middle; font-size: 9pt; border-bottom: 1px solid #e8e8e8; word-wrap: break-word; overflow-wrap: break-word; }
   .forn-row td { border-bottom: none; }
-  .total-row { margin-top: 12pt; text-align: right; font-weight: 700; font-size: 11pt; border-top: 2px solid #000; padding-top: 6pt; }
-  .footer-line { margin-top: 30pt; border-top: 1px solid #ccc; padding-top: 5pt; text-align: center; font-size: 8pt; color: #666; }
-  .btn-print { display: block; margin: 0 auto 20pt; padding: 8pt 24pt; background: #1a3a6b; color: #fff; border: none; border-radius: 4px; font-size: 11pt; cursor: pointer; }
+  .total-row { margin-top: 12pt; text-align: right; font-weight: 700; font-size: 11pt; border-top: 2px solid #000; padding-top: 6pt; }  .btn-print { display: block; margin: 0 auto 20pt; padding: 8pt 24pt; background: #1a3a6b; color: #fff; border: none; border-radius: 4px; font-size: 11pt; cursor: pointer; }
 </style></head><body>
 <button class="btn-print no-print" onclick="window.print()">🖨 Imprimir / Salvar PDF</button>
 <div class="header">
@@ -7922,7 +7844,6 @@ ${_qrFooterReport('Relatório de Fornecedores')}
 
   _gerarDocumento(window.open('', '_blank', 'width=900,height=700'), html, 'Relatório de Fornecedores');
 }
-
 
 // ══════════════════════════════════════════════════════════════
 // MAPA DE PREÇOS
@@ -7972,9 +7893,7 @@ function gerarMapaPrecos(stepIdx) {
   .ref-box .venc{font-weight:700;color:#16a34a;font-size:12pt}
   .city-date{text-align:right;margin-top:20pt;font-size:11pt}
   .sign{margin-top:36pt;text-align:center}
-  .sign-line{border-top:1px solid #000;width:260pt;margin:0 auto;padding-top:4pt;font-size:10pt}
-  .footer-line{margin-top:30pt;border-top:1px solid #ccc;padding-top:5pt;text-align:center;font-size:8pt;color:#666}
-  .btn-print{display:block;margin:0 auto 20pt;padding:8pt 24pt;background:#1a1a2e;color:#fff;border:none;border-radius:4px;font-size:11pt;cursor:pointer;letter-spacing:.5px}
+  .sign-line{border-top:1px solid #000;width:260pt;margin:0 auto;padding-top:4pt;font-size:10pt}  .btn-print{display:block;margin:0 auto 20pt;padding:8pt 24pt;background:#1a1a2e;color:#fff;border:none;border-radius:4px;font-size:11pt;cursor:pointer;letter-spacing:.5px}
   .btn-print:hover{background:#2c2c5e}
   @media print{body{padding:0}.no-print{display:none!important}}
 </style></head><body>
@@ -8922,9 +8841,7 @@ function gerarAvisoDispensa() {
   .section p { line-height: 1.7; text-align: justify; margin-bottom: 8pt; }
   .section ul { padding-left: 20pt; line-height: 1.7; }
   .section ul li { text-align: justify; margin-bottom: 4pt; }
-  .aviso-box { background: #f9f9f9; border-left: 3px solid #333; padding: 10pt 14pt; margin-bottom: 18pt; font-size: 11pt; line-height: 1.8; text-align: justify; }
-  .alerta-juridico { background: #fffbeb; border: 1px solid #d97706; border-radius: 3pt; padding: 8pt 12pt; margin-top: 8pt; font-size: 10.5pt; line-height: 1.7; text-align: justify; }
-</style>
+  .aviso-box { background: #f9f9f9; border-left: 3px solid #333; padding: 10pt 14pt; margin-bottom: 18pt; font-size: 11pt; line-height: 1.8; text-align: justify; }</style>
 </head>
 <body>
 <button class="btn-print no-print" onclick="window.print()">🖨 Imprimir / Salvar PDF</button>
@@ -9782,16 +9699,7 @@ function gerarProcessoCompleto() {
   .no-print { display: none !important; }
   .cover-page { page-break-after: always; padding: 2cm; }
   .content-pages { padding: 1cm 1.5cm; }
-  .doc-section { page-break-inside: avoid; }
-  /* Número de página — compatível com Chrome via elemento fixo */
-  .page-num-footer { display: block; }
-  }
-  /* Número de página no rodapé: funciona no Chrome ao imprimir */
-  .page-num-footer {
-  position: fixed; bottom: 8mm; right: 15mm;
-  font-size: 8pt; color: #888; display: none;
-  }
-</style></head><body>
+  .doc-section { page-break-inside: avoid; }  }</style></head><body>
 <button class="btn-print no-print" onclick="window.print()">🖨 Imprimir / Salvar PDF</button>
 ${coverPage}
 <div class="content-pages">
@@ -9911,10 +9819,7 @@ function gerarAta() {
   .dado strong { display: inline-block; min-width: 220px; }
   table { width: 100%; border-collapse: collapse; margin: 8pt 0; font-size: 10.5pt; }
   th { background: #eee; border: 1px solid #999; padding: 5pt 6pt; text-align: center; vertical-align: middle; font-weight: 700; }
-  td { border: 1px solid #999; padding: 4pt 6pt; vertical-align: middle; font-size: 9.5pt; }
-  .cert-obtida td:last-child { color: #0a5c0a; }
-  .cert-pendente td:last-child { color: #b00; }
-  .assinaturas { margin-top: 40pt; display: flex; gap: 40pt; justify-content: center; flex-wrap: wrap; }
+  td { border: 1px solid #999; padding: 4pt 6pt; vertical-align: middle; font-size: 9.5pt; }.assinaturas { margin-top: 40pt; display: flex; gap: 40pt; justify-content: center; flex-wrap: wrap; }
   .assinatura { text-align: center; min-width: 200px; }
   .assinatura .linha { border-top: 1px solid #000; padding-top: 4pt; margin-top: 40pt; font-size: 10pt; }
   .resultado-hab { font-weight: bold; font-size: 12pt; text-align: center; padding: 8pt; border: 1.5px solid #000; margin: 10pt 0; }
@@ -10458,7 +10363,6 @@ async function _auditEvento(evento, detalhe, processId) {
   return entry;
 }
 
-
 async function alterarMinhaSenha() {
   const atual    = document.getElementById('s-senha-atual').value;
   const nova     = document.getElementById('s-senha-nova').value;
@@ -10841,7 +10745,6 @@ function showSettings() {
   if (custom) { img.src = custom; img.style.display = ''; rmBtn.style.display = ''; }
   else { img.src = ''; img.style.display = 'none'; rmBtn.style.display = 'none'; }
 
-
   _hideAllViews();
   document.getElementById('view-settings').classList.add('active');
   setNavActive('nav-settings');
@@ -10898,7 +10801,6 @@ async function saveSettings() {
   }
   localStorage.setItem('sgcd-user', JSON.stringify(u));
   _atualizarSidebarUsuario();
-
 
   // Dados de Organização: endpoint próprio, acessível a qualquer usuário autenticado
   const orgPayload = {
@@ -11333,7 +11235,6 @@ Atenciosamente,
 ${u.nome||''}
 ${u.cargo||'Agente de Contratação'}
 ${u.orgao||''}`);
-
 
   // ── Aba Interno: lista etapas pendentes ──
   const pendentes = (p.steps || [])
