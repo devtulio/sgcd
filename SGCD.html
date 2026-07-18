@@ -2119,7 +2119,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.29.15';
+const SGCD_VERSION = '2.29.16';
 // URL absoluta (não relativa) porque API_BASE também monta o texto do QR Code
 // de verificação de assinatura, lido por celular fora do navegador — precisa
 // da origem real, nunca uma porta fixa (era 'http://localhost:3000' hardcoded).
@@ -8090,7 +8090,7 @@ function renderDashTable(lista) {
       ? [p.num_proc&&`PA ${escHtml(p.num_proc)}`,p.num_dl&&`DL ${escHtml(p.num_dl)}`].filter(Boolean).join('<br>')
       : escHtml(p.num||'—');
     const prazoHtml = p.prazo ? `<span style="color:${new Date(p.prazo + 'T00:00:00')<new Date()?'var(--danger)':''}">${new Date(p.prazo + 'T00:00:00').toLocaleDateString('pt-BR')}</span>` : '—';
-    return `<tr onclick="openProcess('${p.id}')">
+    return `<tr onclick="openProcess('${p.id}')" role="button" tabindex="0">
       <td style="font-size:.72rem;font-weight:600;color:var(--brand);line-height:1.5">${numHtml}</td>
       <td style="word-break:break-word;white-space:normal;line-height:1.4">${escHtml(p.objeto)}</td>
       <td>${escHtml(p.unidade||'—')}</td>

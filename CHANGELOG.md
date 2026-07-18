@@ -5,6 +5,11 @@
 
 ---
 
+## [2.29.16] — 2026-07-18
+
+### Corrigido (acessibilidade — WCAG 2.1 AA)
+- **Linha da tabela de processos acessível por teclado** (WCAG 2.1.1) — na visão em tabela, a linha clicável (`<tr>` que abre o processo) ganhou `role="button"` + `tabindex="0"`; antes só a visão em cards respondia ao teclado.
+
 ## [2.29.15] — 2026-07-18
 
 ### Corrigido
