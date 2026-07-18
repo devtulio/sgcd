@@ -2119,7 +2119,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.29.14';
+const SGCD_VERSION = '2.29.15';
 // URL absoluta (não relativa) porque API_BASE também monta o texto do QR Code
 // de verificação de assinatura, lido por celular fora do navegador — precisa
 // da origem real, nunca uma porta fixa (era 'http://localhost:3000' hardcoded).
@@ -4449,7 +4449,7 @@ function renderDash() {
   filtered.sort((a, b) => {
     switch (sortBy) {
       case 'date-asc':  return a.createdAt - b.createdAt;
-      case 'prazo-asc': { const da = a.prazo ? new Date(a.prazo).getTime() : Infinity; const db = b.prazo ? new Date(b.prazo).getTime() : Infinity; return da - db; }
+      case 'prazo-asc': { const da = a.prazo ? new Date(a.prazo + 'T00:00:00').getTime() : Infinity; const db = b.prazo ? new Date(b.prazo).getTime() : Infinity; return da - db; }
       case 'pct-desc':  return pct(b) - pct(a);
       case 'pct-asc':   return pct(a) - pct(b);
       case 'valor-desc': return parseValor(b.valor) - parseValor(a.valor);
@@ -5322,7 +5322,7 @@ function renderStallAlerts() {
   // also check processes with expired deadline
   const overdue = processes.filter(p => {
     if (processStatus(p) === 'done') return false;
-    return p.prazo && new Date(p.prazo) < new Date();
+    return p.prazo && new Date(p.prazo + 'T00:00:00') < new Date();
   });
 
   const items = [];
@@ -5340,7 +5340,7 @@ function renderStallAlerts() {
   for (const p of overdue) {
     if (items.find(i => i.p.id === p.id)) continue; // já listado como parado
     const numLbl = p.num_dl ? `DL ${p.num_dl}` : p.num_proc ? `PA ${p.num_proc}` : p.num || 'Sem nº';
-    const d = new Date(p.prazo);
+    const d = new Date(p.prazo + 'T00:00:00');
     const days = Math.floor((Date.now() - d.getTime()) / 86400000);
     items.push({ type:'overdue', p, msg:`Prazo vencido há ${days} dia${days!==1?'s':''}`, numLbl });
   }
@@ -7539,7 +7539,7 @@ function printProcess() {
   ${p.valor   ? `<div class="row"><span class="lbl">Valor estimado:</span> ${fmtMoney(p.valor)}</div>` : ''}
   ${p.unidade ? `<div class="row"><span class="lbl">Unidade:</span> ${escHtml(p.unidade)}</div>` : ''}
   ${fn        ? `<div class="row"><span class="lbl">Fornecedor:</span> ${escHtml(fn)}${fnCnpj ? ` — CNPJ: ${escHtml(fnCnpj)}` : ''}</div>` : ''}
-  ${p.prazo   ? `<div class="row"><span class="lbl">Prazo:</span> ${new Date(p.prazo).toLocaleDateString('pt-BR')}</div>` : ''}
+  ${p.prazo   ? `<div class="row"><span class="lbl">Prazo:</span> ${new Date(p.prazo + 'T00:00:00').toLocaleDateString('pt-BR')}</div>` : ''}
   <div class="row"><span class="lbl">Criado em:</span> ${new Date(p.createdAt).toLocaleDateString('pt-BR')}</div>
 </div>
 <div class="section-title">Progresso do Checklist</div>
@@ -7797,8 +7797,8 @@ function gerarMapaPrecos(stepIdx) {
       <td style="text-align:center">${i+1}</td>
       <td><strong>${escHtml(pr.fornecedor||'—')}</strong>${pr.cnpj?`<br><small style="color:#666">${escHtml(pr.cnpj)}</small>`:''}</td>
       <td style="text-align:right">${pr.valor?fmtMoney(pr.valor):'—'}</td>
-      <td style="text-align:center">${pr.data_proposta?new Date(pr.data_proposta).toLocaleDateString('pt-BR'):'—'}</td>
-      <td style="text-align:center">${pr.validade?new Date(pr.validade).toLocaleDateString('pt-BR'):'—'}</td>
+      <td style="text-align:center">${pr.data_proposta?new Date(pr.data_proposta + 'T00:00:00').toLocaleDateString('pt-BR'):'—'}</td>
+      <td style="text-align:center">${pr.validade?new Date(pr.validade + 'T00:00:00').toLocaleDateString('pt-BR'):'—'}</td>
       <td><span style="font-weight:${isVenc?'700':'400'};color:${isVenc?'#16a34a':pr.situacao==='recusada'?'#dc2626':'#374151'}">${sitLabels[pr.situacao]||pr.situacao}${isVenc?' ✔':''}</span>${pr.obs?`<br><small style="color:#666">${escHtml(pr.obs)}</small>`:''}</td>
     </tr>`;
   }).join('');
@@ -8068,7 +8068,7 @@ function renderDashTable(lista) {
       vb = (typeof b.fornecedor==='object'?(b.fornecedor?.razao_social||''):(b.fornecedor||'')).toLowerCase();
     }
     else if (sk === 'valor')    { va = parseValor(a.valor); vb = parseValor(b.valor); }
-    else if (sk === 'prazo')    { va = a.prazo ? new Date(a.prazo).getTime() : Infinity; vb = b.prazo ? new Date(b.prazo).getTime() : Infinity; }
+    else if (sk === 'prazo')    { va = a.prazo ? new Date(a.prazo + 'T00:00:00').getTime() : Infinity; vb = b.prazo ? new Date(b.prazo).getTime() : Infinity; }
     else if (sk === 'progresso'){ va = pct(a); vb = pct(b); }
     else if (sk === 'status')   { const o={todo:0,progress:1,blocked:2,done:3}; va=o[processStatus(a)]??0; vb=o[processStatus(b)]??0; }
     else if (sk === 'numero')   { va = (a.num_proc||a.num_dl||a.num||'').toLowerCase(); vb = (b.num_proc||b.num_dl||b.num||'').toLowerCase(); }
@@ -8089,7 +8089,7 @@ function renderDashTable(lista) {
     const numHtml = p.num_proc||p.num_dl
       ? [p.num_proc&&`PA ${escHtml(p.num_proc)}`,p.num_dl&&`DL ${escHtml(p.num_dl)}`].filter(Boolean).join('<br>')
       : escHtml(p.num||'—');
-    const prazoHtml = p.prazo ? `<span style="color:${new Date(p.prazo)<new Date()?'var(--danger)':''}">${new Date(p.prazo).toLocaleDateString('pt-BR')}</span>` : '—';
+    const prazoHtml = p.prazo ? `<span style="color:${new Date(p.prazo + 'T00:00:00')<new Date()?'var(--danger)':''}">${new Date(p.prazo + 'T00:00:00').toLocaleDateString('pt-BR')}</span>` : '—';
     return `<tr onclick="openProcess('${p.id}')">
       <td style="font-size:.72rem;font-weight:600;color:var(--brand);line-height:1.5">${numHtml}</td>
       <td style="word-break:break-word;white-space:normal;line-height:1.4">${escHtml(p.objeto)}</td>

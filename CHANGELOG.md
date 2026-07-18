@@ -5,6 +5,12 @@
 
 ---
 
+## [2.29.15] — 2026-07-18
+
+### Corrigido
+- **Datas (prazo/validade/data da proposta) apareciam um dia antes.** Vários pontos formatavam/comparavam datas "só-data" (`YYYY-MM-DD`) com `new Date(str)` cru, que o JavaScript interpreta como UTC — em horário de Brasília (UTC-3) isso deslocava a data em um dia (ex.: prazo `18/07` exibido como `17/07`) e fazia o "vencido"/"dias em atraso" errar por 1 dia. Todos os call sites passaram a usar o mesmo `+ 'T00:00:00'` (hora local) já adotado no restante do arquivo. Sem efeito na ordenação (que era imune ao deslocamento).
+- **Parsing de valores (`_float`) mais robusto** — agora aceita moeda no formato brasileiro com separador de milhar (`1.234,56` → `1234,56` em vez de virar nulo), além de número puro; entradas inválidas continuam retornando nulo sem quebrar.
+
 ## [2.29.14] — 2026-07-18
 
 ### Alterado
