@@ -5,6 +5,11 @@
 
 ---
 
+## [2.29.13] — 2026-07-18
+
+### Corrigido
+- **Bolinhas de cor em "Cor de destaque" apareciam como finos palitos verticais.** O seletor está dentro de um `.info-field`, cuja regra `.info-field input { width:100% }` deixava o radio "guloso" dentro do label flex e espremia o quadradinho de cor de 14px para ~2px. Adicionado `flex-shrink:0` às amostras de cor, que voltam a ser círculos de 14px (verificado no navegador: 14×14). Mesmo ajuste em SGCA e SGEA.
+
 ## [2.29.12] — 2026-07-18
 
 ### Corrigido
