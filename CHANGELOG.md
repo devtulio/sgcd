@@ -5,6 +5,11 @@
 
 ---
 
+## [2.29.12] — 2026-07-18
+
+### Corrigido
+- **Menu Auditoria não aparecia nem para administradores.** O item de navegação `admin-only` (Trilha de Auditoria) era revelado com `style.display = ''`, que apenas limpava o inline e caía na regra `.admin-only { display:none }` do estilo compartilhado — mantendo o item oculto mesmo para admins. Agora, para administradores, a classe `.admin-only` é removida do elemento (que volta ao seu display natural — `flex` no caso do item de menu); para não-admins a classe permanece e continua oculto. Verificado no navegador: admin passa a ver o menu Auditoria.
+
 ## [2.29.11] — 2026-07-17
 
 ### Removido
