@@ -5,6 +5,12 @@
 
 ---
 
+## [2.29.11] — 2026-07-17
+
+### Removido
+- **Skeleton de carregamento removido** — padronização com os sistemas irmãos (que não usam skeleton). O dashboard renderiza direto, sem o placeholder animado e sem o atraso mínimo de exibição. Removidos markup, CSS (dois blocos, um deles duplicado) e a lógica JS de mostrar/ocultar.
+- **Banner de alerta de backup morto** — o `#backup-alert-banner` nunca era exibido (a função `checkBackupAlert()` era vazia; os backups são automáticos no servidor). Removidos markup, função e chamadas.
+
 ## [2.29.10] — 2026-07-17
 
 ### Removido

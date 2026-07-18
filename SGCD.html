@@ -26,34 +26,6 @@
   #app:not(.layout-expanded) #view-fornecedores,
   #app:not(.layout-expanded) #view-settings { max-width: 960px; margin: 0 auto; }
 
-  /* ── Skeleton loading ────────────────────────────── */
-  @keyframes skeleton-pulse {
-    0%   { opacity: 1; }
-    50%  { opacity: .45; }
-    100% { opacity: 1; }
-  }
-  .skeleton {
-    background: var(--gray-200); border-radius: 6px;
-    animation: skeleton-pulse 1.4s ease-in-out infinite;
-  }
-  body.dark .skeleton { background: #383838; }
-  .skeleton-stats {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr));
-    gap: 12px; margin-bottom: 24px;
-  }
-  .skeleton-stat {
-    background: #fff; border-radius: var(--radius); padding: 16px 18px;
-    box-shadow: var(--shadow); border: 1px solid var(--gray-200);
-    border-left: 4px solid var(--gray-200); display: flex; flex-direction: column; gap: 10px;
-  }
-  body.dark .skeleton-stat { background: #2a2a2a; border-color: #383838; }
-  .skeleton-card {
-    background: #fff; border-radius: var(--radius); padding: 16px 18px;
-    box-shadow: var(--shadow); border: 1px solid var(--gray-200);
-    margin-bottom: 10px; display: flex; flex-direction: column; gap: 8px;
-  }
-  body.dark .skeleton-card { background: #2a2a2a; border-color: #383838; }
-
   /* .dash-top é o genérico do base.css. */
 
   .stats {
@@ -606,10 +578,6 @@
   /* ── Task 4: Unit dot ──────────────────────────────────── */
   .unit-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
 
-  /* ── Task 6: Skeleton loading ──────────────────────────── */
-  .skeleton { background: linear-gradient(90deg, var(--gray-100) 25%, var(--gray-200) 50%, var(--gray-100) 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: var(--radius); }
-  @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-  .skeleton-card { height: 90px; margin-bottom: 10px; }
 
   /* ── Task 7: tooltip global dos step-dots ── */
   #step-dot-tooltip {
@@ -748,26 +716,7 @@
   <!-- ── Dashboard ── -->
   <div id="view-dash" class="view active">
 
-    <!-- Skeleton — visível enquanto os dados carregam -->
-    <div id="dash-skeleton">
-      <div style="height:32px;width:160px;margin-bottom:20px" class="skeleton"></div>
-      <div class="skeleton-stats">
-        <div class="skeleton-stat"><div class="skeleton" style="height:10px;width:50%"></div><div class="skeleton" style="height:36px;width:40%"></div><div class="skeleton" style="height:8px;width:70%"></div></div>
-        <div class="skeleton-stat"><div class="skeleton" style="height:10px;width:50%"></div><div class="skeleton" style="height:36px;width:40%"></div><div class="skeleton" style="height:8px;width:70%"></div></div>
-        <div class="skeleton-stat"><div class="skeleton" style="height:10px;width:50%"></div><div class="skeleton" style="height:36px;width:40%"></div><div class="skeleton" style="height:8px;width:70%"></div></div>
-        <div class="skeleton-stat"><div class="skeleton" style="height:10px;width:50%"></div><div class="skeleton" style="height:36px;width:40%"></div><div class="skeleton" style="height:8px;width:70%"></div></div>
-        <div class="skeleton-stat"><div class="skeleton" style="height:10px;width:50%"></div><div class="skeleton" style="height:36px;width:40%"></div><div class="skeleton" style="height:8px;width:70%"></div></div>
-        <div class="skeleton-stat"><div class="skeleton" style="height:10px;width:50%"></div><div class="skeleton" style="height:36px;width:40%"></div><div class="skeleton" style="height:8px;width:70%"></div></div>
-      </div>
-      <div class="skeleton" style="height:38px;margin-bottom:16px;border-radius:8px"></div>
-      <div class="skeleton-card"><div class="skeleton" style="height:14px;width:60%"></div><div class="skeleton" style="height:10px;width:40%"></div></div>
-      <div class="skeleton-card"><div class="skeleton" style="height:14px;width:75%"></div><div class="skeleton" style="height:10px;width:35%"></div></div>
-      <div class="skeleton-card"><div class="skeleton" style="height:14px;width:50%"></div><div class="skeleton" style="height:10px;width:50%"></div></div>
-      <div class="skeleton-card"><div class="skeleton" style="height:14px;width:65%"></div><div class="skeleton" style="height:10px;width:30%"></div></div>
-    </div>
-
-    <!-- Conteúdo real — oculto até os dados estarem prontos -->
-    <div id="dash-content" style="display:none">
+    <div id="dash-content">
     <div class="dash-top">
       <h2>Processos</h2>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -2152,12 +2101,6 @@
 
 <div id="toast"></div>
 <div id="step-dot-tooltip"></div>
-<div id="backup-alert-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9000;background:#7c2d12;color:#fff;padding:10px 20px;display:none;align-items:center;gap:12px;font-size:.82rem;border-top:3px solid #f97316">
-  <span style="font-size:1.1em">⚠</span>
-  <span id="backup-alert-msg" style="flex:1"></span>
-  <button onclick="exportBackup()" style="background:#f97316;color:#fff;border:none;padding:5px 14px;border-radius:6px;font-size:.8rem;font-weight:700;cursor:pointer;white-space:nowrap">💾 Exportar Backup</button>
-  <button onclick="document.getElementById('backup-alert-banner').style.display='none'" style="background:transparent;color:#fca97d;border:1px solid #fca97d;padding:5px 10px;border-radius:6px;font-size:.8rem;cursor:pointer;white-space:nowrap">Lembrar depois</button>
-</div>
 
 <script>const SGX_APP_ID = 'sgcd';</script>
 <script src="base.js"></script>
@@ -2178,7 +2121,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.29.10';
+const SGCD_VERSION = '2.29.11';
 // URL absoluta (não relativa) porque API_BASE também monta o texto do QR Code
 // de verificação de assinatura, lido por celular fora do navegador — precisa
 // da origem real, nunca uma porta fixa (era 'http://localhost:3000' hardcoded).
@@ -2486,8 +2429,6 @@ async function exportBackup() {
     });
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    localStorage.setItem('sgcd-last-manual-export', Date.now().toString());
-    document.getElementById('backup-alert-banner').style.display = 'none';
     toast(`Backup exportado — ${processes.length} processos, ${fornecedores.length} fornecedores.`, 'success');
   } catch(e) { toast('Erro ao exportar: ' + e.message, 'error'); }
 }
@@ -2985,7 +2926,6 @@ let currentId = null;
 let currentProcess = null;
 let fracResultado = new Map();
 let _compactMode = false;
-let _loaded = false;
 
 // ══════════════════════════════════════════════════════════════
 // FRACIONAMENTO ENGINE
@@ -4581,15 +4521,6 @@ function renderDash() {
         : `${filtered.length} de ${processes.length} processo${processes.length !== 1 ? 's' : ''}`;
     } else {
       d.dashInfo.style.display = 'none';
-    }
-  }
-
-  if (!_loaded) {
-    _loaded = true;
-    if (processes.length === 0) {
-      list.innerHTML = [1,2,3].map(() => `<div class="skeleton skeleton-card"></div>`).join('');
-      setTimeout(() => renderDash(), 600);
-      return;
     }
   }
 
@@ -12774,10 +12705,6 @@ async function restaurarBackupDB(file) {
   else toast(`Erro ao restaurar: ${d?.error || 'falha desconhecida'}`, 'error');
 }
 
-async function checkBackupAlert() {
-  // Nenhum alerta necessário — backups automáticos gerenciados pelo servidor
-}
-
 window.addEventListener('beforeunload', () => {
   // Sessões são invalidadas pelo servidor ao reiniciar (após heartbeat timeout).
   // Não enviamos beacon aqui pois beforeunload não distingue F5 de fechar janela.
@@ -12866,52 +12793,18 @@ if (location.protocol === 'file:') {
   throw new Error('Acesso direto via file:// bloqueado.');
 }
 
-function _showDashSkeleton() {
-  document.getElementById('dash-skeleton').style.display = '';
-  document.getElementById('dash-content').style.display  = 'none';
-}
-function _hideDashSkeleton() {
-  document.getElementById('dash-skeleton').style.display = 'none';
-  document.getElementById('dash-content').style.display  = '';
-}
-
-const _skeletonStart = Date.now();
-const _SKELETON_MIN_MS = 1500;
-
-function _hideDashSkeletonWhenReady(fn) {
-  const elapsed = Date.now() - _skeletonStart;
-  const delay = Math.max(0, _SKELETON_MIN_MS - elapsed);
-  setTimeout(() => {
-    fn();
-    const skeleton = document.getElementById('dash-skeleton');
-    const content  = document.getElementById('dash-content');
-    content.style.opacity = '0';
-    content.style.transition = 'opacity .4s ease';
-    content.style.display = '';
-    skeleton.style.transition = 'opacity .3s ease';
-    skeleton.style.opacity = '0';
-    setTimeout(() => {
-      skeleton.style.display = 'none';
-      content.style.opacity = '1';
-    }, 300);
-  }, delay);
-}
-
 // Inicialização: verifica token e mostra login se necessário.
 // Após login bem-sucedido, _onLoginSuccess() dispara carregarDashboard().
 function carregarDashboard() {
   document.getElementById('footer-version').textContent = `v${SGCD_VERSION}`;
   loadProcesses()
     .then(() => {
-      checkBackupAlert();
       const u = getUser();
       if (!u.nome) {
-        _hideDashSkeletonWhenReady(() => {
-          showSettings();
-          setTimeout(() => toast('Bem-vindo ao SGCD! Configure seus dados antes de começar.', 'success'), 400);
-        });
+        showSettings();
+        setTimeout(() => toast('Bem-vindo ao SGCD! Configure seus dados antes de começar.', 'success'), 400);
       } else {
-        _hideDashSkeletonWhenReady(() => renderDash());
+        renderDash();
       }
     })
     .catch(err => console.error('Erro ao carregar dashboard:', err));
