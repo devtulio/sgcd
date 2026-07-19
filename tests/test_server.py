@@ -412,5 +412,49 @@ class TestNuncaEncerraSozinho(SGCDTestCase):
         self.assertEqual(status, 200, 'sessão expirou com atraso que o TTL antigo (15s) não sobreviveria')
 
 
+class TestCeisCnep(SGCDTestCase):
+    """Proxy CEIS/CNEP: valida os dois curtos-circuitos que não tocam a rede."""
+
+    def test_cnpj_invalido_retorna_400(self):
+        token = self.login()
+        status, data = self.request('GET', '/api/ceis-cnep?cnpj=123', token=token)
+        self.assertEqual(status, 400)
+        self.assertIn('CNPJ', data.get('error', ''))
+
+    def test_sem_chave_configurada_retorna_400(self):
+        token = self.login()
+        # DB de teste não tem portal_transparencia_key → não chega a chamar a API externa
+        status, data = self.request('GET', '/api/ceis-cnep?cnpj=12345678000199', token=token)
+        self.assertEqual(status, 400)
+        self.assertIn('não configurada', data.get('error', ''))
+
+
+class TestImportFornecedores(SGCDTestCase):
+    """Importar fornecedores de um backup do SGCA: upsert por CNPJ."""
+
+    def test_import_upsert_por_cnpj(self):
+        token = self.login()
+        cnpj = '12.345.678/0001-99'
+        status, d = self.request('POST', '/api/fornecedores/import', {'fornecedores': [
+            {'cnpj': cnpj, 'razao_social': 'Empresa Teste LTDA'},
+            {'cnpj': '123', 'razao_social': 'CNPJ inválido — ignorar'},
+        ]}, token=token)
+        self.assertEqual(status, 200, d)
+        self.assertEqual(d['novos'], 1)
+        self.assertEqual(d['ignorados'], 1)
+
+        # Re-importar o mesmo CNPJ atualiza, não duplica
+        status, d2 = self.request('POST', '/api/fornecedores/import', {'fornecedores': [
+            {'cnpj': cnpj, 'razao_social': 'Empresa Teste LTDA (novo nome)'},
+        ]}, token=token)
+        self.assertEqual(d2['atualizados'], 1)
+        self.assertEqual(d2['novos'], 0)
+
+        status, lst = self.request('GET', '/api/fornecedores', token=token)
+        matches = [f for f in lst['items'] if f.get('cnpj') == cnpj]
+        self.assertEqual(len(matches), 1, 'não deve duplicar por CNPJ')
+        self.assertEqual(matches[0]['razao_social'], 'Empresa Teste LTDA (novo nome)')
+
+
 if __name__ == '__main__':
     unittest.main()

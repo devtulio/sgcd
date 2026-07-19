@@ -880,6 +880,10 @@
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
           Relatório
         </button>
+        <button class="btn btn-outline" onclick="gerarRelatorioSancoesGlobal()" title="Relatório de sanções de todos os fornecedores">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          Sanções
+        </button>
         <button class="btn btn-outline" onclick="abrirModalCsv()" title="Importar fornecedores de arquivo CSV">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
           Importar CSV
@@ -1332,6 +1336,8 @@
             <input type="text" id="s-municipio" placeholder="Ex: Orindiúva/SP"></div>
           <div class="info-field"><label for="s-cnpj-orgao">CNPJ do Órgão <span style="color:var(--gray-400);font-weight:400">(para exportação PNCP)</span></label>
             <input type="text" id="s-cnpj-orgao" placeholder="Ex: 45.678.901/0001-00" maxlength="18"></div>
+          <div class="info-field"><label for="s-portal-transparencia-key">Chave de API — Portal da Transparência <span style="color:var(--gray-400);font-weight:400">(consulta automática de CEIS/CNEP)</span></label>
+            <input type="text" id="s-portal-transparencia-key" placeholder="Obtida gratuitamente em api.portaldatransparencia.gov.br"></div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
             <div class="info-field"><label for="s-codigo-ibge">Código IBGE do Município <span style="color:var(--gray-400);font-weight:400">(PNCP)</span></label>
               <input type="text" id="s-codigo-ibge" placeholder="Ex: 3534005" maxlength="7"></div>
@@ -1462,6 +1468,15 @@
                 <input type="file" accept=".db" style="display:none" onchange="restaurarBackupDB(this.files[0]).then(()=>this.value='')">
               </label>
             </div>
+          </div>
+
+          <div style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:10px 12px;display:flex;flex-direction:column;gap:6px;margin-bottom:12px">
+            <div style="font-size:.7rem;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:.4px">Importar fornecedores do SGCA</div>
+            <p style="font-size:.72rem;color:var(--gray-500);margin:0 0 2px;line-height:1.5">Traz os fornecedores cadastrados no SGCA para cá, a partir de um backup JSON exportado lá. Upsert por CNPJ: atualiza os que já existem (preservando vínculos locais a processos e certidões) e adiciona os novos — nada é apagado.</p>
+            <label class="btn btn-outline btn-sm" style="cursor:pointer;justify-content:flex-start;width:fit-content">
+              🏢 Importar de backup do SGCA
+              <input type="file" accept=".json" style="display:none" onchange="importarFornecedoresSGCA(this.files[0]).then(()=>this.value='')">
+            </label>
           </div>
 
           <div style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:10px 12px;display:flex;flex-direction:column;gap:6px;margin-bottom:12px">
@@ -2120,7 +2135,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.31.0';
+const SGCD_VERSION = '2.32.0';
 // URL absoluta (não relativa): o API_BASE monta as URLs da REST API a partir da
 // origem real, nunca uma porta fixa (era 'http://localhost:3000' hardcoded).
 const API_BASE = window.location.origin;
@@ -2483,6 +2498,30 @@ async function importBackup(file) {
     toast(`Backup restaurado! ${backup.processes?.length||0} processos${auditMsg} importados.${cfgMsg}${smtpMsg}`, 'success');
     showDash();
   } catch(e) { toast('Erro ao importar: ' + e.message, 'error'); }
+}
+
+// Importa SÓ os fornecedores de um backup do SGCA (upsert por CNPJ no servidor) —
+// não mexe em processos/config; complementa o restore que substitui tudo.
+async function importarFornecedoresSGCA(file) {
+  if (!file) return;
+  try {
+    let bk;
+    try { bk = JSON.parse(await file.text()); }
+    catch { toast('Arquivo inválido — selecione um backup JSON do SGCA.', 'error'); return; }
+    const forns = Array.isArray(bk.fornecedores) ? bk.fornecedores : [];
+    if (!forns.length) { toast('Nenhum fornecedor encontrado no arquivo.', 'error'); return; }
+    const ok = await customConfirm(
+      `O arquivo tem ${forns.length} fornecedor(es).\n\nFornecedores com o mesmo CNPJ serão ATUALIZADOS (preservando vínculos locais a processos e certidões); os demais serão ADICIONADOS. Nada é apagado.`,
+      { title: 'Importar Fornecedores do SGCA', icon: '🏢', okLabel: 'Importar', okClass: 'btn-primary' }
+    );
+    if (!ok) return;
+    toast('Importando fornecedores…', '');
+    const r = await API.post('/api/fornecedores/import', { fornecedores: forns });
+    const d = await API.json(r);
+    if (!r?.ok) { toast('Erro ao importar: ' + (d?.error || 'falha no servidor'), 'error'); return; }
+    toast(`Importação concluída: ${d.novos} novo(s), ${d.atualizados} atualizado(s)${d.ignorados ? `, ${d.ignorados} ignorado(s)` : ''}.`, 'success');
+    if (typeof showFornecedores === 'function') showFornecedores();
+  } catch(e) { toast('Erro ao importar fornecedores: ' + e.message, 'error'); }
 }
 
 // Mostra os registros que existem nos dois lados com data de alteração diferente
@@ -4719,6 +4758,30 @@ let _fornModalData  = null;
 let _currentForn    = null;
 let _expandedFornId = null;
 
+// Consulta CEIS/CNEP (Portal da Transparência/CGU) via proxy do servidor —
+// complementa os links manuais; exige chave de API em Configurações → Órgão.
+async function consultarCeisCnep(fornId, cnpjDigits) {
+  const el = document.getElementById(`forn-ceis-cnep-${fornId}`);
+  if (!el) return;
+  el.innerHTML = '<span style="color:var(--gray-400)">Consultando…</span>';
+  const r = await API.get(`/api/ceis-cnep?cnpj=${cnpjDigits}`);
+  const d = await API.json(r);
+  if (!r?.ok) {
+    el.innerHTML = `<span style="color:var(--red)">⚠️ ${escHtml(d?.error || 'Erro ao consultar CEIS/CNEP.')}</span>`;
+    return;
+  }
+  const total = (d.ceis || []).length + (d.cnep || []).length;
+  if (total === 0) {
+    el.innerHTML = `<span style="color:var(--green)">✅ Nenhuma sanção encontrada no CEIS/CNEP${d.erro ? ' (consulta parcial: ' + escHtml(d.erro) + ')' : ''}.</span>`;
+    return;
+  }
+  const linha = (tipo, s) => `<div style="padding:3px 0;border-bottom:1px solid var(--gray-100)">⚠️ <strong>${tipo}</strong> — ${escHtml(s.tipoSancao?.descricaoResumida || s.tipoSancao?.descricao || 'Sanção registrada')}${s.dataFimSancao ? ' — até ' + fmtDateBR(s.dataFimSancao) : ''}</div>`;
+  el.innerHTML =
+    `<div style="color:var(--red);font-weight:600;margin-bottom:2px">⚠️ ${total} sanção(ões) encontrada(s) no CEIS/CNEP:</div>` +
+    (d.ceis || []).map(s => linha('CEIS', s)).join('') +
+    (d.cnep || []).map(s => linha('CNEP', s)).join('');
+}
+
 function _fornViewHtml(f) {
   const sitCls = cnpjSitClass(f.situacao);
   const fmtD = s => {
@@ -4780,7 +4843,9 @@ function _fornViewHtml(f) {
           <a href="https://certidoes-apf.apps.tcu.gov.br/" target="_blank" rel="noopener" class="btn btn-outline btn-sm" style="font-size:.7rem;padding:2px 8px">CEIS</a>
           <a href="https://certidoes-apf.apps.tcu.gov.br/" target="_blank" rel="noopener" class="btn btn-outline btn-sm" style="font-size:.7rem;padding:2px 8px">CNEP</a>
           <a href="https://portaldatransparencia.gov.br/sancoes/consulta?cpfCnpj=${f.cnpj_digits}" target="_blank" rel="noopener" class="btn btn-outline btn-sm" style="font-size:.7rem;padding:2px 8px">Sanções</a>
+          <button class="btn btn-outline btn-sm" style="font-size:.7rem;padding:2px 8px" onclick="consultarCeisCnep('${f.id}','${f.cnpj_digits}')">🔍 Consultar CEIS/CNEP</button>
         </div>
+        <div id="forn-ceis-cnep-${f.id}" style="font-size:.75rem;margin-top:6px"></div>
       </div>
       <div style="text-align:right;flex-shrink:0;margin-left:10px">
         <span class="forn-sit ${sitCls}">${escHtml(f.situacao || '—')}</span>
@@ -5360,6 +5425,7 @@ function _fornTabsHtml(active) {
   return `<div class="forn-tabs">
     <button class="forn-tab ${active==='dados'?'active':''}" onclick="_switchFornTab('dados')">Dados</button>
     <button class="forn-tab ${active==='certs'?'active':''}" onclick="_switchFornTab('certs')">Certidões</button>
+    <button class="forn-tab ${active==='sancoes'?'active':''}" onclick="_switchFornTab('sancoes')">Sanções</button>
     <button class="forn-tab ${active==='historico'?'active':''}" onclick="_switchFornTab('historico')">Participações</button>
   </div>`;
 }
@@ -5368,9 +5434,248 @@ function _switchFornTab(tab) {
   _fornTab = tab;
   if (tab === 'dados') _renderFornCardView();
   else if (tab === 'historico') _renderFornCardHistorico();
+  else if (tab === 'sancoes') _renderFornCardSancoes();
   else _renderFornCardCerts();
 }
 function _renderFornCerts() { _renderFornCardCerts(); }
+
+// ── Sanções / Penalidades (Art. 156, Lei 14.133/2021) ─────────
+// Sanções manuais ficam no JSON do fornecedor (data.sancoes), salvas via PUT —
+// complementam a consulta automática CEIS/CNEP. Portado do SGCA.
+const SANCAO_TIPOS = [
+  { id: 'advertencia',   label: 'Advertência' },
+  { id: 'multa',         label: 'Multa' },
+  { id: 'suspensao',     label: 'Suspensão Temporária' },
+  { id: 'impedimento',   label: 'Impedimento de Licitar (Art. 156, III)' },
+  { id: 'inidoneidade',  label: 'Declaração de Inidoneidade (Art. 156, IV)' }
+];
+function sancaoTipoLabel(s) { return SANCAO_TIPOS.find(t => t.id === s.tipo)?.label || s.tipo; }
+function sancaoStatus(s) {
+  if (!s.prazoFim) return 'ativa';
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  return new Date(s.prazoFim + 'T00:00:00') < hoje ? 'encerrada' : 'ativa';
+}
+
+function _renderFornCardSancoes() {
+  _fornTab = 'sancoes';
+  const f = _currentForn;
+  const sancoes = f.sancoes || [];
+  const itemsHtml = sancoes.length ? sancoes.map((s, i) => {
+    const st = sancaoStatus(s);
+    const cls = st === 'ativa' ? 'expired' : 'none';
+    return `<div class="forn-cert-item ${cls}">
+      <div style="flex:1;min-width:0">
+        <div class="forn-cert-tipo">${escHtml(sancaoTipoLabel(s))}</div>
+        <div class="forn-cert-dates">Aplicada em: ${fmtDateBR(s.dataAplicacao)}${s.prazoFim ? ' · Até: ' + fmtDateBR(s.prazoFim) : ''}
+          ${s.fundamentacao ? `<br><span style="font-style:italic">${escHtml(s.fundamentacao)}</span>` : ''}</div>
+        <span class="forn-cert-badge ${cls}">${st === 'ativa' ? 'Vigente' : 'Encerrada'}</span>
+      </div>
+      <div class="forn-cert-actions">
+        <button class="btn btn-outline btn-sm" style="padding:2px 8px;font-size:.65rem" onclick="openSancaoEdit('${f.id}',${i})">✏</button>
+        <button class="btn btn-danger btn-sm" style="padding:2px 8px;font-size:.65rem" onclick="deleteSancao('${f.id}',${i})">✕</button>
+      </div>
+    </div>`;
+  }).join('') : '<p style="color:var(--gray-500);font-size:.8rem;text-align:center;padding:20px 0">Nenhuma sanção registrada.</p>';
+  _setFornCardBody(`<div class="forn-inline-body" onclick="event.stopPropagation()">
+    ${_fornTabsHtml('sancoes')}
+    <div class="forn-cert-list">${itemsHtml}</div>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button class="btn btn-outline" style="flex:1" onclick="openSancaoEdit('${f.id}', -1)">+ Registrar Sanção</button>
+      <button class="btn btn-outline" onclick="gerarRelatorioSancoesForn('${f.id}')" title="Gerar relatório de sanções">📄 Relatório</button>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid var(--gray-200)">
+      <button class="btn btn-outline" onclick="_collapseFornCard('${f.id}')">Fechar</button>
+      <button class="btn btn-primary" onclick="_renderFornCardEdit()">✏ Editar</button>
+    </div>
+  </div>`, 'view');
+}
+
+async function gerarRelatorioSancoesForn(fornId) {
+  const f = await API.get(`/api/fornecedores/${fornId}`).then(r => r?.ok ? API.json(r) : null);
+  if (!f) return;
+  const u = getUser();
+  const now = new Date();
+  const dtGer = now.toLocaleDateString('pt-BR') + ' às ' + now.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
+  const sancoes = (f.sancoes || []).slice().sort((a,b) => (a.dataAplicacao||'').localeCompare(b.dataAplicacao||''));
+  const tbody = sancoes.length ? sancoes.map(s => {
+    const st = sancaoStatus(s);
+    return `<tr>
+      <td>${escHtml(sancaoTipoLabel(s))}</td>
+      <td>${fmtDateBR(s.dataAplicacao)}</td>
+      <td>${s.prazoFim ? fmtDateBR(s.prazoFim) : '—'}</td>
+      <td>${st === 'ativa' ? 'Vigente' : 'Encerrada'}</td>
+      <td>${escHtml(s.fundamentacao || '—')}</td>
+    </tr>`;
+  }).join('') : `<tr><td colspan="5" style="text-align:center;padding:20pt;color:#888">Nenhuma sanção registrada para este fornecedor.</td></tr>`;
+  const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+<title>${_nomeArquivoDoc(null, 'RELATORIO DE SANCOES - ' + (f.razao_social || f.id))}</title>
+<style>${_DOC_CSS}
+  body { font-family: 'Times New Roman', Times, serif; font-size: 11pt; color: #000; background: #fff; padding: 2cm 2.5cm; }
+  .header { text-align: center; margin-bottom: 20pt; border-bottom: 2px solid #000; padding-bottom: 12pt; }
+  .header img { height: 90pt; width: auto; margin-bottom: 6pt; }
+  .header h1 { font-size: 13pt; font-weight: 700; text-transform: uppercase; }
+  .doc-title { text-align: center; margin: 14pt 0 10pt; }
+  .doc-title h3 { font-size: 13pt; font-weight: 700; text-transform: uppercase; }
+  .doc-title .sub { font-size: 10pt; color: #444; margin-top: 4pt; }
+  .meta { font-size: 9pt; color: #555; margin-bottom: 10pt; text-align: center; }
+  table { width: 100%; border-collapse: collapse; margin-top: 8pt; font-size: 9pt; table-layout: fixed; }
+  th { background: #1a1a2e; color: #fff; padding: 5pt 7pt; text-align: left; vertical-align: middle; font-weight: 700; font-size: 9pt; }
+  td { padding: 4pt 7pt; vertical-align: middle; font-size: 8.5pt; border-bottom: 1px solid #e8e8e8; word-wrap: break-word; overflow-wrap: break-word; }
+  .btn-print { display: block; margin: 0 auto 20pt; padding: 8pt 24pt; background: #1a3a6b; color: #fff; border: none; border-radius: 4px; font-size: 11pt; cursor: pointer; }
+</style></head><body>
+<button class="btn-print no-print" onclick="window.print()">🖨 Imprimir / Salvar PDF</button>
+<div class="header">
+  <img src="data:image/png;base64,__BRASAO_PLACEHOLDER__" alt="Brasão">
+  <h1>${escHtml(u.orgao || '')}</h1>
+  <h2>${escHtml(u.municipio || '')}</h2>
+</div>
+<div class="doc-title">
+  <h3>Relatório de Sanções e Penalidades</h3>
+  <div class="sub">${escHtml(f.razao_social || f.nome_fantasia || '(sem nome)')}${f.cnpj ? ' — CNPJ: ' + escHtml(f.cnpj) : ''}</div>
+</div>
+<div class="meta">Gerado em: ${dtGer} &nbsp;·&nbsp; Total: ${sancoes.length} sanção${sancoes.length !== 1 ? 'ões' : ''}</div>
+<table>
+  <colgroup><col style="width:26%"><col style="width:16%"><col style="width:16%"><col style="width:14%"><col style="width:28%"></colgroup>
+  <thead><tr><th>Tipo</th><th>Aplicada em</th><th>Prazo Final</th><th>Situação</th><th>Fundamentação</th></tr></thead>
+  <tbody>${tbody}</tbody>
+</table>
+${_qrFooterReport('Relatório de Sanções')}
+</body></html>`;
+  _gerarDocumento(window.open('', '_blank', 'width=900,height=700'), html, `Relatório de Sanções — ${f.razao_social || f.id}`);
+}
+
+async function gerarRelatorioSancoesGlobal() {
+  const todos = await listarFornecedores();
+  const u = getUser();
+  const now = new Date();
+  const dtGer = now.toLocaleDateString('pt-BR') + ' às ' + now.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
+  const linhas = [];
+  for (const f of todos) {
+    for (const s of (f.sancoes || [])) linhas.push({ forn: f.razao_social || f.nome_fantasia || '(sem nome)', s });
+  }
+  linhas.sort((a, b) => (a.s.dataAplicacao || '').localeCompare(b.s.dataAplicacao || ''));
+  const tbody = linhas.length ? linhas.map(({ forn, s }) => {
+    const st = sancaoStatus(s);
+    return `<tr>
+      <td>${escHtml(forn)}</td>
+      <td>${escHtml(sancaoTipoLabel(s))}</td>
+      <td>${fmtDateBR(s.dataAplicacao)}</td>
+      <td>${s.prazoFim ? fmtDateBR(s.prazoFim) : '—'}</td>
+      <td>${st === 'ativa' ? 'Vigente' : 'Encerrada'}</td>
+      <td>${escHtml(s.fundamentacao || '—')}</td>
+    </tr>`;
+  }).join('') : `<tr><td colspan="6" style="text-align:center;padding:20pt;color:#888">Nenhuma sanção registrada.</td></tr>`;
+  const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+<title>${_nomeArquivoDoc(null, 'RELATORIO GLOBAL DE SANCOES')}</title>
+<style>${_DOC_CSS}
+  body { font-family: 'Times New Roman', Times, serif; font-size: 11pt; color: #000; background: #fff; padding: 2cm 2.5cm; }
+  .header { text-align: center; margin-bottom: 20pt; border-bottom: 2px solid #000; padding-bottom: 12pt; }
+  .header img { height: 90pt; width: auto; margin-bottom: 6pt; }
+  .header h1 { font-size: 13pt; font-weight: 700; text-transform: uppercase; }
+  .doc-title { text-align: center; margin: 14pt 0 10pt; }
+  .doc-title h3 { font-size: 13pt; font-weight: 700; text-transform: uppercase; }
+  .doc-title .sub { font-size: 10pt; color: #444; margin-top: 4pt; }
+  .meta { font-size: 9pt; color: #555; margin-bottom: 10pt; text-align: center; }
+  table { width: 100%; border-collapse: collapse; margin-top: 8pt; font-size: 9pt; table-layout: fixed; }
+  th { background: #1a1a2e; color: #fff; padding: 5pt 7pt; text-align: left; vertical-align: middle; font-weight: 700; font-size: 9pt; }
+  td { padding: 4pt 7pt; vertical-align: middle; font-size: 8.5pt; border-bottom: 1px solid #e8e8e8; word-wrap: break-word; overflow-wrap: break-word; }
+  .btn-print { display: block; margin: 0 auto 20pt; padding: 8pt 24pt; background: #1a3a6b; color: #fff; border: none; border-radius: 4px; font-size: 11pt; cursor: pointer; }
+</style></head><body>
+<button class="btn-print no-print" onclick="window.print()">🖨 Imprimir / Salvar PDF</button>
+<div class="header">
+  <img src="data:image/png;base64,__BRASAO_PLACEHOLDER__" alt="Brasão">
+  <h1>${escHtml(u.orgao || '')}</h1>
+  <h2>${escHtml(u.municipio || '')}</h2>
+</div>
+<div class="doc-title">
+  <h3>Relatório Global de Sanções e Penalidades</h3>
+  <div class="sub">Todos os fornecedores cadastrados</div>
+</div>
+<div class="meta">Gerado em: ${dtGer} &nbsp;·&nbsp; Total: ${linhas.length} sanção${linhas.length !== 1 ? 'ões' : ''}</div>
+<table>
+  <colgroup><col style="width:22%"><col style="width:22%"><col style="width:13%"><col style="width:13%"><col style="width:10%"><col style="width:20%"></colgroup>
+  <thead><tr><th>Fornecedor</th><th>Tipo</th><th>Aplicada em</th><th>Prazo Final</th><th>Situação</th><th>Fundamentação</th></tr></thead>
+  <tbody>${tbody}</tbody>
+</table>
+${_qrFooterReport('Relatório Global de Sanções')}
+</body></html>`;
+  _gerarDocumento(window.open('', '_blank', 'width=900,height=700'), html, 'Relatório Global de Sanções');
+}
+
+let _sancaoEditFornId = null, _sancaoEditIdx = null;
+function openSancaoEdit(fornId, idx) {
+  _sancaoEditFornId = fornId;
+  _sancaoEditIdx    = idx;
+  const s = idx >= 0 ? (_currentForn?.sancoes || [])[idx] : null;
+  const titulo = idx === -1 ? 'Registrar Sanção' : 'Editar Sanção';
+  _setFornCardBody(`<div class="forn-inline-body" onclick="event.stopPropagation()">
+    <div style="font-size:.85rem;font-weight:700;color:var(--gray-700);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--gray-200)">${titulo}</div>
+    <div class="info-field">
+      <label for="sa-tipo" style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-500)">Tipo</label>
+      <select id="sa-tipo">${SANCAO_TIPOS.map(t => `<option value="${t.id}" ${s?.tipo===t.id?'selected':''}>${escHtml(t.label)}</option>`).join('')}</select>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="info-field" style="margin:0">
+        <label for="sa-data" style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-500)">Data de Aplicação</label>
+        <input type="date" id="sa-data" value="${s?.dataAplicacao || ''}">
+      </div>
+      <div class="info-field" style="margin:0">
+        <label for="sa-prazo" style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-500)">Prazo Final (se houver)</label>
+        <input type="date" id="sa-prazo" value="${s?.prazoFim || ''}">
+      </div>
+    </div>
+    <div class="info-field">
+      <label for="sa-fundamentacao" style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-500)">Fundamentação / Processo</label>
+      <input type="text" id="sa-fundamentacao" placeholder="ex: Processo 123/2026 — Art. 156, II" value="${escHtml(s?.fundamentacao || '')}">
+    </div>
+    <div class="info-field">
+      <label for="sa-obs" style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-500)">Observações</label>
+      <textarea id="sa-obs" rows="2">${escHtml(s?.obs || '')}</textarea>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid var(--gray-200)">
+      <button class="btn btn-outline" onclick="_renderFornCardSancoes()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveSancaoEdit()">Salvar Sanção</button>
+    </div>
+  </div>`, 'view');
+}
+
+async function saveSancaoEdit() {
+  const tipo           = document.getElementById('sa-tipo').value;
+  const dataAplicacao  = document.getElementById('sa-data').value;
+  const prazoFim       = document.getElementById('sa-prazo').value;
+  const fundamentacao  = document.getElementById('sa-fundamentacao').value.trim();
+  const obs            = document.getElementById('sa-obs').value.trim();
+  if (!dataAplicacao) { toast('Informe a data de aplicação.', 'error'); return; }
+  const sancao = { tipo, dataAplicacao, prazoFim, fundamentacao, obs };
+  const forn = await API.get(`/api/fornecedores/${_sancaoEditFornId}`).then(r => r?.ok ? API.json(r) : null);
+  if (!forn) return;
+  const sancoes = forn.sancoes || [];
+  if (_sancaoEditIdx === -1) sancoes.push(sancao);
+  else sancoes[_sancaoEditIdx] = sancao;
+  forn.sancoes = sancoes;
+  forn.updatedAt = Date.now();
+  await API.put(`/api/fornecedores/${forn.id}`, forn);
+  _currentForn = forn;
+  await _auditEvento('FORNECEDOR_ALTERADO', `Sanção registrada para ${forn.razao_social || forn.nome_fantasia}`);
+  toast('Sanção salva!', 'success');
+  playSuccess();
+  if (document.getElementById('view-fornecedores').classList.contains('active')) await renderFornecedores();
+  _renderFornCardSancoes();
+}
+
+async function deleteSancao(fornId, idx) {
+  const ok = await customConfirm('Esta ação não pode ser desfeita.', { title: 'Excluir sanção?', okLabel: 'Excluir', okClass: 'btn-danger' });
+  if (!ok) return;
+  const forn = await API.get(`/api/fornecedores/${fornId}`).then(r => r?.ok ? API.json(r) : null);
+  if (!forn) return;
+  forn.sancoes = (forn.sancoes || []).filter((_,i) => i !== idx);
+  forn.updatedAt = Date.now();
+  await API.put(`/api/fornecedores/${forn.id}`, forn);
+  _currentForn = forn;
+  toast('Sanção removida.', 'success');
+  if (document.getElementById('view-fornecedores').classList.contains('active')) await renderFornecedores();
+  _renderFornCardSancoes();
+}
 
 async function _renderFornCardHistorico() {
   _fornTab = 'historico';
@@ -10371,6 +10676,7 @@ function showSettings() {
   const u = getUser();
   document.getElementById('s-orgao').value       = u.orgao       || '';
   document.getElementById('s-municipio').value   = u.municipio   || '';
+  document.getElementById('s-portal-transparencia-key').value = u.portal_transparencia_key || '';
   document.getElementById('s-aut-nome').value      = u.aut_nome      || '';
   document.getElementById('s-aut-cargo').value     = u.aut_cargo     || '';
   document.getElementById('s-site-oficial').value  = u.site_oficial  || '';
@@ -10440,6 +10746,7 @@ async function saveSettings() {
   const u = {
     orgao:            document.getElementById('s-orgao').value.trim(),
     municipio:        document.getElementById('s-municipio').value.trim(),
+    portal_transparencia_key: document.getElementById('s-portal-transparencia-key').value.trim(),
     aut_nome:         document.getElementById('s-aut-nome').value.trim(),
     aut_cargo:        document.getElementById('s-aut-cargo').value.trim(),
     site_oficial:     document.getElementById('s-site-oficial').value.trim(),

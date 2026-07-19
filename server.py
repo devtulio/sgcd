@@ -1,4 +1,4 @@
-# SGCD v2.30.2 — Servidor local: SQLite, autenticação, REST API, proxy CNPJ, e-mail SMTP, backup automático
+# SGCD v2.32.0 — Servidor local: SQLite, autenticação, REST API, proxy CNPJ, e-mail SMTP, backup automático
 import http.server
 import socketserver
 import os
@@ -422,6 +422,10 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         elif re.fullmatch(r'/api/fornecedores/[^/]+', p):
             self._get_fornecedor(p.split('/')[-1])
 
+        # CEIS/CNEP (sanções federais por CNPJ, via Portal da Transparência)
+        elif p == '/api/ceis-cnep':
+            self._proxy_ceis_cnep(qs)
+
         # Etiquetas
         elif p == '/api/tags':
             self._list_tags()
@@ -606,6 +610,10 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
 
         elif p == '/api/fornecedores':
             self._create_fornecedor(data)
+
+        elif p == '/api/fornecedores/import':
+            if not s['admin']: self._json(403, {'error': 'Acesso restrito'}); return
+            self._import_fornecedores(data)
 
         elif p == '/api/audit':
             self._add_audit(data, s)
@@ -1017,6 +1025,48 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
                  data.get('cnpj'), data.get('razao') or data.get('razao_social'), data['updatedAt'])
             )
         self._json(200, data)
+
+    def _import_fornecedores(self, data):
+        # Importa fornecedores de um backup do SGCA (mesma forma de dado nos 2 sistemas):
+        # upsert por CNPJ. Ao atualizar um existente, preserva os vínculos LOCAIS do SGCD
+        # (processos, certidões) e sobrepõe o resto com os dados do arquivo.
+        incoming = data.get('fornecedores') if isinstance(data, dict) else None
+        if not isinstance(incoming, list):
+            self._json(400, {'error': 'Formato inválido: esperado {"fornecedores": [...]} (backup do SGCA)'}); return
+        novos = atualizados = ignorados = 0
+        with get_db() as conn:
+            existentes = {}
+            for r in conn.execute("SELECT id,cnpj FROM fornecedores WHERE deleted_at IS NULL").fetchall():
+                dig = re.sub(r'\D', '', r['cnpj'] or '')
+                if dig: existentes[dig] = r['id']
+            for f in incoming:
+                if not isinstance(f, dict):
+                    ignorados += 1; continue
+                cnpj_d = re.sub(r'\D', '', f.get('cnpj') or '')
+                if len(cnpj_d) != 14:
+                    ignorados += 1; continue
+                if cnpj_d in existentes:
+                    fid = existentes[cnpj_d]
+                    row = conn.execute('SELECT data FROM fornecedores WHERE id=?', (fid,)).fetchone()
+                    existing = json.loads(row['data']) if row else {}
+                    f = {**existing, **f, 'id': fid,
+                         'processos': existing.get('processos', []),
+                         'certidoes': existing.get('certidoes', [])}
+                    atualizados += 1
+                else:
+                    fid = f.get('id') or str(uuid.uuid4())
+                    existentes[cnpj_d] = fid
+                    f['id'] = fid
+                    novos += 1
+                f['cnpj_digits'] = cnpj_d  # garante o campo (dados de CSV/parciais podem não trazer)
+                f['updatedAt'] = _now_precise()
+                conn.execute(
+                    'INSERT OR REPLACE INTO fornecedores (id,data,cnpj,razao_social,updated_at) VALUES (?,?,?,?,?)',
+                    (fid, json.dumps(f, ensure_ascii=False),
+                     f.get('cnpj'), f.get('razao') or f.get('razao_social'), f['updatedAt'])
+                )
+            conn.commit()
+        self._json(200, {'ok': True, 'novos': novos, 'atualizados': atualizados, 'ignorados': ignorados})
 
     def _update_fornecedor(self, fid, data):
         with get_db() as conn:
@@ -1441,6 +1491,36 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
             self.end_headers(); self.wfile.write(body)
         except Exception as e:
             self._json(502, {'status': 'ERROR', 'message': str(e)})
+
+    # ── CEIS/CNEP (Portal da Transparência/CGU) ────────────────────────────────
+    # Consulta automatizada de sanções federais por CNPJ, complementando os links
+    # manuais no cadastro de Fornecedores. Exige chave de API gratuita (cadastro em
+    # api.portaldatransparencia.gov.br), salva em Configurações e lida via sys_settings.
+    def _proxy_ceis_cnep(self, qs):
+        def qp(k): v = qs.get(k); return (v[0] if v else '').strip()
+        cnpj = re.sub(r'\D', '', qp('cnpj'))
+        if len(cnpj) != 14:
+            self._json(400, {'error': 'CNPJ inválido'}); return
+        with get_db() as conn:
+            row = conn.execute(
+                "SELECT value FROM sys_settings WHERE key='portal_transparencia_key'"
+            ).fetchone()
+        api_key = row['value'] if row else ''
+        if not api_key:
+            self._json(400, {'error': 'Chave de API do Portal da Transparência não configurada (Configurações → Organização)'}); return
+
+        resultado = {'ceis': [], 'cnep': [], 'erro': None}
+        for tipo in ('ceis', 'cnep'):
+            url = f'https://api.portaldatransparencia.gov.br/api-de-dados/{tipo}?cnpjSancionado={cnpj}&pagina=1'
+            req = urllib.request.Request(url, headers={'chave-api-dados': api_key, 'User-Agent': 'SGCD/2.0'})
+            try:
+                with urllib.request.urlopen(req, timeout=10) as resp:
+                    resultado[tipo] = json.loads(resp.read())
+            except urllib.error.HTTPError as e:
+                resultado['erro'] = f'{tipo.upper()}: HTTP {e.code} (verifique a chave de API)'
+            except Exception as e:
+                resultado['erro'] = f'{tipo.upper()}: {e}'
+        self._json(200, resultado)
 
     # ── Verificar documento ───────────────────────────────────────────────────
 

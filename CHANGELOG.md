@@ -5,6 +5,13 @@
 
 ---
 
+## [2.32.0] — 2026-07-19
+
+### Adicionado
+- **Consulta automática CEIS/CNEP no cadastro de Fornecedores** — botão "🔍 Consultar CEIS/CNEP" no card do fornecedor consulta as sanções federais por CNPJ na API do Portal da Transparência (CGU), complementando os links manuais. Exige uma chave de API gratuita (cadastro em api.portaldatransparencia.gov.br), configurada em Configurações → Órgão. Novo endpoint proxy `GET /api/ceis-cnep`.
+- **Importar fornecedores do SGCA** — em Configurações → Dados, importa os fornecedores de um backup JSON exportado do SGCA, com **upsert por CNPJ**: atualiza os existentes (preservando os vínculos locais a processos e certidões) e adiciona os novos; nada é apagado. Novo endpoint `POST /api/fornecedores/import`.
+- **Sub-sistema de sanções manuais** no cadastro de Fornecedores — nova aba **"Sanções"** no card, com registro de penalidades (Advertência, Multa, Suspensão Temporária, Impedimento de Licitar — Art. 156, III, Declaração de Inidoneidade — Art. 156, IV), data de aplicação, prazo final e fundamentação, com badge Vigente/Encerrada automático. Dois relatórios imprimíveis: por fornecedor e global. Paridade de fornecedor com o SGCA.
+
 ## [2.31.0] — 2026-07-19
 
 ### Adicionado
