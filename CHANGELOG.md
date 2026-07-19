@@ -5,6 +5,11 @@
 
 ---
 
+## [2.30.2] — 2026-07-18
+
+### Removido
+- **Campo `bg` morto no mapa de auditoria** — cada entrada de `_AUDIT_EVENT_META` tinha `{ bg, color }`, mas o badge só usa `color` (fundo sólido + texto branco); o `bg` (tom claro) nunca era lido. Removido das 22 entradas. Sem efeito visual.
+
 ## [2.30.1] — 2026-07-18
 
 ### Alterado

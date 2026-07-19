@@ -2114,7 +2114,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.30.1';
+const SGCD_VERSION = '2.30.2';
 // URL absoluta (não relativa): o API_BASE monta as URLs da REST API a partir da
 // origem real, nunca uma porta fixa (era 'http://localhost:3000' hardcoded).
 const API_BASE = window.location.origin;
@@ -3949,28 +3949,28 @@ const _AUDIT_EVENT_LABELS = {
 };
 
 const _AUDIT_EVENT_META = {
-  ETAPA_DONE:           { bg: '#EEEDFE', color: '#534AB7' },
-  ETAPA_BLOCKED:        { bg: '#FCEBEB', color: '#A32D2D' },
-  ETAPA_PENDING:        { bg: '#FFF3D8', color: '#854F0B' },
-  ARQUIVO_ANEXADO:      { bg: '#E6F1FB', color: '#185FA5' },
-  ARQUIVO_REMOVIDO:     { bg: '#FCEBEB', color: '#A32D2D' },
-  DOCUMENTO_GERADO:     { bg: '#e8eef7', color: '#1a3a6b' },
-  DOCUMENTO_ASSINADO:   { bg: '#E1F5EE', color: '#0F6E56' },
-  PROCESSO_EXCLUIDO:    { bg: '#FCEBEB', color: '#A32D2D' },
-  PROCESSO_RESTAURADO:  { bg: '#E1F5EE', color: '#0F6E56' },
-  PROCESSO_EXPURGADO:   { bg: '#FCEBEB', color: '#A32D2D' },
-  CERTIDAO_ATUALIZADA:  { bg: '#FFF3D8', color: '#854F0B' },
-  CERTIDAO_SINCRONIZADA:{ bg: '#E1F5EE', color: '#0F6E56' },
-  FORNECEDOR_ALTERADO:  { bg: '#E1F5EE', color: '#0F6E56' },
-  FORNECEDOR_EXCLUIDO:  { bg: '#FCEBEB', color: '#A32D2D' },
-  FORNECEDOR_RESTAURADO:{ bg: '#E1F5EE', color: '#0F6E56' },
-  FORNECEDOR_EXPURGADO: { bg: '#FCEBEB', color: '#A32D2D' },
-  CAMPO_ALTERADO:       { bg: '#EBEBEB', color: '#666360' },
-  PNCP_EXPORT:          { bg: '#e8eef7', color: '#1a3a6b' },
-  SYNC_BACKUP:          { bg: '#E1F5EE', color: '#0F6E56' },
-  RESTAURAR_BACKUP:     { bg: '#FFF3D8', color: '#854F0B' },
-  RESTAURAR_DB:         { bg: '#FFF3D8', color: '#854F0B' },
-  FACTORY_RESET:        { bg: '#FCEBEB', color: '#A32D2D' }
+  ETAPA_DONE:           { color: '#534AB7' },
+  ETAPA_BLOCKED:        { color: '#A32D2D' },
+  ETAPA_PENDING:        { color: '#854F0B' },
+  ARQUIVO_ANEXADO:      { color: '#185FA5' },
+  ARQUIVO_REMOVIDO:     { color: '#A32D2D' },
+  DOCUMENTO_GERADO:     { color: '#1a3a6b' },
+  DOCUMENTO_ASSINADO:   { color: '#0F6E56' },
+  PROCESSO_EXCLUIDO:    { color: '#A32D2D' },
+  PROCESSO_RESTAURADO:  { color: '#0F6E56' },
+  PROCESSO_EXPURGADO:   { color: '#A32D2D' },
+  CERTIDAO_ATUALIZADA:  { color: '#854F0B' },
+  CERTIDAO_SINCRONIZADA:{ color: '#0F6E56' },
+  FORNECEDOR_ALTERADO:  { color: '#0F6E56' },
+  FORNECEDOR_EXCLUIDO:  { color: '#A32D2D' },
+  FORNECEDOR_RESTAURADO:{ color: '#0F6E56' },
+  FORNECEDOR_EXPURGADO: { color: '#A32D2D' },
+  CAMPO_ALTERADO:       { color: '#666360' },
+  PNCP_EXPORT:          { color: '#1a3a6b' },
+  SYNC_BACKUP:          { color: '#0F6E56' },
+  RESTAURAR_BACKUP:     { color: '#854F0B' },
+  RESTAURAR_DB:         { color: '#854F0B' },
+  FACTORY_RESET:        { color: '#A32D2D' }
 };
 
 function fmtDataHoraAudit(ts) {
