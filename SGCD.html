@@ -1500,6 +1500,12 @@
           </div>
         </fieldset>
 
+        <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
+          <legend style="font-size:.72rem;font-weight:700;color:var(--accent-light);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Modelos de Processo</legend>
+          <p style="font-size:.72rem;color:var(--gray-500);margin-bottom:10px;line-height:1.5">Modelos guardam objeto, valor e demais campos-base de um processo para reaproveitar ao criar um novo. Salvos localmente neste navegador.</p>
+          <button class="btn btn-outline btn-sm" onclick="abrirModalTemplates()">⊞ Gerenciar modelos</button>
+        </fieldset>
+
         <fieldset style="border:1.5px solid #dc2626;border-radius:8px;padding:14px 16px;margin-top:8px">
           <legend style="font-size:.72rem;font-weight:700;color:#dc2626;padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Zona de Perigo</legend>
           <p style="font-size:.72rem;color:var(--gray-500);margin-bottom:12px;line-height:1.5">Esta operação apaga <strong>permanentemente</strong> todos os processos, fornecedores, arquivos e configurações do sistema. A ação é irreversível. Um backup completo será exportado automaticamente antes do wipe.</p>
@@ -2114,7 +2120,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.30.2';
+const SGCD_VERSION = '2.31.0';
 // URL absoluta (não relativa): o API_BASE monta as URLs da REST API a partir da
 // origem real, nunca uma porta fixa (era 'http://localhost:3000' hardcoded).
 const API_BASE = window.location.origin;

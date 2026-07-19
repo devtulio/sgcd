@@ -5,6 +5,11 @@
 
 ---
 
+## [2.31.0] — 2026-07-19
+
+### Adicionado
+- **Tela "Gerenciar modelos" ligada às Configurações** — `abrirModalTemplates()` e o modal `#modal-templates` já existiam completos (criar processo a partir de um modelo salvo, renomear, excluir) mas não tinham nenhum ponto de acesso na interface — código morto desde a implementação original do recurso "⊞ Modelo". Adicionado card "Modelos de Processo" em Configurações → Dados com o botão "Gerenciar modelos".
+
 ## [2.30.2] — 2026-07-18
 
 ### Removido
