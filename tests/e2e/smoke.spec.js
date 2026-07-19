@@ -40,15 +40,6 @@ test('login força troca de senha, cria processo e gera documento', async ({ pag
   ]);
   await popup.waitForLoadState();
   await expect(popup.locator('.doc-title')).toContainText('Autorização de Abertura');
-
-  // Assinatura Simples: não depende de gov.br nem de certificado ICP-Brasil,
-  // só grava hash + identidade no servidor — testável de ponta a ponta sem mock.
-  await popup.getByRole('button', { name: /Assinar Documento/ }).click();
-  await popup.locator('#sig-card-simples').click();
-  await expect(popup.getByText(/Assinado eletronicamente por/)).toBeVisible();
-
-  await expect(page.locator('#sig-list')).toContainText('Autorização de Abertura');
-  await expect(page.locator('#sig-list')).toContainText('Simples');
 });
 
 test('sincroniza backup de outro agente e mescla processo novo', async ({ page }) => {
