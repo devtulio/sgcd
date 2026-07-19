@@ -314,12 +314,7 @@
   .field-hist-item:last-child { border:none }
   .field-hist-arrow { color:var(--brand);font-weight:600;margin:0 4px }
 
-  /* ── Rich-text editor toolbar ── */
-  ._etb { background:var(--gray-50);border:1px solid var(--gray-200);border-radius:4px;padding:2px 7px;cursor:pointer;font-size:.8rem;line-height:1.6;color:var(--gray-700);transition:background .12s; }
-  ._etb:hover { background:var(--gray-200); }
-  ._etb-sep { display:inline-block;width:1px;background:var(--gray-300);margin:2px 3px;align-self:stretch; }
-  ._etb-sel { background:var(--gray-50);border:1px solid var(--gray-200);border-radius:4px;padding:3px 4px;font-size:.78rem;cursor:pointer;color:var(--gray-700);height:auto;line-height:1.4; }
-  #email-body-forn:focus, #email-body-int:focus { border-color:var(--brand); box-shadow:0 0 0 2px color-mix(in srgb, var(--brand) 15%, transparent); }
+  /* Editor de texto rico (._etb*, .rte-editor) agora vem do base.css compartilhado. */
 
   /* file upload zone */
   .upload-zone {
@@ -1976,46 +1971,8 @@
         <div class="info-field"><label for="email-subj-forn">Assunto</label><input type="text" id="email-subj-forn"></div>
         <div class="info-field">
           <label id="email-body-forn-label">Mensagem</label>
-          <div id="email-editor-toolbar" style="display:flex;flex-wrap:wrap;gap:2px;padding:5px 6px;background:var(--gray-100);border:1px solid var(--gray-200);border-bottom:none;border-radius:6px 6px 0 0">
-            <button type="button" class="_etb" onclick="document.execCommand('bold')" title="Negrito (Ctrl+B)"><b>B</b></button>
-            <button type="button" class="_etb" onclick="document.execCommand('italic')" title="Itálico (Ctrl+I)"><i>I</i></button>
-            <button type="button" class="_etb" onclick="document.execCommand('underline')" title="Sublinhado (Ctrl+U)"><u>U</u></button>
-            <span class="_etb-sep"></span>
-            <button type="button" class="_etb" onclick="document.execCommand('justifyLeft')" title="Alinhar à esquerda">&#8676;</button>
-            <button type="button" class="_etb" onclick="document.execCommand('justifyCenter')" title="Centralizar">&#8801;</button>
-            <button type="button" class="_etb" onclick="document.execCommand('justifyRight')" title="Alinhar à direita">&#8677;</button>
-            <button type="button" class="_etb" onclick="document.execCommand('justifyFull')" title="Justificar">&#8723;</button>
-            <span class="_etb-sep"></span>
-            <select class="_etb-sel" style="width:120px" onchange="document.execCommand('fontName',false,this.value);this.blur()" title="Fonte">
-              <option value="Arial">Arial</option>
-              <option value="Calibri">Calibri</option>
-              <option value="Georgia">Georgia</option>
-              <option value="Times New Roman">Times New Roman</option>
-              <option value="Verdana" selected>Verdana</option>
-            </select>
-            <select class="_etb-sel" style="width:62px" onchange="document.execCommand('fontSize',false,_emailPtToSize(this.value));this.blur()" title="Tamanho">
-              <option value="9">9pt</option>
-              <option value="10">10pt</option>
-              <option value="11">11pt</option>
-              <option value="12" selected>12pt</option>
-              <option value="14">14pt</option>
-              <option value="16">16pt</option>
-              <option value="18">18pt</option>
-            </select>
-            <span class="_etb-sep"></span>
-            <button type="button" class="_etb" onclick="document.execCommand('insertUnorderedList')" title="Lista com marcadores">&#8226;&#8226;</button>
-            <button type="button" class="_etb" onclick="document.execCommand('insertOrderedList')" title="Lista numerada">1.</button>
-            <button type="button" class="_etb" onclick="document.execCommand('indent')" title="Aumentar recuo">&#8677;&#8677;</button>
-            <button type="button" class="_etb" onclick="document.execCommand('outdent')" title="Diminuir recuo">&#8676;&#8676;</button>
-            <span class="_etb-sep"></span>
-            <button type="button" class="_etb" onclick="_emailInsertLink()" title="Inserir link">&#128279;</button>
-            <button type="button" class="_etb" onclick="document.execCommand('removeFormat')" title="Remover formatação">&#10007;</button>
-            <span class="_etb-sep"></span>
-            <button type="button" class="_etb" onclick="document.execCommand('undo')" title="Desfazer (Ctrl+Z)">&#8634;</button>
-            <button type="button" class="_etb" onclick="document.execCommand('redo')" title="Refazer (Ctrl+Y)">&#8635;</button>
-          </div>
-          <div id="email-body-forn" contenteditable="true" spellcheck="true" role="textbox" aria-multiline="true" aria-labelledby="email-body-forn-label"
-            style="min-height:220px;max-height:380px;overflow-y:auto;border:1px solid var(--gray-200);border-radius:0 0 6px 6px;padding:12px 14px;background:var(--bg-card);font-family:Verdana,sans-serif;font-size:13px;line-height:1.7;text-align:justify;outline:none"></div>
+          <div class="rte-toolbar" data-editor="email-body-forn"></div>
+          <div id="email-body-forn" class="rte-editor" contenteditable="true" spellcheck="true" role="textbox" aria-multiline="true" aria-labelledby="email-body-forn-label"></div>
         </div>
       </div>
       <div id="email-tab-int-body" style="display:none">
@@ -2023,46 +1980,8 @@
         <div class="info-field"><label for="email-subj-int">Assunto</label><input type="text" id="email-subj-int"></div>
         <div class="info-field">
           <label id="email-body-int-label">Mensagem</label>
-          <div id="email-editor-toolbar-int" style="display:flex;flex-wrap:wrap;gap:2px;padding:5px 6px;background:var(--gray-100);border:1px solid var(--gray-200);border-bottom:none;border-radius:6px 6px 0 0">
-            <button type="button" class="_etb" onclick="_etbCmd('int','bold')" title="Negrito"><b>B</b></button>
-            <button type="button" class="_etb" onclick="_etbCmd('int','italic')" title="Itálico"><i>I</i></button>
-            <button type="button" class="_etb" onclick="_etbCmd('int','underline')" title="Sublinhado"><u>U</u></button>
-            <span class="_etb-sep"></span>
-            <button type="button" class="_etb" onclick="_etbCmd('int','justifyLeft')" title="Alinhar à esquerda">&#8676;</button>
-            <button type="button" class="_etb" onclick="_etbCmd('int','justifyCenter')" title="Centralizar">&#8801;</button>
-            <button type="button" class="_etb" onclick="_etbCmd('int','justifyRight')" title="Alinhar à direita">&#8677;</button>
-            <button type="button" class="_etb" onclick="_etbCmd('int','justifyFull')" title="Justificar">&#8723;</button>
-            <span class="_etb-sep"></span>
-            <select class="_etb-sel" style="width:120px" onchange="_etbCmd('int','fontName',this.value);this.blur()" title="Fonte">
-              <option value="Arial">Arial</option>
-              <option value="Calibri">Calibri</option>
-              <option value="Georgia">Georgia</option>
-              <option value="Times New Roman">Times New Roman</option>
-              <option value="Verdana" selected>Verdana</option>
-            </select>
-            <select class="_etb-sel" style="width:62px" onchange="_etbCmd('int','fontSize',_emailPtToSize(this.value));this.blur()" title="Tamanho">
-              <option value="9">9pt</option>
-              <option value="10">10pt</option>
-              <option value="11">11pt</option>
-              <option value="12" selected>12pt</option>
-              <option value="14">14pt</option>
-              <option value="16">16pt</option>
-              <option value="18">18pt</option>
-            </select>
-            <span class="_etb-sep"></span>
-            <button type="button" class="_etb" onclick="_etbCmd('int','insertUnorderedList')" title="Lista com marcadores">&#8226;&#8226;</button>
-            <button type="button" class="_etb" onclick="_etbCmd('int','insertOrderedList')" title="Lista numerada">1.</button>
-            <button type="button" class="_etb" onclick="_etbCmd('int','indent')" title="Aumentar recuo">&#8677;&#8677;</button>
-            <button type="button" class="_etb" onclick="_etbCmd('int','outdent')" title="Diminuir recuo">&#8676;&#8676;</button>
-            <span class="_etb-sep"></span>
-            <button type="button" class="_etb" onclick="_emailInsertLinkInt()" title="Inserir link">&#128279;</button>
-            <button type="button" class="_etb" onclick="_etbCmd('int','removeFormat')" title="Remover formatação">&#10007;</button>
-            <span class="_etb-sep"></span>
-            <button type="button" class="_etb" onclick="_etbCmd('int','undo')" title="Desfazer">&#8634;</button>
-            <button type="button" class="_etb" onclick="_etbCmd('int','redo')" title="Refazer">&#8635;</button>
-          </div>
-          <div id="email-body-int" contenteditable="true" spellcheck="true" role="textbox" aria-multiline="true" aria-labelledby="email-body-int-label"
-            style="min-height:220px;max-height:380px;overflow-y:auto;border:1px solid var(--gray-200);border-radius:0 0 6px 6px;padding:12px 14px;background:var(--bg-card);font-family:Verdana,sans-serif;font-size:13px;line-height:1.7;text-align:justify;outline:none"></div>
+          <div class="rte-toolbar" data-editor="email-body-int"></div>
+          <div id="email-body-int" class="rte-editor" contenteditable="true" spellcheck="true" role="textbox" aria-multiline="true" aria-labelledby="email-body-int-label"></div>
         </div>
       </div>
     </div>
@@ -2137,7 +2056,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.34.0';
+const SGCD_VERSION = '2.34.1';
 // URL absoluta (não relativa): o API_BASE monta as URLs da REST API a partir da
 // origem real, nunca uma porta fixa (era 'http://localhost:3000' hardcoded).
 const API_BASE = window.location.origin;
@@ -11145,6 +11064,7 @@ async function abrirEmailModal() {
   const p = currentProcess;
   const smtp = getSmtp();
   const modal = document.getElementById('email-modal');
+  _rteMount(modal);  // gera as toolbars dos editores (base.js)
   modal.classList.remove('hidden');
   document.body.style.overflow = 'hidden';
 
@@ -11230,7 +11150,7 @@ async function abrirEmailModal() {
   const _fornVinculado = todosForns.find(f => f.id === fornVinculadoId)
     || fornsComEmail.find(f => f.qsa?.length);
   const _socioExemplo = _fornVinculado?.qsa?.[0]?.nome || 'fornecedor(a)';
-  _emailSetContent(
+  _rteSetContent('email-body-forn',
 `Prezado(a) ${_socioExemplo},
 
 Por meio desta mensagem, convidamos Vossa Empresa a apresentar proposta de preços para a seguinte contratação pública, nos termos da Lei Federal nº 14.133/2021:
@@ -11261,7 +11181,7 @@ ${u.orgao||''}`);
 
   document.getElementById('email-to-int').value = smtp.to?.email || '';
   document.getElementById('email-subj-int').value = `Pendência — ${nums}`;
-  _emailSetContentInt(
+  _rteSetContent('email-body-int',
 `Processo: ${nums}
 Objeto: ${p.objeto}
 
@@ -11285,65 +11205,8 @@ function fecharEmailModal() {
   document.body.style.overflow = '';
 }
 
-function _etbCmd(tab, cmd, val) {
-  // Foca o editor correto antes de executar o comando
-  const editorId = tab === 'forn' ? 'email-body-forn' : 'email-body-int';
-  document.getElementById(editorId)?.focus();
-  document.execCommand(cmd, false, val);
-}
-
-function _emailInsertLinkInt() {
-  const url = prompt('URL do link:');
-  if (!url) return;
-  const text = prompt('Texto do link (deixe em branco para usar a URL):') || url;
-  const safeUrl2 = /^https?:\/\//i.test(url) ? escHtml(url) : '#';
-  document.getElementById('email-body-int').focus();
-  document.execCommand('insertHTML', false, `<a href="${safeUrl2}" target="_blank">${escHtml(text)}</a>`);
-}
-
-function _emailSetContentInt(text) {
-  const div = document.getElementById('email-body-int');
-  if (!div) return;
-  div.innerHTML = text.split('\n').map(l =>
-    l === '' ? '<div><br></div>' : `<div>${l.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`
-  ).join('');
-}
-
-function _emailPtToSize(pt) {
-  // execCommand fontSize aceita 1-7; mapeamos pt → tamanho aproximado
-  const map = {'9':1,'10':2,'11':2,'12':3,'14':4,'16':5,'18':6,'24':7};
-  return map[String(pt)] || 3;
-}
-
-function _emailInsertLink() {
-  const url = prompt('URL do link:');
-  if (!url) return;
-  const text = prompt('Texto do link (deixe em branco para usar a URL):') || url;
-  const safeUrl3 = /^https?:\/\//i.test(url) ? escHtml(url) : '#';
-  document.getElementById('email-body-forn').focus();
-  document.execCommand('insertHTML', false, `<a href="${safeUrl3}" target="_blank">${escHtml(text)}</a>`);
-}
-
-function _emailGetHtml() {
-  const div = document.getElementById('email-body-forn');
-  return div ? div.innerHTML : '';
-}
-
-function _emailGetText() {
-  const div = document.getElementById('email-body-forn');
-  return div ? div.innerText : '';
-}
-
-function _emailSetContent(text) {
-  const div = document.getElementById('email-body-forn');
-  if (!div) return;
-  // Cada linha vira um <div>; linhas vazias viram <div><br></div> (padrão do contenteditable Chrome)
-  div.innerHTML = text.split('\n').map(l =>
-    l === ''
-      ? '<div><br></div>'
-      : `<div>${l.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`
-  ).join('');
-}
+// Editor rico (_rteExec/_rteInsertLink/_rtePtToSize/_rteGetHtml/_rteGetText/_rteSetContent/_rteToolbarHtml/_rteMount)
+// e _sanitizeEmailHtml agora vêm do base.js compartilhado da família.
 
 function setEmailTab(tab) {
   _emailTab = tab;
@@ -11353,57 +11216,6 @@ function setEmailTab(tab) {
   document.getElementById('email-tab-int').style.fontWeight  = tab === 'int'  ? '700' : '';
 }
 
-// Remove tags e atributos perigosos do HTML gerado pelo contenteditable
-function _sanitizeEmailHtml(html) {
-  if (!html) return '';
-  const ALLOWED_TAGS = new Set([
-    'p','br','div','span','b','strong','i','em','u','s','strike',
-    'ul','ol','li','h1','h2','h3','h4','blockquote','pre','code',
-    'table','thead','tbody','tr','th','td','a','img',
-    'font','hr','sub','sup'
-  ]);
-  const ALLOWED_ATTRS = new Set([
-    'style','href','src','alt','width','height','align','valign',
-    'border','cellpadding','cellspacing','colspan','rowspan','target',
-    'color','size','face'
-  ]);
-  const DANGEROUS_PROTOCOLS = /^(javascript|vbscript|data(?!:image\/(png|jpeg|gif|webp|svg)))/i;
-
-  const doc = new DOMParser().parseFromString(html, 'text/html');
-
-  function clean(node) {
-    if (node.nodeType === Node.TEXT_NODE) return;
-    if (node.nodeType === Node.COMMENT_NODE) { node.remove(); return; }
-    if (node.nodeType !== Node.ELEMENT_NODE) { node.remove(); return; }
-
-    const tag = node.tagName.toLowerCase();
-    if (!ALLOWED_TAGS.has(tag)) {
-      // Substitui tag não permitida pelo seu conteúdo de texto
-      node.replaceWith(document.createTextNode(node.textContent));
-      return;
-    }
-
-    // Limpa atributos não permitidos ou com valores perigosos
-    for (const attr of [...node.attributes]) {
-      if (!ALLOWED_ATTRS.has(attr.name.toLowerCase())) {
-        node.removeAttribute(attr.name);
-      } else if ((attr.name === 'href' || attr.name === 'src') &&
-                 DANGEROUS_PROTOCOLS.test(attr.value.trim())) {
-        node.removeAttribute(attr.name);
-      }
-    }
-
-    // Remove event handlers (on*)
-    for (const attr of [...node.attributes]) {
-      if (/^on/i.test(attr.name)) node.removeAttribute(attr.name);
-    }
-
-    for (const child of [...node.childNodes]) clean(child);
-  }
-
-  for (const child of [...doc.body.childNodes]) clean(child);
-  return doc.body.innerHTML;
-}
 
 async function enviarNotificacao() {
   const btn = document.getElementById('btn-enviar-email');
@@ -11413,8 +11225,8 @@ async function enviarNotificacao() {
     if (!subject) { toast('Preencha o assunto.', 'error'); return; }
     let html, text;
     if (_emailTab === 'forn') {
-      html = `<div style="font-family:Verdana,Arial,sans-serif;font-size:13px;line-height:1.7;max-width:700px">${_sanitizeEmailHtml(_emailGetHtml())}</div>`;
-      text = _emailGetText();
+      html = `<div style="font-family:Verdana,Arial,sans-serif;font-size:13px;line-height:1.7;max-width:700px">${_sanitizeEmailHtml(_rteGetHtml('email-body-forn'))}</div>`;
+      text = _rteGetText('email-body-forn');
     } else {
       const intDiv = document.getElementById('email-body-int');
       html = `<div style="font-family:Verdana,Arial,sans-serif;font-size:13px;line-height:1.7;max-width:700px">${_sanitizeEmailHtml(intDiv?.innerHTML || '')}</div>`;

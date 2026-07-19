@@ -5,6 +5,11 @@
 
 ---
 
+## [2.34.1] — 2026-07-19
+
+### Alterado
+- **Editor de mensagem de e-mail (contenteditable + toolbar + `_sanitizeEmailHtml`) movido para o `base.js`/`base.css` compartilhado** da família (`_rteToolbarHtml`/`_rteMount`/`_rteExec`/…). Refactor interno, **sem mudança de comportamento** no modal de e-mail; o objetivo foi disponibilizar o mesmo editor para o SGDP sem duplicar código.
+
 ## [2.34.0] — 2026-07-19
 
 ### Adicionado
