@@ -1127,11 +1127,6 @@
             <div class="timeline" id="timeline"></div>
           </div>
         </div>
-        <!-- Assinaturas -->
-        <div class="sidebar-card" id="sig-card" style="display:none">
-          <h4>Assinaturas</h4>
-          <div class="body" id="sig-list"></div>
-        </div>
         <!-- Audit log -->
         <div class="sidebar-card" id="audit-card" style="display:none">
           <h4 style="display:flex;justify-content:space-between;align-items:center">
@@ -2119,10 +2114,9 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.29.16';
-// URL absoluta (não relativa) porque API_BASE também monta o texto do QR Code
-// de verificação de assinatura, lido por celular fora do navegador — precisa
-// da origem real, nunca uma porta fixa (era 'http://localhost:3000' hardcoded).
+const SGCD_VERSION = '2.30.0';
+// URL absoluta (não relativa): o API_BASE monta as URLs da REST API a partir da
+// origem real, nunca uma porta fixa (era 'http://localhost:3000' hardcoded).
 const API_BASE = window.location.origin;
 document.title = `SGCD v${SGCD_VERSION}`;
 // ── API wrapper (REST) ────────────────────────────────────────
@@ -4140,7 +4134,6 @@ async function gerarRelatorioIntegridade() {
     ['Processos ativos', c.processos_ativos], ['Processos na lixeira', c.na_lixeira],
     ['Fornecedores cadastrados', c.fornecedores], ['PDFs anexados', c.arquivos],
     ['Usuários ativos', c.usuarios_ativos], ['Etiquetas', c.etiquetas],
-    ['Assinaturas digitais registradas', c.assinaturas],
   ].map(([lbl, n]) => `<tr><td>${escHtml(lbl)}</td><td style="text-align:right;font-weight:700">${n}</td></tr>`).join('');
 
   const dias = d.last_backup ? Math.floor((Date.now() - new Date(d.last_backup).getTime()) / 86400000) : null;
@@ -5874,29 +5867,6 @@ function renderDetail() {
   renderTimeline();
   renderFracPanel();
   renderLimiteAnualPanel();
-  renderSignatures(p.id);
-}
-
-async function renderSignatures(processId) {
-  const card = document.getElementById('sig-card');
-  const list = document.getElementById('sig-list');
-  if (!card || !list) return;
-  const r = await API.get(`/api/signatures?process_id=${encodeURIComponent(processId)}`);
-  const d = await API.json(r);
-  const items = d?.items || [];
-  if (!items.length) { card.style.display = 'none'; return; }
-  card.style.display = '';
-  const metodoLabel = { internal: 'Simples', govbr: 'gov.br', 'icp-brasil': 'ICP-Brasil' };
-  list.innerHTML = items.map(sig => {
-    const cod = (() => { try { return JSON.parse(sig.extra_json || '{}').cod || ''; } catch { return ''; } })();
-    const data = sig.signed_at ? new Date(sig.signed_at).toLocaleString('pt-BR') : '';
-    const download = sig.file_id ? `<a href="${API_BASE}/api/files/${sig.file_id}" target="_blank" style="font-size:.7rem">Baixar PDF</a>` : '';
-    return `<div style="padding:6px 0;border-bottom:1px solid var(--gray-200);font-size:.75rem">
-      <div><strong>${escHtml(sig.doc_type||'')}</strong> — ${metodoLabel[sig.method]||sig.method}</div>
-      <div style="color:var(--gray-500)">${escHtml(sig.signer_name||'')} · ${data}${cod?' · '+cod:''}</div>
-      ${download}
-    </div>`;
-  }).join('');
 }
 
 function renderFracPanel() {
@@ -9456,18 +9426,6 @@ function _gerarDocumento(win, html, docNome) {
   }
   win.document.write(finalHtml);
   win.document.close();
-
-  // Botão "Assinar Documento" — injetado aqui, uma única vez, pois todo
-  // gerador de documento passa por esta função central
-  const printBtn = win.document.querySelector('.btn-print');
-  if (printBtn) {
-    const signBtn = win.document.createElement('button');
-    signBtn.className = 'btn-print no-print';
-    signBtn.textContent = '✍ Assinar Documento';
-    signBtn.style.marginLeft = '8px';
-    signBtn.onclick = () => abrirModalAssinatura(currentProcess, docNome || 'Documento', finalHtml, win);
-    printBtn.insertAdjacentElement('afterend', signBtn);
-  }
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -9990,179 +9948,6 @@ async function _hashSha256(text) {
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-function abrirModalAssinatura(p, docNome, htmlContent, win) {
-  // Modal vive DENTRO da janela do documento (win), não na janela principal —
-  // documentos abrem maximizados, e a janela principal ficaria escondida atrás.
-  const doc = win.document;
-  if (!doc.getElementById('sig-modal-style')) {
-    const style = doc.createElement('style');
-    style.id = 'sig-modal-style';
-    style.textContent = `
-      .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:6px;font-size:.85rem;font-weight:600;border:none;cursor:pointer;font-family:inherit}
-      .btn-primary{background:#1a3a6b;color:#fff}
-      .btn-danger{background:#dc2626;color:#fff}
-      .btn-outline{background:#fff;color:#374151;border:1px solid #d1d5db}
-      .btn-sm{padding:5px 12px;font-size:.78rem}
-    `;
-    doc.head.appendChild(style);
-  }
-  const overlay = doc.createElement('div');
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center';
-  const dark = document.body.classList.contains('dark');
-  const bg  = dark ? '#2a2a2a' : '#ffffff';
-  const txt = dark ? '#f0ece8' : '#1a1a1a';
-  const sub = dark ? '#9ca3af' : '#6b7280';
-
-  function render(inner) {
-    overlay.innerHTML = `<div style="background:${bg};color:${txt};border-radius:12px;padding:26px 30px;max-width:460px;width:92%;max-height:88vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.5)">${inner}</div>`;
-  }
-  function close() { overlay.remove(); }
-
-  function telaEscolha() {
-    render(`
-      <h3 style="font-size:1rem;font-weight:700;margin-bottom:4px">Assinar Documento</h3>
-      <p style="font-size:.78rem;color:${sub};margin-bottom:16px">${escHtml(docNome)} — escolha como deseja assinar.</p>
-      <div id="sig-card-simples" class="sig-card" style="border:1px solid var(--gray-200,#333);border-radius:8px;padding:12px 14px;margin-bottom:10px;cursor:pointer">
-        <strong>1. Assinatura Simples</strong>
-        <p style="font-size:.72rem;color:${sub};margin-top:2px">Registra sua identidade e um hash do documento. Rápido, sem upload — mas <strong>não substitui</strong> assinatura física em atos que exigem nível avançado/qualificado.</p>
-      </div>
-      <div id="sig-card-govbr" class="sig-card" style="border:1px solid var(--gray-200,#333);border-radius:8px;padding:12px 14px;margin-bottom:10px;cursor:pointer">
-        <strong>2. gov.br (nível avançado)</strong>
-        <p style="font-size:.72rem;color:${sub};margin-top:2px">Assine no portal público do governo com seu login gov.br, depois reenvie o PDF assinado aqui.</p>
-      </div>
-      <div id="sig-card-icp" class="sig-card" style="border:1px solid var(--gray-200,#333);border-radius:8px;padding:12px 14px;margin-bottom:16px;cursor:pointer">
-        <strong>3. Certificado ICP-Brasil (nível qualificado)</strong>
-        <p style="font-size:.72rem;color:${sub};margin-top:2px">Assine com seu certificado A1 (.pfx) próprio. A senha não é armazenada.</p>
-      </div>
-      <div style="text-align:right"><button class="btn btn-outline btn-sm" id="sig-cancelar">Cancelar</button></div>
-    `);
-    overlay.querySelector('#sig-card-simples').onclick = () => { playClick(); fluxoSimples(); };
-    overlay.querySelector('#sig-card-govbr').onclick   = () => { playClick(); fluxoGovBr(); };
-    overlay.querySelector('#sig-card-icp').onclick     = () => { playClick(); fluxoIcp(); };
-    overlay.querySelector('#sig-cancelar').onclick     = () => { playClick(); close(); };
-  }
-
-  async function fluxoSimples() {
-    render(`<p style="font-size:.85rem">Assinando…</p>`);
-    try {
-      const u = getUser();
-      const hash = await _hashSha256(htmlContent);
-      const r = await API.post('/api/signatures', {
-        process_id: p?.id || '', doc_type: docNome, doc_filename: _nomeArquivoDoc(p, docNome), hash_sha256: hash,
-      });
-      const d = await API.json(r);
-      if (!r || !r.ok || !d) throw new Error('Falha ao registrar assinatura no servidor');
-      const agora = new Date().toLocaleString('pt-BR');
-      const carimbo = win.document.createElement('div');
-      carimbo.style.cssText = 'margin-top:14pt;padding:8pt 10pt;border:1px solid #999;font-size:8pt;color:#333;background:#f9f9f9';
-      carimbo.innerHTML = `Assinado eletronicamente por <strong>${escHtml(u.nome||'')}</strong>${u.cargo?', '+escHtml(u.cargo):''}, em ${agora} — Nível: <strong>Assinatura Simples</strong> — Código: <strong>${d.cod}</strong>`;
-      win.document.body.appendChild(carimbo);
-      if (p?.id) await _auditEvento('DOCUMENTO_ASSINADO', `${docNome} — Simples — código ${d.cod}`, p.id);
-      if (p?.id) renderSignatures(p.id);
-      toast('Documento assinado (nível simples). Salve o PDF na janela do documento.', 'success');
-      close();
-    } catch (e) {
-      render(`<p style="color:#dc2626">Erro ao assinar: ${escHtml(e.message)}</p><div style="text-align:right;margin-top:12px"><button class="btn btn-outline btn-sm" id="sig-voltar">Voltar</button></div>`);
-      overlay.querySelector('#sig-voltar').onclick = telaEscolha;
-    }
-  }
-
-  function fluxoGovBr() {
-    render(`
-      <h3 style="font-size:1rem;font-weight:700;margin-bottom:10px">gov.br — nível avançado</h3>
-      <ol style="font-size:.78rem;color:${sub};line-height:1.7;padding-left:18px;margin-bottom:14px">
-        <li>Salve o PDF deste documento (botão "Imprimir / Salvar PDF" na janela do documento).</li>
-        <li>Abra o <a href="https://assinador.iti.br/" target="_blank" rel="noopener">assinador.iti.br</a> e assine lá com seu login gov.br.</li>
-        <li>Baixe o PDF assinado e selecione-o abaixo.</li>
-      </ol>
-      <input type="file" id="sig-govbr-file" accept="application/pdf" style="width:100%;margin-bottom:14px">
-      <div style="display:flex;justify-content:space-between">
-        <button class="btn btn-outline btn-sm" id="sig-voltar">Voltar</button>
-        <button class="btn btn-primary btn-sm" id="sig-enviar">Enviar PDF assinado</button>
-      </div>
-    `);
-    overlay.querySelector('#sig-voltar').onclick = telaEscolha;
-    overlay.querySelector('#sig-enviar').onclick = async () => {
-      const file = overlay.querySelector('#sig-govbr-file').files[0];
-      if (!file) { toast('Selecione o PDF assinado.', 'error'); return; }
-      const form = new FormData();
-      form.append('method', 'govbr');
-      form.append('process_id', p?.id || '');
-      form.append('doc_type', docNome);
-      form.append('pdf', file, _nomeArquivoDoc(p, docNome) + '.pdf');
-      render(`<p style="font-size:.85rem">Enviando…</p>`);
-      const r = await API.upload('/api/signatures/upload', form);
-      const d = await API.json(r);
-      if (!r || !r.ok || !d) {
-        render(`<p style="color:#dc2626">Erro ao enviar: ${escHtml(d?.error||'falha desconhecida')}</p><div style="text-align:right;margin-top:12px"><button class="btn btn-outline btn-sm" id="sig-voltar2">Voltar</button></div>`);
-        overlay.querySelector('#sig-voltar2').onclick = telaEscolha;
-        return;
-      }
-      if (p?.id) await _auditEvento('DOCUMENTO_ASSINADO', `${docNome} — gov.br — código ${d.cod}`, p.id);
-      if (p?.id) renderSignatures(p.id);
-      toast('PDF assinado anexado ao processo.', 'success');
-      close();
-    };
-  }
-
-  function fluxoIcp() {
-    render(`
-      <h3 style="font-size:1rem;font-weight:700;margin-bottom:10px">ICP-Brasil — nível qualificado</h3>
-      <p style="font-size:.78rem;color:${sub};margin-bottom:12px">Salve o PDF deste documento (ainda sem assinar) e selecione-o abaixo, junto com seu certificado A1 (.pfx) e a senha. A senha não é armazenada.</p>
-      <label for="sig-icp-pdf" style="font-size:.72rem;font-weight:600;display:block;margin-bottom:4px">PDF do documento</label>
-      <input type="file" id="sig-icp-pdf" accept="application/pdf" style="width:100%;margin-bottom:10px">
-      <label for="sig-icp-cert" style="font-size:.72rem;font-weight:600;display:block;margin-bottom:4px">Certificado (.pfx)</label>
-      <input type="file" id="sig-icp-cert" accept=".pfx,.p12" style="width:100%;margin-bottom:10px">
-      <label for="sig-icp-senha" style="font-size:.72rem;font-weight:600;display:block;margin-bottom:4px">Senha do certificado</label>
-      <input type="password" id="sig-icp-senha" style="width:100%;padding:6px 8px;margin-bottom:14px">
-      <div style="display:flex;justify-content:space-between">
-        <button class="btn btn-outline btn-sm" id="sig-voltar">Voltar</button>
-        <button class="btn btn-primary btn-sm" id="sig-assinar">Assinar</button>
-      </div>
-    `);
-    overlay.querySelector('#sig-voltar').onclick = telaEscolha;
-    overlay.querySelector('#sig-assinar').onclick = async () => {
-      const pdfFile  = overlay.querySelector('#sig-icp-pdf').files[0];
-      const certFile = overlay.querySelector('#sig-icp-cert').files[0];
-      const senha    = overlay.querySelector('#sig-icp-senha').value;
-      if (!pdfFile || !certFile || !senha) { toast('Preencha o PDF, o certificado e a senha.', 'error'); return; }
-      const form = new FormData();
-      form.append('method', 'icp-brasil');
-      form.append('process_id', p?.id || '');
-      form.append('doc_type', docNome);
-      form.append('pdf', pdfFile, _nomeArquivoDoc(p, docNome) + '.pdf');
-      form.append('cert', certFile, certFile.name);
-      form.append('senha', senha);
-      render(`<p style="font-size:.85rem">Assinando com o certificado…</p>`);
-      const r = await API.upload('/api/signatures/upload', form);
-      const d = await API.json(r);
-      if (!r || !r.ok || !d) {
-        render(`<p style="color:#dc2626">${escHtml(d?.error||'Falha ao assinar com o certificado.')}</p><div style="text-align:right;margin-top:12px"><button class="btn btn-outline btn-sm" id="sig-voltar2">Voltar</button></div>`);
-        overlay.querySelector('#sig-voltar2').onclick = telaEscolha;
-        return;
-      }
-      if (p?.id) await _auditEvento('DOCUMENTO_ASSINADO', `${docNome} — ICP-Brasil — código ${d.cod}`, p.id);
-      if (p?.id) renderSignatures(p.id);
-      render(`<p style="font-size:.85rem;color:var(--success,#166534)">Documento assinado com sucesso!</p>
-        <p style="font-size:.72rem;color:${sub};margin:8px 0 14px">Confira também no verificador oficial: <a href="https://verificador.iti.gov.br/" target="_blank" rel="noopener">verificador.iti.gov.br</a></p>
-        <div style="display:flex;justify-content:space-between">
-          <a class="btn btn-outline btn-sm" href="${API_BASE}/api/files/${d.file_id}" target="_blank">Baixar PDF assinado</a>
-          <button class="btn btn-primary btn-sm" id="sig-fechar">Fechar</button>
-        </div>`);
-      overlay.querySelector('#sig-fechar').onclick = close;
-      toast('PDF assinado com certificado ICP-Brasil.', 'success');
-    };
-  }
-
-  telaEscolha();
-  doc.body.appendChild(overlay);
-  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
-  win.focus();
-}
-
-// ══════════════════════════════════════════════════════════════
-// THEME — claro / escuro
-// ══════════════════════════════════════════════════════════════
 function applyTheme(dark) {
   document.body.classList.toggle('dark', dark);
   const btn = document.getElementById('theme-btn');
@@ -12545,7 +12330,7 @@ function _qrFooterReport(label) {
 
 function _qrFooter(p, extraInfo) {
   const cod  = _docAuthCode(p);
-  const qrText = `${API_BASE}/verificar/${cod}`;
+  const qrText = `SGCD/${SGCD_VERSION}/${getUser()?.orgao || ''}/${cod}`;
   const svg  = _QR.svg(qrText, 3);
   const svgB64 = svg ? 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg))) : null;
   const dtFmt = new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'}) + ' ' + new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});

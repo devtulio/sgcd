@@ -5,6 +5,11 @@
 
 ---
 
+## [2.30.0] — 2026-07-18
+
+### Removido
+- **Assinatura eletrônica de documentos (3 módulos: Simples, gov.br e ICP-Brasil).** Removida por completo: os endpoints `/api/signatures` e `/api/signatures/upload`, o modal de assinatura na tela dos documentos gerados, a página pública de verificação (`/verificar/<código>`), o card "Assinaturas" no painel do processo, a contagem no Relatório de Integridade, a dependência opcional `pyhanko` (o SGCD volta a rodar 100% com a biblioteca padrão do Python) e o script `Instalar Assinatura ICP-Brasil.bat`. A tabela `signatures` e seus dados são descartados na inicialização; backups antigos que ainda tragam esse bloco são aceitos e o bloco é ignorado. **O QR de autenticidade permanece** nos documentos como carimbo (agora sem página de verificação online), e **o bloco de assinatura manuscrita nos documentos impressos não muda.**
+
 ## [2.29.16] — 2026-07-18
 
 ### Corrigido (acessibilidade — WCAG 2.1 AA)

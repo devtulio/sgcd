@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Manual Operacional — SGCD v2.29.16</title>
+<title>Manual Operacional — SGCD v2.30.0</title>
 <style>
   /* Reset e base */
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -89,7 +89,7 @@
       margin: 20mm 20mm 25mm;
       size: A4;
       @top-center {
-        content: "SGCD v2.29.16 — Manual Operacional";
+        content: "SGCD v2.30.0 — Manual Operacional";
         font-family: 'Times New Roman', serif;
         font-size: 9pt;
         color: #666;
@@ -118,7 +118,7 @@
     <div class="cover-title">Manual Operacional</div>
     <div class="cover-subtitle">SGCD — Sistema de Gestão de Contratação Direta</div>
     <div class="cover-system">Gestão de Processos de Dispensa de Licitação</div>
-    <div class="cover-version">Versão v2.29.16</div>
+    <div class="cover-version">Versão v2.30.0</div>
     <br>
     <div style="font-size:11pt; color:#555; line-height:1.8;">
       Aplicação web multiusuário para agentes de contratação pública<br>
@@ -225,12 +225,11 @@
     <div class="toc-item h2"><a href="#sec22">22. Controle de Acesso por Senha</a></div>
     <div class="toc-item h2"><a href="#sec23">23. Painel de Diagnóstico</a></div>
     <div class="toc-item h2"><a href="#sec24">24. Notificações por E-mail</a></div>
-    <div class="toc-item h2"><a href="#sec25">25. Assinatura Eletrônica de Documentos</a></div>
-    <div class="toc-item h2"><a href="#sec26">26. Vinculação entre Processos</a></div>
-    <div class="toc-item h2"><a href="#sec27">27. Agenda de Vencimentos</a></div>
-    <div class="toc-item h2"><a href="#sec28">28. Lixeira — Processos Excluídos</a></div>
-    <div class="toc-item h2"><a href="#sec29">29. Exportação PNCP</a></div>
-    <div class="toc-item h2"><a href="#sec30">30. Histórico de Versões</a></div>
+    <div class="toc-item h2"><a href="#sec25">25. Vinculação entre Processos</a></div>
+    <div class="toc-item h2"><a href="#sec26">26. Agenda de Vencimentos</a></div>
+    <div class="toc-item h2"><a href="#sec27">27. Lixeira — Processos Excluídos</a></div>
+    <div class="toc-item h2"><a href="#sec28">28. Exportação PNCP</a></div>
+    <div class="toc-item h2"><a href="#sec29">29. Histórico de Versões</a></div>
   </div>
 </div>
 
@@ -1443,24 +1442,10 @@
   <li>A <strong>data e hora</strong> de geração do documento</li>
   <li>O <strong>código de autenticidade</strong> no formato <code>XXXX-XXXX</code> (8 caracteres hexadecimais derivados dos dados do processo)</li>
 </ul>
-<p>O QR Code codifica o endereço: <code>http://localhost:3000/verificar/{código}</code></p>
+<p>O QR Code codifica um texto de autenticidade no formato <code>SGCD/versão/órgão/{código}</code> (identifica o documento; não há mais página de verificação online).</p>
 
-<h3 id="sec20-2">20.2 Como verificar um documento</h3>
-<p>A verificação funciona enquanto o SGCD estiver em execução na máquina onde o documento foi gerado (ou em computadores com acesso à mesma rede local).</p>
-<ol>
-  <li>Abra o <strong>Iniciar SGCD.bat</strong> para garantir que o servidor local está em execução</li>
-  <li>Escaneie o <strong>QR Code</strong> impresso no rodapé do documento com um smartphone ou tablet</li>
-  <li>O navegador abrirá a página de verificação em <code>http://localhost:3000/verificar/XXXX-XXXX</code></li>
-  <li>O sistema consultará automaticamente a base de dados local e exibirá o resultado</li>
-</ol>
-<table>
-  <tr><th>Resultado</th><th>Significado</th></tr>
-  <tr><td style="color:#166534;font-weight:700">✓ Documento Autêntico</td><td>O código corresponde a um processo existente na base. São exibidos: número PA/DL, objeto, unidade, valor estimado e data de criação</td></tr>
-  <tr><td style="color:#b91c1c;font-weight:700">✗ Documento não encontrado</td><td>O código não corresponde a nenhum processo. O documento pode ter sido adulterado, gerado em outra instalação do SGCD ou a base de dados pode estar em outro computador</td></tr>
-</table>
-<div class="aviso">
-  <strong>Limitação:</strong> A verificação é local — funciona apenas enquanto o SGCD estiver aberto na mesma máquina (ou acessível via rede local). Documentos enviados externamente não podem ser verificados pelo destinatário sem acesso ao servidor do órgão emissor.
-</div>
+<h3 id="sec20-2">20.2 O código de autenticidade</h3>
+<p>O código no formato <code>XXXX-XXXX</code> é um carimbo de autenticidade derivado dos dados do processo, impresso junto ao QR no rodapé de cada documento. Ele identifica o documento e o vincula ao processo que o originou. Não há mais uma página de verificação online — o código serve como referência para conferência manual contra o processo no sistema.</p>
 
 <h3 id="sec20-3">20.3 Histórico de edições por campo</h3>
 <p>Cada campo editável no <strong>painel de informações</strong> do processo possui um botão <strong>🕐</strong> ao lado do seu rótulo. Clique nele para visualizar um histórico completo de todas as alterações já realizadas naquele campo específico.</p>
@@ -1618,23 +1603,8 @@
 <hr class="section-divider">
 
 <!-- ─────────────────────────────────────────────── SEÇÃO 25 -->
-<h2 id="sec25">25. Assinatura Eletrônica de Documentos</h2>
-<p>Os documentos gerados pelo sistema podem ser assinados eletronicamente sem sair do SGCD, por três módulos diferentes, conforme o nível de segurança exigido:</p>
-<table>
-  <tr><th>Módulo</th><th>Nível</th><th>Quando usar</th></tr>
-  <tr><td><strong>Simples</strong></td><td>Interno</td><td>Assinatura interna do próprio sistema, sem validação externa — uso corriqueiro entre servidores do órgão</td></tr>
-  <tr><td><strong>gov.br</strong></td><td>Avançado</td><td>Integração com a plataforma gov.br, exige conta e autenticação do signatário</td></tr>
-  <tr><td><strong>Certificado ICP-Brasil A1</strong></td><td>Qualificado</td><td>Maior força jurídica; exige certificado digital A1 instalado no computador (requer o módulo opcional <code>pyhanko</code>, ver <code>requirements.txt</code>)</td></tr>
-</table>
-<p>Ao gerar um documento (Ata, Aviso, Extrato etc.), escolha o módulo de assinatura desejado na tela de assinatura antes de finalizar.</p>
-<div class="nota">
-  <strong>Nota:</strong> o QR Code de autenticidade (Seção 20) funciona com qualquer um dos três módulos, permitindo verificar a integridade do documento independentemente do tipo de assinatura usado.
-</div>
-
-<hr class="section-divider">
-
-<!-- ─────────────────────────────────────────────── SEÇÃO 26 -->
-<h2 id="sec26">26. Vinculação entre Processos</h2>
+<!-- ─────────────────────────────────────────────── SEÇÃO 25 -->
+<h2 id="sec25">25. Vinculação entre Processos</h2>
 <p>Processos relacionados — por exemplo, uma renovação, um aditivo ou a continuidade de uma contratação anterior — podem ser vinculados entre si, criando um histórico rastreável.</p>
 <ul>
   <li>No processo, use a opção de <strong>vincular processo</strong> e selecione o processo relacionado e o tipo de vínculo (renovação, aditivo, continuidade)</li>
@@ -1647,8 +1617,8 @@
 
 <hr class="section-divider">
 
-<!-- ─────────────────────────────────────────────── SEÇÃO 27 -->
-<h2 id="sec27">27. Agenda de Vencimentos</h2>
+<!-- ─────────────────────────────────────────────── SEÇÃO 26 -->
+<h2 id="sec26">26. Agenda de Vencimentos</h2>
 <p>
   Acesse <strong>Contratações → Agenda</strong> na barra lateral para visualizar, num único painel, todos
   os prazos relevantes: validade de propostas, vencimento de contratos e processos parados há muito tempo
@@ -1662,8 +1632,8 @@
 
 <hr class="section-divider">
 
-<!-- ─────────────────────────────────────────────── SEÇÃO 28 -->
-<h2 id="sec28">28. Lixeira — Processos Excluídos</h2>
+<!-- ─────────────────────────────────────────────── SEÇÃO 27 -->
+<h2 id="sec27">27. Lixeira — Processos Excluídos</h2>
 <p>
   Ao excluir um processo, ele não é apagado imediatamente — vai para a <strong>Lixeira</strong>,
   acessível pela barra lateral (seção Administração), onde fica recuperável por <strong>30 dias</strong>,
@@ -1679,8 +1649,8 @@
 
 <hr class="section-divider">
 
-<!-- ─────────────────────────────────────────────── SEÇÃO 29 -->
-<h2 id="sec29">29. Exportação PNCP</h2>
+<!-- ─────────────────────────────────────────────── SEÇÃO 28 -->
+<h2 id="sec28">28. Exportação PNCP</h2>
 <p>
   Na etapa do Aviso de Dispensa, o botão <strong>"📤 Exportar PNCP"</strong> gera um arquivo JSON
   estruturado no formato exigido pela API do Portal Nacional de Contratações Públicas
@@ -1699,8 +1669,14 @@
 
 <hr class="section-divider">
 
-<!-- ─────────────────────────────────────────────── SEÇÃO 30 -->
-<h2 id="sec30">30. Histórico de Versões</h2>
+<!-- ─────────────────────────────────────────────── SEÇÃO 29 -->
+<h2 id="sec29">29. Histórico de Versões</h2>
+
+<h3>v2.30.0 — Julho/2026</h3>
+<p><strong>Removido</strong></p>
+<ul>
+  <li><strong>Assinatura eletrônica de documentos</strong> (módulos Simples, gov.br e ICP-Brasil) e a página pública de verificação — removidos por completo; o SGCD volta a rodar 100% com a biblioteca padrão do Python. O QR de autenticidade permanece nos documentos como carimbo (sem verificação online). O bloco de assinatura manuscrita nos documentos impressos não muda.</li>
+</ul>
 
 <h3>v2.29.16 — Julho/2026</h3>
 <ul>
@@ -1929,7 +1905,7 @@
   <li><strong>Configurações — layout responsivo:</strong> a tela de configurações passa a respeitar o modo compacto/expandido; largura dos cards de configuração alinhada com a barra de abas; conteúdo preenche a altura disponível da tela.</li>
 </ul>
 
-<h3 id="sec30-1">30.1 v1.18.0 — Junho/2026</h3>
+<h3 id="sec29-1">29.1 v1.18.0 — Junho/2026</h3>
 <ul>
   <li><strong>Backup automático por salvamento:</strong> snapshot gravado no <code>localStorage</code> 3 segundos após cada alteração em processo, sem intervenção do usuário (ver Seção 22.1).</li>
   <li><strong>Banner de alerta de backup:</strong> faixa laranja persistente exibida quando o último backup manual foi exportado há mais de 7 dias ou nunca foi exportado, com botão de exportação rápida (ver Seção 22.2).</li>
@@ -1941,7 +1917,7 @@
   <li><strong>Correção de índices no Relatório de Fornecedores:</strong> índice de valor adjudicado substituído por <code>STEPS.findIndex()</code>, eliminando dependência de posição fixa das etapas.</li>
 </ul>
 
-<h3 id="sec30-2">30.2 v1.17.0 — Junho/2026</h3>
+<h3 id="sec29-2">29.2 v1.17.0 — Junho/2026</h3>
 <ul>
   <li><strong>Exportação PNCP:</strong> novo botão "📤 Exportar PNCP" na etapa do Aviso de Dispensa gera um arquivo JSON estruturado no formato da API do Portal Nacional de Contratações Públicas, pré-preenchido com os dados do processo.</li>
   <li><strong>Correção da Ata de Procedimento:</strong> os índices das etapas (Cotações, Propostas, Habilitação, Adjudicação e Homologação) agora são calculados dinamicamente via <code>STEPS.findIndex()</code>, eliminando bugs silenciosos quando etapas são reordenadas.</li>
@@ -1950,7 +1926,7 @@
   <li><strong>Correções legais nos documentos:</strong> revisão geral em todos os 16 modelos de documentos — artigos corrigidos (arts. 3º/9º Lei 9.784/99, art. 72 Lei 14.133/2021, art. 94 c/c art. 91 §4º, art. 72 VII), concordâncias gramaticais, termos técnicos padronizados e parágrafos duplicados removidos.</li>
 </ul>
 
-<h3 id="sec30-3">30.3 v1.16.0</h3>
+<h3 id="sec29-3">29.3 v1.16.0</h3>
 <ul>
   <li><strong>Relatório de Fornecedores:</strong> novo relatório global com indicadores de participação, aprovação e reprovação por fornecedor, incluindo QR Code de autenticidade.</li>
   <li><strong>Relatório Executivo:</strong> novo relatório consolidado de contratações diretas com gráfico de barras de valores por processo, filtros e indicadores de conformidade.</li>
@@ -1958,14 +1934,14 @@
   <li><strong>Processo Completo (PDF):</strong> documento único que agrega todos os atos do processo, com QR Code de autenticidade no rodapé e numeração de seções.</li>
 </ul>
 
-<h3 id="sec30-4">30.4 v1.15.0</h3>
+<h3 id="sec29-4">29.4 v1.15.0</h3>
 <ul>
   <li><strong>Dashboard com paginação:</strong> a listagem de processos no painel inicial passou a exibir resultados paginados, melhorando a performance com grande volume de processos.</li>
   <li><strong>Lazy loading nas etapas:</strong> os cards de cada etapa do processo são renderizados sob demanda, reduzindo o tempo de abertura do painel de processo.</li>
   <li><strong>Filtros avançados no Dashboard:</strong> adicionados filtros por valor mínimo/máximo, período e combinação de critérios.</li>
 </ul>
 
-<h3 id="sec30-5">30.5 v1.14.0</h3>
+<h3 id="sec29-5">29.5 v1.14.0</h3>
 <ul>
   <li><strong>QR Code de autenticidade:</strong> todos os documentos gerados passaram a incluir QR Code no rodapé com código de verificação derivado dos dados do processo (ver Seção 20).</li>
   <li><strong>Histórico por campo:</strong> botão 🕐 em cada campo do painel de informações exibe o histórico completo de alterações com data, valor anterior e novo valor (ver Seção 20.3).</li>

@@ -1,6 +1,6 @@
 # SGCD — Sistema de Gestão de Contratação Direta
 
-![Versão](https://img.shields.io/badge/versão-v2.29.16-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-Python%20%2B%20SQLite-orange) ![Licença](https://img.shields.io/badge/licença-MIT-green) ![Multiusuário](https://img.shields.io/badge/acesso-multiusuário-blueviolet) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21314672.svg)](https://doi.org/10.5281/zenodo.21314672) [![CI](https://github.com/devtulio/sgcd/actions/workflows/ci.yml/badge.svg)](https://github.com/devtulio/sgcd/actions/workflows/ci.yml)
+![Versão](https://img.shields.io/badge/versão-v2.30.0-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-Python%20%2B%20SQLite-orange) ![Licença](https://img.shields.io/badge/licença-MIT-green) ![Multiusuário](https://img.shields.io/badge/acesso-multiusuário-blueviolet) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21314672.svg)](https://doi.org/10.5281/zenodo.21314672) [![CI](https://github.com/devtulio/sgcd/actions/workflows/ci.yml/badge.svg)](https://github.com/devtulio/sgcd/actions/workflows/ci.yml)
 
 ## Descrição
 
@@ -29,8 +29,7 @@ Funciona em rede local: um único computador executa o servidor e todos os usuá
 - **Notificações por e-mail via SMTP** com editor rich text para fornecedor e equipe interna
 - **Notificações in-app** — alertas de prazo, processos parados e certidões vencendo
 - **Resumo diário por e-mail** — prazos e processos parados, enviado automaticamente pelo servidor sem depender de ninguém logado (requer SMTP configurado)
-- **QR Code de autenticidade** em todos os documentos gerados com verificação online
-- **Assinatura eletrônica de documentos** — 3 módulos à escolha: Simples (interna), gov.br (nível avançado) e certificado ICP-Brasil A1 (nível qualificado)
+- **QR Code de autenticidade** em todos os documentos gerados
 - **Exportação PNCP** — JSON estruturado no formato da API do Portal Nacional de Contratações Públicas
 - **Backup automático** após o último usuário sair (JSON + banco de dados SQLite) com rotação configurável — o servidor continua no ar, pronto pro próximo login
 - **Sincronização de backup entre agentes/máquinas** — mescla dados de outra instalação (soma o que é novo, revisa o que conflita) sem substituir o banco inteiro
@@ -46,12 +45,10 @@ Funciona em rede local: um único computador executa o servidor e todos os usuá
 - **Python 3.7+** (apenas biblioteca padrão — sem dependências externas)
 - **Google Chrome** ou **Microsoft Edge** (recomendado)
 - Windows 10/11
-- Opcional: `pip install -r requirements.txt` — só necessário para o módulo de assinatura com certificado ICP-Brasil (`pyhanko`)
+- Nenhuma dependência externa — o SGCD roda 100% com a biblioteca padrão do Python
 
 > **Servidor sem Python instalado (ex.: Windows Server bloqueado por política de TI):**
 > o `Iniciar SGCD.bat` detecta automaticamente a ausência do Python e extrai uma versão portátil (embarcável, sem instalador) incluída no próprio projeto (`python-3.12.9-embed-amd64.zip`) para `C:\Python312-embed\` — não exige instalação nem privilégio de administrador. Isso resolve o caso comum de instaladores `.exe` bloqueados por AppLocker/antivírus corporativo em servidores.
->
-> Essa versão portátil não vem com `pip` pronto (limitação do próprio pacote embarcável do Python). Se esse servidor precisar do módulo de assinatura ICP-Brasil, rode **`Instalar Assinatura ICP-Brasil.bat`** depois — ele habilita o pip e instala o `pyhanko` (requer acesso à internet só nesse momento, para baixar do PyPI). Validado de ponta a ponta (extração → habilitação do pip → instalação do pyhanko) numa cópia isolada do Python embarcável.
 
 ---
 
@@ -114,7 +111,6 @@ SGCD/
 │   └── e2e/                 # Testes E2E (Playwright) — navegador real de ponta a ponta
 ├── Iniciar SGCD.bat         # Inicializa o servidor
 ├── python-3.12.9-embed-amd64.zip  # Python portátil (fallback se não houver Python instalado)
-├── Instalar Assinatura ICP-Brasil.bat  # Opcional — instala pip + pyhanko no Python embarcável
 ├── get-pip.py               # Usado só pelo script acima (Python embarcável não vem com pip)
 ├── Criar Atalho SGCD.bat    # Cria atalho na área de trabalho com ícone
 ├── Criar Atalho SGCD.ps1    # Script PowerShell de criação do atalho
@@ -126,7 +122,7 @@ SGCD/
 ├── sgcd.db                  # Banco de dados SQLite (criado automaticamente)
 ├── uploads/                 # Documentos anexados (criado automaticamente)
 ├── backups/                 # Backups automáticos (criado automaticamente)
-├── requirements.txt         # Dependência opcional (pyhanko — só p/ assinatura ICP-Brasil)
+├── requirements.txt         # Sem dependências externas (stdlib do Python)
 ├── README.md
 ├── CHANGELOG.md
 └── MANUAL.html
