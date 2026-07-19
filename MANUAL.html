@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Manual Operacional — SGCD v2.32.0</title>
+<title>Manual Operacional — SGCD v2.33.0</title>
 <style>
   /* Reset e base */
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -89,7 +89,7 @@
       margin: 20mm 20mm 25mm;
       size: A4;
       @top-center {
-        content: "SGCD v2.32.0 — Manual Operacional";
+        content: "SGCD v2.33.0 — Manual Operacional";
         font-family: 'Times New Roman', serif;
         font-size: 9pt;
         color: #666;
@@ -118,7 +118,7 @@
     <div class="cover-title">Manual Operacional</div>
     <div class="cover-subtitle">SGCD — Sistema de Gestão de Contratação Direta</div>
     <div class="cover-system">Gestão de Processos de Dispensa de Licitação</div>
-    <div class="cover-version">Versão v2.32.0</div>
+    <div class="cover-version">Versão v2.33.0</div>
     <br>
     <div style="font-size:11pt; color:#555; line-height:1.8;">
       Aplicação web multiusuário para agentes de contratação pública<br>
@@ -1671,6 +1671,16 @@
 
 <!-- ─────────────────────────────────────────────── SEÇÃO 29 -->
 <h2 id="sec29">29. Histórico de Versões</h2>
+
+<h3>v2.33.0 — Julho/2026</h3>
+<p><strong>Adicionado</strong></p>
+<ul>
+  <li><strong>Filtros na tela de Fornecedores</strong> — botões <strong>Todos / Ativos / Inativos / Pendências</strong> (mesmos do SGCA). Ativos/Inativos usam a situação cadastral da Receita; <em>Pendências</em> mostra fornecedores com CNPJ duplicado/inválido ou certidão vencida.</li>
+</ul>
+<p><strong>Alterado</strong></p>
+<ul>
+  <li><strong>"Importar do SGCA" agora fica na tela de Fornecedores</strong> — o botão de importar fornecedores saiu de Configurações → Dados e passou para a barra de ações da própria tela <strong>Fornecedores</strong>, ao lado de "Importar CSV" (mesmo lugar do SGEA). O funcionamento é o mesmo (casa por CNPJ).</li>
+</ul>
 
 <h3>v2.32.0 — Julho/2026</h3>
 <p><strong>Adicionado</strong> — paridade do cadastro de Fornecedores com o SGCA</p>

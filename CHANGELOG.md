@@ -5,6 +5,14 @@
 
 ---
 
+## [2.33.0] — 2026-07-19
+
+### Adicionado
+- **Filtros na tela de Fornecedores** — botões **Todos / Ativos / Inativos / Pendências** (paridade com o SGCA). Ativos/Inativos pela situação cadastral (ReceitaWS); **Pendências** lista fornecedores com CNPJ duplicado/inválido ou com certidão vencida.
+
+### Alterado
+- **"Importar do SGCA" movido para a tela de Fornecedores** — o importador de fornecedores saiu de Configurações → Dados e passou para a barra de ações da tela **Fornecedores**, ao lado de "Importar CSV", padronizando o local com o SGEA (onde a importação também fica na própria tela de Fornecedores). Sem mudança de comportamento — mesmo upsert por CNPJ.
+
 ## [2.32.0] — 2026-07-19
 
 ### Adicionado
