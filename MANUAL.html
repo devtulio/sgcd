@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Manual Operacional — SGCD v2.33.0</title>
+<title>Manual Operacional — SGCD v2.34.0</title>
 <style>
   /* Reset e base */
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -89,7 +89,7 @@
       margin: 20mm 20mm 25mm;
       size: A4;
       @top-center {
-        content: "SGCD v2.33.0 — Manual Operacional";
+        content: "SGCD v2.34.0 — Manual Operacional";
         font-family: 'Times New Roman', serif;
         font-size: 9pt;
         color: #666;
@@ -118,7 +118,7 @@
     <div class="cover-title">Manual Operacional</div>
     <div class="cover-subtitle">SGCD — Sistema de Gestão de Contratação Direta</div>
     <div class="cover-system">Gestão de Processos de Dispensa de Licitação</div>
-    <div class="cover-version">Versão v2.33.0</div>
+    <div class="cover-version">Versão v2.34.0</div>
     <br>
     <div style="font-size:11pt; color:#555; line-height:1.8;">
       Aplicação web multiusuário para agentes de contratação pública<br>
@@ -1671,6 +1671,20 @@
 
 <!-- ─────────────────────────────────────────────── SEÇÃO 29 -->
 <h2 id="sec29">29. Histórico de Versões</h2>
+
+<h3>v2.34.0 — Julho/2026</h3>
+<p><strong>Adicionado</strong></p>
+<ul>
+  <li><strong>Exportar Excel na tela de Fornecedores</strong> — novo botão que gera a lista de fornecedores (respeitando busca e filtro ativos) em planilha <strong>.xlsx</strong>, ao lado do já existente "Exportar CSV". Usa o mesmo motor de exportação do SGCA, agora compartilhado pela família.</li>
+</ul>
+<p><strong>Alterado</strong></p>
+<ul>
+  <li>Botão de sanções renomeado para <strong>"Relatório de Sanções"</strong> (rótulo e ícone idênticos ao SGCA), padronizando a barra de ações de Fornecedores.</li>
+</ul>
+<p><strong>Removido</strong></p>
+<ul>
+  <li><strong>"Importar do SGCA"</strong> saiu da barra de ações de Fornecedores, para deixá-la idêntica ao padrão do SGCA. A importação em lote continua disponível por <strong>"Importar CSV"</strong>. (O endpoint <code>POST /api/fornecedores/import</code> do servidor foi mantido.)</li>
+</ul>
 
 <h3>v2.33.0 — Julho/2026</h3>
 <p><strong>Adicionado</strong></p>

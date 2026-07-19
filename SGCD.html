@@ -877,23 +877,22 @@
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Exportar CSV
         </button>
+        <button class="btn btn-outline" onclick="exportarFornecedoresXlsx()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Exportar Excel
+        </button>
         <button class="btn btn-outline" onclick="gerarRelatorioFornecedores()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
           Relatório
         </button>
         <button class="btn btn-outline" onclick="gerarRelatorioSancoesGlobal()" title="Relatório de sanções de todos os fornecedores">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          Sanções
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Relatório de Sanções
         </button>
         <button class="btn btn-outline" onclick="abrirModalCsv()" title="Importar fornecedores de arquivo CSV">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
           Importar CSV
         </button>
-        <label class="btn btn-outline" style="cursor:pointer" title="Importar fornecedores de um backup do SGCA (casa por CNPJ, atualiza os existentes e adiciona os novos)">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-          Importar do SGCA
-          <input type="file" accept=".json" style="display:none" onchange="importarFornecedoresSGCA(this.files[0]).then(()=>this.value='')">
-        </label>
         <button class="btn btn-primary" onclick="openFornModal()">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
           Novo Fornecedor
@@ -2138,7 +2137,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.33.0';
+const SGCD_VERSION = '2.34.0';
 // URL absoluta (não relativa): o API_BASE monta as URLs da REST API a partir da
 // origem real, nunca uma porta fixa (era 'http://localhost:3000' hardcoded).
 const API_BASE = window.location.origin;
@@ -2501,30 +2500,6 @@ async function importBackup(file) {
     toast(`Backup restaurado! ${backup.processes?.length||0} processos${auditMsg} importados.${cfgMsg}${smtpMsg}`, 'success');
     showDash();
   } catch(e) { toast('Erro ao importar: ' + e.message, 'error'); }
-}
-
-// Importa SÓ os fornecedores de um backup do SGCA (upsert por CNPJ no servidor) —
-// não mexe em processos/config; complementa o restore que substitui tudo.
-async function importarFornecedoresSGCA(file) {
-  if (!file) return;
-  try {
-    let bk;
-    try { bk = JSON.parse(await file.text()); }
-    catch { toast('Arquivo inválido — selecione um backup JSON do SGCA.', 'error'); return; }
-    const forns = Array.isArray(bk.fornecedores) ? bk.fornecedores : [];
-    if (!forns.length) { toast('Nenhum fornecedor encontrado no arquivo.', 'error'); return; }
-    const ok = await customConfirm(
-      `O arquivo tem ${forns.length} fornecedor(es).\n\nFornecedores com o mesmo CNPJ serão ATUALIZADOS (preservando vínculos locais a processos e certidões); os demais serão ADICIONADOS. Nada é apagado.`,
-      { title: 'Importar Fornecedores do SGCA', icon: '🏢', okLabel: 'Importar', okClass: 'btn-primary' }
-    );
-    if (!ok) return;
-    toast('Importando fornecedores…', '');
-    const r = await API.post('/api/fornecedores/import', { fornecedores: forns });
-    const d = await API.json(r);
-    if (!r?.ok) { toast('Erro ao importar: ' + (d?.error || 'falha no servidor'), 'error'); return; }
-    toast(`Importação concluída: ${d.novos} novo(s), ${d.atualizados} atualizado(s)${d.ignorados ? `, ${d.ignorados} ignorado(s)` : ''}.`, 'success');
-    if (typeof showFornecedores === 'function') showFornecedores();
-  } catch(e) { toast('Erro ao importar fornecedores: ' + e.message, 'error'); }
 }
 
 // Mostra os registros que existem nos dois lados com data de alteração diferente
@@ -8474,6 +8449,30 @@ async function exportarFornecedoresCSV() {
   const csv = '﻿' + [header.map(esc).join(','), ...rows].join('\r\n');
   const salvo = await _salvarArquivoComo(csv, `SGCD_fornecedores_${new Date().toISOString().slice(0,10)}.csv`, 'text/csv;charset=utf-8;');
   if (salvo) toast(`${lista.length} fornecedor(es) exportado(s).`, 'success');
+}
+
+async function exportarFornecedoresXlsx() {
+  const q = (document.getElementById('forn-search')?.value || '').toLowerCase();
+  const todos = await listarFornecedores();
+  const cnpjDupSet = _cnpjDuplicadosSet(todos);
+  const lista = todos
+    .filter(f => _fornecedorPassaFiltro(f, _fornFiltro, cnpjDupSet) && (!q || f.razao_social?.toLowerCase().includes(q) || f.cnpj?.includes(q) || f.nome_fantasia?.toLowerCase().includes(q)))
+    .sort((a, b) => (a.razao_social||'').localeCompare(b.razao_social||'', 'pt-BR'));
+  if (!lista.length) { toast('Nenhum fornecedor para exportar', 'error'); return; }
+
+  const fmtCnpj = d => d ? d.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/,'$1.$2.$3/$4-$5') : '';
+  const cabecalho = ['Razão Social', 'Nome Fantasia', 'CNPJ', 'Porte', 'Situação', 'Município/UF', 'Certidões vencidas', 'Atualizado em'];
+  const linhas = lista.map(f => {
+    const vencidas = (f.certidoes||[]).filter(c => certStatus(c) === 'expired').length;
+    const municipioUf = [f.municipio, f.uf].filter(Boolean).join('/');
+    const atualizado = f.updatedAt || f.addedAt;
+    return [
+      f.razao_social||'', f.nome_fantasia||'', fmtCnpj(f.cnpj_digits||f.cnpj), f.porte||'', f.situacao||'',
+      municipioUf, vencidas, atualizado ? new Date(atualizado).toLocaleDateString('pt-BR') : ''
+    ];
+  });
+  if (!(await _exportarXlsx(`SGCD_fornecedores_${new Date().toISOString().slice(0,10)}.xlsx`, cabecalho, linhas))) return;
+  toast(`${lista.length} fornecedor(es) exportado(s).`, 'success');
 }
 
 // AUTORIZAÇÃO DE ABERTURA — Lei 14.133/2021

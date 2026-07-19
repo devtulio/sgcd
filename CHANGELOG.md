@@ -5,6 +5,17 @@
 
 ---
 
+## [2.34.0] — 2026-07-19
+
+### Adicionado
+- **Exportar Excel na tela de Fornecedores** — novo botão que gera a lista de fornecedores (respeitando busca e filtro ativos) em planilha **.xlsx**, ao lado do "Exportar CSV". Usa o motor de exportação OOXML (sem dependências) agora compartilhado no `base.js` da família.
+
+### Alterado
+- Botão de sanções renomeado para **"Relatório de Sanções"** (rótulo e ícone idênticos ao SGCA), padronizando a barra de ações de Fornecedores.
+
+### Removido
+- **"Importar do SGCA"** saiu da barra de ações de Fornecedores, deixando-a idêntica ao padrão do SGCA. A importação em lote continua via **"Importar CSV"**. (O endpoint `POST /api/fornecedores/import` do servidor foi mantido.)
+
 ## [2.33.0] — 2026-07-19
 
 ### Adicionado
