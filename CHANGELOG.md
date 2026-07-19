@@ -5,6 +5,11 @@
 
 ---
 
+## [2.30.1] — 2026-07-18
+
+### Alterado
+- **Helper de exportação consolidado no `base.js` compartilhado** (`_salvarArquivoComo`) e **todas as exportações passam a abrir o diálogo "Salvar como"**: os CSV de Auditoria, Processos e Fornecedores e o modelo de importação — que ainda caíam direto na pasta Downloads — agora usam o mesmo diálogo dos demais exports. (O download de anexo do processo continua como está — é passagem direta do arquivo do servidor.)
+
 ## [2.30.0] — 2026-07-18
 
 ### Removido
