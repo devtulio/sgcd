@@ -76,34 +76,16 @@
   @media print {
     body { background: #fff; }
     .btn-print { display: none; }
-    .page { margin: 0; padding: 0; box-shadow: none; width: 100%; }
+    .page { margin: 0; padding: 0; box-shadow: none; width: 100%; min-height: 0; }
     .cover { page-break-after: always; }
     .toc-page { page-break-after: always; }
     h2 { page-break-before: always; }
-    h2:first-of-type { page-break-before: avoid; }
+    h2, h3, h4 { page-break-after: avoid; }
     .step-box { page-break-inside: avoid; }
     .nota, .aviso, .dica { page-break-inside: avoid; }
 
     /* Cabeçalho e rodapé de impressão */
-    @page {
-      margin: 20mm 20mm 25mm;
-      size: A4;
-      @top-center {
-        content: "SGCD v2.35.0 — Manual Operacional";
-        font-family: 'Times New Roman', serif;
-        font-size: 9pt;
-        color: #666;
-        border-bottom: 1px solid #ccc;
-        padding-bottom: 4pt;
-      }
-      @bottom-center {
-        content: counter(page);
-        font-family: 'Times New Roman', serif;
-        font-size: 9pt;
-        color: #666;
-      }
-    }
-    @page :first { @top-center { content: none; } }
+    @page { size: A4; }
   }
 </style>
 </head>
