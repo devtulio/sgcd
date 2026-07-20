@@ -5,6 +5,11 @@
 
 ---
 
+## [2.36.1] — 2026-07-20
+
+### Alterado
+- **Lote 4 da auditoria de design.** (1) Roxo do botão "Conformidade" oficializado como token `--violet` no `base.css` (era hex solto `#7c3aed`). (2) **Fim do brasão default embutido nos documentos**: sem brasão configurado em Configurações, o documento sai sem imagem (só o nome do órgão) — o crest de ~92KB embutido no gerador foi removido (produto é genérico; brasão é sempre upload do órgão). Instalações com brasão configurado não mudam em nada. (3) `DESIGN.md` ganhou as regras de fronteira: paletas categóricas de dados fora dos tokens, brasão nunca-default, idioma de formulário do SGDP aceito como divergência deliberada.
+
 ## [2.36.0] — 2026-07-20
 
 ### Adicionado
