@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Manual Operacional — SGCD v2.35.0</title>
+<title>Manual Operacional — SGCD v2.35.1</title>
 <style>
   /* Reset e base */
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -89,7 +89,7 @@
       size: A4;
       margin: 20mm 20mm 25mm;
       @top-center {
-        content: "SGCD v2.35.0 — Manual Operacional";
+        content: "SGCD v2.35.1 — Manual Operacional";
         font-family: 'Times New Roman', serif;
         font-size: 9pt;
         color: #666;
@@ -116,7 +116,7 @@
     <div class="cover-title">Manual Operacional</div>
     <div class="cover-subtitle">SGCD — Sistema de Gestão de Contratação Direta</div>
     <div class="cover-system">Gestão de Processos de Dispensa de Licitação</div>
-    <div class="cover-version">Versão v2.35.0</div>
+    <div class="cover-version">Versão v2.35.1</div>
     <br>
     <div style="font-size:11pt; color:#555; line-height:1.8;">
       Aplicação web multiusuário para agentes de contratação pública<br>
@@ -1581,7 +1581,7 @@
 <p>O sistema tem <strong>duas camadas</strong> de configuração de e-mail, ambas guardadas <strong>apenas no servidor</strong> (a senha nunca fica no navegador):</p>
 <ul>
   <li><strong>E-mail do sistema</strong> (só administradores), em Configurações: servidor e porta (ex: <code>smtp.gmail.com</code>, 587), usuário/senha da conta de envio, remetente e o e-mail interno (destinatário padrão). É usado no <strong>resumo diário automático</strong> e como <strong>padrão</strong> para quem não tiver config própria.</li>
-  <li><strong>Meu E-mail (SMTP)</strong> — disponível a <em>todos</em> os usuários, logo abaixo. Cada um informa a própria conta de envio; assim, as notificações que você dispara <strong>estando logado</strong> saem por você. Em branco = herda a config do sistema. O botão <strong>"Copiar do sistema"</strong> preenche servidor/porta/segurança (você informa seu usuário e senha). Um administrador também pode preencher a config de qualquer usuário ao editá-lo na tela de Usuários.</li>
+  <li><strong>Meu E-mail (SMTP)</strong> — disponível a <em>todos</em> os usuários, na aba <strong>Segurança</strong> (ao lado da troca de senha — é uma credencial sua). Cada um informa a própria conta de envio; assim, as notificações que você dispara <strong>estando logado</strong> saem por você. Em branco = herda a config do sistema. O botão <strong>"Copiar do sistema"</strong> preenche servidor/porta/segurança (você informa seu usuário e senha).</li>
 </ul>
 <div class="nota">
   <strong>Nota:</strong> "Ignorar verificação SSL" só deve ser habilitado para servidores com certificado autoassinado (ex: webmail municipal). A senha SMTP não entra em backups — ela vive só no banco do servidor.
@@ -1667,6 +1667,16 @@
 
 <!-- ─────────────────────────────────────────────── SEÇÃO 29 -->
 <h2 id="sec29">29. Histórico de Versões</h2>
+
+<h3>v2.35.1 — Julho/2026</h3>
+<p><strong>Alterado</strong></p>
+<ul>
+  <li><strong>"Meu E-mail (SMTP)" movido para a aba Segurança</strong> de Configurações (ao lado da troca de senha), separando a config pessoal da config do sistema — mesmo arranjo do SGDP. A aba <strong>Comunicação</strong> (config do sistema) passa a aparecer só para administradores.</li>
+</ul>
+<p><strong>Removido</strong></p>
+<ul>
+  <li>Seção de SMTP no modal de edição de usuário — cada usuário configura a própria conta na aba Segurança (a config inclui a senha do e-mail pessoal, que não cabe ao administrador digitar).</li>
+</ul>
 
 <h3>v2.35.0 — Julho/2026</h3>
 <p><strong>Adicionado</strong></p>

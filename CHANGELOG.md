@@ -5,6 +5,14 @@
 
 ---
 
+## [2.35.1] — 2026-07-20
+
+### Alterado
+- **"Meu E-mail (SMTP)" movido para a aba Segurança** de Configurações (ao lado de "Alterar Minha Senha" — é uma credencial pessoal), separando a config pessoal da config do sistema; mesmo arranjo do SGDP. A aba **Comunicação** (config do sistema) agora aparece só para administradores, com uma nota apontando para a aba Segurança.
+
+### Removido
+- **Seção de SMTP no modal de edição de usuário** — cada usuário configura a própria conta na aba Segurança; a config inclui a senha do e-mail pessoal, que não cabe ao administrador digitar. (Endpoints do servidor mantidos; `GET /api/usuarios/{id}/smtp` segue em uso pelo próprio usuário.)
+
 ## [2.35.0] — 2026-07-19
 
 ### Adicionado
