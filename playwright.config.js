@@ -12,7 +12,7 @@ const port = 3050;
 
 export default defineConfig({
   testDir: './tests/e2e',
-  timeout: 30_000,
+  timeout: 60_000,  // 60s: runners Windows do CI ocasionalmente lentos (goto+fill consumiam os 30s)
   // Assertions (toBeVisible/toBeHidden) que dependem de um round-trip ao servidor
   // Python ocasionalmente passam de 5s (default) sob carga nos runners Windows do
   // GitHub — ex.: o overlay de login some só após o POST voltar. 10s dá folga sem
