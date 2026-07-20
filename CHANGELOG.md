@@ -5,6 +5,17 @@
 
 ---
 
+## [2.36.0] — 2026-07-20
+
+### Adicionado
+- **Badge de pendência no card do fornecedor** — CNPJ/CPF inválido ou duplicado agora aparece no próprio card (chip âmbar/vermelho + fundo tingido), como no SGCA. Antes só o filtro "Pendências" revelava o problema.
+
+### Alterado
+- **Legibilidade do modo escuro**: novo token `--brand-text` — textos na cor da marca (números, links, metadados de cards) agora clareiam automaticamente no tema escuro (antes: navy sobre fundo escuro, quase ilegível). Aplicado via troca global `color: var(--brand)` → `var(--brand-text)`.
+- **Componentes canônicos novos no `base.css`** (auditoria de design 2026-07-20): tabela de listagem (`.list-table`, com cabeçalho, zebra e hover) e variantes de badge (`badge-ok/warn/danger/neutral`). `DESIGN.md` atualizado (token, tabela e regra do acento esquerdo nos stat-cards).
+- **Stat-cards no escuro** voltam ao acento de borda **esquerda** (o override escuro pintava a borda inteira, criando um "anel" colorido divergente do claro).
+- Cosmético: rodapé da sidebar mostra **"Administrador"** para admins sem cargo cadastrado; linha do órgão fica oculta até o órgão ser configurado (antes exibia "—"); respiro após o checkbox "Ignorar SSL" nos blocos SMTP.
+
 ## [2.35.1] — 2026-07-20
 
 ### Alterado

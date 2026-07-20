@@ -46,19 +46,19 @@
   .stat.done    { border-left-color: var(--success); }
   .stat.prog    { border-left-color: var(--warning); }
   .stat.blocked { border-left-color: var(--danger); }
-  .stat.brand   { border-left-color: var(--brand); }
+  .stat.brand   { border-left-color: var(--brand-text); }
   .stat-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
   .stat-icon { display: flex; align-items: center; color: var(--gray-400); }
   .stat.done    .stat-icon { color: var(--success); }
   .stat.prog    .stat-icon { color: var(--warning); }
   .stat.blocked .stat-icon { color: var(--danger); }
-  .stat.brand   .stat-icon { color: var(--brand); }
+  .stat.brand   .stat-icon { color: var(--brand-text); }
   .stat-badge { font-size: .65rem; font-weight: 700; padding: 2px 7px; border-radius: 20px;
     background: var(--gray-100); color: var(--gray-500); letter-spacing: .3px; }
   .stat.done    .stat-badge { background: var(--success-light); color: var(--success); }
   .stat.prog    .stat-badge { background: var(--warning-light); color: #7a5800; }
   .stat.blocked .stat-badge { background: #fde8e8; color: var(--danger); }
-  .stat.brand   .stat-badge { background: var(--brand-light); color: var(--brand); }
+  .stat.brand   .stat-badge { background: var(--brand-light); color: var(--brand-text); }
   .stat-val { font-size: 2rem; font-weight: 700; line-height: 1; color: var(--gray-900); font-variant-numeric: tabular-nums; }
   .stat-lbl { font-size: .72rem; color: var(--gray-500); text-transform: uppercase; letter-spacing: .5px; }
   .stat-sub { font-size: .7rem; color: var(--gray-400); margin-top: 6px; padding-top: 6px;
@@ -69,7 +69,7 @@
   body.dark .stat.done    .stat-badge { background: #0d2e15; color: var(--success); }
   body.dark .stat.prog    .stat-badge { background: #2e1e00; color: var(--warning); }
   body.dark .stat.blocked .stat-badge { background: #2e0d0d; color: var(--danger); }
-  body.dark .stat.brand   .stat-badge { background: var(--brand-light); color: var(--brand); }
+  body.dark .stat.brand   .stat-badge { background: var(--brand-light); color: var(--brand-text); }
   body.dark .stat-sub { border-top-color: #383838; }
 
   /* search / filter */
@@ -80,8 +80,8 @@
     color: var(--gray-900); outline: none;
   }
   .filters input { flex: 1; min-width: 180px; }
-  .filters input:focus, .filters select:focus { border-color: var(--brand); outline: 2px solid color-mix(in srgb, var(--brand) 20%, transparent); }
-  #aud-q:focus, #aud-tipo:focus, #aud-de:focus, #aud-ate:focus { border-color: var(--brand); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 25%, transparent); }
+  .filters input:focus, .filters select:focus { border-color: var(--brand-text); outline: 2px solid color-mix(in srgb, var(--brand) 20%, transparent); }
+  #aud-q:focus, #aud-tipo:focus, #aud-de:focus, #aud-ate:focus { border-color: var(--brand-text); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 25%, transparent); }
 
   /* process cards */
   .process-list { display: flex; flex-direction: column; gap: 10px; }
@@ -92,13 +92,13 @@
     display: grid; grid-template-columns: 4px 1fr auto; gap: 0; align-items: stretch;
     overflow: hidden;
   }
-  .process-card:hover { box-shadow: var(--shadow-md); border-color: var(--brand); }
-  .process-card .pc-stripe { border-radius: var(--radius) 0 0 var(--radius); background: var(--gray-300); }.process-card .pc-body { padding: 14px 16px; }  .process-card .num { font-size: .72rem; font-weight: 600; color: var(--brand); text-transform: uppercase; letter-spacing: .3px; }
+  .process-card:hover { box-shadow: var(--shadow-md); border-color: var(--brand-text); }
+  .process-card .pc-stripe { border-radius: var(--radius) 0 0 var(--radius); background: var(--gray-300); }.process-card .pc-body { padding: 14px 16px; }  .process-card .num { font-size: .72rem; font-weight: 600; color: var(--brand-text); text-transform: uppercase; letter-spacing: .3px; }
   .process-card .title { font-weight: 600; font-size: .95rem; margin: 2px 0 4px; display: flex; align-items: baseline; gap: 6px; text-align: justify; }
   .process-card .title-text[contenteditable="true"] { outline: 2px solid var(--brand); border-radius: 2px; padding: 0 2px; cursor: text; }
   .title-edit-btn { opacity: 0; border: none; background: none; cursor: pointer; color: var(--gray-400); padding: 0; font-size: .8rem; flex-shrink: 0; line-height: 1; transition: opacity .15s, color .15s; }
   .process-card:hover .title-edit-btn { opacity: 1; }
-  .title-edit-btn:hover { color: var(--brand); }
+  .title-edit-btn:hover { color: var(--brand-text); }
   .pc-quick-open { position: absolute; bottom: 10px; right: 12px; opacity: 0; background: var(--brand); color: #fff; border: none; border-radius: 6px; padding: 3px 10px; font-size: .7rem; font-weight: 600; cursor: pointer; transition: opacity .15s; white-space: nowrap; pointer-events: none; }
   .process-card { position: relative; }
   .process-card:hover .pc-quick-open { opacity: 1; pointer-events: auto; }
@@ -109,7 +109,7 @@
   /* ── Drag-and-drop step reorder ── */
   .step-drag-handle { cursor: grab; color: var(--gray-500); padding: 0 4px 0 0; display: flex; align-items: center; flex-shrink: 0; }
   .step-drag-handle:active { cursor: grabbing; }
-  .step-card.drag-over { border-color: var(--brand) !important; background: var(--brand-light) !important; }
+  .step-card.drag-over { border-color: var(--brand-text) !important; background: var(--brand-light) !important; }
 
   /* ── Global Search ── */
   #global-search-overlay { z-index: 1100; }
@@ -127,7 +127,7 @@
   /* ── Audit log ── */
   .audit-item { display: flex; flex-direction: column; gap: 2px; padding: 7px 0; border-bottom: 1px solid var(--gray-100); font-size: .78rem; }
   .audit-item:last-child { border-bottom: none; }
-  .audit-field { font-weight: 700; color: var(--brand); font-size: .7rem; text-transform: uppercase; letter-spacing: .3px; }
+  .audit-field { font-weight: 700; color: var(--brand-text); font-size: .7rem; text-transform: uppercase; letter-spacing: .3px; }
   .audit-vals { color: var(--gray-700); }
   .audit-time { color: var(--gray-500); font-size: .7rem; }
 
@@ -167,12 +167,12 @@
   }
   .detail-header .back {
     display: inline-flex; align-items: center; gap: 6px;
-    color: var(--brand); font-size: .85rem; font-weight: 600;
+    color: var(--brand-text); font-size: .85rem; font-weight: 600;
     cursor: pointer; margin-bottom: 10px; background: none; border: none; padding: 0;
   }
   .detail-header .back:hover { text-decoration: underline; }
   .detail-title { font-size: 1.1rem; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; text-align: justify; }
-  .detail-num   { font-size: .8rem; color: var(--brand); font-weight: 600; margin-bottom: 4px; }
+  .detail-num   { font-size: .8rem; color: var(--brand-text); font-weight: 600; margin-bottom: 4px; }
   .detail-meta  { font-size: .8rem; color: var(--gray-500); margin-top: 4px; display: flex; gap: 16px; flex-wrap: wrap; }
 
   .detail-grid {
@@ -198,8 +198,8 @@
   }
   .step-card.completed { border-color: var(--success); border-left-color: var(--success); }
   .step-card.blocked   { border-color: var(--danger);  border-left-color: var(--danger); }
-  .step-card.expanded  { border-color: var(--brand); border-left-color: var(--brand); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 12%, transparent), var(--shadow-md); background: color-mix(in srgb, var(--brand) 3%, #fff); }
-  body.dark .step-card.expanded { background: color-mix(in srgb, var(--brand) 15%, #1a1a1a); border-color: var(--brand); border-left-color: var(--brand); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 18%, transparent), var(--shadow-md); }
+  .step-card.expanded  { border-color: var(--brand-text); border-left-color: var(--brand-text); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 12%, transparent), var(--shadow-md); background: color-mix(in srgb, var(--brand) 3%, #fff); }
+  body.dark .step-card.expanded { background: color-mix(in srgb, var(--brand) 15%, #1a1a1a); border-color: var(--brand-text); border-left-color: var(--brand-text); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 18%, transparent), var(--shadow-md); }
   .step-card.expanded .step-row { background: color-mix(in srgb, var(--brand) 4%, transparent); }
 
   .step-row {
@@ -234,13 +234,13 @@
     padding: 7px 10px; font-size: .85rem; font-family: inherit; color: var(--gray-900);
     outline: none; resize: vertical;
   }
-  .step-body textarea:focus, .step-body input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 25%, transparent); }
+  .step-body textarea:focus, .step-body input:focus { border-color: var(--brand-text); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 25%, transparent); }
   .step-body textarea { min-height: 70px; }
   .kanban-board { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 16px; align-items: flex-start; }
   .kanban-col { min-width: 260px; max-width: 300px; flex-shrink: 0; background: var(--gray-50); border-radius: 10px; padding: 10px; }
   .kanban-col-title { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--gray-500); margin-bottom: 8px; }
   .kanban-card { background: var(--bg-card); border: 1px solid var(--gray-200); border-radius: 8px; padding: 10px; margin-bottom: 8px; cursor: pointer; font-size: .8rem; }
-  .kanban-card:hover { border-color: var(--brand); }
+  .kanban-card:hover { border-color: var(--brand-text); }
   .kanban-card .kc-num { font-size: .7rem; color: var(--gray-400); margin-bottom: 2px; }
   .kanban-card .kc-obj { font-weight: 500; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word; white-space: normal; }
   .kanban-card .kc-val { font-size: .72rem; color: var(--gray-500); }
@@ -308,11 +308,11 @@
 
   /* ── Histórico de campo ── */
   .field-hist-btn { background:none;border:none;cursor:pointer;color:var(--gray-400);font-size:.75rem;padding:0 3px;vertical-align:middle;line-height:1;transition:color .12s }
-  .field-hist-btn:hover { color:var(--brand) }
+  .field-hist-btn:hover { color: var(--brand-text) }
   #field-hist-panel { position:fixed;z-index:9999;background:var(--bg-card);border:1px solid var(--gray-200);border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.15);width:300px;max-height:280px;overflow-y:auto;display:none }
   .field-hist-item { padding:8px 12px;border-bottom:1px solid var(--gray-100);font-size:.76rem }
   .field-hist-item:last-child { border:none }
-  .field-hist-arrow { color:var(--brand);font-weight:600;margin:0 4px }
+  .field-hist-arrow { color: var(--brand-text);font-weight:600;margin:0 4px }
 
   /* Editor de texto rico (._etb*, .rte-editor) agora vem do base.css compartilhado. */
 
@@ -323,7 +323,7 @@
     color: var(--gray-500); font-size: .8rem; transition: all .15s;
     margin-top: 8px;
   }
-  .upload-zone:hover, .upload-zone.dragover { border-color: var(--brand); color: var(--brand); background: var(--brand-light); }
+  .upload-zone:hover, .upload-zone.dragover { border-color: var(--brand-text); color: var(--brand-text); background: var(--brand-light); }
   .upload-zone input { display: none; }
 
   /* ── Propostas ───────────────────────────────────── */
@@ -383,7 +383,7 @@
   .cert-date input { width: 100%; min-width: 140px; border: none; background: transparent; font-size: .72rem; color: var(--gray-500); font-family: inherit; cursor: pointer; }
   .cert-link-btn {
     padding: 3px 8px; font-size: .68rem; border-radius: 3px; border: 1px solid var(--brand);
-    color: var(--brand); background: transparent; cursor: pointer; font-family: inherit;
+    color: var(--brand-text); background: transparent; cursor: pointer; font-family: inherit;
     font-weight: 600; white-space: nowrap; text-decoration: none;
     display: inline-flex; align-items: center; gap: 3px;
   }
@@ -391,7 +391,7 @@
 
   .cert-file-area { grid-column: 1 / -1; margin-top: 8px; display: flex; flex-direction: column; gap: 4px; }
   .cert-upload-lbl { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: .72rem; padding: 10px; border: 2px dashed var(--gray-300); border-radius: var(--radius); cursor: pointer; color: var(--gray-500); background: transparent; transition: .15s; width: 100%; }
-  .cert-upload-lbl:hover { border-color: var(--brand); color: var(--brand); background: var(--brand-light); }
+  .cert-upload-lbl:hover { border-color: var(--brand-text); color: var(--brand-text); background: var(--brand-light); }
   .cert-file-chip { display: inline-flex; align-items: center; gap: 4px; font-size: .64rem; padding: 2px 6px; background: var(--gray-100); border: 1px solid var(--gray-200); border-radius: var(--radius); max-width: 180px; }
   .cert-file-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .cert-file-chip button { background: none; border: none; cursor: pointer; color: var(--gray-500); font-size: .72rem; padding: 0; line-height: 1; flex-shrink: 0; }
@@ -400,8 +400,10 @@
   /* ── Dark mode (Yaru Dark) — só o que é específico do SGCD;
      tokens/componentes genéricos vêm do base.css ── */
   body.dark .stat          { background: #2a2a2a; border-color: #383838; }
-  body.dark .stat.done     { background: #0d2e15; border-color: var(--success); }
-  body.dark .stat.prog     { background: #2e1e00; border-color: var(--warning); }
+  body.dark .stat.done     { background: #0d2e15; border-left-color: var(--success); }
+  body.dark .stat.prog     { background: #2e1e00; border-left-color: var(--warning); }
+  body.dark .forn-list-item.issue-erro  { background: #3a1f1f; }
+  body.dark .forn-list-item.issue-aviso { background: #3a2f1a; }
   body.dark .pc-stall-bar { background: rgba(202,138,4,.12); border-color: var(--warning); color: #fcd34d; }
   body.dark .pc-quick-open { background: var(--brand); }
   body.dark .process-card,
@@ -414,7 +416,7 @@
   body.dark .step-body { border-top-color: #383838; }
   body.dark .tl-item:not(:last-child)::before { background: #383838; }
   body.dark .upload-zone { border-color: #444; color: var(--gray-500); }
-  body.dark .upload-zone:hover { background: #3a1a0a; border-color: var(--brand); }
+  body.dark .upload-zone:hover { background: #3a1a0a; border-color: var(--brand-text); }
   body.dark .file-item { background: #323232; border-color: #444; }
   body.dark .badge-todo { background: #323232; }
   body.dark .proposta-card.vencedora { background: #0d2e15; }
@@ -440,8 +442,8 @@
   .frac-group-item { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;
     padding: 6px 8px; border-radius: var(--radius); background: var(--gray-50); border: 1px solid var(--gray-200);
     margin-bottom: 4px; cursor: pointer; }
-  .frac-group-item:hover { border-color: var(--brand); }
-  .frac-group-item .fgi-num { font-size: .68rem; color: var(--brand); font-weight: 600; }
+  .frac-group-item:hover { border-color: var(--brand-text); }
+  .frac-group-item .fgi-num { font-size: .68rem; color: var(--brand-text); font-weight: 600; }
   .frac-group-item .fgi-obj { font-size: .75rem; font-weight: 500; text-align: justify; }
   .frac-group-item .fgi-val { font-size: .72rem; color: var(--gray-500); white-space: nowrap; }
   .frac-total { display: flex; justify-content: space-between; padding: 6px 8px; border-top: 1px solid var(--gray-200);
@@ -451,17 +453,22 @@
   .forn-lookup { margin-top: 12px; margin-bottom: 14px; padding: 12px; background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: var(--radius); }
   .forn-input-row { display: flex; gap: 8px; align-items: center; }
   .forn-input-row input { flex: 1; border: 1px solid var(--gray-200); border-radius: 6px; padding: 7px 10px; font-size: .85rem; font-family: inherit; color: var(--gray-900); outline: none; }
-  .forn-input-row input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 25%, transparent); }
+  .forn-input-row input:focus { border-color: var(--brand-text); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 25%, transparent); }
   .wipe-confirm-inp:focus { box-shadow: 0 0 0 3px rgba(220,38,38,.3); }
   .forn-card { margin-top: 10px; background: #fff; border: 1px solid var(--gray-200); border-radius: var(--radius); overflow: hidden; }
   .forn-card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--gray-100); }
   .forn-razao { font-size: .85rem; font-weight: 700; color: var(--gray-900); }
-  .forn-filtro-btn.active { background: var(--brand); color: #fff; border-color: var(--brand); }
+  .forn-list-item.issue-erro  { border-left: 4px solid #dc2626; background: #fef2f2; }
+  .forn-list-item.issue-aviso { border-left: 4px solid #d97706; background: #fffbeb; }
+  .forn-issue-badge { font-size: .68rem; font-weight: 700; padding: 2px 8px; border-radius: 20px; white-space: nowrap; }
+  .forn-issue-badge.forn-issue-erro  { background: #fecaca; color: #7f1d1d; }
+  .forn-issue-badge.forn-issue-aviso { background: #fde68a; color: #78350f; }
+  .forn-filtro-btn.active { background: var(--brand); color: #fff; border-color: var(--brand-text); }
   .forn-fantasia { font-size: .75rem; color: var(--gray-500); }
   .forn-cnpj-row { display: flex; align-items: center; gap: 6px; margin-top: 3px; }
-  .forn-cnpj-txt { font-size: .78rem; color: var(--brand); font-weight: 600; letter-spacing: .3px; }
+  .forn-cnpj-txt { font-size: .78rem; color: var(--brand-text); font-weight: 600; letter-spacing: .3px; }
   .copy-btn { background: none; border: 1px solid var(--gray-200); border-radius: 4px; padding: 1px 6px; font-size: .65rem; cursor: pointer; color: var(--gray-500); }
-  .copy-btn:hover { border-color: var(--brand); color: var(--brand); }
+  .copy-btn:hover { border-color: var(--brand-text); color: var(--brand-text); }
   .forn-sit { font-size: .7rem; font-weight: 700; padding: 2px 8px; border-radius: 20px; white-space: nowrap; }
   .forn-sit.ativa   { background: #d4edda; color: #155724; }
   .forn-sit.inativa { background: #f8d7da; color: #721c24; }
@@ -478,11 +485,11 @@
   /* ── Fornecedores view ── */
   .forn-list-item { background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 10px; cursor: pointer; transition: border-color .15s; }
   .forn-list-item.expanded { border-color: var(--gray-400); cursor: default; }
-  .forn-list-item.editing  { border-color: var(--brand); cursor: default; }
+  .forn-list-item.editing  { border-color: var(--brand-text); cursor: default; }
   .forn-inline-body { border-top: 1px solid var(--gray-200); padding: 14px; margin: 8px -14px -12px; }
   .forn-inline-edit-header { background: var(--gray-100); border-radius: var(--radius) var(--radius) 0 0; padding: 8px 14px; margin: 8px -14px 0; border-top: 1px solid var(--gray-200); }
   body.dark .forn-list-item.expanded { border-color: #666; }
-  body.dark .forn-list-item.editing  { border-color: var(--brand); }
+  body.dark .forn-list-item.editing  { border-color: var(--brand-text); }
   body.dark .forn-inline-body { border-color: #444; }
   body.dark .forn-inline-edit-header { background: #333; border-color: #444; }
   .forn-list-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 8px; }
@@ -501,7 +508,7 @@
   .cert-alert-header h3 { font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--gray-700); }
   .cert-alert-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px,1fr)); gap: 8px; }
   .cert-alert-item { background: #fff; border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 10px 12px; border-left: 4px solid var(--gray-300); cursor: pointer; }
-  .cert-alert-item:hover { border-color: var(--brand); }
+  .cert-alert-item:hover { border-color: var(--brand-text); }
   .cert-alert-item.expired  { border-left-color: var(--danger); background: var(--danger-light); }
   .cert-alert-item.expiring { border-left-color: var(--warning); background: var(--warning-light); }
   .cert-alert-forn { font-size: .72rem; font-weight: 700; color: var(--gray-700); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -513,7 +520,7 @@
   /* Tabs in forn detail */
   .forn-tabs { display: flex; border-bottom: 2px solid var(--gray-200); margin-bottom: 14px; gap: 0; }
   .forn-tab { background: none; border: none; padding: 8px 18px; font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--gray-500); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; }
-  .forn-tab.active { color: var(--brand); border-bottom-color: var(--brand); }
+  .forn-tab.active { color: var(--brand-text); border-bottom-color: var(--brand-text); }
   .forn-tab:hover:not(.active) { color: var(--gray-700); }
 
   /* Certidão items inside modal */
@@ -540,7 +547,7 @@
   .proc-table th { background:var(--gray-100); color:var(--gray-600); font-weight:700; font-size:.72rem; text-transform:uppercase; letter-spacing:.4px; padding:8px 10px; text-align:left; border-bottom:2px solid var(--gray-200); cursor:pointer; user-select:none; transition:background .1s; }
   .proc-table th:hover { background:var(--gray-200); }
   .proc-table th .sort-icon { margin-left:4px; opacity:.3; font-style:normal; font-size:.8em; }
-  .proc-table th.sorted { background:color-mix(in srgb,var(--brand) 8%,var(--gray-100)); color:var(--brand); border-bottom-color:var(--brand); }
+  .proc-table th.sorted { background:color-mix(in srgb,var(--brand) 8%,var(--gray-100)); color: var(--brand-text); border-bottom-color: var(--brand-text); }
   .proc-table th.sorted .sort-icon { opacity:1; font-weight:900; }
   .proc-table td { padding:8px 10px; border-bottom:1px solid var(--gray-100); vertical-align:middle; }
   .proc-table tr:hover td { background:var(--gray-50); cursor:pointer; }
@@ -649,7 +656,7 @@
     <img id="sidebar-brasao" alt="" class="sidebar-brasao" style="display:none" onerror="this.style.display='none'">
     <div class="s-title">SGCD</div>
     <div class="s-sub">Contratação Direta</div>
-    <div class="s-muni" id="sidebar-orgao">—</div>
+    <div class="s-muni" id="sidebar-orgao" style="display:none"></div>
   </div>
 
   <div class="sidebar-search">
@@ -1367,7 +1374,7 @@
         </fieldset>
 
         <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
-          <legend style="font-size:.72rem;font-weight:700;color:var(--brand);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Brasão do Município</legend>
+          <legend style="font-size:.72rem;font-weight:700;color: var(--brand-text);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Brasão do Município</legend>
           <p style="font-size:.72rem;color:var(--gray-500);margin-bottom:10px;line-height:1.5">Substitua o brasão padrão pelo do seu município. Será usado em todos os documentos gerados.</p>
           <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
             <img id="s-brasao-preview" alt="Prévia do brasão selecionado" style="height:56px;width:auto;display:none;border:1px solid var(--gray-200);border-radius:4px;padding:2px">
@@ -1411,7 +1418,7 @@
             <label style="display:flex;align-items:center;gap:6px;font-size:.82rem;cursor:pointer"><input type="checkbox" id="s-smtp-tls" style="width:15px;height:15px"> Usar STARTTLS (porta 587)</label>
             <label style="display:flex;align-items:center;gap:6px;font-size:.82rem;cursor:pointer"><input type="checkbox" id="s-smtp-ssl" style="width:15px;height:15px"> Usar SSL direto (porta 465)</label>
           </div>
-          <div style="margin-top:6px">
+          <div style="margin-top:6px;margin-bottom:10px">
             <label style="display:flex;align-items:center;gap:6px;font-size:.82rem;cursor:pointer;color:var(--gray-500)">
               <input type="checkbox" id="s-smtp-ignore-ssl" style="width:15px;height:15px">
               Ignorar verificação de certificado SSL <span style="font-size:.75rem;color:var(--warning,#b45309)">(apenas para servidores internos / autoassinados)</span>
@@ -1560,7 +1567,7 @@
             <label style="display:flex;align-items:center;gap:6px;font-size:.82rem;cursor:pointer"><input type="checkbox" id="me-smtp-tls" style="width:15px;height:15px"> Usar STARTTLS (porta 587)</label>
             <label style="display:flex;align-items:center;gap:6px;font-size:.82rem;cursor:pointer"><input type="checkbox" id="me-smtp-ssl" style="width:15px;height:15px"> Usar SSL direto (porta 465)</label>
           </div>
-          <div style="margin-top:6px">
+          <div style="margin-top:6px;margin-bottom:10px">
             <label style="display:flex;align-items:center;gap:6px;font-size:.82rem;cursor:pointer;color:var(--gray-500)">
               <input type="checkbox" id="me-smtp-ignore-ssl" style="width:15px;height:15px">
               Ignorar verificação de certificado SSL <span style="font-size:.75rem;color:var(--warning,#b45309)">(apenas para servidores internos / autoassinados)</span>
@@ -1765,12 +1772,12 @@
     <div class="modal-body" style="padding-top:12px">
       <!-- Templates -->
       <div id="modal-template-bar" style="display:none;margin-bottom:14px;padding:10px 12px;background:color-mix(in srgb,var(--brand) 6%,var(--gray-50));border:1px solid color-mix(in srgb,var(--brand) 20%,var(--gray-200));border-radius:8px">
-        <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--brand);margin-bottom:6px">Usar um modelo salvo</div>
+        <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color: var(--brand-text);margin-bottom:6px">Usar um modelo salvo</div>
         <div id="modal-templates-chips" style="display:flex;flex-wrap:wrap;gap:6px"></div>
       </div>
 
       <!-- Grupo 1: Identificação -->
-      <p style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--brand);margin-bottom:8px">Identificação</p>
+      <p style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color: var(--brand-text);margin-bottom:8px">Identificação</p>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
         <div class="info-field" style="margin:0">
           <label for="m-num-proc">Processo Administrativo</label>
@@ -1788,7 +1795,7 @@
 
       <!-- Grupo 2: Base legal -->
       <div style="border-top:1px solid var(--gray-200);margin:14px 0 10px;padding-top:12px">
-        <p style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--brand);margin-bottom:8px">Base Legal e Critério</p>
+        <p style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color: var(--brand-text);margin-bottom:8px">Base Legal e Critério</p>
       </div>
       <div class="info-field">
         <label for="m-legal">Fundamentação Legal (Art. 75, inciso)</label>
@@ -1815,7 +1822,7 @@
 
       <!-- Grupo 3: Financeiro e prazo -->
       <div style="border-top:1px solid var(--gray-200);margin:14px 0 10px;padding-top:12px">
-        <p style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--brand);margin-bottom:8px">Financeiro e Prazo</p>
+        <p style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color: var(--brand-text);margin-bottom:8px">Financeiro e Prazo</p>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;align-items:end">
         <div class="info-field" style="margin:0">
@@ -1940,7 +1947,7 @@
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
           <span id="csv-preview-count" style="font-size:.82rem;color:var(--gray-600)"></span>
           <label style="font-size:.78rem;display:flex;align-items:center;gap:6px;cursor:pointer">
-            <input type="checkbox" id="csv-opt-cnpj" checked style="accent-color:var(--brand)">
+            <input type="checkbox" id="csv-opt-cnpj" checked style="accent-color: var(--brand-text)">
             Consultar CNPJ automaticamente
           </label>
         </div>
@@ -2083,7 +2090,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.35.1';
+const SGCD_VERSION = '2.36.0';
 // URL absoluta (não relativa): o API_BASE monta as URLs da REST API a partir da
 // origem real, nunca uma porta fixa (era 'http://localhost:3000' hardcoded).
 const API_BASE = window.location.origin;
@@ -3692,11 +3699,13 @@ async function renderFornecedores() {
   el.innerHTML = lista.map(f => {
     const sitCls = cnpjSitClass(f.situacao);
     const nProcs = (f.processos || []).filter(pid => _procMap.has(pid)).length;
-    return `<div class="forn-list-item" data-forn-id="${f.id}" onclick="toggleFornCard('${f.id}')" role="button" tabindex="0">
+    const issue = _fornecedorIssue(f, cnpjDupSet);
+    return `<div class="forn-list-item${issue ? ' issue-' + issue.sev : ''}" data-forn-id="${f.id}" onclick="toggleFornCard('${f.id}')" role="button" tabindex="0">
       <div class="forn-list-header">
         <div>
           <div class="forn-razao" style="display:flex;align-items:center;gap:8px">
             ${escHtml(f.razao_social)}
+            ${issue ? `<span class="forn-issue-badge forn-issue-${issue.sev}" title="${escHtml(issue.label)}">${issue.sev === 'erro' ? '🔴' : '🟡'} ${escHtml(issue.label)}</span>` : ''}
             ${nProcs > 0 ? `<span style="flex-shrink:0;background:var(--gray-200);color:var(--gray-600);border-radius:99px;font-size:.65rem;font-weight:700;padding:1px 8px">${nProcs} processo${nProcs !== 1 ? 's' : ''}</span>` : ''}
           </div>
           ${f.nome_fantasia ? `<div class="forn-fantasia">${escHtml(f.nome_fantasia)}</div>` : ''}
@@ -4010,7 +4019,7 @@ async function _auditCarregar(append = false) {
       <td>${escHtml(e.user_nome || '—')}</td>
       <td><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;color:#fff;background:${meta.color}">${escHtml(label)}</span></td>
       <td style="max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escHtml(e.detail||'')}">
-        ${e.process_id ? `<button onclick="openProcess('${escHtml(e.process_id)}')" style="font-size:10px;color:var(--brand);background:none;border:1px solid var(--brand);border-radius:4px;padding:0 5px;cursor:pointer;font-family:inherit;margin-right:4px">Abrir</button>` : ''}
+        ${e.process_id ? `<button onclick="openProcess('${escHtml(e.process_id)}')" style="font-size:10px;color: var(--brand-text);background:none;border:1px solid var(--brand);border-radius:4px;padding:0 5px;cursor:pointer;font-family:inherit;margin-right:4px">Abrir</button>` : ''}
         ${escHtml(e.detail || '—')}
       </td>
     </tr>`;
@@ -4602,7 +4611,7 @@ function renderDash() {
           ${fracBadge}
         </div>
         ${(p.tags || []).length ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px">${p.tags.map(t =>
-          `<span style="font-size:.65rem;padding:1px 6px;border-radius:8px;background:var(--brand-light);color:var(--brand)">🏷 ${escHtml(t)}</span>`).join('')}</div>` : ''}
+          `<span style="font-size:.65rem;padding:1px 6px;border-radius:8px;background:var(--brand-light);color: var(--brand-text)">🏷 ${escHtml(t)}</span>`).join('')}</div>` : ''}
         <div class="progress-wrap" style="margin-top:8px">
           <div class="step-indicators">${(p.steps||[]).map(s => { const cls = s.status==='done'?'done':s.status==='blocked'?'blocked':'pending'; const tip = s.status==='done'?'Concluída':s.status==='blocked'?'Bloqueada':'Pendente'; return `<div class="step-dot ${cls}" style="width:8px;height:8px" data-tip="${escHtml(s.name||tip)}" title="${escHtml(s.name||tip)}"></div>`; }).join('')}</div>
           <span class="progress-pct">${pc}%</span>
@@ -4842,8 +4851,8 @@ function _fornViewHtml(f) {
       <div class="forn-qsa-title" style="margin-bottom:4px">Contato</div>
       ${row('📞','Telefone', f.telefone || null)}
       ${row('📞','Telefone 2', f.telefone2 || null)}
-      ${row('✉️','E-mail', f.email ? `<a href="mailto:${escHtml(f.email)}" style="color:var(--brand)">${escHtml(f.email)}</a>` : null)}
-      ${row('🌐','Website', f.website ? `<a href="${escHtml(f.website)}" target="_blank" rel="noopener" style="color:var(--brand)">${escHtml(f.website)}</a>` : null)}
+      ${row('✉️','E-mail', f.email ? `<a href="mailto:${escHtml(f.email)}" style="color: var(--brand-text)">${escHtml(f.email)}</a>` : null)}
+      ${row('🌐','Website', f.website ? `<a href="${escHtml(f.website)}" target="_blank" rel="noopener" style="color: var(--brand-text)">${escHtml(f.website)}</a>` : null)}
     </div>` : ''}
 
     <!-- QSA -->
@@ -5676,7 +5685,7 @@ async function _renderFornCardHistorico() {
     return `<div style="padding:7px 10px;border-bottom:1px solid var(--gray-100);display:flex;flex-direction:column;gap:2px">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
         <a href="#" onclick="event.preventDefault();_collapseFornCard('${f.id}');openProcess('${p.id}')"
-           style="font-size:.8rem;font-weight:600;color:var(--brand);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
+           style="font-size:.8rem;font-weight:600;color: var(--brand-text);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
            title="${escHtml(p.objeto)}">${escHtml(p.objeto)}</a>
         ${badge}
       </div>
@@ -6152,9 +6161,9 @@ function renderFracPanel() {
     const razaoTag = (!isAtual && q._razao)
       ? `<span style="font-size:.65rem;color:var(--gray-500);font-style:normal;text-transform:none;display:block;margin-top:1px">${escHtml(q._razao)}</span>`
       : '';
-    return `<div class="frac-group-item" onclick="${isAtual ? '' : `openProcess('${q.id}')`}" ${isAtual ? '' : 'role="button" tabindex="0"'} style="${isAtual ? 'cursor:default;background:color-mix(in srgb,var(--brand) 10%,transparent);border-color:var(--brand)' : ''}">
+    return `<div class="frac-group-item" onclick="${isAtual ? '' : `openProcess('${q.id}')`}" ${isAtual ? '' : 'role="button" tabindex="0"'} style="${isAtual ? 'cursor:default;background:color-mix(in srgb,var(--brand) 10%,transparent);border-color: var(--brand-text)' : ''}">
       <div>
-        <div class="fgi-num">${escHtml(q.num_dl ? `DL ${q.num_dl}` : q.num_proc ? `PA ${q.num_proc}` : q.num || '—')}${isAtual ? ' <em style="color:var(--brand);font-style:normal;text-transform:none">(este processo)</em>' : ''}</div>
+        <div class="fgi-num">${escHtml(q.num_dl ? `DL ${q.num_dl}` : q.num_proc ? `PA ${q.num_proc}` : q.num || '—')}${isAtual ? ' <em style="color: var(--brand-text);font-style:normal;text-transform:none">(este processo)</em>' : ''}</div>
         <div class="fgi-obj">${escHtml(q.objeto)}</div>
         ${razaoTag}
       </div>
@@ -6618,7 +6627,7 @@ function renderCertidoesSection(stepIdx, data, certFileMap = {}) {
       <button class="btn btn-outline btn-sm" onclick="gerarDespachoHabilitacao(${stepIdx})" style="margin-left:8px">✅ Despacho de Habilitação</button>
     </div>
     <label style="display:flex;align-items:center;gap:8px;font-size:.75rem;margin-bottom:10px;cursor:pointer;padding:6px 10px;background:var(--gray-100);border-radius:var(--radius);border:1px solid var(--gray-200)">
-      <input type="checkbox" ${engenharia ? 'checked' : ''} onchange="toggleEngenharia(${stepIdx},this.checked)" style="width:15px;height:15px;accent-color:var(--brand)">
+      <input type="checkbox" ${engenharia ? 'checked' : ''} onchange="toggleEngenharia(${stepIdx},this.checked)" style="width:15px;height:15px;accent-color: var(--brand-text)">
       <span>Contratação envolve obras de engenharia (habilita itens SUSEP)</span>
     </label>
     ${items}
@@ -8321,7 +8330,7 @@ function renderDashTable(lista) {
       : escHtml(p.num||'—');
     const prazoHtml = p.prazo ? `<span style="color:${new Date(p.prazo + 'T00:00:00')<new Date()?'var(--danger)':''}">${new Date(p.prazo + 'T00:00:00').toLocaleDateString('pt-BR')}</span>` : '—';
     return `<tr onclick="openProcess('${p.id}')" role="button" tabindex="0">
-      <td style="font-size:.72rem;font-weight:600;color:var(--brand);line-height:1.5">${numHtml}</td>
+      <td style="font-size:.72rem;font-weight:600;color: var(--brand-text);line-height:1.5">${numHtml}</td>
       <td style="word-break:break-word;white-space:normal;line-height:1.4">${escHtml(p.objeto)}</td>
       <td>${escHtml(p.unidade||'—')}</td>
       <td>${escHtml(fn||'—')}</td>
@@ -10434,14 +10443,14 @@ function _onLoginSuccess() {
 function _atualizarSidebarUsuario() {
   const u = getUser();
   const nome  = _apiUser?.nome  || u.nome  || '—';
-  const cargo = _apiUser?.cargo || u.cargo || 'Usuário';
-  const orgao = u.orgao || '—';
+  const cargo = _apiUser?.cargo || u.cargo || (_apiUser?.admin ? 'Administrador' : 'Usuário');
+  const orgao = u.orgao || '';
   const inicial = nome.trim().split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || '?';
   const el = id => document.getElementById(id);
   if (el('sidebar-nome'))   el('sidebar-nome').textContent   = nome;
   if (el('sidebar-cargo'))  el('sidebar-cargo').textContent  = cargo;
   if (el('sidebar-avatar')) el('sidebar-avatar').textContent = inicial;
-  if (el('sidebar-orgao'))  el('sidebar-orgao').textContent  = orgao;
+  if (el('sidebar-orgao')) { el('sidebar-orgao').textContent = orgao; el('sidebar-orgao').style.display = orgao ? '' : 'none'; }
   const brasaoUrl = localStorage.getItem('sgcd-brasao-dataurl');
   const sb = el('sidebar-brasao');
   if (sb) {
@@ -11112,7 +11121,7 @@ async function abrirEmailModal() {
       const socio = f.qsa?.[0]?.nome || '';
       return `<label style="display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:6px;cursor:pointer;border-bottom:1px solid var(--gray-100)">
         <input type="checkbox" data-email="${escHtml(f.email)}" data-nome="${escHtml(nome)}" data-socio="${escHtml(socio)}"
-          ${f.id === fornVinculadoId ? 'checked' : ''} style="flex-shrink:0;width:15px;height:15px;accent-color:var(--brand)">
+          ${f.id === fornVinculadoId ? 'checked' : ''} style="flex-shrink:0;width:15px;height:15px;accent-color: var(--brand-text)">
         <span style="flex:1;min-width:0;overflow:hidden">
           <div style="font-weight:600;font-size:.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(nome)}</div>
           <div style="font-size:.72rem;color:var(--gray-500);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(f.email)}</div>
