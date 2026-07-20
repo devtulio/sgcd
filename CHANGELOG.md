@@ -5,6 +5,17 @@
 
 ---
 
+## [2.35.0] — 2026-07-19
+
+### Adicionado
+- **Config de e-mail (SMTP) por usuário** — 8 colunas `smtp_*` em `usuarios` (migração aditiva) + seção **"Meu E-mail (SMTP)"** em Configurações, disponível a todos os usuários. As notificações enviadas **logado** saem pela conta do usuário (`get_user_smtp(user_id)` com **fallback** para a config do sistema). Botão "Copiar do sistema" (host/porta/segurança, sem a senha). Admin edita a config de qualquer usuário no modal de Usuários. Novo endpoint `GET /api/usuarios/{id}/smtp` (self ou admin); `PUT /api/usuarios/{id}` aceita os campos `smtp_*` (não-admin só no próprio registro). O **resumo diário automático** continua usando a config do sistema.
+
+### Alterado
+- **Config SMTP migrada do navegador para o servidor.** Fim da cópia por navegador em `localStorage` (com senha cifrada via WebCrypto) reenviada ao servidor a cada disparo: o `/send-email` agora resolve a config server-side e **a senha nunca passa pelo navegador** — o modo antigo (config explícita no corpo) ficou restrito ao "Testar conexão", que testa os valores digitados sem salvar. `GET /api/settings` deixou de retornar `smtp_pass` (expõe só `smtp_pass_set`). A seção SMTP de Configurações virou duas: "E-mail do sistema" (admin, `sys_settings`) e "Meu E-mail" (por usuário). Removida toda a cadeia de criptografia client-side (`getSmtp`/`saveSmtp`/`_getSmtpForSend`/`_syncSmtpFromServer` etc.); `backup.smtp` de backups antigos passa a ser ignorado na restauração.
+
+### Migração para quem já usa
+- A config do **admin** já estava no servidor (`sys_settings`) — nada a fazer. Configs que usuários não-admin tinham **por navegador** (localStorage) não migram: cada um reinforma a própria conta em "Meu E-mail (SMTP)".
+
 ## [2.34.1] — 2026-07-19
 
 ### Alterado

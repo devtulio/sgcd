@@ -1,4 +1,4 @@
-# SGCD v2.34.1 — Servidor local: SQLite, autenticação, REST API, proxy CNPJ, e-mail SMTP, backup automático
+# SGCD v2.35.0 — Servidor local: SQLite, autenticação, REST API, proxy CNPJ, e-mail SMTP, backup automático
 import http.server
 import socketserver
 import os
@@ -180,7 +180,9 @@ def init_db():
         conn.execute('CREATE INDEX IF NOT EXISTS idx_proc_deleted ON processes(deleted_at)')
         conn.execute('CREATE INDEX IF NOT EXISTS idx_forn_deleted ON fornecedores(deleted_at)')
         # Migração: colunas cpf/email em usuarios (cadastro de dados de contato)
-        for col in ('cpf', 'email'):
+        # + config SMTP por usuário (vazio = herda a config do sistema em sys_settings)
+        for col in ('cpf', 'email', 'smtp_host', 'smtp_port', 'smtp_secure', 'smtp_require_tls',
+                    'smtp_ignore_ssl', 'smtp_user', 'smtp_pass', 'smtp_from_name'):
             try:
                 conn.execute(f'ALTER TABLE usuarios ADD COLUMN {col} TEXT')
             except sqlite3.OperationalError:
@@ -232,6 +234,30 @@ def get_session(token):
             (token, time.time())
         ).fetchone()
     return dict(row) if row else None
+
+_USER_SMTP_COLS = ('smtp_host', 'smtp_port', 'smtp_secure', 'smtp_require_tls',
+                   'smtp_ignore_ssl', 'smtp_user', 'smtp_pass', 'smtp_from_name')
+
+def get_user_smtp(user_id):
+    """Config SMTP (chaves smtp_*) do usuário; se ele não tiver host próprio,
+    herda a config do sistema (sys_settings) — a mesma usada pelos alertas."""
+    with get_db() as conn:
+        row = conn.execute(f"SELECT {', '.join(_USER_SMTP_COLS)} FROM usuarios WHERE id=?", (user_id,)).fetchone()
+        if row and (row['smtp_host'] or '').strip():
+            return {c: (row[c] or '') for c in _USER_SMTP_COLS}
+        rows = conn.execute("SELECT key,value FROM sys_settings WHERE key LIKE 'smtp_%'").fetchall()
+    return {r['key']: r['value'] for r in rows}
+
+def _smtp_cfg_build(cfg, default_name='SGCD'):
+    """Converte chaves smtp_* no par (smtp_cfg, from) que _send_email_raw espera."""
+    smtp_cfg = {
+        'host': cfg.get('smtp_host', ''), 'port': int(cfg.get('smtp_port') or 587),
+        'secure': cfg.get('smtp_secure') == '1', 'requireTLS': cfg.get('smtp_require_tls') != '0',
+        'ignoreSSL': cfg.get('smtp_ignore_ssl') == '1',
+        'auth': {'user': cfg.get('smtp_user', ''), 'pass': cfg.get('smtp_pass', '')},
+    }
+    frm = {'name': cfg.get('smtp_from_name') or default_name, 'email': cfg.get('smtp_user', '')}
+    return smtp_cfg, frm
 
 def delete_session(token):
     sgx_base.delete_session(get_db, token)
@@ -352,10 +378,11 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
             return
 
         if p == '/send-email':
-            if not get_session(self._token()):
+            sess = get_session(self._token())
+            if not sess:
                 self._json(401, {'error': 'Não autenticado'}); return
             try:
-                self._send_email(json.loads(self._body()))
+                self._send_email(json.loads(self._body()), sess)
                 self._json(200, {'ok': True})
             except Exception as e:
                 self._json(500, {'ok': False, 'error': str(e)})
@@ -484,6 +511,8 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
             with get_db() as conn:
                 rows = conn.execute('SELECT key,value FROM sys_settings').fetchall()
             result = {r['key']: r['value'] for r in rows}
+            # A senha SMTP fica só no servidor (o envio resolve a config server-side).
+            result['smtp_pass_set'] = '1' if (result.pop('smtp_pass', '') or '').strip() else '0'
             print(f"  [SETTINGS] GET /api/settings de {s.get('nome') or s.get('user_id')} — chaves retornadas: {sorted(result.keys())}", flush=True)
             self._json(200, result)
 
@@ -500,6 +529,21 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
                     'SELECT id,username,nome,cpf,email,cargo,matricula,admin,ativo,criado_em FROM usuarios'
                 ).fetchall()
             self._json(200, [dict(r) for r in rows])
+
+        elif re.fullmatch(r'/api/usuarios/\d+/smtp', p):
+            # Config SMTP de um usuário (sem a senha): o próprio usuário ou admin
+            uid = int(p.split('/')[3])
+            if uid != s['user_id'] and not s['admin']:
+                self._json(403, {'error': 'Acesso restrito'}); return
+            with get_db() as conn:
+                row = conn.execute(f"SELECT {', '.join(_USER_SMTP_COLS)} FROM usuarios WHERE id=?", (uid,)).fetchone()
+                if not row: self._json(404, {'error': 'Usuário não encontrado'}); return
+                sysc = {r['key']: r['value'] for r in conn.execute("SELECT key,value FROM sys_settings WHERE key LIKE 'smtp_%'").fetchall()}
+            out = {c: (row[c] or '') for c in _USER_SMTP_COLS if c != 'smtp_pass'}
+            out['smtp_pass_set'] = bool((row['smtp_pass'] or '').strip())
+            # defaults do sistema para o "Copiar do sistema" (sem a senha)
+            out['system'] = {c: sysc.get(c, '') for c in ('smtp_host', 'smtp_port', 'smtp_secure', 'smtp_require_tls', 'smtp_ignore_ssl', 'smtp_from_name')}
+            self._json(200, out)
 
         elif p == '/api/relatorio/integridade':
             if not s['admin']: self._json(403, {'error': 'Acesso restrito'}); return
@@ -693,8 +737,8 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
             if not s['admin']:
                 if uid != s['user_id']:
                     self._json(403, {'error': 'Acesso restrito'}); return
-                # ponytail: não-admin só pode trocar a própria senha
-                data = {k: data[k] for k in ('password', 'old_password') if k in data}
+                # não-admin: só a própria senha e a própria config SMTP
+                data = {k: data[k] for k in ('password', 'old_password', *_USER_SMTP_COLS) if k in data}
             self._update_user(uid, data, s)
         else:
             self._json(404, {'error': 'Rota não encontrada'})
@@ -1281,6 +1325,12 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
             fields, params = [], []
             for col in ('nome', 'cpf', 'email', 'cargo', 'matricula'):
                 if col in data: fields.append(f'{col}=?'); params.append(data[col])
+            # Config SMTP do usuário — smtp_pass em branco preserva a senha salva
+            for col in _USER_SMTP_COLS:
+                if col == 'smtp_pass':
+                    if data.get('smtp_pass'): fields.append('smtp_pass=?'); params.append(data['smtp_pass'])
+                elif col in data:
+                    fields.append(f'{col}=?'); params.append(str(data[col] or '').strip())
             if 'admin' in data: fields.append('admin=?'); params.append(int(bool(data['admin'])))
             if 'ativo' in data: fields.append('ativo=?'); params.append(int(bool(data['ativo'])))
             if data.get('password'):
@@ -1526,8 +1576,19 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
 
     # ── E-mail ────────────────────────────────────────────────────────────────
 
-    def _send_email(self, data):
-        _send_email_raw(data['smtp'], data['from'], data['to'], data['subject'], data['html'], data.get('text', ''))
+    def _send_email(self, data, sess):
+        if 'smtp' in data:
+            # Modo teste ("Testar conexão"): usa a config explícita digitada na tela,
+            # sem salvar — único caminho em que o cliente ainda manda config.
+            _send_email_raw(data['smtp'], data['from'], data['to'], data['subject'], data['html'], data.get('text', ''))
+            return
+        # Envio normal: config resolvida no servidor — a do usuário logado,
+        # com fallback para a do sistema. A senha nunca passa pelo navegador.
+        cfg = get_user_smtp(sess['user_id'])
+        if not (cfg.get('smtp_host') and cfg.get('smtp_user')):
+            raise ValueError('SMTP não configurado. Configure em Configurações → E-mail (ou no seu perfil).')
+        smtp_cfg, frm = _smtp_cfg_build(cfg)
+        _send_email_raw(smtp_cfg, frm, data['to'], data['subject'], data['html'], data.get('text', ''))
 
     # ── Helpers HTTP ──────────────────────────────────────────────────────────
 
@@ -1756,13 +1817,7 @@ def _send_daily_alerts():
         linhas.append('</ul>')
 
     corpo = f"<p>Resumo automático do SGCD — {hoje}</p>" + ''.join(linhas)
-    smtp_cfg = {
-        'host': cfg['smtp_host'], 'port': cfg.get('smtp_port', 587),
-        'secure': cfg.get('smtp_secure') == '1', 'requireTLS': cfg.get('smtp_require_tls') != '0',
-        'ignoreSSL': cfg.get('smtp_ignore_ssl') == '1',
-        'auth': {'user': cfg['smtp_user'], 'pass': cfg['smtp_pass']},
-    }
-    frm = {'name': cfg.get('smtp_from_name') or 'SGCD', 'email': cfg['smtp_user']}
+    smtp_cfg, frm = _smtp_cfg_build(cfg)
     try:
         _send_email_raw(smtp_cfg, frm, cfg['smtp_to'], f'SGCD — Resumo de pendências ({hoje})', corpo)
         print(f'  [ALERTAS] E-mail de resumo enviado ({len(prazos)} prazo(s), {len(parados)} parado(s))', flush=True)

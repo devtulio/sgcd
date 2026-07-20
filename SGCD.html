@@ -1011,6 +1011,21 @@
             <input type="checkbox" id="_u-admin"> Administrador
           </label>
         </div>
+        <div id="_u-smtp-section" style="display:none;border-top:1px solid var(--gray-200);margin-top:12px;padding-top:12px">
+          <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-500);margin-bottom:4px">E-mail (SMTP) deste usuário</div>
+          <p style="font-size:.72rem;color:var(--gray-500);margin-bottom:10px;line-height:1.5">Em branco = herda a config do sistema. Os e-mails que este usuário enviar logado saem por esta conta.</p>
+          <div class="info-field"><label for="_u-smtp-host">Host</label><input id="_u-smtp-host" type="text" placeholder="ex: smtp.gmail.com"></div>
+          <div class="info-field"><label for="_u-smtp-port">Porta</label><input id="_u-smtp-port" type="number" placeholder="587" style="max-width:120px"></div>
+          <div style="display:flex;gap:14px;margin:8px 0;flex-wrap:wrap">
+            <label style="display:flex;align-items:center;gap:6px;font-size:.8rem;cursor:pointer"><input type="checkbox" id="_u-smtp-tls" style="width:15px;height:15px"> STARTTLS (587)</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:.8rem;cursor:pointer"><input type="checkbox" id="_u-smtp-ssl" style="width:15px;height:15px"> SSL direto (465)</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:.8rem;cursor:pointer"><input type="checkbox" id="_u-smtp-ignore-ssl" style="width:15px;height:15px"> Ignorar SSL</label>
+          </div>
+          <div class="info-field"><label for="_u-smtp-user">Usuário (e-mail de envio)</label><input id="_u-smtp-user" type="email" placeholder="ex: fulano@municipio.sp.gov.br"></div>
+          <div class="info-field"><label for="_u-smtp-pass">Senha</label><input id="_u-smtp-pass" type="password" autocomplete="new-password" placeholder="(em branco preserva a atual)"></div>
+          <div class="info-field"><label for="_u-smtp-from-name">Nome do remetente</label><input id="_u-smtp-from-name" type="text" placeholder="ex: Fulano — Setor de Licitações"></div>
+          <button type="button" class="btn btn-outline btn-sm" onclick="copiarSmtpDoSistemaUser()" title="Copia host/porta/segurança do sistema; informe usuário e senha do usuário">Copiar do sistema</button>
+        </div>
         <div id="_u-ativo-row" style="display:none;margin-top:6px">
           <label style="display:flex;align-items:center;gap:6px;font-size:.85rem;cursor:pointer">
             <input type="checkbox" id="_u-ativo"> Ativo
@@ -1401,9 +1416,9 @@
 
       <!-- ── Aba: Comunicação ── -->
       <div class="cfg-panel" id="cfg-comunicacao">
-        <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
-          <legend style="font-size:.72rem;font-weight:700;color:var(--accent-light);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">E-mail (SMTP)</legend>
-          <p style="font-size:.75rem;color:var(--gray-500);margin-bottom:12px;line-height:1.5">Configure o servidor SMTP para envio de notificações. O servidor local (<strong>server.py</strong>) deve estar em execução. As credenciais sincronizam com o servidor (admin) e ficam disponíveis em qualquer navegador da rede.<br><br>
+        <fieldset id="smtp-sys-fieldset" style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
+          <legend style="font-size:.72rem;font-weight:700;color:var(--accent-light);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">E-mail do sistema (SMTP)</legend>
+          <p style="font-size:.75rem;color:var(--gray-500);margin-bottom:12px;line-height:1.5">Config de e-mail <strong>do sistema</strong> (só administradores): usada nos alertas automáticos e como padrão para quem não tiver config própria. A senha fica <strong>apenas no servidor</strong>.<br><br>
           Assim que configurado, o sistema passa a enviar automaticamente um <strong>resumo diário por e-mail</strong> (prazos vencendo e processos parados há 15+ dias) para o e-mail interno abaixo — mesmo sem ninguém logado.</p>
           <div class="info-field"><label for="s-smtp-host">Servidor SMTP (host)</label><input type="text" id="s-smtp-host" placeholder="ex: smtp.gmail.com"></div>
           <div class="info-field"><label for="s-smtp-port">Porta</label><input type="number" id="s-smtp-port" placeholder="587" style="max-width:120px"></div>
@@ -1422,8 +1437,34 @@
           <div class="info-field"><label for="s-smtp-from-name">Nome do remetente</label><input type="text" id="s-smtp-from-name" placeholder="SGCD — Contratações Diretas"></div>
           <div class="info-field"><label for="s-smtp-to">E-mail interno (destinatário padrão)</label><input type="email" id="s-smtp-to" placeholder="ex: chefia@municipio.sp.gov.br"></div>
           <div style="margin-top:8px;display:flex;align-items:center;gap:10px">
-            <button class="btn btn-outline btn-sm" onclick="testSmtp()">🔌 Testar conexão com servidor</button>
+            <button class="btn btn-outline btn-sm" onclick="testSmtp('s')">🔌 Testar conexão com servidor</button>
             <span id="smtp-test-result" style="font-size:.8rem"></span>
+          </div>
+        </fieldset>
+
+        <fieldset style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:14px;margin-bottom:16px">
+          <legend style="font-size:.72rem;font-weight:700;color:var(--accent-light);padding:0 6px;text-transform:uppercase;letter-spacing:.4px">Meu E-mail (SMTP)</legend>
+          <p style="font-size:.75rem;color:var(--gray-500);margin-bottom:12px;line-height:1.5">Quando <strong>você</strong> envia notificações estando logado, o e-mail sai por esta conta. <strong>Deixe em branco para usar a config do sistema.</strong></p>
+          <div class="info-field"><label for="me-smtp-host">Servidor SMTP (host)</label><input type="text" id="me-smtp-host" placeholder="ex: smtp.gmail.com"></div>
+          <div class="info-field"><label for="me-smtp-port">Porta</label><input type="number" id="me-smtp-port" placeholder="587" style="max-width:120px"></div>
+          <div style="display:flex;gap:20px;margin:8px 0">
+            <label style="display:flex;align-items:center;gap:6px;font-size:.82rem;cursor:pointer"><input type="checkbox" id="me-smtp-tls" style="width:15px;height:15px"> Usar STARTTLS (porta 587)</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:.82rem;cursor:pointer"><input type="checkbox" id="me-smtp-ssl" style="width:15px;height:15px"> Usar SSL direto (porta 465)</label>
+          </div>
+          <div style="margin-top:6px">
+            <label style="display:flex;align-items:center;gap:6px;font-size:.82rem;cursor:pointer;color:var(--gray-500)">
+              <input type="checkbox" id="me-smtp-ignore-ssl" style="width:15px;height:15px">
+              Ignorar verificação de certificado SSL <span style="font-size:.75rem;color:var(--warning,#b45309)">(apenas para servidores internos / autoassinados)</span>
+            </label>
+          </div>
+          <div class="info-field"><label for="me-smtp-user">Usuário (seu e-mail de envio)</label><input type="email" id="me-smtp-user" placeholder="ex: fulano@municipio.sp.gov.br"></div>
+          <div class="info-field"><label for="me-smtp-pass">Senha</label><input type="password" id="me-smtp-pass" autocomplete="new-password" placeholder="(em branco preserva a atual)"></div>
+          <div class="info-field"><label for="me-smtp-from-name">Nome do remetente</label><input type="text" id="me-smtp-from-name" placeholder="ex: Fulano — Setor de Licitações"></div>
+          <div style="margin-top:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <button class="btn btn-primary btn-sm" onclick="salvarMeuSmtp()">Salvar minha config</button>
+            <button class="btn btn-outline btn-sm" onclick="copiarSmtpDoSistema()" title="Copia host/porta/segurança do sistema; você informa seu usuário e senha">Copiar do sistema</button>
+            <button class="btn btn-outline btn-sm" onclick="testSmtp('me')">🔌 Testar</button>
+            <span id="me-smtp-status" style="font-size:.8rem"></span>
           </div>
         </fieldset>
       </div>
@@ -2056,7 +2097,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.34.1';
+const SGCD_VERSION = '2.35.0';
 // URL absoluta (não relativa): o API_BASE monta as URLs da REST API a partir da
 // origem real, nunca uma porta fixa (era 'http://localhost:3000' hardcoded).
 const API_BASE = window.location.origin;
@@ -2410,7 +2451,7 @@ async function importBackup(file) {
     // Restaura configurações e brasão locais
     if (backup.settings) localStorage.setItem('sgcd-user', backup.settings);
     if (backup.brasao)   localStorage.setItem('sgcd-brasao-dataurl', backup.brasao);
-    if (backup.smtp)     localStorage.setItem('sgcd-smtp', backup.smtp);
+    // backup.smtp de versões antigas é ignorado: a config SMTP agora vive no servidor
     window._BRASAO_CACHE = null;
     _atualizarSidebarUsuario();
     const auditMsg = hasAudit ? ` e ${backup.auditGlobal.length} registros de auditoria` : '';
@@ -10185,92 +10226,14 @@ function getUser() {
     return settings;
   } catch { return {}; }
 }
-function getSmtp() {
-  try { return JSON.parse(localStorage.getItem('sgcd-smtp') || '{}'); } catch { return {}; }
-}
-
-// ── Criptografia AES-GCM para credenciais SMTP ───────────────
-// crypto.subtle só existe em contexto seguro (HTTPS ou localhost). Acesso via IP puro
-// (modo servidor em rede local) é contexto inseguro — sem isso, salvar/ler a senha
-// SMTP quebrava silenciosamente sempre que acessado pelo IP. Fallback: base64 simples
-// (mesma proteção prática de antes, já que a "chave" também ficava no localStorage).
-function _smtpCryptoAvailable() {
-  return typeof crypto !== 'undefined' && !!crypto.subtle;
-}
-let _smtpKey = null;
-async function _getSmtpCryptoKey() {
-  if (_smtpKey) return _smtpKey;
-  let raw = localStorage.getItem('sgcd-enc-key');
-  if (!raw) {
-    const bytes = crypto.getRandomValues(new Uint8Array(32));
-    raw = btoa(String.fromCharCode(...bytes));
-    localStorage.setItem('sgcd-enc-key', raw);
-  }
-  const keyBytes = Uint8Array.from(atob(raw), c => c.charCodeAt(0));
-  _smtpKey = await crypto.subtle.importKey('raw', keyBytes, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']);
-  return _smtpKey;
-}
-async function _encryptText(text) {
-  if (!_smtpCryptoAvailable()) return 'b64:' + btoa(unescape(encodeURIComponent(text)));
-  const key = await _getSmtpCryptoKey();
-  const iv  = crypto.getRandomValues(new Uint8Array(12));
-  const enc = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, new TextEncoder().encode(text));
-  const out = new Uint8Array(12 + enc.byteLength);
-  out.set(iv); out.set(new Uint8Array(enc), 12);
-  return btoa(String.fromCharCode(...out));
-}
-async function _decryptText(b64) {
+// Config SMTP agora vive só no servidor (sistema em sys_settings; por usuário em
+// usuarios.smtp_*). O envio resolve a config server-side — a senha nunca chega ao
+// navegador. Este helper busca as settings do sistema (sem smtp_pass) p/ prefills.
+async function _getSysSettings() {
   try {
-    if (b64.startsWith('b64:')) return decodeURIComponent(escape(atob(b64.slice(4))));
-    if (!_smtpCryptoAvailable()) return '';
-    const key = await _getSmtpCryptoKey();
-    const buf = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
-    const dec = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: buf.slice(0, 12) }, key, buf.slice(12));
-    return new TextDecoder().decode(dec);
-  } catch { return ''; }
-}
-async function saveSmtp(cfg) {
-  const stored = { ...cfg, auth: { ...cfg.auth } };
-  if (stored.auth.pass) {
-    stored.auth.pass_enc = await _encryptText(stored.auth.pass);
-    delete stored.auth.pass;
-  } else {
-    // Campo vazio → mantém a senha já criptografada, se houver
-    const existing = getSmtp();
-    if (existing.auth?.pass_enc) stored.auth.pass_enc = existing.auth.pass_enc;
-    delete stored.auth.pass;
-  }
-  localStorage.setItem('sgcd-smtp', JSON.stringify(stored));
-}
-async function _getSmtpForSend() {
-  const cfg = { ...getSmtp(), auth: { ...getSmtp().auth } };
-  if (cfg.auth?.pass_enc) {
-    cfg.auth.pass = await _decryptText(cfg.auth.pass_enc);
-    delete cfg.auth.pass_enc;
-  }
-  return cfg;
-}
-// Traz a config SMTP salva no servidor (admin) para este navegador, reencriptando
-// a senha com a chave local. Servidor só vence se tiver host configurado (não vazio).
-async function _syncSmtpFromServer(remote) {
-  if (!remote.smtp_host) return;
-  const local = getSmtp();
-  const stored = {
-    host: remote.smtp_host,
-    port: parseInt(remote.smtp_port) || 587,
-    secure: remote.smtp_secure === '1',
-    requireTLS: remote.smtp_require_tls !== '0',
-    ignoreSSL: remote.smtp_ignore_ssl === '1',
-    auth: { user: remote.smtp_user || '' },
-    from: { name: remote.smtp_from_name || 'SGCD', email: remote.smtp_user || '' },
-    to:   { email: remote.smtp_to || '' },
-  };
-  if (remote.smtp_pass) {
-    stored.auth.pass_enc = await _encryptText(remote.smtp_pass);
-  } else if (local.auth?.pass_enc) {
-    stored.auth.pass_enc = local.auth.pass_enc;
-  }
-  localStorage.setItem('sgcd-smtp', JSON.stringify(stored));
+    const r = await fetch(`${API_BASE}/api/settings`, { headers: { 'Authorization': `Bearer ${_apiToken}` }, signal: AbortSignal.timeout(5000) });
+    return r.ok ? await r.json() : {};
+  } catch { return {}; }
 }
 
 function _getAuditor() {
@@ -10466,8 +10429,7 @@ function _onLoginSuccess() {
           if (v !== '' && v !== null && v !== undefined) merged[k] = v;
         }
         localStorage.setItem('sgcd-user', JSON.stringify(merged));
-        await _syncSmtpFromServer(remote);
-        console.log('[SGCD] sgcd-smtp após sync:', localStorage.getItem('sgcd-smtp'));
+        // SMTP não sincroniza mais para o navegador: config vive só no servidor
         // Brasão: servidor é sempre a fonte de verdade (endpoint dedicado trata remoção explícita)
         if (remote.brasao_dataurl) localStorage.setItem('sgcd-brasao-dataurl', remote.brasao_dataurl);
         else localStorage.removeItem('sgcd-brasao-dataurl');
@@ -10657,19 +10619,9 @@ function showSettings() {
   document.getElementById('s-detail-sidebar').value = u.detail_sidebar_hidden ? 'oculto' : 'visivel';
   _applyDetailSidebar(u.detail_sidebar_hidden);
 
-  // SMTP
-  const smtp = getSmtp();
-  document.getElementById('s-smtp-host').value      = smtp.host        || '';
-  document.getElementById('s-smtp-port').value      = smtp.port        || '587';
-  document.getElementById('s-smtp-tls').checked          = smtp.requireTLS !== false;
-  document.getElementById('s-smtp-ssl').checked          = !!smtp.secure;
-  document.getElementById('s-smtp-ignore-ssl').checked  = !!smtp.ignoreSSL;
-  document.getElementById('s-smtp-user').value      = smtp.auth?.user  || '';
-  const passEl = document.getElementById('s-smtp-pass');
-  passEl.value       = '';
-  passEl.placeholder = smtp.auth?.pass_enc ? '••••••••  (senha salva — deixe em branco para manter)' : 'Senha';
-  document.getElementById('s-smtp-from-name').value = smtp.from?.name  || '';
-  document.getElementById('s-smtp-to').value        = smtp.to?.email   || '';
+  // SMTP — sistema (admin) e "Meu E-mail", ambos do servidor
+  document.getElementById('smtp-sys-fieldset').style.display = _apiUser?.admin ? '' : 'none';
+  _carregarSmtpSettings();
 
   // Brasão
   const custom = localStorage.getItem('sgcd-brasao-dataurl');
@@ -10760,40 +10712,95 @@ async function saveSettings() {
     });
   }
 
-  // Save SMTP config (local, para uso imediato neste navegador)
-  const smtpUser = document.getElementById('s-smtp-user').value.trim();
-  const smtpPassTyped = document.getElementById('s-smtp-pass').value;
-  await saveSmtp({
-    host:       document.getElementById('s-smtp-host').value.trim(),
-    port:       parseInt(document.getElementById('s-smtp-port').value) || 587,
-    secure:     document.getElementById('s-smtp-ssl').checked,
-    requireTLS: document.getElementById('s-smtp-tls').checked,
-    ignoreSSL:  document.getElementById('s-smtp-ignore-ssl').checked,
-    auth: { user: smtpUser, pass: smtpPassTyped },
-    from: { name: document.getElementById('s-smtp-from-name').value.trim() || 'SGCD', email: smtpUser },
-    to:   { email: document.getElementById('s-smtp-to').value.trim() },
-  });
-
-  // Sincroniza SMTP com o servidor (admin), para outras máquinas puxarem no login
+  // SMTP do sistema (admin): salvo direto no servidor — senha nunca fica no navegador
   if (_apiUser?.admin) {
-    const rSmtp = await API.put('/api/settings/smtp', {
+    const smtpUser = document.getElementById('s-smtp-user').value.trim();
+    const smtpPassTyped = document.getElementById('s-smtp-pass').value;
+    const payload = {
       smtp_host: document.getElementById('s-smtp-host').value.trim(),
       smtp_port: String(parseInt(document.getElementById('s-smtp-port').value) || 587),
       smtp_secure: document.getElementById('s-smtp-ssl').checked ? '1' : '0',
       smtp_require_tls: document.getElementById('s-smtp-tls').checked ? '1' : '0',
       smtp_ignore_ssl: document.getElementById('s-smtp-ignore-ssl').checked ? '1' : '0',
       smtp_user: smtpUser,
-      smtp_pass: smtpPassTyped,
       smtp_from_name: document.getElementById('s-smtp-from-name').value.trim() || 'SGCD',
       smtp_to: document.getElementById('s-smtp-to').value.trim(),
-    });
-    if (!rSmtp || !rSmtp.ok) {
-      toast('⚠ SMTP salvo apenas neste navegador — falha ao sincronizar com o servidor', 'error');
-    }
+    };
+    if (smtpPassTyped) payload.smtp_pass = smtpPassTyped;  // em branco preserva a salva
+    const rSmtp = await API.put('/api/settings/smtp', payload);
+    if (!rSmtp || !rSmtp.ok) toast('⚠ Falha ao salvar o SMTP do sistema no servidor', 'error');
+    else document.getElementById('s-smtp-pass').value = '';
   }
 
   updateHeaderUser();
   document.getElementById('btn-save-settings')?.classList.remove('has-changes');
+}
+
+// ── SMTP: carregar/salvar (sistema + "Meu E-mail") ────────────
+async function _carregarSmtpSettings() {
+  // Sistema (admin) — sem a senha; smtp_pass_set indica se há senha salva
+  if (_apiUser?.admin) {
+    const d = await _getSysSettings();
+    document.getElementById('s-smtp-host').value      = d.smtp_host || '';
+    document.getElementById('s-smtp-port').value      = d.smtp_port || '587';
+    document.getElementById('s-smtp-tls').checked         = d.smtp_require_tls !== '0';
+    document.getElementById('s-smtp-ssl').checked         = d.smtp_secure === '1';
+    document.getElementById('s-smtp-ignore-ssl').checked  = d.smtp_ignore_ssl === '1';
+    document.getElementById('s-smtp-user').value      = d.smtp_user || '';
+    const passEl = document.getElementById('s-smtp-pass');
+    passEl.value = '';
+    passEl.placeholder = d.smtp_pass_set === '1' ? '••••••••  (senha salva — deixe em branco para manter)' : 'Senha';
+    document.getElementById('s-smtp-from-name').value = d.smtp_from_name || '';
+    document.getElementById('s-smtp-to').value        = d.smtp_to || '';
+  }
+  // Meu E-mail (todos)
+  const me = await API.json(await API.get(`/api/usuarios/${_apiUser?.id}/smtp`));
+  if (!me) return;
+  window._meSmtpSystem = me.system || {};
+  document.getElementById('me-smtp-host').value = me.smtp_host || '';
+  document.getElementById('me-smtp-port').value = me.smtp_port || '';
+  document.getElementById('me-smtp-tls').checked        = me.smtp_require_tls !== '0';
+  document.getElementById('me-smtp-ssl').checked        = me.smtp_secure === '1';
+  document.getElementById('me-smtp-ignore-ssl').checked = me.smtp_ignore_ssl === '1';
+  document.getElementById('me-smtp-user').value = me.smtp_user || '';
+  document.getElementById('me-smtp-from-name').value = me.smtp_from_name || '';
+  const mp = document.getElementById('me-smtp-pass');
+  mp.value = '';
+  mp.placeholder = me.smtp_pass_set ? '(senha salva — em branco preserva)' : '(em branco preserva a atual)';
+}
+
+async function salvarMeuSmtp() {
+  const st = document.getElementById('me-smtp-status');
+  const payload = {
+    smtp_host: document.getElementById('me-smtp-host').value.trim(),
+    smtp_port: document.getElementById('me-smtp-port').value.trim(),
+    smtp_require_tls: document.getElementById('me-smtp-tls').checked ? '1' : '0',
+    smtp_secure: document.getElementById('me-smtp-ssl').checked ? '1' : '0',
+    smtp_ignore_ssl: document.getElementById('me-smtp-ignore-ssl').checked ? '1' : '0',
+    smtp_user: document.getElementById('me-smtp-user').value.trim(),
+    smtp_from_name: document.getElementById('me-smtp-from-name').value.trim(),
+  };
+  const pass = document.getElementById('me-smtp-pass').value;
+  if (pass) payload.smtp_pass = pass;
+  const r = await API.put(`/api/usuarios/${_apiUser?.id}`, payload);
+  if (!r || !r.ok) { st.textContent = '❌ Erro ao salvar.'; st.style.color = 'var(--danger)'; return; }
+  document.getElementById('me-smtp-pass').value = '';
+  st.textContent = '✅ Config salva.'; st.style.color = 'var(--success)';
+  toast('Sua config de e-mail foi salva.', 'success');
+}
+
+function copiarSmtpDoSistema() {
+  const sys = window._meSmtpSystem || {};
+  document.getElementById('me-smtp-host').value = sys.smtp_host || '';
+  document.getElementById('me-smtp-port').value = sys.smtp_port || '';
+  document.getElementById('me-smtp-tls').checked        = sys.smtp_require_tls !== '0';
+  document.getElementById('me-smtp-ssl').checked        = sys.smtp_secure === '1';
+  document.getElementById('me-smtp-ignore-ssl').checked = sys.smtp_ignore_ssl === '1';
+  document.getElementById('me-smtp-from-name').value = sys.smtp_from_name || '';
+  // Usuário e senha ficam em branco de propósito: a conta de envio é a sua
+  const st = document.getElementById('me-smtp-status');
+  st.textContent = 'Copiado do sistema — informe seu usuário/senha e salve.'; st.style.color = 'var(--gray-500)';
+  document.getElementById('me-smtp-user').focus();
 }
 
 function switchCfgTab(id, btn) {
@@ -10862,6 +10869,7 @@ function abrirModalNovoUsuario() {
   document.getElementById('_u-admin').checked = false;
   document.getElementById('_u-ativo').checked = true;
   document.getElementById('_u-ativo-row').style.display = 'none';
+  document.getElementById('_u-smtp-section').style.display = 'none';  // SMTP só na edição (novo herda o sistema)
   document.getElementById('usuario-modal-overlay').classList.remove('hidden');
 }
 
@@ -10886,7 +10894,37 @@ async function abrirModalEditarUsuario(id) {
   document.getElementById('_u-admin').checked = !!u.admin;
   document.getElementById('_u-ativo').checked = !!u.ativo;
   document.getElementById('_u-ativo-row').style.display = '';
+  document.getElementById('_u-smtp-section').style.display = '';
+  _carregarUserSmtp(u.id);
   document.getElementById('usuario-modal-overlay').classList.remove('hidden');
+}
+
+let _userSmtpSystem = {};
+async function _carregarUserSmtp(uid) {
+  const d = await API.json(await API.get(`/api/usuarios/${uid}/smtp`));
+  if (!d) return;
+  _userSmtpSystem = d.system || {};
+  document.getElementById('_u-smtp-host').value = d.smtp_host || '';
+  document.getElementById('_u-smtp-port').value = d.smtp_port || '';
+  document.getElementById('_u-smtp-tls').checked        = d.smtp_require_tls !== '0';
+  document.getElementById('_u-smtp-ssl').checked        = d.smtp_secure === '1';
+  document.getElementById('_u-smtp-ignore-ssl').checked = d.smtp_ignore_ssl === '1';
+  document.getElementById('_u-smtp-user').value = d.smtp_user || '';
+  document.getElementById('_u-smtp-from-name').value = d.smtp_from_name || '';
+  const pe = document.getElementById('_u-smtp-pass');
+  pe.value = '';
+  pe.placeholder = d.smtp_pass_set ? '(senha salva — em branco preserva)' : '(em branco preserva a atual)';
+}
+
+function copiarSmtpDoSistemaUser() {
+  const sys = _userSmtpSystem || {};
+  document.getElementById('_u-smtp-host').value = sys.smtp_host || '';
+  document.getElementById('_u-smtp-port').value = sys.smtp_port || '';
+  document.getElementById('_u-smtp-tls').checked        = sys.smtp_require_tls !== '0';
+  document.getElementById('_u-smtp-ssl').checked        = sys.smtp_secure === '1';
+  document.getElementById('_u-smtp-ignore-ssl').checked = sys.smtp_ignore_ssl === '1';
+  document.getElementById('_u-smtp-from-name').value = sys.smtp_from_name || '';
+  document.getElementById('_u-smtp-user').focus();  // usuário/senha em branco: a conta é do usuário
 }
 
 function fecharModalUsuario() {
@@ -10907,6 +10945,19 @@ async function salvarModalUsuario() {
   };
   const senha = document.getElementById('_u-senha').value;
   if (senha) payload.password = senha;
+  if (!isNew) {
+    Object.assign(payload, {
+      smtp_host: document.getElementById('_u-smtp-host').value.trim(),
+      smtp_port: document.getElementById('_u-smtp-port').value.trim(),
+      smtp_require_tls: document.getElementById('_u-smtp-tls').checked ? '1' : '0',
+      smtp_secure: document.getElementById('_u-smtp-ssl').checked ? '1' : '0',
+      smtp_ignore_ssl: document.getElementById('_u-smtp-ignore-ssl').checked ? '1' : '0',
+      smtp_user: document.getElementById('_u-smtp-user').value.trim(),
+      smtp_from_name: document.getElementById('_u-smtp-from-name').value.trim(),
+    });
+    const uPass = document.getElementById('_u-smtp-pass').value;
+    if (uPass) payload.smtp_pass = uPass;
+  }
   if (!payload.username) { toast('Informe o username.', 'error'); return; }
   if (isNew && !senha)   { toast('Informe a senha inicial.', 'error'); return; }
   const r = isNew
@@ -10986,12 +11037,13 @@ function toggleTheme() {
 // ══════════════════════════════════════════════════════════════
 // E-MAIL VIA SMTP (feature 9)
 // ══════════════════════════════════════════════════════════════
-async function testSmtp() {
-  const el = document.getElementById('smtp-test-result');
+// Testa com os valores DIGITADOS na tela (sem salvar). section: 's' = sistema, 'me' = Meu E-mail.
+// A senha digitada só é usada para o teste; se em branco no teste do "Meu E-mail",
+// o teste falha com orientação (a senha salva nunca volta do servidor).
+async function testSmtp(section) {
+  const el = document.getElementById(section === 'me' ? 'me-smtp-status' : 'smtp-test-result');
   el.style.color = '';
   el.textContent = '⏳ Verificando servidor...';
-
-  // 1. Verifica se o servidor local está ativo
   try {
     const r = await fetch(`${API_BASE}/health`, { signal: AbortSignal.timeout(3000) });
     const j = await r.json();
@@ -11002,34 +11054,37 @@ async function testSmtp() {
     return;
   }
 
-  // 2. Lê configuração da tela (pode estar editada mas não salva ainda)
-  const smtpUser = document.getElementById('s-smtp-user').value.trim();
-  const to = document.getElementById('s-smtp-to').value.trim();
+  const p = section === 'me' ? 'me-smtp' : 's-smtp';
+  const smtpUser = document.getElementById(`${p}-user`).value.trim();
+  const pass = document.getElementById(`${p}-pass`).value;
+  const to = section === 'me' ? smtpUser : document.getElementById('s-smtp-to').value.trim();
   if (!smtpUser || !to) {
-    el.textContent = '⚠ Preencha usuário e destinatário antes de testar.';
+    el.textContent = '⚠ Preencha usuário' + (section === 'me' ? '' : ' e destinatário') + ' antes de testar.';
+    el.style.color = 'var(--warning, #b45309)';
+    return;
+  }
+  if (!pass) {
+    el.textContent = '⚠ Informe a senha para testar (a senha salva não é reaproveitada no teste).';
     el.style.color = 'var(--warning, #b45309)';
     return;
   }
 
   el.textContent = '⏳ Enviando e-mail de teste...';
   const smtp = {
-    host:       document.getElementById('s-smtp-host').value.trim(),
-    port:       parseInt(document.getElementById('s-smtp-port').value) || 587,
-    secure:     document.getElementById('s-smtp-ssl').checked,
-    requireTLS: document.getElementById('s-smtp-tls').checked,
-    ignoreSSL:  document.getElementById('s-smtp-ignore-ssl').checked,
-    auth: { user: smtpUser, pass: document.getElementById('s-smtp-pass').value || (await _getSmtpForSend()).auth?.pass || '' },
-    from: { name: document.getElementById('s-smtp-from-name').value.trim() || 'SGCD', email: smtpUser },
+    host:       document.getElementById(`${p}-host`).value.trim(),
+    port:       parseInt(document.getElementById(`${p}-port`).value) || 587,
+    secure:     document.getElementById(`${p}-ssl`).checked,
+    requireTLS: document.getElementById(`${p}-tls`).checked,
+    ignoreSSL:  document.getElementById(`${p}-ignore-ssl`).checked,
+    auth: { user: smtpUser, pass },
+    from: { name: document.getElementById(`${p}-from-name`).value.trim() || 'SGCD', email: smtpUser },
   };
-
   try {
     const res = await fetch(`${API_BASE}/send-email`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${_apiToken}` },
       body: JSON.stringify({
-        smtp,
-        from: smtp.from,
-        to,
+        smtp, from: smtp.from, to,
         subject: 'SGCD — Teste de configuração SMTP',
         html: '<p>Este é um e-mail de teste enviado pelo <strong>SGCD</strong>.<br>Se você recebeu esta mensagem, as configurações SMTP estão corretas.</p>',
         text: 'Este é um e-mail de teste enviado pelo SGCD. Se você recebeu esta mensagem, as configurações SMTP estão corretas.',
@@ -11046,13 +11101,13 @@ async function testSmtp() {
   }
 }
 
+// Envio normal: o servidor resolve a config (a do usuário logado, com fallback
+// para a do sistema) — o navegador só manda destinatário e conteúdo.
 async function smtpSend({ to, subject, html, text }) {
-  const smtp = await _getSmtpForSend();
-  if (!smtp.host || !smtp.auth?.user) throw new Error('SMTP não configurado em Configurações.');
   const res = await fetch(`${API_BASE}/send-email`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${_apiToken}` },
-    body: JSON.stringify({ smtp, from: smtp.from, to, subject, html, text }),
+    body: JSON.stringify({ to, subject, html, text }),
     signal: AbortSignal.timeout(15000),
   });
   const j = await res.json();
@@ -11062,7 +11117,7 @@ async function smtpSend({ to, subject, html, text }) {
 let _emailTab = 'forn';
 async function abrirEmailModal() {
   const p = currentProcess;
-  const smtp = getSmtp();
+  const sysCfg = await _getSysSettings();  // p/ prefill do destinatário interno (smtp_to)
   const modal = document.getElementById('email-modal');
   _rteMount(modal);  // gera as toolbars dos editores (base.js)
   modal.classList.remove('hidden');
@@ -11179,7 +11234,7 @@ ${u.orgao||''}`);
     ? `Etapas pendentes:\n${pendentes.join('\n')}`
     : 'Todas as etapas estão concluídas.';
 
-  document.getElementById('email-to-int').value = smtp.to?.email || '';
+  document.getElementById('email-to-int').value = sysCfg.smtp_to || '';
   document.getElementById('email-subj-int').value = `Pendência — ${nums}`;
   _rteSetContent('email-body-int',
 `Processo: ${nums}
