@@ -589,17 +589,7 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
             global _watchdog_paused
             _watchdog_paused = True
             try:
-                import subprocess as _sp
-                ps_cmd = (
-                    'Add-Type -AssemblyName System.Windows.Forms;'
-                    '$d=New-Object System.Windows.Forms.FolderBrowserDialog;'
-                    '$d.Description="Selecione a pasta de backup do SGCD";'
-                    '$d.ShowNewFolderButton=$true;'
-                    'if($d.ShowDialog()-eq"OK"){Write-Output $d.SelectedPath}'
-                )
-                r = _sp.run(['powershell', '-Sta', '-WindowStyle', 'Hidden', '-Command', ps_cmd],
-                            capture_output=True, text=True, timeout=120)
-                path = r.stdout.strip()
+                path = sgx_base.pick_folder_dialog("Selecione a pasta de backup do SGCD")
                 self._json(200, {'path': path or None})
             except Exception as e:
                 self._json(500, {'error': str(e)})
@@ -614,12 +604,8 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
                 (f for f in os.listdir(bdir) if f.startswith('DB_SGCD_BACKUP_') and f.endswith('.db')),
                 reverse=True
             ) if os.path.isdir(bdir) else []
-            def _parse_ts(f):
-                # DB_SGCD_BACKUP_2026-06-27_20-35-41.db → 2026-06-27T20:35:41
-                d = f[15:25]; t = f[26:34].replace('-', ':')
-                return f'{d}T{t}'
             items = [{'name': f, 'size': os.path.getsize(os.path.join(bdir, f)),
-                      'ts': _parse_ts(f)} for f in files]
+                      'ts': sgx_base.backup_ts(f)} for f in files]
             with get_db() as conn:
                 last_row = conn.execute("SELECT value FROM sys_settings WHERE key='auto_backup_last'").fetchone()
             last_backup = last_row['value'] if last_row else None

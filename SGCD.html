@@ -10379,29 +10379,6 @@ async function _checkSenhaAcesso() {
   _showLoginOverlay();
 }
 
-// Alerta quando o servidor Python em execução está mais antigo que este SGCD.html
-// (processo iniciado antes de uma atualização → rotas novas dão 404 até reiniciar).
-async function _checarVersaoServidor() {
-  let sv;
-  try {
-    const r = await fetch('/health', { cache: 'no-store' });
-    sv = (await r.json())?.version;
-  } catch { return; }  // servidor inacessível: o resto do app já sinaliza
-  if (sv === SGCD_VERSION) return;
-  const msg = sv
-    ? `Servidor em execução: v${sv} · esta página: v${SGCD_VERSION}. Reinicie o servidor (Iniciar SGCD.bat) para carregar a versão nova — funções novas podem falhar até lá.`
-    : `O servidor em execução é uma versão antiga (anterior à v2.36.2) e não informa a versão. Reinicie o servidor (Iniciar SGCD.bat) — funções novas podem falhar até lá.`;
-  let bar = document.getElementById('server-version-warn');
-  if (!bar) {
-    bar = document.createElement('div');
-    bar.id = 'server-version-warn';
-    bar.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#b45309;color:#fff;padding:8px 44px 8px 16px;font-size:.85rem;line-height:1.4;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.35)';
-    bar.innerHTML = '<span id="server-version-warn-msg"></span><button onclick="this.parentElement.remove()" title="Dispensar" style="position:absolute;right:10px;top:6px;background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:4px;padding:2px 9px;cursor:pointer">✕</button>';
-    document.body.appendChild(bar);
-  }
-  document.getElementById('server-version-warn-msg').textContent = '⚠ ' + msg;
-}
-
 function _onLoginSuccess() {
   const tabUsuarios = document.getElementById('cfg-tab-usuarios');
   if (tabUsuarios) tabUsuarios.style.display = _apiUser?.admin ? '' : 'none';
@@ -10413,7 +10390,7 @@ function _onLoginSuccess() {
   document.querySelectorAll('.admin-only').forEach(el => {
     el.classList.toggle('admin-only', !_apiUser?.admin);
   });
-  _checarVersaoServidor();
+  checarVersaoServidor(SGCD_VERSION, 'Iniciar SGCD.bat');
   (async () => {
     try {
       console.log('[SGCD] _onLoginSuccess: buscando GET /api/settings...');
