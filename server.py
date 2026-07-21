@@ -790,34 +790,6 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
                 conn.execute('DELETE FROM usuarios WHERE id=?', (uid,))
             self._json(200, {'ok': True})
 
-        elif p == '/api/processes/all':
-            if not s['admin']: self._json(403, {'error': 'Acesso restrito'}); return
-            with get_db() as conn:
-                conn.execute('DELETE FROM processes')
-            self._json(200, {'ok': True})
-
-        elif p == '/api/fornecedores/all':
-            if not s['admin']: self._json(403, {'error': 'Acesso restrito'}); return
-            with get_db() as conn:
-                conn.execute('DELETE FROM fornecedores')
-            self._json(200, {'ok': True})
-
-        elif p == '/api/files/all':
-            if not s['admin']: self._json(403, {'error': 'Acesso restrito'}); return
-            import shutil
-            with get_db() as conn:
-                conn.execute('DELETE FROM files')
-            if os.path.exists(UPLOADS_DIR):
-                shutil.rmtree(UPLOADS_DIR)
-            os.makedirs(UPLOADS_DIR, exist_ok=True)
-            self._json(200, {'ok': True})
-
-        elif p == '/api/audit/all':
-            if not s['admin']: self._json(403, {'error': 'Acesso restrito'}); return
-            with get_db() as conn:
-                conn.execute('DELETE FROM audit_global')
-            self._json(200, {'ok': True})
-
         elif p == '/api/wipe':
             if not s['admin']: self._json(403, {'error': 'Acesso restrito'}); return
             import shutil
