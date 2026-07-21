@@ -1,4 +1,4 @@
-# SGCD v2.36.1 — Servidor local: SQLite, autenticação, REST API, proxy CNPJ, e-mail SMTP, backup automático
+# SGCD v2.36.2 — Servidor local: SQLite, autenticação, REST API, proxy CNPJ, e-mail SMTP, backup automático
 import http.server
 import socketserver
 import os
@@ -33,6 +33,11 @@ from email.mime.multipart import MIMEMultipart
 from urllib.parse import urlparse, parse_qs
 
 import sgx_base   # esqueleto compartilhado da família — ver _esqueleto/README.md
+
+# Versão do servidor — DEVE acompanhar o SGCD_VERSION do SGCD.html a cada release.
+# Exposta em /health para o frontend detectar quando o processo em execução está
+# desatualizado (HTML novo servido, mas server.py antigo ainda rodando em memória).
+SERVER_VERSION = '2.36.2'
 
 PORT          = int(os.environ.get('SGCD_PORT', 3000))
 _BASE         = os.path.dirname(os.path.abspath(__file__))
@@ -326,7 +331,7 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         qs = parse_qs(parsed.query)
 
         if p == '/health':
-            self._json(200, {'ok': True})
+            self._json(200, {'ok': True, 'version': SERVER_VERSION})
         elif p == '/api/public/org-info':
             try:
                 with get_db() as conn:

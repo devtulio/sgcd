@@ -5,6 +5,11 @@
 
 ---
 
+## [2.36.2] — 2026-07-20
+
+### Adicionado
+- **Aviso de servidor desatualizado.** O `/health` do servidor passou a informar a versão em execução, e o app compara com a versão do `SGCD.html` carregado ao entrar. Se o servidor Python em execução for mais antigo que a página (processo iniciado antes de uma atualização, situação em que rotas novas dão "Rota não encontrada" até reiniciar), uma faixa de alerta no topo orienta a reiniciar pelo `Iniciar SGCD.bat`. `SERVER_VERSION` no `server.py` deve acompanhar o `SGCD_VERSION` a cada release.
+
 ## [2.36.1] — 2026-07-20
 
 ### Alterado
