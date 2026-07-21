@@ -4130,7 +4130,7 @@ ${_qrFooterReport('Relatório de Auditoria')}
 
 async function gerarRelatorioIntegridade() {
   const r = await API.get('/api/relatorio/integridade');
-  if (!r.ok) { toast('Erro ao gerar relatório (acesso restrito a administradores).', 'error'); return; }
+  if (!r.ok) { toast((await API.json(r))?.error || 'Erro ao gerar relatório.', 'error'); return; }
   const d = await API.json(r);
 
   const u = getUser();
