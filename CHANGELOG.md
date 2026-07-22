@@ -5,6 +5,13 @@
 
 ---
 
+## [2.36.6] — 2026-07-22
+
+### Corrigido
+- Campos de busca (painel e Fornecedores) agora usam um estilo único compartilhado (`.search-inp` no `base.css`), garantindo o mesmo visual arredondado em toda a família e evitando divergência entre telas.
+
+---
+
 ## [2.36.5] — 2026-07-22
 
 ### Modificado
