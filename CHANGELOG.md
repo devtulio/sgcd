@@ -5,6 +5,11 @@
 
 ---
 
+## [2.36.4] — 2026-07-22
+
+### Corrigido
+- Inputs da aba Dados (pasta de backup, backups mantidos) agora aparecem arredondados: a classe `.input` que esses campos usavam **nunca havia sido definida** no CSS, então ficavam com o visual cru do navegador. Definida no `base.css` compartilhado.
+
 ## [2.36.3] — 2026-07-21
 
 ### Corrigido
