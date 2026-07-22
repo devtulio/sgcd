@@ -5,6 +5,13 @@
 
 ---
 
+## [2.36.5] — 2026-07-22
+
+### Modificado
+- **Busca com ✕ para limpar** na busca principal do painel (Dispensas): o campo ganhou o mesmo botão ✕ já usado em Fornecedores — aparece ao digitar, limpa a busca ao clicar. Helper compartilhado no `base.js`.
+
+---
+
 ## [2.36.4] — 2026-07-22
 
 ### Corrigido
