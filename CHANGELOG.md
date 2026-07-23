@@ -5,6 +5,16 @@
 
 ---
 
+## [2.37.0] — 2026-07-22
+
+### Adicionado
+- **Opção de saudação** no modal Notificar Fornecedores, com o checkbox *"Saudar cada fornecedor pelo nome do sócio"* na linha do campo Mensagem:
+  - **marcado** (padrão, comportamento anterior): cada destinatário recebe `Prezado(a) NOME DO SÓCIO,` — o nome vem do quadro societário (QSA) do fornecedor; sem QSA cadastrado, sai `Prezado(a) fornecedor(a),`;
+  - **desmarcado**: saudação simples `Prezado fornecedor,`, igual para todos.
+- A troca é aplicada **na hora, no próprio editor** — o texto que aparece na tela é exatamente o que será enviado. Ao reabrir o modal, volta ao padrão (marcado).
+
+---
+
 ## [2.36.7] — 2026-07-22
 
 ### Corrigido
