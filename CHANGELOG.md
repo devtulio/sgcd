@@ -5,6 +5,19 @@
 
 ---
 
+## [2.39.0] — 2026-07-22
+
+### Adicionado
+- **Menor preço** como método de cálculo do valor de referência na etapa de Pesquisa de Preços, ao lado de Média e Mediana — os três métodos previstos no **art. 6º da IN SEGES/ME nº 65/2021**. O resumo passa a mostrar o nome do método por extenso ("Média", "Mediana", "Menor preço") em vez da chave interna.
+
+### Corrigido
+- **Margens de impressão dos documentos.** O CSS zerava o recuo ao imprimir (`@media print { body { padding: 0 } }`) e o `@page` não declarava margem, restando apenas o mínimo do navegador: ~10 mm nas laterais e **rodapé a 3,9 mm da borda**, dentro da faixa que muitas impressoras não imprimem — havia risco real de o código de autenticidade ser cortado. Agora as margens vão no `@page` (**30 mm à esquerda**, para perfuração/encadernação, 25 mm no topo, 20 mm à direita e embaixo) e valem para **todas** as páginas — o recuo via `body` não servia, pois em documento multipágina só se aplica ao topo da primeira e ao fim da última.
+- **Data e assinatura não se separam mais.** O bloco de assinatura não podia ser quebrado nem apartado da linha de data (`page-break-inside`/`after: avoid`), o que fazia a data ficar numa página e a assinatura na seguinte.
+- **Pontuação duplicada** nos documentos que citam o objeto no meio da frase: quando o objeto cadastrado termina com ponto, saía `...mão de obra., com valor estimado`. O ponto final passa a ser removido nesse encaixe (Justificativa de Enquadramento Legal e Justificativa da Escolha do Fornecedor).
+- **Justificativa de Enquadramento Legal**: o texto repetia o objeto por inteiro logo abaixo do quadro que já o exibe ("tem por objeto Contratação de empresa para..."); agora remete ao quadro. A data passou a sair **por extenso**, no mesmo formato dos demais documentos, e deixou de voltar um dia por leitura da data ISO em UTC.
+
+---
+
 ## [2.38.0] — 2026-07-22
 
 ### Modificado
