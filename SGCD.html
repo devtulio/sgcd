@@ -2096,7 +2096,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.39.0';
+const SGCD_VERSION = '2.39.1';
 // URL absoluta (não relativa): o API_BASE monta as URLs da REST API a partir da
 // origem real, nunca uma porta fixa (era 'http://localhost:3000' hardcoded).
 const API_BASE = window.location.origin;
@@ -2131,7 +2131,7 @@ async function salvarProcesso(data) {
     err.conflict = true;
     throw err;
   }
-  if (!r.ok) {
+  if (!r || !r.ok) {
     const body = await API.json(r).catch(() => null);
     throw new Error(body?.error || `Erro ao salvar (HTTP ${r.status}).`);
   }
@@ -2159,7 +2159,7 @@ async function salvarFornecedor(data) {
     err.conflict = true;
     throw err;
   }
-  if (!r.ok) {
+  if (!r || !r.ok) {
     const body = await API.json(r).catch(() => null);
     throw new Error(body?.error || `Erro ao salvar (HTTP ${r.status}).`);
   }
@@ -4136,7 +4136,7 @@ ${_qrFooterReport('Relatório de Auditoria')}
 
 async function gerarRelatorioIntegridade() {
   const r = await API.get('/api/relatorio/integridade');
-  if (!r.ok) { toast((await API.json(r))?.error || 'Erro ao gerar relatório.', 'error'); return; }
+  if (!r || !r.ok) { toast((await API.json(r))?.error || 'Erro ao gerar relatório.', 'error'); return; }
   const d = await API.json(r);
 
   const u = getUser();
@@ -10290,7 +10290,7 @@ async function alterarMinhaSenha() {
   if (nova !== confirma) { show('As senhas não coincidem.', false); return; }
 
   const r = await API.req('PUT', `/api/usuarios/${_apiUser.id}`, { old_password: atual, password: nova });
-  if (!r.ok) { show((await r.json()).error || 'Erro ao alterar senha.', false); return; }
+  if (!r || !r.ok) { show((await r.json()).error || 'Erro ao alterar senha.', false); return; }
   document.getElementById('s-senha-atual').value = '';
   document.getElementById('s-senha-nova').value = '';
   document.getElementById('s-senha-confirmar').value = '';

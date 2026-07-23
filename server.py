@@ -1,4 +1,4 @@
-# SGCD v2.39.0 — Servidor local: SQLite, autenticação, REST API, proxy CNPJ, e-mail SMTP, backup automático
+# SGCD v2.39.1 — Servidor local: SQLite, autenticação, REST API, proxy CNPJ, e-mail SMTP, backup automático
 import http.server
 import socketserver
 import os
@@ -37,7 +37,7 @@ import sgx_base   # esqueleto compartilhado da família — ver _esqueleto/READM
 # Versão do servidor — DEVE acompanhar o SGCD_VERSION do SGCD.html a cada release.
 # Exposta em /health para o frontend detectar quando o processo em execução está
 # desatualizado (HTML novo servido, mas server.py antigo ainda rodando em memória).
-SERVER_VERSION = '2.39.0'
+SERVER_VERSION = '2.39.1'
 
 PORT          = int(os.environ.get('SGCD_PORT', 3000))
 _BASE         = os.path.dirname(os.path.abspath(__file__))
@@ -821,6 +821,14 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         s = get_session(self._token())
         if not s:
             self._json(401, {'error': 'Não autenticado'})
+            return s
+        # Sessão deslizante: qualquer requisição autenticada renova o prazo. Antes
+        # só o /api/auth/ping renovava, e o ping é um setInterval que o navegador
+        # estrangula em aba de segundo plano — quem ficava redigindo com a aba
+        # atrás perdia a sessão em 60s e a ação seguinte falhava com 401.
+        # Não afeta o backup automático: navegador fechado não faz requisições,
+        # então a sessão continua expirando em SESSION_TTL como antes.
+        renew_session(self._token())
         return s
 
     def _user_dict(self, s):
