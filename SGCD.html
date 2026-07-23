@@ -2096,7 +2096,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.37.0';
+const SGCD_VERSION = '2.38.0';
 // URL absoluta (não relativa): o API_BASE monta as URLs da REST API a partir da
 // origem real, nunca uma porta fixa (era 'http://localhost:3000' hardcoded).
 const API_BASE = window.location.origin;
@@ -8098,7 +8098,7 @@ ${mediaRef?`<div class="ref-box">
 </div>
 ${_qrFooter(p)}
 </body></html>`;
-  _gerarDocumento(window.open('','_blank','width=900,height=700'), html, 'Mapa de Preços');
+  _gerarDocumento(window.open('','_blank','width=900,height=700'), html, 'Mapa de Preços', { podeSerMinuta: true });
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -8541,7 +8541,7 @@ ${_qrFooter(proc)}
 </html>`;
 
   const win = window.open('', '_blank', 'width=900,height=700');
-  _gerarDocumento(win, html, 'Despacho de Recusa / Desclassificação');
+  _gerarDocumento(win, html, 'Despacho de Recusa / Desclassificação', { podeSerMinuta: true });
 }
 
 function gerarDespachoInabilitacao(stepIdx) {
@@ -8667,7 +8667,7 @@ ${_qrFooter(proc)}
 </html>`;
 
   const win = window.open('', '_blank', 'width=900,height=700');
-  _gerarDocumento(win, html, 'Despacho de Inabilitação');
+  _gerarDocumento(win, html, 'Despacho de Inabilitação', { podeSerMinuta: true });
 }
 
 function gerarDespachoHabilitacao(stepIdx) {
@@ -8769,7 +8769,7 @@ ${_qrFooter(proc)}
 </html>`;
 
   const win = window.open('', '_blank', 'width=900,height=700');
-  _gerarDocumento(win, html, 'Despacho de Habilitação');
+  _gerarDocumento(win, html, 'Despacho de Habilitação', { podeSerMinuta: true });
 }
 
 function gerarTermoAdjudicacao() {
@@ -8870,7 +8870,7 @@ ${_qrFooter(proc)}
 </html>`;
 
   const win = window.open('', '_blank', 'width=900,height=700');
-  _gerarDocumento(win, html, 'Termo de Adjudicação');
+  _gerarDocumento(win, html, 'Termo de Adjudicação', { podeSerMinuta: true });
 }
 
 function gerarTermoHomologacao() {
@@ -8966,7 +8966,7 @@ ${_qrFooter(proc)}
 </html>`;
 
   const win = window.open('', '_blank', 'width=900,height=700');
-  _gerarDocumento(win, html, 'Termo de Homologação');
+  _gerarDocumento(win, html, 'Termo de Homologação', { podeSerMinuta: true });
 }
 
 function gerarAvisoDispensa() {
@@ -9106,7 +9106,7 @@ ${_qrFooter(proc)}
 </html>`;
 
   const win = window.open('', '_blank', 'width=900,height=700');
-  _gerarDocumento(win, html, 'Aviso de Dispensa de Licitação');
+  _gerarDocumento(win, html, 'Aviso de Dispensa de Licitação', { podeSerMinuta: true });
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -9354,7 +9354,7 @@ ${_qrFooter(proc)}
 </html>`;
 
   const win = window.open('', '_blank', 'width=900,height=700');
-  _gerarDocumento(win, html, 'Extrato de Contrato');
+  _gerarDocumento(win, html, 'Extrato de Contrato', { podeSerMinuta: true });
 }
 
 // CSS compartilhado pelos documentos formais gerados (Enquadramento Legal,
@@ -9467,7 +9467,7 @@ ${_qrFooter(p)}
 </html>`;
 
   const win = window.open('', '_blank', 'width=900,height=700');
-  _gerarDocumento(win, html, 'Justificativa de Enquadramento Legal');
+  _gerarDocumento(win, html, 'Justificativa de Enquadramento Legal', { podeSerMinuta: true });
 }
 
 function gerarJustificativaEscolha() {
@@ -9548,7 +9548,7 @@ ${_qrFooter(p)}
 </html>`;
 
   const win = window.open('', '_blank');
-  _gerarDocumento(win, html, 'Justificativa da Escolha do Fornecedor');
+  _gerarDocumento(win, html, 'Justificativa da Escolha do Fornecedor', { podeSerMinuta: true });
 }
 
 function gerarAutorizacao() {
@@ -9630,11 +9630,11 @@ ${_qrFooter(p)}
 </html>`;
 
   const win = window.open('', '_blank', 'width=900,height=700');
-  _gerarDocumento(win, html, 'Autorização de Abertura de Processo');
+  _gerarDocumento(win, html, 'Autorização de Abertura de Processo', { podeSerMinuta: true });
 }
 
 
-function _gerarDocumento(win, html, docNome) {
+function _gerarDocumento(win, html, docNome, opts = {}) {
   // Fix #1: window.open retorna null quando bloqueador de popup está ativo
   if (!win) {
     toast('Popup bloqueado pelo navegador. Permita popups para este site e tente novamente.', 'danger');
@@ -9645,11 +9645,13 @@ function _gerarDocumento(win, html, docNome) {
     _auditEvento('DOCUMENTO_GERADO', `${docNome}${ref}`, currentProcess?.id || null);
   }
 
-  // Injeta marca d'água "MINUTA" quando o processo ainda não está concluído
-  if (currentProcess && processStatus(currentProcess) !== 'done') {
-    const watermarkCss = `<style>
-      @media print { body::before { content:'MINUTA'; } }
-      body::before {
+  // Documentos oficiais (os que se assinam/publicam) podem sair como MINUTA — a
+  // escolha fica na própria janela do documento, ao lado do botão de imprimir, com
+  // prévia imediata. Sai desmarcado: o uso normal é gerar a versão para assinatura.
+  // Relatórios nunca recebem marca d'água (não passam podeSerMinuta).
+  if (opts.podeSerMinuta) {
+    const minutaCss = `<style>
+      body.minuta::before {
         content: 'MINUTA';
         position: fixed; top: 50%; left: 50%;
         transform: translate(-50%, -50%) rotate(-35deg);
@@ -9657,8 +9659,19 @@ function _gerarDocumento(win, html, docNome) {
         color: rgba(220,0,0,.07); pointer-events: none; z-index: 9999;
         letter-spacing: 8px; white-space: nowrap; user-select: none;
       }
+      .minuta-toggle { display: flex; align-items: center; justify-content: center; gap: 7px;
+        margin: 0 auto 16pt; font-family: Arial, sans-serif; font-size: 10pt; color: #555; cursor: pointer; }
+      .minuta-toggle input { width: 15px; height: 15px; cursor: pointer; }
+      @media print { .minuta-toggle { display: none; } }
     </style>`;
-    html = html.replace('</head>', watermarkCss + '</head>');
+    const toggle = `<label class="minuta-toggle no-print">
+      <input type="checkbox" onchange="document.body.classList.toggle('minuta', this.checked)">
+      Gerar como <strong>&nbsp;MINUTA&nbsp;</strong> (aplica marca d'água)
+    </label>`;
+    html = html.replace('</head>', minutaCss + '</head>');
+    html = /<button class="btn-print no-print"[\s\S]*?<\/button>/.test(html)
+      ? html.replace(/(<button class="btn-print no-print"[\s\S]*?<\/button>)/, `$1${toggle}`)
+      : html.replace(/(<body[^>]*>)/, `$1${toggle}`);
   }
   const custom = localStorage.getItem('sgcd-brasao-dataurl');
   const finalHtml = custom
@@ -9846,7 +9859,7 @@ ${_qrFooter(p)}
 </div>
 </body></html>`;
 
-  _gerarDocumento(window.open('', '_blank', 'width=900,height=700'), html, 'Processo Completo');
+  _gerarDocumento(window.open('', '_blank', 'width=900,height=700'), html, 'Processo Completo', { podeSerMinuta: true });
 }
 
 // ATA DE SESSÃO — Lei 14.133/2021
@@ -10069,7 +10082,7 @@ ${_qrFooter(p)}
 </html>`;
 
   const win = window.open('', '_blank', 'width=900,height=700');
-  _gerarDocumento(win, html, 'Ata de Sessão');
+  _gerarDocumento(win, html, 'Ata de Sessão', { podeSerMinuta: true });
 }
 
 // ══════════════════════════════════════════════════════════════

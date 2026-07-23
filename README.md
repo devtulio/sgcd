@@ -1,6 +1,6 @@
 # SGCD — Sistema de Gestão de Contratação Direta
 
-![Versão](https://img.shields.io/badge/versão-v2.37.0-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-Python%20%2B%20SQLite-orange) ![Licença](https://img.shields.io/badge/licença-MIT-green) ![Multiusuário](https://img.shields.io/badge/acesso-multiusuário-blueviolet) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21314672.svg)](https://doi.org/10.5281/zenodo.21314672) [![CI](https://github.com/devtulio/sgcd/actions/workflows/ci.yml/badge.svg)](https://github.com/devtulio/sgcd/actions/workflows/ci.yml)
+![Versão](https://img.shields.io/badge/versão-v2.38.0-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-Python%20%2B%20SQLite-orange) ![Licença](https://img.shields.io/badge/licença-MIT-green) ![Multiusuário](https://img.shields.io/badge/acesso-multiusuário-blueviolet) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21314672.svg)](https://doi.org/10.5281/zenodo.21314672) [![CI](https://github.com/devtulio/sgcd/actions/workflows/ci.yml/badge.svg)](https://github.com/devtulio/sgcd/actions/workflows/ci.yml)
 
 ## Descrição
 
@@ -13,7 +13,7 @@ Funciona em rede local: um único computador executa o servidor e todos os usuá
 ## Funcionalidades Principais
 
 - **Checklist estruturado com 18 etapas** do processo de Dispensa de Licitação, cada uma com fundamento legal e orientação de preenchimento
-- **Geração automática de documentos** prontos para assinatura: Autorização de Abertura, Aviso de Dispensa, Ata de Sessão, Mapa de Preços, Despachos e Extrato de Contrato
+- **Geração automática de documentos** prontos para assinatura: Autorização de Abertura, Aviso de Dispensa, Ata de Sessão, Mapa de Preços, Despachos e Extrato de Contrato — cada um com a opção **"Gerar como MINUTA"** (marca d'água), desmarcada por padrão
 - **Cadastro de fornecedores** com consulta automática de CNPJ via ReceitaWS/BrasilAPI e controle de certidões com alertas de vencimento
 - **Gestão de propostas e cotações** com cálculo automático de média ou mediana como valor de referência
 - **Dotação orçamentária** por processo — Programa/Ação, Elemento de Despesa, Fonte e Dotação Completa

@@ -5,6 +5,15 @@
 
 ---
 
+## [2.38.0] — 2026-07-22
+
+### Modificado
+- **Marca d'água "MINUTA" deixa de ser automática.** Antes ela era aplicada sempre que o processo não estivesse com as **18 etapas** concluídas — ou seja, na prática todo documento assinado ou publicado saía carimbado, já que os documentos são gerados no meio do processo.
+- Agora a escolha é sua **na hora de gerar**: cada documento oficial abre com o controle **"Gerar como MINUTA (aplica marca d'água)"** ao lado do botão de imprimir, desmarcado por padrão. Marcar aplica a marca d'água na hora, com prévia imediata; o controle não sai na impressão.
+- Vale para os 13 documentos do processo (Autorização, Aviso de Dispensa, Termos de Adjudicação/Homologação, Despachos, Extrato de Contrato, Justificativas, Ata de Sessão, Mapa de Preços e Processo Completo). **Relatórios nunca recebem marca d'água** — antes podiam recebê-la se um processo estivesse aberto na tela.
+
+---
+
 ## [2.37.0] — 2026-07-22
 
 ### Adicionado
