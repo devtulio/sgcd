@@ -2096,7 +2096,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.39.1';
+const SGCD_VERSION = '2.39.2';
 // URL absoluta (não relativa): o API_BASE monta as URLs da REST API a partir da
 // origem real, nunca uma porta fixa (era 'http://localhost:3000' hardcoded).
 const API_BASE = window.location.origin;
@@ -8080,6 +8080,9 @@ function gerarMapaPrecos(stepIdx) {
   .sign-line{border-top:1px solid #000;width:260pt;margin:0 auto;padding-top:4pt;font-size:10pt}  .btn-print{display:block;margin:0 auto 20pt;padding:8pt 24pt;background:#1a1a2e;color:#fff;border:none;border-radius:4px;font-size:11pt;cursor:pointer;letter-spacing:.5px}
   .btn-print:hover{background:#2c2c5e}
   @media print{body{padding:0}.no-print{display:none!important}}
+  /* Margem no @page (repete em TODAS as páginas) — o padding do body só vale no
+     topo da 1ª e no fim da última, deixando o resto colado na borda. */
+  @page{size:A4;margin:20mm}
 </style></head><body>
 <button class="btn-print no-print" onclick="window.print()">🖨 Imprimir / Salvar PDF</button>
 <div class="header">
@@ -9402,7 +9405,7 @@ const _DOC_CSS = `
      da última. Esquerda maior para perfuração/encadernação do processo físico. */
   @page {
     size: A4;
-    margin: 25mm 20mm 20mm 30mm;
+    margin: 20mm;
     @bottom-right { content: "Folha " counter(page); font-size: 8pt; color: #888; }
   }
 `;

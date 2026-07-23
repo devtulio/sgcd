@@ -1,4 +1,4 @@
-# SGCD v2.39.1 — Servidor local: SQLite, autenticação, REST API, proxy CNPJ, e-mail SMTP, backup automático
+# SGCD v2.39.2 — Servidor local: SQLite, autenticação, REST API, proxy CNPJ, e-mail SMTP, backup automático
 import http.server
 import socketserver
 import os
@@ -37,7 +37,7 @@ import sgx_base   # esqueleto compartilhado da família — ver _esqueleto/READM
 # Versão do servidor — DEVE acompanhar o SGCD_VERSION do SGCD.html a cada release.
 # Exposta em /health para o frontend detectar quando o processo em execução está
 # desatualizado (HTML novo servido, mas server.py antigo ainda rodando em memória).
-SERVER_VERSION = '2.39.1'
+SERVER_VERSION = '2.39.2'
 
 PORT          = int(os.environ.get('SGCD_PORT', 3000))
 _BASE         = os.path.dirname(os.path.abspath(__file__))
