@@ -2090,7 +2090,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.36.6';
+const SGCD_VERSION = '2.36.7';
 // URL absoluta (não relativa): o API_BASE monta as URLs da REST API a partir da
 // origem real, nunca uma porta fixa (era 'http://localhost:3000' hardcoded).
 const API_BASE = window.location.origin;
@@ -11081,26 +11081,49 @@ async function abrirEmailModal() {
   const nums = [p.num_proc && 'PA '+p.num_proc, p.num_dl && 'DL '+p.num_dl].filter(Boolean).join(' · ');
   const u = getUser();
 
-  // ── Aba Fornecedores: lista de fornecedores cadastrados com checkbox ──
+  // ── Aba Fornecedores: só os fornecedores COTADOS neste processo ──
+  // As cotações guardam apenas nome/CNPJ digitados (não o id do fornecedor),
+  // então o casamento com o cadastro — de onde vem o e-mail — é por CNPJ.
   const fornList = document.getElementById('email-forn-list');
   const todosForns = await listarFornecedores();
-  const fornsComEmail = todosForns.filter(f => f.email);
+  const _soDigitos = v => String(v || '').replace(/\D/g, '');
+  const _cotStepIdx = STEPS.findIndex(s => s.cotacoes);
+  let _cotacoes = [];
+  try { _cotacoes = JSON.parse(p.steps?.[_cotStepIdx]?.fields?._cotacoes || '[]'); } catch { _cotacoes = []; }
+
+  const _fornPorCnpj = new Map();
+  todosForns.forEach(f => {
+    const d = _soDigitos(f.cnpj_digits || f.cnpj);
+    if (d) _fornPorCnpj.set(d, f);
+  });
+
+  const fornsComEmail = [];   // cotados que dá para notificar
+  const _semCadastro = [];    // cotados que não existem no cadastro
+  const _semEmail = [];       // cotados cadastrados, mas sem e-mail
+  const _vistos = new Set();
+  for (const c of _cotacoes) {
+    const d = _soDigitos(c.cnpj);
+    if (!d || _vistos.has(d)) continue;   // ignora cotação sem CNPJ e deduplica
+    _vistos.add(d);
+    const f = _fornPorCnpj.get(d);
+    if (!f) { _semCadastro.push(c.fornecedor || c.cnpj || '—'); continue; }
+    if (!f.email) { _semEmail.push(f); continue; }
+    fornsComEmail.push(f);
+  }
   const fornVinculadoId = typeof p.fornecedor === 'object' ? p.fornecedor?.id : null;
 
-  // Avisa se fornecedor vinculado ao processo não tem e-mail
-  const fornVinculado = typeof p.fornecedor === 'object' ? p.fornecedor : null;
-  const fornVinculadoSemEmail = fornVinculado && !fornVinculado.email;
-  const avisoSemEmail = fornVinculadoSemEmail
-    ? `<div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:6px;padding:7px 10px;margin-bottom:6px;font-size:.78rem;color:#92400e">
-        ⚠️ O fornecedor vinculado a este processo (<strong>${escHtml(fornVinculado.razao_social || fornVinculado.nome_fantasia || 'Sem nome')}</strong>)
-        não tem e-mail cadastrado e não aparecerá na lista de destinatários.
-        <a href="#" onclick="fecharEmailModal();abrirFornecedor('${escHtml(fornVinculado.id||'')}');return false"
-           style="color:#b45309;font-weight:600;margin-left:4px">Cadastrar e-mail →</a>
-      </div>`
-    : '';
+  const _caixaAviso = html => `<div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:6px;padding:7px 10px;margin-bottom:6px;font-size:.78rem;color:#92400e">${html}</div>`;
+  const avisoSemEmail =
+    (_semCadastro.length ? _caixaAviso(`⚠️ Cotado(s) sem cadastro de fornecedor (sem e-mail para notificar): <strong>${_semCadastro.map(escHtml).join(', ')}</strong>.`) : '') +
+    (_semEmail.length ? _caixaAviso(`⚠️ Cotado(s) sem e-mail cadastrado: ` + _semEmail.map(f =>
+      `<strong>${escHtml(f.razao_social || f.nome_fantasia || f.nome || 'Sem nome')}</strong>
+       <a href="#" onclick="fecharEmailModal();abrirFornecedor('${escHtml(f.id || '')}');return false" style="color:#b45309;font-weight:600">cadastrar →</a>`
+    ).join(' · ') + '.') : '');
 
-  if (fornsComEmail.length === 0) {
-    fornList.innerHTML = avisoSemEmail + '<div style="padding:8px;font-size:.8rem;color:var(--gray-500)">Nenhum fornecedor cadastrado com e-mail.</div>';
+  if (!_cotacoes.length) {
+    fornList.innerHTML = '<div style="padding:8px;font-size:.8rem;color:var(--gray-500)">Nenhuma cotação registrada neste processo. Cadastre as cotações na etapa <strong>Pesquisa de Preços / Estimativa do Valor</strong> para poder notificar os fornecedores.</div>';
+  } else if (fornsComEmail.length === 0) {
+    fornList.innerHTML = avisoSemEmail + '<div style="padding:8px;font-size:.8rem;color:var(--gray-500)">Nenhum fornecedor cotado tem e-mail cadastrado.</div>';
   } else {
     fornList.innerHTML = avisoSemEmail + fornsComEmail.map(f => {
       const nome = f.razao_social || f.nome || '';

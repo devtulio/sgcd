@@ -5,6 +5,14 @@
 
 ---
 
+## [2.36.7] — 2026-07-22
+
+### Corrigido
+- **Notificar Fornecedores** listava **todos os fornecedores do cadastro** com e-mail, e não os do processo — o modal vinha poluído com empresas sem relação com a dispensa. Agora lista apenas os **fornecedores cotados naquele processo** (etapa "Pesquisa de Preços / Estimativa do Valor"), casados com o cadastro **por CNPJ** (as cotações guardam só nome/CNPJ digitados, não o id do fornecedor), deduplicados.
+- O modal agora avisa quando um cotado **não está no cadastro** (não há e-mail para notificar) ou está cadastrado **sem e-mail** — neste caso com atalho para cadastrar o e-mail. Se o processo não tiver cotações, explica onde registrá-las.
+
+---
+
 ## [2.36.6] — 2026-07-22
 
 ### Corrigido
