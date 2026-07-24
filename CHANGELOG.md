@@ -5,6 +5,14 @@
 
 ---
 
+## [2.43.0] — 2026-07-24
+
+### Alterado
+- **O backup do banco passa a incluir os anexos.** Antes o "backup do banco" era só o arquivo do banco de dados; os documentos digitalizados (PDFs), que ficam guardados fora do banco, não iam junto. Agora ele é um pacote **.zip** com o banco **e** a pasta de anexos, e restaurá-lo recupera também os arquivos. Backups no formato antigo (.db) continuam podendo ser restaurados — apenas sem os anexos, como antes.
+- **Formato de backup unificado com os demais sistemas da família**, com leitura compatível: nenhum arquivo de backup já gerado deixa de ser restaurável.
+
+---
+
 ## [2.42.2] — 2026-07-24
 
 ### Corrigido

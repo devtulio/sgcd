@@ -1471,7 +1471,7 @@
               </label>
             </div>
             <div style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:10px 12px;display:flex;flex-direction:column;gap:6px">
-              <div style="font-size:.7rem;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:.4px">Banco de dados (.db)</div>
+              <div style="font-size:.7rem;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:.4px">Banco + anexos (.zip)</div>
               <button class="btn btn-outline btn-sm" onclick="exportarBackupDB()" style="justify-content:flex-start">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 Exportar backup
@@ -1479,7 +1479,7 @@
               <label class="btn btn-outline btn-sm" style="cursor:pointer;justify-content:flex-start">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                 Restaurar backup
-                <input type="file" accept=".db" style="display:none" onchange="restaurarBackupDB(this.files[0]).then(()=>this.value='')">
+                <input type="file" accept=".zip,.db" style="display:none" onchange="restaurarBackupDB(this.files[0]).then(()=>this.value='')">
               </label>
             </div>
           </div>
@@ -1503,7 +1503,7 @@
             </label>
             <div style="flex:1">
               <div style="font-size:.82rem;font-weight:600;color:var(--gray-700)">Backup automático ao fechar o sistema</div>
-              <p style="font-size:.7rem;color:var(--gray-500);margin:3px 0 8px;line-height:1.5">Cria um backup do banco (sgcd.db) sempre que o sistema for encerrado pelo botão Fechar Sistema ou pelo X da janela.</p>
+              <p style="font-size:.7rem;color:var(--gray-500);margin:3px 0 8px;line-height:1.5">Cria um backup do banco e dos anexos (pacote .zip) sempre que o sistema for encerrado pelo botão Fechar Sistema ou pelo X da janela.</p>
               <div id="s-auto-backup-sub" style="display:flex;flex-direction:column;gap:8px;padding:10px 12px;background:var(--gray-50);border-radius:var(--radius);border:1px solid var(--gray-100);transition:opacity .15s">
                 <div style="display:flex;align-items:center;gap:8px">
                   <label for="s-auto-backup-keep" style="font-size:.78rem;color:var(--gray-600);white-space:nowrap">Backups mantidos</label>
@@ -2091,7 +2091,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.42.2';
+const SGCD_VERSION = '2.43.0';
 // URL absoluta (não relativa): o API_BASE monta as URLs da REST API a partir da
 // origem real, nunca uma porta fixa (era 'http://localhost:3000' hardcoded).
 const API_BASE = window.location.origin;
@@ -2404,7 +2404,7 @@ async function exportBackup() {
 
 function _validarEstruturaBackup(b) {
   if (!b || typeof b !== 'object') return 'Arquivo não é um objeto JSON válido.';
-  if (!b._sgcd) return 'Arquivo não é um backup do SGCD (campo _sgcd ausente).';
+  if (b._sgx !== 'SGCD' && !b._sgcd) return 'Arquivo não é um backup do SGCD.';
   if (!Array.isArray(b.processes)) return 'Campo "processes" ausente ou inválido.';
   if (b.fornecedores !== undefined && !Array.isArray(b.fornecedores))
     return 'Campo "fornecedores" com formato inválido.';
@@ -4251,7 +4251,7 @@ async function gerarRelatorioIntegridade() {
 <table>
   <tr><td>Pasta de backup</td><td style="font-size:8pt">${escHtml(d.backup_path)}</td></tr>
   <tr><td>Backups mantidos (config.)</td><td>${d.auto_backup_keep}</td></tr>
-  <tr><td>Backups .db no disco</td><td>${d.backups_db_count} arquivo(s) — ${fmtSize(d.backups_db_size_bytes)}</td></tr>
+  <tr><td>Backups do banco no disco</td><td>${d.backups_db_count} arquivo(s) — ${fmtSize(d.backups_db_size_bytes)}</td></tr>
   <tr><td>Backups .json no disco</td><td>${d.backups_json_count} arquivo(s)</td></tr>
   <tr><td>Tamanho do banco de dados</td><td>${fmtSize(d.db_size_bytes)}</td></tr>
   <tr><td>Tamanho da pasta de PDFs</td><td>${fmtSize(d.uploads_size_bytes)} (${d.uploads_count} arquivo(s))</td></tr>
@@ -12682,7 +12682,7 @@ async function exportarBackupDB() {
   const blob = await r.blob();
   const url  = URL.createObjectURL(blob);
   const a    = Object.assign(document.createElement('a'), { href: url,
-    download: `DB_SGCD_BACKUP_${new Date().toISOString().slice(0,10)}_${new Date().toTimeString().slice(0,8).replace(/:/g,'-')}.db`
+    download: `DB_SGCD_BACKUP_${new Date().toISOString().slice(0,10)}_${new Date().toTimeString().slice(0,8).replace(/:/g,'-')}.zip`
   });
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   URL.revokeObjectURL(url);

@@ -3,14 +3,17 @@
 # python -m unittest discover -s tests   (ou: python tests/test_server.py)
 import base64
 import http.client
+import io
 import json
 import os
 import shutil
 import socketserver
+import sqlite3
 import sys
 import tempfile
 import threading
 import time
+import zipfile
 import unittest
 import uuid
 
@@ -332,7 +335,8 @@ class TestBackup(SGCDTestCase):
 
         status, data = self.request('GET', '/api/backup', token=token)
         self.assertEqual(status, 200)
-        self.assertTrue(data['_sgcd'])
+        self.assertEqual(data.get('_sgx'), 'SGCD')   # envelope padronizado da família
+        self.assertNotIn('usuarios', data)           # SGCD não leva contas no JSON portátil
         self.assertTrue(any(p['objeto'] == 'Processo para backup' for p in data['processes']))
 
     def test_restore_com_item_malformado_nao_apaga_dados_existentes(self):
@@ -725,6 +729,57 @@ class TestSenhaPadraoMarcadaNoBoot(SGCDTestCase):
     def test_boot_nao_mexe_em_quem_ja_trocou(self):
         self.assertEqual(self._cria_e_reinicia('OutraSenha#2026'), 0,
                          'exigiu troca de quem já tinha saído da senha padrão')
+
+
+class TestBackupCofre(SGCDTestCase):
+    """Padronização do backup (2026-07): Cofre .zip (banco + anexos) via sgx_base,
+    com leitura retrocompatível do .db legado. O round-trip de anexos em si é
+    coberto pela suíte do SGDP (mesmo helper compartilhado)."""
+
+    def _raw(self, method, path, data, token):
+        conn = http.client.HTTPConnection('127.0.0.1', PORT, timeout=15)
+        hdrs = {'Content-Length': str(len(data))}
+        if token: hdrs['Authorization'] = f'Bearer {token}'
+        conn.request(method, path, body=data, headers=hdrs)
+        resp = conn.getresponse(); body = resp.read(); conn.close()
+        try: return resp.status, json.loads(body)
+        except ValueError: return resp.status, body
+
+    def test_cofre_e_zip_com_banco(self):
+        token = self.login()
+        self.request('POST', '/api/processes', {'objeto': 'Proc do Cofre'}, token=token)
+        st, raw = self.request('GET', '/api/backup/db', token=token)
+        self.assertEqual(st, 200)
+        self.assertEqual(raw[:4], b'PK\x03\x04')
+        with zipfile.ZipFile(io.BytesIO(raw)) as z:
+            self.assertIn('banco.db', z.namelist())
+
+    def test_restaura_cofre_zip(self):
+        token = self.login()
+        self.request('POST', '/api/processes', {'objeto': 'Proc que volta do Cofre'}, token=token)
+        _, raw = self.request('GET', '/api/backup/db', token=token)
+        st, d = self._raw('POST', '/api/backups/db/restore', raw, token)
+        self.assertEqual(st, 200, d)
+        st, listado = self.request('GET', '/api/processes', token=token)
+        self.assertTrue(any(p['objeto'] == 'Proc que volta do Cofre' for p in listado['items']))
+
+    def test_restore_aceita_db_legado(self):
+        token = self.login()
+        legado = os.path.join(server.BACKUP_DIR, 'legado.db')
+        s = sqlite3.connect(server.DB_PATH); k = sqlite3.connect(legado)
+        try:
+            with k: s.backup(k)
+        finally:
+            s.close(); k.close()
+        with open(legado, 'rb') as f: db_bytes = f.read()
+        os.remove(legado)
+        st, d = self._raw('POST', '/api/backups/db/restore', db_bytes, token)
+        self.assertEqual(st, 200, d)
+
+    def test_arquivos_invalidos_recusados(self):
+        token = self.login()
+        self.assertEqual(self.request('POST', '/api/backup/restore', {'foo': 1}, token=token)[0], 400)
+        self.assertEqual(self._raw('POST', '/api/backups/db/restore', b'lixo', token)[0], 400)
 
 
 if __name__ == '__main__':
