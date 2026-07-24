@@ -5,6 +5,13 @@
 
 ---
 
+## [2.40.1] — 2026-07-24
+
+### Corrigido
+- **Criar um processo reaproveitando o número de um que está na Lixeira o tirava de lá.** Último caso da mesma família já corrigida em fornecedores: o registro era regravado por cima e a marca de exclusão se perdia. Só acontecia por chamada direta à API — pela tela o sistema nunca reaproveita identificador —, mas agora a marca é preservada também nesse caminho.
+
+---
+
 ## [2.40.0] — 2026-07-24
 
 ### Corrigido

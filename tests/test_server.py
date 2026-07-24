@@ -527,6 +527,22 @@ class TestBackupPreservaColunasSql(SGCDTestCase):
         self.assertEqual(self._col('fornecedores', 'deleted_at', fid), excluido_em,
                          'importar fornecedores tirou da Lixeira quem estava excluído')
 
+    def test_criar_processo_com_id_de_um_na_lixeira_nao_o_ressuscita(self):
+        # POST /api/processes aceita id explícito e usa INSERT OR REPLACE: sem a
+        # subconsulta, o REPLACE zerava deleted_at e tirava o processo da Lixeira.
+        token = self.login()
+        status, p = self.request('POST', '/api/processes', {'objeto': 'Vai para a Lixeira'}, token=token)
+        pid = p['id']
+        self.assertEqual(self.request('DELETE', f'/api/processes/{pid}', token=token)[0], 200)
+        excluido_em = self._col('processes', 'deleted_at', pid)
+        self.assertIsNotNone(excluido_em, 'exclusão não marcou deleted_at — teste inválido')
+
+        status, _ = self.request('POST', '/api/processes',
+                                 {'id': pid, 'objeto': 'Tentando ressuscitar'}, token=token)
+        self.assertEqual(status, 200)
+        self.assertEqual(self._col('processes', 'deleted_at', pid), excluido_em,
+                         'criar processo com o mesmo id tirou o anterior da Lixeira')
+
     def test_sql_extra_nao_polui_o_registro(self):
         # A chave '_sql' carrega as colunas no arquivo; não pode acabar dentro do
         # blob regravado, que é o que o front consome.

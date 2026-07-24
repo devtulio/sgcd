@@ -1,4 +1,4 @@
-# SGCD v2.40.0 — Servidor local: SQLite, autenticação, REST API, proxy CNPJ, e-mail SMTP, backup automático
+# SGCD v2.40.1 — Servidor local: SQLite, autenticação, REST API, proxy CNPJ, e-mail SMTP, backup automático
 import http.server
 import socketserver
 import os
@@ -37,7 +37,7 @@ import sgx_base   # esqueleto compartilhado da família — ver _esqueleto/READM
 # Versão do servidor — DEVE acompanhar o SGCD_VERSION do SGCD.html a cada release.
 # Exposta em /health para o frontend detectar quando o processo em execução está
 # desatualizado (HTML novo servido, mas server.py antigo ainda rodando em memória).
-SERVER_VERSION = '2.40.0'
+SERVER_VERSION = '2.40.1'
 
 PORT          = int(os.environ.get('SGCD_PORT', 3000))
 _BASE         = os.path.dirname(os.path.abspath(__file__))
@@ -939,15 +939,20 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         data.setdefault('createdAt', _now())
         data['updatedAt'] = _now_precise()
         with get_db() as conn:
+            # deleted_at por subconsulta, como em fornecedores: sem isso o REPLACE
+            # zerava a coluna e um processo que estava na Lixeira voltava ao
+            # cadastro só porque alguém criou outro com o mesmo id.
             conn.execute(
                 '''INSERT OR REPLACE INTO processes
-                   (id,data,objeto,status,unidade,valor,num_proc,num_dl,created_at,updated_at,created_by)
-                   VALUES (?,?,?,?,?,?,?,?,?,?,?)''',
+                   (id,data,objeto,status,unidade,valor,num_proc,num_dl,created_at,updated_at,
+                    created_by,deleted_at)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,
+                           (SELECT deleted_at FROM processes WHERE id=?))''',
                 (pid, json.dumps(data, ensure_ascii=False),
                  data.get('objeto'), data.get('status', 'em_andamento'),
                  data.get('unidade'), _float(data.get('valor')),
                  data.get('num_proc'), data.get('num_dl'),
-                 data.get('createdAt'), data['updatedAt'], s['user_id'])
+                 data.get('createdAt'), data['updatedAt'], s['user_id'], pid)
             )
             if 'tags' in data: _sync_tags(conn, 'process_tags', 'process_id', pid, data['tags'])
         self._json(200, data)
