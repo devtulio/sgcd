@@ -1,4 +1,4 @@
-# SGCD v2.41.0 — Servidor local: SQLite, autenticação, REST API, proxy CNPJ, e-mail SMTP, backup automático
+# SGCD v2.42.0 — Servidor local: SQLite, autenticação, REST API, proxy CNPJ, e-mail SMTP, backup automático
 import http.server
 import socketserver
 import os
@@ -37,7 +37,7 @@ import sgx_base   # esqueleto compartilhado da família — ver _esqueleto/READM
 # Versão do servidor — DEVE acompanhar o SGCD_VERSION do SGCD.html a cada release.
 # Exposta em /health para o frontend detectar quando o processo em execução está
 # desatualizado (HTML novo servido, mas server.py antigo ainda rodando em memória).
-SERVER_VERSION = '2.41.0'
+SERVER_VERSION = '2.42.0'
 
 PORT          = int(os.environ.get('SGCD_PORT', 3000))
 _BASE         = os.path.dirname(os.path.abspath(__file__))
@@ -1692,24 +1692,9 @@ def _audit_config(conn, s, label, detail):
 
 
 def _float(v):
-    if v is None or v == '':
-        return None
-    if isinstance(v, (int, float)):
-        return float(v)
-    s = str(v).replace('R$', '').strip()
-    if not s:
-        return None
-    # Formato BR: ponto = milhar, vírgula = decimal. Com os dois presentes,
-    # remove os pontos e troca a vírgula por ponto (1.234,56 -> 1234.56).
-    # Só vírgula -> decimal (1234,56 -> 1234.56). Só ponto -> já é decimal.
-    if ',' in s and '.' in s:
-        s = s.replace('.', '').replace(',', '.')
-    elif ',' in s:
-        s = s.replace(',', '.')
-    try:
-        return float(s)
-    except (ValueError, TypeError):
-        return None
+    # Regra única da família — ver sgx_base.parse_valor. Antes, este parser e o
+    # do front discordavam: "1.234" virava 1,234 aqui e 1234 na tela.
+    return sgx_base.parse_valor(v)
 
 def _mime(ext):
     return {'.pdf': 'application/pdf', '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',

@@ -2096,7 +2096,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.41.0';
+const SGCD_VERSION = '2.42.0';
 // URL absoluta (não relativa): o API_BASE monta as URLs da REST API a partir da
 // origem real, nunca uma porta fixa (era 'http://localhost:3000' hardcoded).
 const API_BASE = window.location.origin;
@@ -2909,7 +2909,23 @@ const FRAC_STOPWORDS = new Set(['de','do','da','dos','das','para','com','em','na
   'que','se','ou','ate','mais','menos','entre','sobre','aquisicao','contratacao',
   'fornecimento','prestacao','servico','servicos','compra','material']);
 
-const FRAC_LIMITES = { 'I':130984.20, 'II':65492.11, 'III':65492.11, 'IV':65492.11 };
+// Tetos de dispensa por valor (art. 75, I e II da Lei 14.133/2021), atualizados
+// por decreto todo ano. FONTE ÚNICA dos números usados em CÁLCULO — antes eles
+// estavam repetidos no card de limite e no fallback de fracLimite, e uma
+// atualização podia passar por um e esquecer o outro.
+//
+// ⚠ Ao atualizar: os mesmos valores aparecem por extenso no texto das opções de
+// fundamento legal (o <select> de "Fundamento" e a lista LEGAL_OPCOES). Aqueles
+// são o texto que fica GRAVADO em cada processo, então mudam só para processos
+// novos — os antigos mantêm a redação do decreto vigente à época, que é o
+// correto. A citação do decreto em si é configurável em Configurações.
+const LIMITES_DISPENSA = { 'I': 130984.20, 'II': 65492.11 };
+const FRAC_LIMITES = {
+  'I':  LIMITES_DISPENSA.I,
+  'II': LIMITES_DISPENSA.II,
+  'III':LIMITES_DISPENSA.II,
+  'IV': LIMITES_DISPENSA.II,
+};
 
 // ══════════════════════════════════════════════════════════════
 // CLASSIFICAÇÃO DO OBJETO (Natureza → Categoria → Subcategoria)
@@ -3099,11 +3115,10 @@ function fracInciso(legal) {
   return m ? m[1].toUpperCase() : null;
 }
 function fracLimite(legal) {
-  return FRAC_LIMITES[fracInciso(legal)] || 65492.11;
+  return FRAC_LIMITES[fracInciso(legal)] || LIMITES_DISPENSA.II;
 }
 function fracParseValor(v) {
-  const n = parseFloat(String(v||'').replace(/R\$\s*/,'').replace(/\./g,'').replace(',','.'));
-  return isNaN(n) ? 0 : n;
+  return parseValorBR(v);   // ver parseValorBR no base.js
 }
 function fracJanelaAtivos(lista) {
   const cfg = getUser().frac_janela || 'exercicio';
@@ -3113,7 +3128,7 @@ function fracJanelaAtivos(lista) {
   }
   const meses = parseInt(cfg, 10) || 12;
   const corte = Date.now() - meses * 30.44 * 24 * 3600 * 1000;
-  return lista.filter(p => p.createdAt >= corte);
+  return lista.filter(p => _ts(p.createdAt) >= corte);
 }
 
 function analisarFracionamento(lista) {
@@ -3197,10 +3212,21 @@ function _toastSom(t) {
   else if (t === 'error') playError();
 }
 
+function _ts(v) {
+  // createdAt/updatedAt chegam como número (Date.now(), quando o registro nasce
+  // na tela) ou como texto ISO (quando o servidor carimba — criação via API,
+  // restauração de backup). Comparar ou subtrair os dois direto dá NaN: o
+  // registro sumia do filtro de período móvel e ia parar no fim da ordenação,
+  // sem erro nenhum. Normalizar antes de comparar.
+  if (v == null) return 0;
+  if (typeof v === 'number') return v;
+  const t = Date.parse(v);
+  return Number.isNaN(t) ? 0 : t;
+}
+
 function parseValor(v) {
-  if (!v) return 0;
-  const s = String(v).replace(/\./g, '').replace(',', '.');
-  return parseFloat(s.replace(/[^\d\.]/g, '')) || 0;
+  // Regra única da família — ver parseValorBR no base.js.
+  return parseValorBR(v);
 }
 function fmtMoney(v) {
   if (!v) return '';
@@ -3222,7 +3248,7 @@ function maskMoney(el) {
 // ══════════════════════════════════════════════════════════════
 async function loadProcesses() {
   processes = await listarProcessos();
-  processes.sort((a,b) => b.createdAt - a.createdAt);
+  processes.sort((a,b) => _ts(b.createdAt) - _ts(a.createdAt));
   fracResultado = analisarFracionamento(processes);
   updateAgendaBadge();
   try { renderNotificacoes(); } catch {}
@@ -3632,7 +3658,7 @@ async function renderFornecedores() {
         const exp = f => (f.certidoes||[]).filter(c => certStatus(c) === 'expired').length;
         return exp(b) - exp(a);
       }
-      return (b.updatedAt || b.addedAt || 0) - (a.updatedAt || a.addedAt || 0);
+      return _ts(b.updatedAt || b.addedAt) - _ts(a.updatedAt || a.addedAt);
     });
 
   // Contagem de resultados
@@ -4388,8 +4414,8 @@ function _applyDashFilters(list, f) {
     const st = processStatus(p);
     if (f.fSt && st !== f.fSt) return false;
     if (f.fUn && p.unidade !== f.fUn) return false;
-    if (f.fDe && p.createdAt < new Date(f.fDe + 'T00:00:00').getTime()) return false;
-    if (f.fAte && p.createdAt > new Date(f.fAte + 'T23:59:59').getTime()) return false;
+    if (f.fDe && _ts(p.createdAt) < new Date(f.fDe + 'T00:00:00').getTime()) return false;
+    if (f.fAte && _ts(p.createdAt) > new Date(f.fAte + 'T23:59:59').getTime()) return false;
     if (f.fVmin !== null && parseValor(p.valor) < f.fVmin) return false;
     if (f.fVmax !== null && parseValor(p.valor) > f.fVmax) return false;
     if (f.q) {
@@ -4447,13 +4473,13 @@ function renderDash() {
   // sort
   filtered.sort((a, b) => {
     switch (sortBy) {
-      case 'date-asc':  return a.createdAt - b.createdAt;
+      case 'date-asc':  return _ts(a.createdAt) - _ts(b.createdAt);
       case 'prazo-asc': { const da = a.prazo ? new Date(a.prazo + 'T00:00:00').getTime() : Infinity; const db = b.prazo ? new Date(b.prazo).getTime() : Infinity; return da - db; }
       case 'pct-desc':  return pct(b) - pct(a);
       case 'pct-asc':   return pct(a) - pct(b);
       case 'valor-desc': return parseValor(b.valor) - parseValor(a.valor);
       case 'valor-asc':  return parseValor(a.valor) - parseValor(b.valor);
-      default:          return b.createdAt - a.createdAt; // date-desc
+      default:          return _ts(b.createdAt) - _ts(a.createdAt); // date-desc
     }
   });
 
@@ -5677,7 +5703,7 @@ async function _renderFornCardHistorico() {
     }
   }
 
-  participacoes.sort((a, b) => b.p.createdAt - a.p.createdAt);
+  participacoes.sort((a, b) => _ts(b.p.createdAt) - _ts(a.p.createdAt));
 
   const rows = participacoes.length ? participacoes.map(({ p, num, isVencedor }) => {
     const statusMap = { todo:'Não iniciado', pending:'Em instrução', progress:'Em andamento', done:'Concluído', blocked:'Bloqueado' };
@@ -7291,8 +7317,8 @@ function renderLimiteAnualPanel() {
   if (!card) return;
 
   let inciso = null, limite = 0;
-  if ((p.legal || '').includes('Art. 75, I —'))  { inciso = 'I';  limite = 130984.20; }
-  else if ((p.legal || '').includes('Art. 75, II —')) { inciso = 'II'; limite = 65492.11; }
+  if ((p.legal || '').includes('Art. 75, I —'))  { inciso = 'I';  limite = LIMITES_DISPENSA.I; }
+  else if ((p.legal || '').includes('Art. 75, II —')) { inciso = 'II'; limite = LIMITES_DISPENSA.II; }
 
   if (!inciso) { card.style.display = 'none'; return; }
 
@@ -9454,7 +9480,7 @@ function gerarEnquadramentoLegal() {
 <div class="section">
   <p>O <strong>Agente de Contratação</strong> da <strong>${blank(u.orgao)}</strong>, no exercício de suas atribuições legais, vem por meio desta justificativa declarar o enquadramento da contratação acima identificada na hipótese de <strong>Dispensa de Licitação</strong> prevista no <strong>${incisoLabel} da Lei Federal nº 14.133/2021</strong> (Nova Lei de Licitações e Contratos Administrativos), nos seguintes termos:</p>
 
-  <p>A contratação tem por objeto o descrito no quadro acima, com valor estimado de <strong>${fmtVal(p.valor)}</strong>, atendendo à demanda da unidade requisitante <strong>${blank(p.unidade)}</strong>. O valor apurado por meio de pesquisa de mercado está dentro dos limites estabelecidos pelo ${incisoLabel} da Lei nº 14.133/2021${p.legal && (p.legal.includes('65.492') || p.legal.includes('130.984')) ? `, conforme atualização fixada pelo ${u.decreto_limites || 'Decreto Federal nº 12.807, de 29 de dezembro de 2025'}` : ''}, razão pela qual a licitação é dispensável.</p>
+  <p>A contratação tem por objeto o descrito no quadro acima, com valor estimado de <strong>${fmtVal(p.valor)}</strong>, atendendo à demanda da unidade requisitante <strong>${blank(p.unidade)}</strong>. O valor apurado por meio de pesquisa de mercado está dentro dos limites estabelecidos pelo ${incisoLabel} da Lei nº 14.133/2021${['I','II'].includes(fracInciso(p.legal)) ? `, conforme atualização fixada pelo ${u.decreto_limites || 'Decreto Federal nº 12.807, de 29 de dezembro de 2025'}` : ''}, razão pela qual a licitação é dispensável.</p>
 
   <p>A presente contratação atende ao interesse público, está em conformidade com os princípios da legalidade, impessoalidade, moralidade, publicidade e eficiência previstos no art. 37, caput, da Constituição Federal, e com os princípios específicos das contratações públicas dispostos no art. 5º da Lei Federal nº 14.133/2021, e a escolha do objeto foi precedida de pesquisa de preços nos termos do Art. 23 da referida Lei, garantindo a compatibilidade do valor com os praticados no mercado.</p>
 

@@ -5,6 +5,17 @@
 
 ---
 
+## [2.42.0] — 2026-07-24
+
+### Corrigido
+- **Processos criados fora da tela sumiam da análise de fracionamento por período móvel.** A data de criação era gravada em dois formatos — número, quando o processo nasce na tela; texto, quando é criado por outro caminho (importação, restauração) — e a comparação só entendia um deles. Quem escolhesse "últimos 12/18/24 meses" perdia da conta os processos gravados no outro formato, sem aviso. A mesma causa desordenava a lista de processos por data.
+- **Leitura de valores em dinheiro unificada.** Existiam três rotinas diferentes para interpretar um valor digitado — duas na tela e uma no servidor — e elas discordavam: `1.234` valia mil duzentos e trinta e quatro para uma e um vírgula dois para outra; `1234.56` virava cento e vinte e três mil na tela; o sinal de negativo se perdia. Agora é uma regra só, igual nos dois lados, conferida com 24 formatos diferentes.
+
+### Alterado
+- **Tetos de dispensa em um só lugar no código.** Os valores do art. 75, I e II estavam repetidos em três pontos usados em cálculo; agora saem de uma definição única. A citação do decreto nos documentos passou a depender do inciso, não do valor — antes, atualizar os limites fazia o documento parar de citar o decreto.
+
+---
+
 ## [2.41.0] — 2026-07-24
 
 ### Adicionado
