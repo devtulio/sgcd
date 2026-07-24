@@ -1799,14 +1799,9 @@
       </div>
       <div class="info-field">
         <label for="m-legal">Fundamentação Legal (Art. 75, inciso)</label>
-        <select id="m-legal">
-          <option value="">Selecionar…</option>
-          <option value="Art. 75, I — Valor (até R$ 130.984,20 — obras/serv. engenharia)">Art. 75, I — Valor (até R$ 130.984,20 — obras/serv. engenharia)</option>
-          <option value="Art. 75, II — Valor (até R$ 65.492,11 — serviços e compras)">Art. 75, II — Valor (até R$ 65.492,11 — serviços e compras)</option>
-          <option value="Art. 75, III — Emergência ou calamidade">Art. 75, III — Emergência ou calamidade</option>
-          <option value="Art. 75, IV — Fornecedor exclusivo">Art. 75, IV — Fornecedor exclusivo</option>
-          <option value="Outro">Outro</option>
-        </select>
+        <!-- Opções preenchidas por _preencherLegalSelect() a partir de
+             LIMITES_DISPENSA — ver legalOpcoes(). -->
+        <select id="m-legal"><option value="">Selecionar…</option></select>
       </div>
       <div class="info-field">
         <label for="m-criterio">Critério de Seleção (Art. 33, Lei 14.133/2021)</label>
@@ -2096,7 +2091,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.42.0';
+const SGCD_VERSION = '2.42.1';
 // URL absoluta (não relativa): o API_BASE monta as URLs da REST API a partir da
 // origem real, nunca uma porta fixa (era 'http://localhost:3000' hardcoded).
 const API_BASE = window.location.origin;
@@ -2839,10 +2834,62 @@ const FIELD_LABELS = {
 const DATE_FIELDS  = new Set(['data_conclusao','data_publicacao','data_encerramento','vigencia_inicial','vigencia_final','data_assinatura','prazo_propostas']);
 const MONEY_FIELDS = new Set(['valor_estimado','valor_adjudicado','valor_contrato']);
 
+// Tetos de dispensa por valor (art. 75, I e II da Lei 14.133/2021), atualizados
+// por decreto todo ano. FONTE ÚNICA dos números usados em CÁLCULO — antes eles
+// estavam repetidos no card de limite e no fallback de fracLimite, e uma
+// atualização podia passar por um e esquecer o outro.
+//
+// O texto das opções de fundamento legal também sai daqui (ver legalOpcoes e
+// SELECT_FIELDS), então basta atualizar este objeto e a citação do decreto em
+// Configurações. Processos antigos mantêm a redação do decreto vigente à época,
+// que é o correto — legalOpcoes() reinsere o valor gravado na lista para que ele
+// continue aparecendo no lugar de um campo vazio.
+const LIMITES_DISPENSA = { 'I': 130984.20, 'II': 65492.11 };
+// Texto das opções de fundamento legal derivado de LIMITES_DISPENSA: o valor
+// aparecia escrito à mão em três listas, e atualizar o decreto exigia lembrar
+// das três.
+function _decretoCurto() {
+  // "Decreto Federal nº 12.807, de 29 de dezembro de 2025" -> "Decreto nº 12.807/2025",
+  // que é como o texto do fundamento sempre citou. Sai das Configurações, então
+  // atualizar o decreto lá reflete aqui.
+  const txt = (typeof getUser === 'function' ? (getUser().decreto_limites || '') : '') ||
+              'Decreto Federal nº 12.807, de 29 de dezembro de 2025';
+  const num = txt.match(/n[ºo°]?\s*([\d.]+)/i);
+  const ano = txt.match(/(\d{4})\s*$/) || txt.match(/de\s+(\d{4})/i);
+  return num && ano ? `Decreto nº ${num[1]}/${ano[1]}` : txt;
+}
+
+const _fmtLimite = v => v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+function _preencherLegalSelect(valorGravado) {
+  const sel = document.getElementById('m-legal');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Selecionar…</option>' +
+    legalOpcoes(valorGravado).map(o => `<option value="${escHtml(o)}">${escHtml(o)}</option>`).join('');
+}
+
+function legalOpcoes(valorGravado) {
+  const base = [
+    `Art. 75, I — Valor (até R$ ${_fmtLimite(LIMITES_DISPENSA.I)} — obras/serv. engenharia)`,
+    `Art. 75, II — Valor (até R$ ${_fmtLimite(LIMITES_DISPENSA.II)} — serviços e compras)`,
+    'Art. 75, III — Emergência ou calamidade',
+    'Art. 75, IV — Fornecedor exclusivo',
+    'Outro',
+  ];
+  // Processo de exercício anterior traz o texto do decreto vigente à época —
+  // e é assim que deve continuar. Sem incluí-lo, o campo aparecia vazio, como
+  // se o fundamento tivesse sumido, convidando a trocá-lo sem necessidade.
+  if (valorGravado && !base.includes(valorGravado)) base.push(valorGravado);
+  return base;
+}
+
 const SELECT_FIELDS = {
   fundamento: [
-    { v: 'Art. 75, I — obras e serviços de engenharia e serviços de manutenção de veículos automotores até R$ 130.984,20 (Decreto nº 12.807/2025)', l: 'Art. 75, I — Obras/Eng. (até R$ 130.984,20)' },
-    { v: 'Art. 75, II — outros bens e serviços até R$ 65.492,11 (Decreto nº 12.807/2025)', l: 'Art. 75, II — Bens e Serviços (até R$ 65.492,11)' },
+    // Valores de LIMITES_DISPENSA; o decreto citado sai de decreto_limites nas
+    // Configurações. Ver legalOpcoes() para o mesmo raciocínio no outro select.
+    { v: `Art. 75, I — obras e serviços de engenharia e serviços de manutenção de veículos automotores até R$ ${_fmtLimite(LIMITES_DISPENSA.I)} (${_decretoCurto()})`,
+      l: `Art. 75, I — Obras/Eng. (até R$ ${_fmtLimite(LIMITES_DISPENSA.I)})` },
+    { v: `Art. 75, II — outros bens e serviços até R$ ${_fmtLimite(LIMITES_DISPENSA.II)} (${_decretoCurto()})`,
+      l: `Art. 75, II — Bens e Serviços (até R$ ${_fmtLimite(LIMITES_DISPENSA.II)})` },
     { v: 'Art. 75, III — situação de emergência ou calamidade pública', l: 'Art. 75, III — Emergência/Calamidade' },
     { v: 'Art. 75, IV — contratação com órgãos ou entidades da Administração Pública', l: 'Art. 75, IV — Contratação com Adm. Pública' },
     { v: 'Art. 75, V — compras de gêneros perecíveis e hortifrutigranjeiros', l: 'Art. 75, V — Gêneros Perecíveis' },
@@ -2909,17 +2956,6 @@ const FRAC_STOPWORDS = new Set(['de','do','da','dos','das','para','com','em','na
   'que','se','ou','ate','mais','menos','entre','sobre','aquisicao','contratacao',
   'fornecimento','prestacao','servico','servicos','compra','material']);
 
-// Tetos de dispensa por valor (art. 75, I e II da Lei 14.133/2021), atualizados
-// por decreto todo ano. FONTE ÚNICA dos números usados em CÁLCULO — antes eles
-// estavam repetidos no card de limite e no fallback de fracLimite, e uma
-// atualização podia passar por um e esquecer o outro.
-//
-// ⚠ Ao atualizar: os mesmos valores aparecem por extenso no texto das opções de
-// fundamento legal (o <select> de "Fundamento" e a lista LEGAL_OPCOES). Aqueles
-// são o texto que fica GRAVADO em cada processo, então mudam só para processos
-// novos — os antigos mantêm a redação do decreto vigente à época, que é o
-// correto. A citação do decreto em si é configurável em Configurações.
-const LIMITES_DISPENSA = { 'I': 130984.20, 'II': 65492.11 };
 const FRAC_LIMITES = {
   'I':  LIMITES_DISPENSA.I,
   'II': LIMITES_DISPENSA.II,
@@ -5956,6 +5992,7 @@ async function saveFornModal() {
 
 function openNewModal() {
   populateModalNatureza();
+  _preencherLegalSelect();
   document.getElementById('m-legal').value = '';
   document.getElementById('m-natureza').value = '';
   onModalNaturezaChange();
@@ -7243,14 +7280,7 @@ function renderInfoFields() {
         <input type="text" id="${fid}" value="${val}" oninput="maskMoney(this)" onchange="updateProcessField('${f.key}',this.value)"></div>`;
     }
     if (f.type === 'select') {
-      const opts = [
-        '',
-        'Art. 75, I — Valor (até R$ 130.984,20 — obras/serv. engenharia)',
-        'Art. 75, II — Valor (até R$ 65.492,11 — serviços e compras)',
-        'Art. 75, III — Emergência ou calamidade',
-        'Art. 75, IV — Fornecedor exclusivo',
-        'Outro'
-      ];
+      const opts = ['', ...legalOpcoes(p[f.key])];
       const options = opts.map(o => `<option value="${o}" ${p[f.key]===o?'selected':''}>${o || 'Selecionar…'}</option>`).join('');
       return `<div class="info-field"><label for="${fid}" style="display:flex;justify-content:space-between;align-items:center">${f.label}${histBtn}</label>
         <select id="${fid}" onchange="updateProcessField('${f.key}',this.value)">${options}</select></div>`;
@@ -11424,7 +11454,8 @@ function applyTemplate(id) {
   const t = _getTemplates().find(x => x.id === id);
   if (!t) return;
   if (t.objeto)   document.getElementById('m-obj').value       = t.objeto;
-  if (t.legal)    document.getElementById('m-legal').value     = t.legal;
+  if (t.legal)  { _preencherLegalSelect(t.legal);
+                  document.getElementById('m-legal').value = t.legal; }
   if (t.criterio_selecao) document.getElementById('m-criterio').value = t.criterio_selecao;
   if (t.valor)    document.getElementById('m-valor').value     = t.valor;
   if (t.unidade)  document.getElementById('m-unidade').value   = t.unidade;

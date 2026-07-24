@@ -5,6 +5,16 @@
 
 ---
 
+## [2.42.1] — 2026-07-24
+
+### Corrigido
+- **Processos de exercícios anteriores mostravam a Fundamentação Legal em branco.** O texto do fundamento inclui o valor-limite do decreto daquele ano; quando o decreto é atualizado, o texto antigo deixava de constar na lista de opções e o campo aparecia vazio, como se o fundamento tivesse sumido — convidando a trocá-lo sem necessidade. O valor gravado passa a ser sempre exibido, preservando a redação vigente à época.
+
+### Alterado
+- Os valores-limite do art. 75 agora aparecem em um único lugar do código, inclusive no texto das opções de fundamento. Atualizar o decreto passa a ser: trocar os dois valores e a citação em Configurações.
+
+---
+
 ## [2.42.0] — 2026-07-24
 
 ### Corrigido
