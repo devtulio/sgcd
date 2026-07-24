@@ -1,4 +1,4 @@
-# SGCD v2.39.4 — Servidor local: SQLite, autenticação, REST API, proxy CNPJ, e-mail SMTP, backup automático
+# SGCD v2.39.5 — Servidor local: SQLite, autenticação, REST API, proxy CNPJ, e-mail SMTP, backup automático
 import http.server
 import socketserver
 import os
@@ -37,7 +37,7 @@ import sgx_base   # esqueleto compartilhado da família — ver _esqueleto/READM
 # Versão do servidor — DEVE acompanhar o SGCD_VERSION do SGCD.html a cada release.
 # Exposta em /health para o frontend detectar quando o processo em execução está
 # desatualizado (HTML novo servido, mas server.py antigo ainda rodando em memória).
-SERVER_VERSION = '2.39.4'
+SERVER_VERSION = '2.39.5'
 
 PORT          = int(os.environ.get('SGCD_PORT', 3000))
 _BASE         = os.path.dirname(os.path.abspath(__file__))
@@ -1871,12 +1871,18 @@ def _com_sql_extra(conn, tabela):
         linhas.append(registro)
     return linhas
 
+# Credenciais que NÃO viajam no backup JSON: o arquivo sai do servidor e o
+# manual orienta enviá-lo a outra máquina para sincronizar. Restaurar não as
+# perde — a chave ausente no arquivo mantém o valor que já está no banco.
+_CHAVES_SIGILOSAS = ('smtp_pass', 'portal_transparencia_key')
+
 def _build_backup_payload():
     with get_db() as conn:
         processes    = _com_sql_extra(conn, 'processes')
         fornecedores = _com_sql_extra(conn, 'fornecedores')
         audit        = [dict(r) for r in conn.execute('SELECT * FROM audit_global').fetchall()]
-        settings     = {r['key']: r['value'] for r in conn.execute('SELECT key,value FROM sys_settings').fetchall()}
+        settings     = {r['key']: r['value'] for r in conn.execute('SELECT key,value FROM sys_settings').fetchall()
+                        if r['key'] not in _CHAVES_SIGILOSAS}
         file_rows    = conn.execute('SELECT * FROM files').fetchall()
     files_out = []
     for fr in file_rows:
