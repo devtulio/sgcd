@@ -456,5 +456,76 @@ class TestImportFornecedores(SGCDTestCase):
         self.assertEqual(matches[0]['razao_social'], 'Empresa Teste LTDA (novo nome)')
 
 
+class TestBackupPreservaColunasSql(SGCDTestCase):
+    """Regressão do eixo perda de dado (auditoria 2026-07-24).
+
+    `created_by` e `deleted_at` são colunas SQL que não existem dentro do blob
+    JSON de cada registro. O backup levava só o blob, então restaurar apagava a
+    autoria do processo e devolvia ao cadastro tudo o que estava na Lixeira.
+    """
+
+    def _criar_fornecedor(self, token, cnpj='11.222.333/0001-81'):
+        status, f = self.request('POST', '/api/fornecedores',
+                                 {'cnpj': cnpj, 'razao': 'Alfa Comércio Ltda'}, token=token)
+        self.assertEqual(status, 200, f)
+        return f['id']
+
+    def _col(self, tabela, coluna, rid):
+        with server.get_db() as conn:
+            row = conn.execute(f'SELECT {coluna} FROM {tabela} WHERE id=?', (rid,)).fetchone()
+        return row[coluna] if row else None
+
+    def test_restaurar_preserva_autoria_do_processo(self):
+        token = self.login()
+        status, p = self.request('POST', '/api/processes',
+                                 {'objeto': 'Aquisição de teste'}, token=token)
+        self.assertEqual(status, 200, p)
+        pid = p['id']
+        autor = self._col('processes', 'created_by', pid)
+        self.assertIsNotNone(autor, 'processo nasceu sem autoria — teste inválido')
+
+        _, backup = self.request('GET', '/api/backup', token=token)
+        self.assertEqual(self.request('POST', '/api/backup/restore', backup, token=token)[0], 200)
+        self.assertEqual(self._col('processes', 'created_by', pid), autor,
+                         'restaurar backup perdeu a autoria do processo')
+
+    def test_restaurar_nao_ressuscita_item_da_lixeira(self):
+        token = self.login()
+        fid = self._criar_fornecedor(token, '22.333.444/0001-92')
+        self.assertEqual(self.request('DELETE', f'/api/fornecedores/{fid}', token=token)[0], 200)
+        excluido_em = self._col('fornecedores', 'deleted_at', fid)
+        self.assertIsNotNone(excluido_em, 'exclusão não marcou deleted_at — teste inválido')
+
+        _, backup = self.request('GET', '/api/backup', token=token)
+        self.assertEqual(self.request('POST', '/api/backup/restore', backup, token=token)[0], 200)
+        self.assertEqual(self._col('fornecedores', 'deleted_at', fid), excluido_em,
+                         'restaurar backup tirou o fornecedor da Lixeira')
+
+    def test_importar_nao_ressuscita_item_da_lixeira(self):
+        token = self.login()
+        fid = self._criar_fornecedor(token, '33.444.555/0001-03')
+        self.request('DELETE', f'/api/fornecedores/{fid}', token=token)
+        excluido_em = self._col('fornecedores', 'deleted_at', fid)
+
+        status, _ = self.request('POST', '/api/fornecedores/import',
+                                 {'fornecedores': [{'id': fid, 'cnpj': '33.444.555/0001-03',
+                                                    'razao': 'Alfa Comércio Ltda'}]}, token=token)
+        self.assertEqual(status, 200)
+        self.assertEqual(self._col('fornecedores', 'deleted_at', fid), excluido_em,
+                         'importar fornecedores tirou da Lixeira quem estava excluído')
+
+    def test_sql_extra_nao_polui_o_registro(self):
+        # A chave '_sql' carrega as colunas no arquivo; não pode acabar dentro do
+        # blob regravado, que é o que o front consome.
+        token = self.login()
+        status, p = self.request('POST', '/api/processes', {'objeto': 'Outro teste'}, token=token)
+        pid = p['id']
+        _, backup = self.request('GET', '/api/backup', token=token)
+        self.request('POST', '/api/backup/restore', backup, token=token)
+        with server.get_db() as conn:
+            blob = json.loads(conn.execute('SELECT data FROM processes WHERE id=?', (pid,)).fetchone()['data'])
+        self.assertNotIn('_sql', blob)
+
+
 if __name__ == '__main__':
     unittest.main()

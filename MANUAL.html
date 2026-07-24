@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Manual Operacional — SGCD v2.39.3</title>
+<title>Manual Operacional — SGCD v2.39.4</title>
 <style>
   /* Reset e base */
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -89,7 +89,7 @@
       size: A4;
       margin: 20mm 20mm 25mm;
       @top-center {
-        content: "SGCD v2.39.3 — Manual Operacional";
+        content: "SGCD v2.39.4 — Manual Operacional";
         font-family: 'Times New Roman', serif;
         font-size: 9pt;
         color: #666;
@@ -116,7 +116,7 @@
     <div class="cover-title">Manual Operacional</div>
     <div class="cover-subtitle">SGCD — Sistema de Gestão de Contratação Direta</div>
     <div class="cover-system">Gestão de Processos de Dispensa de Licitação</div>
-    <div class="cover-version">Versão v2.39.3</div>
+    <div class="cover-version">Versão v2.39.4</div>
     <br>
     <div style="font-size:11pt; color:#555; line-height:1.8;">
       Aplicação web multiusuário para agentes de contratação pública<br>
@@ -1137,6 +1137,7 @@
 
 <!-- ─────────────────────────────────────────────── SEÇÃO 12 -->
 <h2 id="sec12">12. Backup e Restauração</h2>
+<p><strong>Dois tipos de backup, para usos diferentes.</strong> O arquivo <strong>JSON</strong> guarda os dados de trabalho (processos, fornecedores e configurações) e é o que se envia a outra máquina para sincronizar — ele <strong>não</strong> contém as contas de usuário nem as senhas. Para recuperação completa depois de perda de disco ou formatação, use o <strong>backup do banco (.db)</strong>, gerado automaticamente e disponível em Configurações → Backup: é uma cópia integral do sistema, contas inclusive. Guarde-o em local seguro, pois contém todos os dados.</p>
 <p>Os dados do SGCD ficam armazenados no arquivo <code>sgcd.db</code> (SQLite), no servidor local. Mesmo assim, é fundamental realizar backups regulares para se proteger contra perda do arquivo, falha de disco ou exclusão acidental.</p>
 
 <h3>Como fazer backup</h3>
@@ -1667,6 +1668,10 @@
 
 <!-- ─────────────────────────────────────────────── SEÇÃO 29 -->
 <h2 id="sec29">29. Histórico de Versões</h2>
+
+<h3>v2.39.4 — Julho/2026</h3>
+<p><strong>Corrigido</strong></p>
+<ul><li>Corrigido: restaurar um backup <strong>apagava a autoria dos processos</strong>, <strong>esvaziava a Lixeira</strong> (devolvendo processos e fornecedores excluídos ao cadastro) e perdia quem enviou cada anexo. Importar fornecedores também ressuscitava quem estava na Lixeira.</li></ul>
 
 <h3>v2.39.3 — Julho/2026</h3>
 <p><strong>Corrigido</strong></p>

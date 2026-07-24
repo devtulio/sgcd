@@ -5,6 +5,16 @@
 
 ---
 
+## [2.39.4] — 2026-07-24
+
+### Corrigido
+- **Restaurar um backup apagava a autoria dos processos.** Quem criou cada processo é registrado numa coluna do banco, fora do conteúdo do processo em si — e o arquivo de backup só guardava o conteúdo. Depois de restaurar, todos os processos ficavam sem autor.
+- **Restaurar um backup esvaziava a Lixeira, devolvendo tudo ao cadastro.** A marca de exclusão também fica fora do conteúdo do registro e não ia no arquivo: processos e fornecedores que estavam na Lixeira voltavam como ativos, sem aviso.
+- **Importar fornecedores ressuscitava quem estava na Lixeira.** Bastava o CNPJ de um fornecedor excluído aparecer no arquivo importado para ele voltar ao cadastro.
+- **Restaurar um backup perdia quem enviou cada anexo** e a data do envio.
+
+---
+
 ## [2.39.3] — 2026-07-23
 
 ### Corrigido

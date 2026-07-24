@@ -1,4 +1,4 @@
-# SGCD v2.39.3 — Servidor local: SQLite, autenticação, REST API, proxy CNPJ, e-mail SMTP, backup automático
+# SGCD v2.39.4 — Servidor local: SQLite, autenticação, REST API, proxy CNPJ, e-mail SMTP, backup automático
 import http.server
 import socketserver
 import os
@@ -37,7 +37,7 @@ import sgx_base   # esqueleto compartilhado da família — ver _esqueleto/READM
 # Versão do servidor — DEVE acompanhar o SGCD_VERSION do SGCD.html a cada release.
 # Exposta em /health para o frontend detectar quando o processo em execução está
 # desatualizado (HTML novo servido, mas server.py antigo ainda rodando em memória).
-SERVER_VERSION = '2.39.3'
+SERVER_VERSION = '2.39.4'
 
 PORT          = int(os.environ.get('SGCD_PORT', 3000))
 _BASE         = os.path.dirname(os.path.abspath(__file__))
@@ -1034,10 +1034,13 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         data['id'] = fid
         data.setdefault('updatedAt', _now_precise())
         with get_db() as conn:
+            # deleted_at por subconsulta: sem isso o REPLACE zerava a coluna e um
+            # fornecedor que estava na Lixeira voltava sozinho ao cadastro.
             conn.execute(
-                'INSERT OR REPLACE INTO fornecedores (id,data,cnpj,razao_social,updated_at) VALUES (?,?,?,?,?)',
+                '''INSERT OR REPLACE INTO fornecedores (id,data,cnpj,razao_social,updated_at,deleted_at)
+                   VALUES (?,?,?,?,?,(SELECT deleted_at FROM fornecedores WHERE id=?))''',
                 (fid, json.dumps(data, ensure_ascii=False),
-                 data.get('cnpj'), data.get('razao') or data.get('razao_social'), data['updatedAt'])
+                 data.get('cnpj'), data.get('razao') or data.get('razao_social'), data['updatedAt'], fid)
             )
         self._json(200, data)
 
@@ -1075,10 +1078,14 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
                     novos += 1
                 f['cnpj_digits'] = cnpj_d  # garante o campo (dados de CSV/parciais podem não trazer)
                 f['updatedAt'] = _now_precise()
+                # deleted_at vem por subconsulta em vez de ficar de fora: sem isso o
+                # REPLACE zerava a coluna e um fornecedor que estava na Lixeira
+                # voltava sozinho ao cadastro só porque o CNPJ dele veio no arquivo.
                 conn.execute(
-                    'INSERT OR REPLACE INTO fornecedores (id,data,cnpj,razao_social,updated_at) VALUES (?,?,?,?,?)',
+                    '''INSERT OR REPLACE INTO fornecedores (id,data,cnpj,razao_social,updated_at,deleted_at)
+                       VALUES (?,?,?,?,?,(SELECT deleted_at FROM fornecedores WHERE id=?))''',
                     (fid, json.dumps(f, ensure_ascii=False),
-                     f.get('cnpj'), f.get('razao') or f.get('razao_social'), f['updatedAt'])
+                     f.get('cnpj'), f.get('razao') or f.get('razao_social'), f['updatedAt'], fid)
                 )
             conn.commit()
         self._json(200, {'ok': True, 'novos': novos, 'atualizados': atualizados, 'ignorados': ignorados})
@@ -1364,22 +1371,28 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
             for p in data.get('processes', []):
                 pid = p.get('id') or str(uuid.uuid4())
                 p['id'] = pid
+                sql = p.pop('_sql', {})   # fora do blob: são colunas, não campos do processo
                 conn.execute(
                     '''INSERT OR REPLACE INTO processes
-                       (id,data,objeto,status,unidade,valor,num_proc,num_dl,created_at,updated_at)
-                       VALUES (?,?,?,?,?,?,?,?,?,?)''',
+                       (id,data,objeto,status,unidade,valor,num_proc,num_dl,created_at,updated_at,
+                        created_by,deleted_at)
+                       VALUES (?,?,?,?,?,?,?,?,?,?,?,?)''',
                     (pid, json.dumps(p, ensure_ascii=False),
                      p.get('objeto'), p.get('status'), p.get('unidade'), _float(p.get('valor')),
-                     p.get('num_proc'), p.get('num_dl'), p.get('createdAt'), p.get('updatedAt'))
+                     p.get('num_proc'), p.get('num_dl'), p.get('createdAt'), p.get('updatedAt'),
+                     sql.get('created_by'), sql.get('deleted_at'))
                 )
 
             for f in data.get('fornecedores', []):
                 fid = f.get('id') or str(uuid.uuid4())
                 f['id'] = fid
+                sql = f.pop('_sql', {})
                 conn.execute(
-                    'INSERT OR REPLACE INTO fornecedores (id,data,cnpj,razao_social,updated_at) VALUES (?,?,?,?,?)',
+                    '''INSERT OR REPLACE INTO fornecedores (id,data,cnpj,razao_social,updated_at,deleted_at)
+                       VALUES (?,?,?,?,?,?)''',
                     (fid, json.dumps(f, ensure_ascii=False),
-                     f.get('cnpj'), f.get('razao') or f.get('razao_social'), f.get('updatedAt'))
+                     f.get('cnpj'), f.get('razao') or f.get('razao_social'), f.get('updatedAt'),
+                     sql.get('deleted_at'))
                 )
 
             for a in data.get('auditGlobal', []):
@@ -1399,11 +1412,13 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
                         fh.write(binary)
                     conn.execute(
                         '''INSERT OR REPLACE INTO files
-                           (id,process_id,step_index,nome_original,nome_disco,tamanho,mime)
-                           VALUES (?,?,?,?,?,?,?)''',
+                           (id,process_id,step_index,nome_original,nome_disco,tamanho,mime,
+                            uploaded_by,uploaded_em)
+                           VALUES (?,?,?,?,?,?,?,?,?)''',
                         (fd.get('id') or str(uuid.uuid4()), fd.get('process_id'),
                          fd.get('step_index'), fd.get('nome_original', 'arquivo'),
-                         safe_name, len(binary), fd.get('mime', 'application/octet-stream'))
+                         safe_name, len(binary), fd.get('mime', 'application/octet-stream'),
+                         fd.get('uploaded_by'), fd.get('uploaded_em'))
                     )
                 except Exception:
                     pass
@@ -1841,10 +1856,25 @@ def _watchdog():
 
 # ── Backup automático do banco ─────────────────────────────────────────────────
 
+# Colunas que vivem só no SQL, fora do blob JSON de cada registro: sem levá-las
+# no backup, restaurar perdia a autoria (created_by) e devolvia à vida o que
+# estava na Lixeira (deleted_at). Vão sob '_sql' para não poluir o blob, que é
+# o que o front consome — o restore lê e remove essa chave antes de regravar.
+_SQL_EXTRA = {'processes': ('created_by', 'deleted_at'), 'fornecedores': ('deleted_at',)}
+
+def _com_sql_extra(conn, tabela):
+    cols = _SQL_EXTRA[tabela]
+    linhas = []
+    for r in conn.execute(f'SELECT data,{",".join(cols)} FROM {tabela}').fetchall():
+        registro = json.loads(r['data'])
+        registro['_sql'] = {c: r[c] for c in cols}
+        linhas.append(registro)
+    return linhas
+
 def _build_backup_payload():
     with get_db() as conn:
-        processes    = [json.loads(r['data']) for r in conn.execute('SELECT data FROM processes').fetchall()]
-        fornecedores = [json.loads(r['data']) for r in conn.execute('SELECT data FROM fornecedores').fetchall()]
+        processes    = _com_sql_extra(conn, 'processes')
+        fornecedores = _com_sql_extra(conn, 'fornecedores')
         audit        = [dict(r) for r in conn.execute('SELECT * FROM audit_global').fetchall()]
         settings     = {r['key']: r['value'] for r in conn.execute('SELECT key,value FROM sys_settings').fetchall()}
         file_rows    = conn.execute('SELECT * FROM files').fetchall()
