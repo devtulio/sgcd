@@ -121,3 +121,36 @@ test('objeto/nº DL com payload de XSS não executa script no documento gerado',
   expect(xssBody).toBeUndefined();
   await expect(popup.locator('.doc-title')).toContainText('img');
 });
+
+test('sanitizador de e-mail bloqueia javascript: mesmo com caractere de controle', async ({ page }) => {
+  // Regressão: DANGEROUS_PROTOCOLS testava o valor cru do atributo, e TAB/LF/CR
+  // dentro do esquema são ignorados pelo navegador ao resolver a URL — um
+  // href="java<TAB>script:..." passava pelo filtro e virava javascript: de
+  // verdade (verificado: a.protocol devolvia 'javascript:').
+  await page.goto('/SGCD.html');
+
+  const r = await page.evaluate(() => {
+    const proto = html => {
+      const limpo = _sanitizeEmailHtml(html);
+      const el = new DOMParser().parseFromString(limpo, 'text/html').querySelector('a,img');
+      return { limpo, protocolo: el ? el.protocol : '(sem elemento)' };
+    };
+    return {
+      tab:      proto('<a href="java\tscript:alert(1)">x</a>'),
+      lf:       proto('<a href="java\nscript:alert(1)">x</a>'),
+      cr:       proto('<a href="java\rscript:alert(1)">x</a>'),
+      vbs:      proto('<a href="vb\tscript:alert(1)">x</a>'),
+      imgSrc:   proto('<img src="java\tscript:alert(1)">'),
+      https:    proto('<a href="https://orindiuva.sp.gov.br/edital">edital</a>'),
+      mailto:   proto('<a href="mailto:proc@orindiuva.sp.gov.br">e-mail</a>'),
+    };
+  });
+
+  for (const chave of ['tab', 'lf', 'cr', 'vbs', 'imgSrc']) {
+    expect(r[chave].limpo, `${chave} manteve o atributo`).not.toMatch(/href=|src=/);
+    expect(r[chave].protocolo, `${chave} ainda resolve para javascript:`).not.toBe('javascript:');
+  }
+  // e o que é legítimo continua passando
+  expect(r.https.protocolo).toBe('https:');
+  expect(r.mailto.protocolo).toBe('mailto:');
+});

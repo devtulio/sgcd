@@ -5,6 +5,13 @@
 
 ---
 
+## [2.40.2] — 2026-07-24
+
+### Corrigido
+- **Link disfarçado passava pelo filtro do corpo de e-mail.** Ao enviar um e-mail, o sistema limpa o texto formatado antes de mandar, removendo scripts e endereços perigosos. O filtro comparava o endereço exatamente como escrito — e um `javascript:` com um caractere invisível no meio não era reconhecido, embora o navegador o entenda normalmente ao clicar. Agora os caracteres invisíveis são desconsiderados na conferência. Endereços legítimos (http, https, e-mail, imagens) continuam passando.
+
+---
+
 ## [2.40.1] — 2026-07-24
 
 ### Corrigido
