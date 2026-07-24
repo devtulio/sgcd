@@ -17,6 +17,9 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import server  # noqa: E402
 
 PORT = 3091
+# Capturado antes de o setUpModule limpar a flag, para que o teste da troca
+# obrigatória continue verificando o que init_db() realmente cria.
+_admin_nasceu_com_troca = None
 _tmpdir = None
 _httpd = None
 _thread = None
@@ -35,6 +38,16 @@ def setUpModule():
     os.makedirs(server.UPLOADS_DIR, exist_ok=True)
     os.makedirs(server.BACKUP_DIR, exist_ok=True)
     server.init_db()
+    # A suíte age como um sistema já instalado, com a senha padrão trocada: sem
+    # isto todo login como admin/admin123 tomaria 403, porque o servidor passou a
+    # recusar qualquer rota enquanto a troca obrigatória estiver pendente (o
+    # bloqueio em si tem teste próprio, em TestSenhaPadraoObrigatoria).
+    global _admin_nasceu_com_troca
+    with server.get_db() as conn:
+        _admin_nasceu_com_troca = conn.execute(
+            "SELECT must_change_password FROM usuarios WHERE username='admin'").fetchone()['must_change_password']
+        conn.execute("UPDATE usuarios SET must_change_password=0 WHERE username='admin'")
+        conn.commit()
 
     socketserver.ThreadingTCPServer.allow_reuse_address = True
     _httpd = socketserver.ThreadingTCPServer(('127.0.0.1', PORT), server.SGCDHandler)
@@ -104,9 +117,9 @@ class TestAuth(SGCDTestCase):
         self.assertEqual(data['username'], 'admin')
 
     def test_admin_padrao_nasce_com_troca_de_senha_obrigatoria(self):
-        with server.get_db() as conn:
-            row = conn.execute('SELECT must_change_password FROM usuarios WHERE username=?', ('admin',)).fetchone()
-        self.assertEqual(row['must_change_password'], 1)
+        # Valor de quando init_db() criou o admin — o setUpModule zera a flag
+        # depois, para que o resto da suíte possa usar a conta.
+        self.assertEqual(_admin_nasceu_com_troca, 1)
 
 
 class TestForcaTrocaSenha(SGCDTestCase):
@@ -565,6 +578,45 @@ class TestBackupNaoVazaCredencial(SGCDTestCase):
         self.assertEqual(self.request('POST', '/api/backup/restore', backup, token=token)[0], 200)
         self.assertEqual(self._ler_segredo(), self.SEGREDO,
                          'restaurar backup apagou a senha do SMTP do sistema')
+
+
+class TestSenhaPadraoObrigatoria(SGCDTestCase):
+    """Regressão do eixo permissão/sigilo (auditoria 2026-07-24).
+
+    A troca de senha obrigatória existia só no navegador: quem falasse direto
+    com a API entrava com a senha padrão (que está no README e no manual) e
+    usava o sistema inteiro, rotas de administrador inclusive.
+    """
+
+    def _usuario_pendente(self):
+        adm = self.login()
+        self.request('POST', '/api/usuarios',
+                     {'username': 'pendente', 'nome': 'Pendente',
+                       'password': 'senha123', 'senha': 'senha123', 'admin': True}, token=adm)
+        with server.get_db() as conn:
+            uid = conn.execute("SELECT id FROM usuarios WHERE username='pendente'").fetchone()['id']
+            conn.execute('UPDATE usuarios SET must_change_password=1 WHERE id=?', (uid,))
+            conn.commit()
+        st, log = self.request('POST', '/api/auth/login', {'username': 'pendente', 'password': 'senha123'})
+        self.assertEqual(st, 200, log)
+        return log['token'], uid
+
+    def test_api_recusa_enquanto_a_senha_nao_for_trocada(self):
+        tok, _ = self._usuario_pendente()
+        for rota in ('/api/processes', '/api/usuarios', '/api/backup'):
+            st, _ = self.request('GET', rota, token=tok)
+            self.assertEqual(st, 403, f'{rota} respondeu {st} com a senha padrão pendente')
+
+    def test_libera_o_que_a_tela_de_troca_precisa(self):
+        tok, uid = self._usuario_pendente()
+        self.assertEqual(self.request('GET', '/api/auth/me', token=tok)[0], 200)
+        st, _ = self.request('PUT', f'/api/usuarios/{uid}', {'password': 'TrocadaAgora#2026'}, token=tok)
+        self.assertEqual(st, 200, 'não deu para trocar a própria senha')
+        st, log = self.request('POST', '/api/auth/login',
+                               {'username': 'pendente', 'password': 'TrocadaAgora#2026'})
+        self.assertEqual(st, 200)
+        self.assertEqual(self.request('GET', '/api/processes', token=log['token'])[0], 200,
+                         'sistema continuou bloqueado depois de trocar a senha')
 
 
 if __name__ == '__main__':

@@ -1,4 +1,4 @@
-# SGCD v2.39.5 — Servidor local: SQLite, autenticação, REST API, proxy CNPJ, e-mail SMTP, backup automático
+# SGCD v2.40.0 — Servidor local: SQLite, autenticação, REST API, proxy CNPJ, e-mail SMTP, backup automático
 import http.server
 import socketserver
 import os
@@ -37,7 +37,7 @@ import sgx_base   # esqueleto compartilhado da família — ver _esqueleto/READM
 # Versão do servidor — DEVE acompanhar o SGCD_VERSION do SGCD.html a cada release.
 # Exposta em /health para o frontend detectar quando o processo em execução está
 # desatualizado (HTML novo servido, mas server.py antigo ainda rodando em memória).
-SERVER_VERSION = '2.39.5'
+SERVER_VERSION = '2.40.0'
 
 PORT          = int(os.environ.get('SGCD_PORT', 3000))
 _BASE         = os.path.dirname(os.path.abspath(__file__))
@@ -233,7 +233,8 @@ def get_session(token):
     with get_db() as conn:
         row = conn.execute(
             '''SELECT s.token, s.user_id, s.expires,
-                      u.nome, u.username, u.cpf, u.email, u.cargo, u.matricula, u.admin, u.ativo
+                      u.nome, u.username, u.cpf, u.email, u.cargo, u.matricula, u.admin, u.ativo,
+                      u.must_change_password
                FROM sessions s JOIN usuarios u ON u.id=s.user_id
                WHERE s.token=? AND s.expires>? AND u.ativo=1''',
             (token, time.time())
@@ -518,8 +519,7 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
             result = {r['key']: r['value'] for r in rows}
             # A senha SMTP fica só no servidor (o envio resolve a config server-side).
             result['smtp_pass_set'] = '1' if (result.pop('smtp_pass', '') or '').strip() else '0'
-            print(f"  [SETTINGS] GET /api/settings de {s.get('nome') or s.get('user_id')} — chaves retornadas: {sorted(result.keys())}", flush=True)
-            self._json(200, result)
+            self._json(200, _settings_para(result, s))
 
         elif p in ('/api/settings/brasao', '/api/settings/brasao/'):
             with get_db() as conn:
@@ -702,7 +702,6 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
             # Dados de Organização: qualquer usuário autenticado pode salvar (não é config administrativa)
             allowed = {'orgao', 'municipio', 'aut_nome', 'aut_cargo', 'site_oficial',
                        'diario_url', 'cnpj_orgao', 'codigo_ibge', 'uf', 'decreto_limites'}
-            print(f"  [SETTINGS] PUT /api/settings/org recebido de {s.get('nome') or s.get('user_id')} (admin={s['admin']})", flush=True)
             self._save_settings({k: v for k, v in data.items() if k in allowed})
         elif p in ('/api/settings/brasao', '/api/settings/brasao/'):
             # Brasão customizado (data URL base64): qualquer usuário autenticado pode salvar.
@@ -714,7 +713,6 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
                     conn.execute('INSERT OR REPLACE INTO sys_settings (key,value) VALUES (?,?)', ('brasao_dataurl', dataurl))
                 else:
                     conn.execute("DELETE FROM sys_settings WHERE key='brasao_dataurl'")
-            print(f"  [SETTINGS] PUT /api/settings/brasao de {s.get('nome') or s.get('user_id')} — {'removido' if not dataurl else f'{len(dataurl)} bytes'}", flush=True)
             self._json(200, {'ok': True})
         elif p in ('/api/settings/smtp', '/api/settings/smtp/'):
             # Config SMTP: sensível (inclui senha), restrita a admin
@@ -822,6 +820,12 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         if not s:
             self._json(401, {'error': 'Não autenticado'})
             return s
+        # Troca de senha obrigatória valia só no navegador — ver
+        # sgx_base.rota_liberada_sem_trocar_senha.
+        if s.get('must_change_password') and not sgx_base.rota_liberada_sem_trocar_senha(
+                self.path, self.command, s['user_id']):
+            self._json(403, {'error': 'Troque a senha padrão antes de usar o sistema.'})
+            return None
         # Sessão deslizante: qualquer requisição autenticada renova o prazo. Antes
         # só o /api/auth/ping renovava, e o ping é um setInterval que o navegador
         # estrangula em aba de segundo plano — quem ficava redigindo com a aba
@@ -1260,16 +1264,12 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         # ponytail: string vazia nunca sobrescreve um valor já salvo — evita que um
         # formulário em branco (navegador que nunca carregou os dados) apague a
         # configuração real ao salvar. Para limpar um campo, edite o banco diretamente.
-        gravadas, ignoradas = [], []
         with get_db() as conn:
             for key, value in data.items():
                 v = value if isinstance(value, str) else json.dumps(value, ensure_ascii=False)
                 if v == '':
-                    ignoradas.append(key)
                     continue
                 conn.execute('INSERT OR REPLACE INTO sys_settings (key,value) VALUES (?,?)', (key, v))
-                gravadas.append(key)
-        print(f'  [SETTINGS] gravadas={gravadas} ignoradas(vazias)={ignoradas}', flush=True)
         if 'auto_backup_keep' in data or 'backup_path' in data:
             _rotate_backups()
         self._json(200, {'ok': True})
@@ -1875,6 +1875,22 @@ def _com_sql_extra(conn, tabela):
 # manual orienta enviá-lo a outra máquina para sincronizar. Restaurar não as
 # perde — a chave ausente no arquivo mantém o valor que já está no banco.
 _CHAVES_SIGILOSAS = ('smtp_pass', 'portal_transparencia_key')
+
+def _settings_para(result, s):
+    """Recorta o que /api/settings devolve conforme quem pergunta.
+
+    A rota é aberta a qualquer usuário autenticado — a tela de Configurações usa
+    os dados de organização — e por ela saíam a chave de API do Portal da
+    Transparência e a conta de e-mail do órgão. A senha do SMTP nunca esteve
+    aqui; agora a config de e-mail inteira, a chave do Portal e o caminho de
+    backup também só vão para o administrador. O SMTP pessoal de cada usuário
+    tem endpoint próprio e não passa por aqui.
+    """
+    if s['admin']:
+        return result
+    return {k: v for k, v in result.items()
+            if not k.startswith('smtp_') and k != 'backup_path' and k not in _CHAVES_SIGILOSAS}
+
 
 def _build_backup_payload():
     with get_db() as conn:
