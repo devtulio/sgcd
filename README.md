@@ -6,6 +6,8 @@
 
 O **SGCD** é uma aplicação web multiusuário para gestão completa de processos de **Dispensa de Licitação** conforme a **Lei Federal nº 14.133/2021** (Nova Lei de Licitações e Contratos Administrativos). Desenvolvido para agentes de contratação pública, o sistema organiza todas as etapas do processo — da formalização da demanda até a publicação do contrato no PNCP — em um fluxo de trabalho guiado, com geração automática de documentos.
 
+Compartilha a arquitetura (servidor Python stdlib + SQLite + frontend single-file) com os sistemas irmãos **SGCA**, **SGDP** e **SGEA**.
+
 Funciona em rede local: um único computador executa o servidor e todos os usuários acessam pelo navegador via IP ou `localhost`.
 
 ---
@@ -68,12 +70,14 @@ Funciona em rede local: um único computador executa o servidor e todos os usuá
 | Usuário | `admin`     |
 | Senha   | `admin123`  |
 
-### Menu inicial
+### Menu de inicialização
+
+O `Iniciar SGCD.bat` abre um menu no terminal:
 
 | Opção | Descrição |
 |-------|-----------|
 | **[1] Diagnóstico** | Verifica e corrige automaticamente rede, porta e firewall (pede elevação de Administrador quando necessário) |
-| **[2] Iniciar Servidor** | Abre o navegador automaticamente e fica rodando continuamente — funciona tanto para uso individual quanto em rede. Só encerra com **Ctrl+C** no terminal |
+| **[2] Iniciar Servidor** | Sobe o servidor e mantém rodando continuamente — atende uso individual e em rede. Só encerra com **Ctrl+C** no terminal ou fechando a janela |
 
 ### Acesso em rede local
 
