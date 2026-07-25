@@ -7,6 +7,10 @@
 
 ## [Não versionado]
 
+---
+
+## [2.46.1] — 2026-07-25
+
 ### Alterado
 - **Avisos de várias linhas passam a sair em linhas separadas** (antes viravam um parágrafo corrido). Aparece, por exemplo, na lista de arquivos rejeitados por exceder 20 MB.
 
