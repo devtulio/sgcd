@@ -9,6 +9,17 @@
 
 ---
 
+## [2.46.2] — 2026-07-25
+
+### Documentação
+- **Auditoria do manual e do README.** A Seção 4 (Fornecedores) ainda ensinava a operar a tela antiga de cards, substituída por tabela + janela na 2.46.0 — foi reescrita. Corrigidos também: o backup do banco (é pacote .zip com o banco e os anexos desde a 2.43.0, e restaurá-lo repõe os PDFs), o limite prático de anexo (20 MB, recusado pela própria tela), o nome do arquivo de exportação, a aba onde ficam os dados do órgão (Organização) e o rodapé do manual, que ainda anunciava a v1.18.0.
+- **O que existia sem documentação entrou no manual:** a opção **Gerar como MINUTA**, os três métodos de cálculo do preço estimado (média, mediana e menor preço, art. 6º da IN SEGES/ME 65/2021), a tela **Erros recentes do sistema**, o **cadastro de fornecedores compartilhado** por CNPJ com os sistemas irmãos, as **etiquetas** do processo, a **consulta automática CEIS/CNEP** e os eventos de auditoria de organização e brasão.
+- **Correções de navegação e coerência:** a barra lateral descrita corretamente (com Lixeira, sem Notificações, com Auditoria marcada como exclusiva de administrador), o Critério de Seleção apontado para o cadastro do processo (estava atribuído a duas etapas diferentes e erradas), a Lixeira renomeada para "Processos e Fornecedores Excluídos", títulos do sumário igualados aos do corpo e subseções que faltavam acrescentadas ao sumário.
+- **README:** removido um documento que o sistema não gera (Extrato de Publicação), limite de anexo corrigido, funcionalidades recentes acrescentadas e a árvore de arquivos atualizada com o esqueleto compartilhado e o waitress vendorizado — que também substitui a afirmação de "zero dependências" por "nada a instalar".
+- **Histórico de Versões** completado com as versões 2.20.3 e 2.20.4.
+
+---
+
 ## [2.46.1] — 2026-07-25
 
 ### Alterado

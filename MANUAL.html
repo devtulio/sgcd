@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Manual Operacional — SGCD v2.46.1</title>
+<title>Manual Operacional — SGCD v2.46.2</title>
 <style>
   /* Reset e base */
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -89,7 +89,7 @@
       size: A4;
       margin: 20mm 20mm 25mm;
       @top-center {
-        content: "SGCD v2.46.1 — Manual Operacional";
+        content: "SGCD v2.46.2 — Manual Operacional";
         font-family: 'Times New Roman', serif;
         font-size: 9pt;
         color: #666;
@@ -116,7 +116,7 @@
     <div class="cover-title">Manual Operacional</div>
     <div class="cover-subtitle">SGCD — Sistema de Gestão de Contratação Direta</div>
     <div class="cover-system">Gestão de Processos de Dispensa de Licitação</div>
-    <div class="cover-version">Versão v2.46.1</div>
+    <div class="cover-version">Versão v2.46.2</div>
     <br>
     <div style="font-size:11pt; color:#555; line-height:1.8;">
       Aplicação web multiusuário para agentes de contratação pública<br>
@@ -142,7 +142,7 @@
     <div class="toc-item h3"><a href="#sec1-1">1.1 O que é o SGCD</a></div>
     <div class="toc-item h3"><a href="#sec1-2">1.2 Para quem é destinado</a></div>
     <div class="toc-item h3"><a href="#sec1-3">1.3 Requisitos mínimos</a></div>
-    <div class="toc-item h3"><a href="#sec1-4">1.4 Aviso sobre armazenamento de dados</a></div>
+    <div class="toc-item h3"><a href="#sec1-4">1.4 Armazenamento de dados</a></div>
     <div class="toc-item h3"><a href="#sec1-5">1.5 Uso em rede local</a></div>
 
     <div class="toc-item h2"><a href="#sec2">2. Primeiro Acesso — Configuração Inicial</a></div>
@@ -173,6 +173,7 @@
     <div class="toc-item h3"><a href="#sec7-4">7.4 Editar informações do processo</a></div>
     <div class="toc-item h3"><a href="#sec7-5">7.5 Reordenar etapas</a></div>
     <div class="toc-item h3"><a href="#sec7-6">7.6 Histórico e log de auditoria</a></div>
+    <div class="toc-item h3"><a href="#sec7-7">7.7 Responsável preenchido automaticamente</a></div>
 
     <div class="toc-item h2"><a href="#sec8">8. Gerenciamento de Propostas (Etapa 11)</a></div>
     <div class="toc-item h3"><a href="#sec8-1">8.1 Situações de proposta</a></div>
@@ -216,16 +217,29 @@
 
     <div class="toc-item h2"><a href="#sec20">20. QR Code e Verificação de Autenticidade</a></div>
     <div class="toc-item h3"><a href="#sec20-1">20.1 QR Code nos documentos</a></div>
-    <div class="toc-item h3"><a href="#sec20-2">20.2 Como verificar um documento</a></div>
+    <div class="toc-item h3"><a href="#sec20-2">20.2 O código de autenticidade</a></div>
     <div class="toc-item h3"><a href="#sec20-3">20.3 Histórico de edições por campo</a></div>
 
     <div class="toc-item h2"><a href="#sec21">21. Backup Automático e Proteção de Dados</a></div>
-    <div class="toc-item h2"><a href="#sec22">22. Controle de Acesso por Senha</a></div>
+    <div class="toc-item h3"><a href="#sec21-1">21.1 Backup automático do servidor</a></div>
+    <div class="toc-item h3"><a href="#sec21-2">21.2 Exportação manual (JSON)</a></div>
+    <div class="toc-item h3"><a href="#sec21-3">21.3 Validação ao concluir etapas</a></div>
+
+    <div class="toc-item h2"><a href="#sec22">22. Login e Controle de Acesso</a></div>
+    <div class="toc-item h3"><a href="#sec22-1">22.1 Tela de login</a></div>
+    <div class="toc-item h3"><a href="#sec22-2">22.2 Gerenciando usuários</a></div>
+    <div class="toc-item h3"><a href="#sec22-3">22.3 Recuperação de acesso</a></div>
+
     <div class="toc-item h2"><a href="#sec23">23. Painel de Diagnóstico</a></div>
+    <div class="toc-item h3"><a href="#sec23-1">23.1 Como acessar</a></div>
+    <div class="toc-item h3"><a href="#sec23-2">23.2 O que é verificado</a></div>
+    <div class="toc-item h3"><a href="#sec23-3">23.3 Verificações realizadas</a></div>
+    <div class="toc-item h3"><a href="#sec23-4">23.4 Erros recentes do sistema</a></div>
+
     <div class="toc-item h2"><a href="#sec24">24. Notificações por E-mail</a></div>
     <div class="toc-item h2"><a href="#sec25">25. Vinculação entre Processos</a></div>
     <div class="toc-item h2"><a href="#sec26">26. Agenda de Vencimentos</a></div>
-    <div class="toc-item h2"><a href="#sec27">27. Lixeira — Processos Excluídos</a></div>
+    <div class="toc-item h2"><a href="#sec27">27. Lixeira — Processos e Fornecedores Excluídos</a></div>
     <div class="toc-item h2"><a href="#sec28">28. Exportação PNCP</a></div>
     <div class="toc-item h2"><a href="#sec29">29. Histórico de Versões</a></div>
   </div>
@@ -309,7 +323,7 @@
 </div>
 
 <h3 id="sec2-2">2.2 Campos do perfil</h3>
-<p>Preencha os seguintes campos na aba <strong>Perfil do Agente</strong>:</p>
+<p>Preencha os seguintes campos na aba <strong>Organização</strong>:</p>
 
 <table>
   <tr>
@@ -399,8 +413,8 @@
   <li><strong>Seção Principal — Dashboard:</strong> retorna ao dashboard de processos; exibe badge com o total de processos cadastrados</li>
   <li><strong>Seção Contratações — Fornecedores:</strong> acessa o cadastro de fornecedores</li>
   <li><strong>Seção Contratações — Agenda:</strong> abre a Agenda de Vencimentos; exibe badge vermelho com a contagem de alertas ativos</li>
-  <li><strong>Seção Administração — Auditoria:</strong> abre a Trilha de Auditoria Global</li>
-  <li><strong>Seção Administração — Notificações:</strong> abre o painel de alertas e pendências</li>
+  <li><strong>Seção Administração — Lixeira:</strong> abre a Lixeira, com os processos e fornecedores excluídos (ver Seção 27)</li>
+  <li><strong>Seção Administração — Auditoria:</strong> abre a Trilha de Auditoria Global (somente administradores)</li>
   <li><strong>Seção Administração — Configurações:</strong> abre as configurações do sistema</li>
   <li><strong>Rodapé do sidebar:</strong> exibe avatar com iniciais, nome e cargo do usuário logado; botão de <em>Sair</em> (volta à tela de login sem encerrar o servidor — o servidor local fica sempre disponível para o próximo login, e só é encerrado de fato fechando a janela do <code>Iniciar SGCD.bat</code> ou com Ctrl+C no terminal)</li>
 </ul>
@@ -429,7 +443,7 @@
 
 <h3 id="sec4-1">4.1 Consultando e cadastrando</h3>
 <p>Para acessar o cadastro de fornecedores, clique no <strong>ícone de prédio</strong> na barra lateral. A tela exibirá a lista de fornecedores cadastrados e um botão para adicionar novo.</p>
-<p>Os fornecedores são exibidos como cards na lista. <strong>Clique em qualquer card</strong> para expandi-lo e visualizar todos os dados do fornecedor sem sair da tela. Clique novamente (ou em "Fechar") para recolher. Apenas um card pode estar aberto por vez.</p>
+<p>Os fornecedores são listados em <strong>tabela</strong>. <strong>Clique em qualquer linha</strong> (ou no botão <strong>"✏ Editar"</strong> da linha) para abrir a <strong>janela do fornecedor</strong>, com todos os dados organizados nas abas <strong>Dados</strong>, <strong>Certidões</strong>, <strong>Sanções</strong> e <strong>Participações</strong>. Feche a janela pelo <strong>✕</strong> ou pela tecla <code>Esc</code> para voltar à lista.</p>
 <p>Para cadastrar um novo fornecedor:</p>
 <ol>
   <li>Clique em <strong>"+ Novo Fornecedor"</strong></li>
@@ -439,26 +453,30 @@
   <li>Verifique e complete os dados se necessário</li>
   <li>Clique em <strong>"Salvar"</strong></li>
 </ol>
-<p>Para <strong>editar</strong> um fornecedor já cadastrado, clique no botão <strong>"✏ Editar"</strong> no canto do card (sem precisar abrir modal). O formulário abre diretamente abaixo do card na lista. É possível também re-consultar o CNPJ na Receita Federal durante a edição para atualizar os dados.</p>
+<p>Para <strong>editar</strong> um fornecedor já cadastrado, clique na linha correspondente na tabela (ou no botão <strong>"✏ Editar"</strong>) — a janela do fornecedor abre na aba <strong>Dados</strong>, com os campos disponíveis para alteração. É possível também re-consultar o CNPJ na Receita Federal durante a edição para atualizar os dados.</p>
 <div class="dica">
-  <strong>Dica:</strong> Ao vincular fornecedores do cadastro às propostas (em vez de digitá-los manualmente), o histórico de participações do fornecedor em processos anteriores fica disponível automaticamente no card, na aba "Dados".
+  <strong>Dica:</strong> Ao vincular fornecedores do cadastro às propostas (em vez de digitá-los manualmente), o histórico de participações do fornecedor em processos anteriores fica disponível automaticamente na janela do fornecedor, na aba "Participações".
 </div>
 
 <h3 id="sec4-2">4.2 Certidões e regularidade fiscal</h3>
-<p>Para cada fornecedor, é possível registrar as certidões de regularidade fiscal, trabalhista e previdenciária. Com o card do fornecedor expandido, clique na aba <strong>"Certidões"</strong> e informe:</p>
+<p>Para cada fornecedor, é possível registrar as certidões de regularidade fiscal, trabalhista e previdenciária. Com a janela do fornecedor aberta, clique na aba <strong>"Certidões"</strong> e informe:</p>
 <ul>
   <li><strong>Tipo da certidão</strong> (ex.: FGTS, Receita Federal, INSS, Trabalhista, Municipal, Estadual)</li>
   <li><strong>Situação:</strong> Regular, Irregular ou Vencida</li>
   <li><strong>Data de emissão</strong> e <strong>data de vencimento</strong></li>
 </ul>
-<p>O formulário de certidão abre diretamente dentro do card, sem modal separado. Ao salvar ou cancelar, o sistema volta para a lista de certidões do fornecedor. O sistema exibe alertas quando certidões estão próximas do vencimento ou já vencidas, auxiliando na etapa de habilitação (Etapa 12).</p>
+<p>O formulário de certidão abre dentro da própria aba "Certidões". Ao salvar ou cancelar, o sistema volta para a lista de certidões do fornecedor. O sistema exibe alertas quando certidões estão próximas do vencimento ou já vencidas, auxiliando na etapa de habilitação (Etapa 12).</p>
 
 <h3 id="sec4-3">4.3 Verificação de impedimento</h3>
-<p>No card do fornecedor (aba "Dados"), há links diretos para consulta nos portais de transparência:</p>
+<p>Na janela do fornecedor (aba "Dados"), o botão <strong>"🔍 Consultar CEIS/CNEP"</strong> faz a <strong>consulta automática</strong> pelo CNPJ do fornecedor, diretamente no Portal da Transparência (CGU). O resultado aparece logo abaixo do botão: "Nenhuma sanção encontrada" ou a relação das sanções localizadas no CEIS e no CNEP.</p>
+<div class="nota">
+  <strong>Nota:</strong> A consulta automática exige a <strong>chave de API do Portal da Transparência</strong> — obtida gratuitamente em <em>api.portaldatransparencia.gov.br</em> e informada em <strong>Configurações → Organização</strong>. Sem a chave, use os links de consulta manual descritos abaixo.
+</div>
+<p>Ao lado do botão de consulta automática, há links diretos para os portais oficiais, úteis como alternativa manual ou para conferência:</p>
 <ul>
   <li><strong>CEIS</strong> — Cadastro de Empresas Inidôneas e Suspensas</li>
   <li><strong>CNEP</strong> — Cadastro Nacional de Empresas Punidas</li>
-  <li><strong>Portal da Transparência</strong> — consulta geral de impedimentos</li>
+  <li><strong>Sanções</strong> — consulta geral de impedimentos no Portal da Transparência, já filtrada pelo CNPJ do fornecedor</li>
 </ul>
 <p>Clique nos links correspondentes para abrir os portais e realizar a consulta. Registre o resultado da verificação no campo de observações do fornecedor.</p>
 
@@ -497,6 +515,11 @@
     <td>Hipótese de dispensa aplicável — inciso do Art. 75 da Lei 14.133/2021 (ex.: Art. 75, I — valor)</td>
   </tr>
   <tr>
+    <td><strong>Critério de Seleção</strong></td>
+    <td>Recomendado</td>
+    <td>Critério de julgamento das propostas, conforme o Art. 33 da Lei 14.133/2021 — menor preço (padrão), maior desconto, melhor técnica ou conteúdo artístico, técnica e preço, ou maior retorno econômico. É usado no Aviso de Dispensa e na exportação PNCP</td>
+  </tr>
+  <tr>
     <td><strong>Valor Estimado</strong></td>
     <td>Recomendado</td>
     <td>Valor estimado da contratação em reais. Usado nos alertas de fracionamento e nos documentos</td>
@@ -512,9 +535,9 @@
     <td>Prazo previsto para entrega do bem ou execução do serviço</td>
   </tr>
   <tr>
-    <td><strong>Exercício</strong></td>
-    <td>Automático</td>
-    <td>Ano do processo. Preenchido automaticamente com o ano corrente</td>
+    <td><strong>Observações iniciais</strong></td>
+    <td>Opcional</td>
+    <td>Contexto, prioridade, prazos e qualquer anotação livre sobre a contratação (até 1.000 caracteres)</td>
   </tr>
 </table>
 
@@ -583,11 +606,19 @@
     <li>Clique em <strong>"+ Adicionar cotação"</strong> para cada fonte consultada</li>
     <li>Preencha: fornecedor, CNPJ, valor cotado, data e situação (Válida ou Descartada)</li>
     <li>Descarte cotações inexequíveis ou desatualizadas e justifique no campo de observações</li>
-    <li>Calcule e registre o <strong>valor de referência</strong> (geralmente a média das cotações válidas)</li>
+    <li>Escolha o <strong>método de cálculo</strong> e registre o <strong>valor de referência</strong> apurado</li>
     <li>Guarde os comprovantes: e-mails, prints de portais, declarações de fornecedores</li>
     <li>Anexe o Mapa de Preços ou planilha de apuração ao processo</li>
   </ul>
-  <div class="aviso" style="margin-top:8pt;"><strong>Atenção:</strong> Cotações com preços inexequíveis (muito abaixo do mercado) ou superfaturados devem ser marcadas como "Descartada", com a justificativa registrada no campo de observações.</div>
+  <p>O sistema calcula o preço estimado a partir das cotações marcadas como <strong>Válidas</strong>, pelos três métodos previstos no <strong>art. 6º da IN SEGES/ME nº 65/2021</strong>, selecionáveis logo abaixo da lista de cotações:</p>
+  <table>
+    <tr><th>Método</th><th>Como é calculado</th><th>Quando usar</th></tr>
+    <tr><td><strong>Média</strong></td><td>Soma dos valores válidos dividida pela quantidade de cotações</td><td>Padrão do sistema; adequado quando as cotações são homogêneas</td></tr>
+    <tr><td><strong>Mediana</strong></td><td>Valor central da lista ordenada (média dos dois centrais, se a quantidade for par)</td><td>Quando há cotação muito acima ou muito abaixo das demais, que distorceria a média</td></tr>
+    <tr><td><strong>Menor preço</strong></td><td>O menor dos valores válidos</td><td>Estimativa conservadora, quando se quer o piso do mercado pesquisado</td></tr>
+  </table>
+  <p>Ao trocar o método, o valor estimado do processo é recalculado automaticamente. O método fica gravado <strong>no próprio processo</strong>, de modo que alterá-lo em um processo não afeta os demais.</p>
+  <div class="aviso" style="margin-top:8pt;"><strong>Atenção:</strong> Cotações com preços inexequíveis (muito abaixo do mercado) ou superfaturados devem ser marcadas como "Descartada", com a justificativa registrada no campo de observações. O uso de metodologia diversa das três acima exige justificativa nos autos (art. 6º, §2º da IN SEGES/ME nº 65/2021).</div>
 </div>
 
 <div class="step-box">
@@ -606,7 +637,7 @@
   <div class="step-num">Etapa 6</div>
   <div class="step-name">Enquadramento Legal</div>
   <div class="step-legal">Fundamento: Art. 75 c/c Art. 72, III da Lei 14.133/2021</div>
-  <p><strong>O que fazer:</strong> Fundamentar o enquadramento do processo na hipótese de Dispensa de Licitação cabível, com base nos incisos do Art. 75 da Lei 14.133/2021. A justificativa deve ser explícita e objetiva, demonstrando por que o caso se encaixa na hipótese invocada. Selecione também o <strong>Critério de Seleção</strong> que será usado no julgamento das propostas (menor preço, maior desconto, melhor técnica etc.), conforme o Art. 33 da Lei 14.133/2021.</p>
+  <p><strong>O que fazer:</strong> Fundamentar o enquadramento do processo na hipótese de Dispensa de Licitação cabível, com base nos incisos do Art. 75 da Lei 14.133/2021. A justificativa deve ser explícita e objetiva, demonstrando por que o caso se encaixa na hipótese invocada. O <strong>Critério de Seleção</strong> que será usado no julgamento das propostas (menor preço, maior desconto, melhor técnica etc.), conforme o Art. 33 da Lei 14.133/2021, é definido no cadastro do processo (Seção 5) — confira se está de acordo com o enquadramento antes de seguir.</p>
   <p>As hipóteses mais comuns são:</p>
   <ul>
     <li><strong>Art. 75, I:</strong> obras e serviços de engenharia ou serviços de manutenção de veículos automotores até R$ 30.000,00</li>
@@ -662,7 +693,7 @@
   <div class="step-num">Etapa 10</div>
   <div class="step-name">Elaboração e Publicação do Aviso de Dispensa</div>
   <div class="step-legal">Fundamento: Art. 75, §3º e Art. 54, §1º da Lei 14.133/2021 — prazo mínimo 3 dias úteis</div>
-  <p><strong>O que fazer:</strong> Elaborar o Aviso de Dispensa e publicá-lo no PNCP e no Diário Oficial. Use o botão <strong>"Gerar Aviso de Dispensa"</strong> para gerar o documento completo, preenchido com os dados do processo e o Critério de Seleção definido na Etapa 5. O aviso contém: identificação do órgão, objeto, valor estimado, critério de julgamento, condições de participação, seção sobre a proposta mais vantajosa (Art. 59), data limite e canais de divulgação do resultado.</p>
+  <p><strong>O que fazer:</strong> Elaborar o Aviso de Dispensa e publicá-lo no PNCP e no Diário Oficial. Use o botão <strong>"Gerar Aviso de Dispensa"</strong> para gerar o documento completo, preenchido com os dados do processo e o Critério de Seleção definido no cadastro do processo (Seção 5). O aviso contém: identificação do órgão, objeto, valor estimado, critério de julgamento, condições de participação, seção sobre a proposta mais vantajosa (Art. 59), data limite e canais de divulgação do resultado.</p>
   <ul>
     <li>Clique em <strong>"Gerar Aviso de Dispensa"</strong>, revise, imprima ou salve como PDF e assine</li>
     <li>Acesse o PNCP (<em>www.pncp.gov.br</em>) e publique o aviso completo</li>
@@ -710,7 +741,7 @@
   <p><strong>O que fazer:</strong> Registrar formalmente a razão da escolha do fornecedor contratado — exigência distinta da habilitação (que verifica apenas a regularidade fiscal e jurídica) e da justificativa de preço (já coberta pela Etapa 4). O Art. 72, VI exige que o processo de contratação direta seja instruído com a "razão da escolha do contratado", explicando por que aquele fornecedor específico foi selecionado (menor preço entre os habilitados, melhor técnica, exclusividade etc.).</p>
   <ul>
     <li>Registre a justificativa no campo <strong>"Justificativa da Escolha do Fornecedor"</strong>, referenciando os critérios objetivos que levaram à escolha</li>
-    <li>Relacione a justificativa ao Critério de Seleção definido na Etapa 6 e às propostas analisadas na Etapa 11</li>
+    <li>Relacione a justificativa ao Critério de Seleção definido no cadastro do processo (Seção 5) e às propostas analisadas na Etapa 11</li>
     <li>Use o botão <strong>"Gerar Justificativa da Escolha do Fornecedor"</strong> para gerar o documento formal, preenchido com os dados do processo, do fornecedor e do texto de justificativa registrado</li>
     <li>Anexe documentos de apoio, se houver (ex.: comparativo de propostas, parecer técnico)</li>
   </ul>
@@ -816,11 +847,12 @@
   <li>O arquivo é enviado ao servidor e armazenado na pasta <code>uploads/</code>, com o registro vinculado ao processo no banco <code>sgcd.db</code></li>
 </ol>
 <div class="aviso">
-  <strong>Atenção:</strong> Arquivos anexados ficam armazenados no servidor (não no navegador) — limite de 50 MB por arquivo. Recomenda-se compactar PDFs grandes antes de anexar.
+  <strong>Atenção:</strong> Arquivos anexados ficam armazenados no servidor (não no navegador) — limite de 20 MB por arquivo (a tela recusa o envio de arquivos maiores). Recomenda-se compactar PDFs grandes antes de anexar.
 </div>
 
 <h3 id="sec7-4">7.4 Editar informações do processo</h3>
 <p>Para editar as informações gerais do processo (objeto, valor, fundamentação, unidade etc.), localize o <strong>painel lateral direito</strong> quando o processo está aberto, ou clique no botão <strong>"Editar"</strong> no cabeçalho do processo. Altere os campos desejados e clique em <strong>"Salvar"</strong>.</p>
+<p><strong>Etiquetas.</strong> No mesmo painel de informações há o campo <strong>Etiquetas</strong>, para classificar o processo livremente com termos do dia a dia do setor (ex.: "urgente", "TI", "Secretaria de Saúde"). Digite as etiquetas separadas por vírgula; ao começar a digitar, o sistema <strong>sugere as etiquetas já usadas</strong> em outros processos, evitando variações do mesmo termo. As etiquetas aparecem como marcadores no card do processo, no dashboard, e são <strong>consideradas na busca</strong> — pesquisar por uma etiqueta traz todos os processos marcados com ela.</p>
 
 <h3 id="sec7-5">7.5 Reordenar etapas</h3>
 <p>Embora as 18 etapas sigam uma ordem lógica sugerida, é possível reordená-las conforme as necessidades específicas do processo. Para reordenar:</p>
@@ -1057,6 +1089,9 @@
   </tr>
 </table>
 
+<h3>Gerar como MINUTA</h3>
+<p>A partir da versão 2.38.0, todos os documentos oficiais trazem, na própria janela do documento (ao lado do botão "🖨 Imprimir / Salvar PDF"), a opção <strong>"Gerar como MINUTA"</strong>. Marcada, ela aplica imediatamente uma <strong>marca d'água "MINUTA"</strong> ao documento, que acompanha a impressão e o PDF salvo — útil para circular uma versão preliminar sem risco de confundi-la com a via de assinatura. A opção vem <strong>desmarcada por padrão</strong>: o uso normal continua sendo gerar a versão definitiva. Os relatórios gerenciais (Relatório Geral, Relatório Executivo) não recebem marca d'água.</p>
+
 <h3>Código de autenticidade</h3>
 <p>Todos os documentos gerados pelo SGCD possuem um <strong>código de autenticidade único</strong> no rodapé, composto por um hash gerado a partir dos dados do processo. Esse código permite verificar a integridade do documento e rastrear sua origem.</p>
 
@@ -1138,7 +1173,10 @@
 
 <!-- ─────────────────────────────────────────────── SEÇÃO 12 -->
 <h2 id="sec12">12. Backup e Restauração</h2>
-<p><strong>Dois tipos de backup, para usos diferentes.</strong> O arquivo <strong>JSON</strong> guarda os dados de trabalho (processos, fornecedores e configurações) e é o que se envia a outra máquina para sincronizar — ele <strong>não</strong> contém as contas de usuário nem as senhas. Para recuperação completa depois de perda de disco ou formatação, use o <strong>backup do banco (.db)</strong>, gerado automaticamente e disponível em Configurações → Backup: é uma cópia integral do sistema, contas inclusive. Guarde-o em local seguro, pois contém todos os dados.</p>
+<p><strong>Dois tipos de backup, para usos diferentes.</strong> O arquivo <strong>JSON</strong> guarda os dados de trabalho (processos, fornecedores e configurações) e é o que se envia a outra máquina para sincronizar — ele <strong>não</strong> contém as contas de usuário nem as senhas. Para recuperação completa depois de perda de disco ou formatação, use o <strong>backup do banco (pacote .zip)</strong>, gerado automaticamente e disponível em Configurações → Backup: a partir da versão 2.43.0 ele é um pacote <code>.zip</code> com o banco <strong>e a pasta de anexos</strong>, de modo que restaurá-lo recupera também os PDFs anexados aos processos. É uma cópia integral do sistema, contas inclusive. Guarde-o em local seguro, pois contém todos os dados.</p>
+<div class="nota">
+  <strong>Nota:</strong> Backups antigos, gerados no formato <code>.db</code> (antes da v2.43.0), continuam podendo ser restaurados normalmente — apenas sem os anexos, que não faziam parte daquele formato.
+</div>
 <p>Os dados do SGCD ficam armazenados no arquivo <code>sgcd.db</code> (SQLite), no servidor local. Mesmo assim, é fundamental realizar backups regulares para se proteger contra perda do arquivo, falha de disco ou exclusão acidental.</p>
 
 <h3>Como fazer backup</h3>
@@ -1146,7 +1184,7 @@
   <li>Clique no ícone de <strong>engrenagem (⚙)</strong> para abrir as Configurações</li>
   <li>Localize a seção <strong>"Backup de Dados"</strong></li>
   <li>Clique em <strong>"Exportar Backup"</strong></li>
-  <li>Um arquivo JSON será baixado automaticamente pelo navegador com o nome <code>sgcd-backup-[data].json</code></li>
+  <li>Um arquivo JSON será baixado automaticamente pelo navegador com o nome <code>SIS_SGCD_BACKUP_[data]_[hora].json</code></li>
   <li>Salve o arquivo em local seguro (pasta local, nuvem, pen drive)</li>
 </ol>
 <div class="dica">
@@ -1176,8 +1214,20 @@
   <strong>Nota:</strong> Se, por coincidência, as duas máquinas tiverem criado processos com o mesmo número oficial (ex.: "PA 5/2026") para assuntos diferentes, o sistema avisa ao final da sincronização — nesse caso, renumeie manualmente um dos processos, já que os números de referência precisam ser únicos.
 </div>
 
+<h3>Sincronizar o cadastro de fornecedores (SGCD ↔ SGCA/SGEA)</h3>
+<p>A partir da versão 2.44.0, o <strong>cadastro de fornecedores</strong> pode ser sincronizado separadamente do backup — inclusive com os sistemas irmãos (SGCA e SGEA), que usam o mesmo formato. Os dois botões ficam na tela de <strong>Fornecedores</strong>:</p>
+<ol>
+  <li><strong>Exportar cadastro:</strong> gera um arquivo <code>.json</code> com todos os fornecedores cadastrados, para enviar à outra máquina ou ao outro sistema</li>
+  <li><strong>Sincronizar cadastro:</strong> selecione o arquivo recebido — o sistema compara os cadastros e mostra, antes de aplicar, quantos fornecedores serão <strong>incluídos</strong>, quantos serão <strong>atualizados</strong> e quantos estão <strong>em conflito</strong></li>
+</ol>
+<p>O casamento dos registros é feito pelo <strong>CNPJ</strong>: fornecedor que só existe no arquivo é incluído; fornecedor que existe nos dois lados, mas foi alterado apenas de um lado, é atualizado automaticamente. Registros sem CNPJ são ignorados.</p>
+<p>Quando o <strong>mesmo fornecedor foi alterado dos dois lados</strong>, há conflito — e nesse caso o sistema abre uma <strong>tela de revisão</strong> mostrando as duas versões lado a lado, com a data de alteração de cada uma. Você escolhe, um a um, qual versão manter; por padrão prevalece a versão local, para que nada seja sobrescrito sem intenção.</p>
+<div class="nota">
+  <strong>Nota:</strong> Esta sincronização trata <em>apenas</em> do cadastro de fornecedores — processos, configurações e usuários não são afetados. Para sincronizar os processos, use "Sincronizar backup", descrito acima.
+</div>
+
 <h3>Auto-backup automático</h3>
-<p>O servidor realiza um <strong>backup automático do banco</strong> (cópia do arquivo <code>sgcd.db</code>, com nome <code>DB_SGCD_BACKUP_[data-hora].db</code>) e um <strong>backup JSON automático</strong> sempre que a última sessão ativa é encerrada. Ambos são gravados na pasta <code>backups/</code> (ou em outra pasta configurada em Configurações → Backup de Dados). O sistema mantém automaticamente os backups mais recentes e descarta os mais antigos, respeitando o número configurado em <strong>"Manter últimos N backups"</strong> (padrão: 7).</p>
+<p>O servidor realiza um <strong>backup automático do banco e dos anexos</strong> (pacote <code>DB_SGCD_BACKUP_[data-hora].zip</code>, contendo o <code>sgcd.db</code> e a pasta <code>uploads/</code>) e um <strong>backup JSON automático</strong> sempre que a última sessão ativa é encerrada. Ambos são gravados na pasta <code>backups/</code> (ou em outra pasta configurada em Configurações → Backup de Dados). O sistema mantém automaticamente os backups mais recentes e descarta os mais antigos, respeitando o número configurado em <strong>"Manter últimos N backups"</strong> (padrão: 7).</p>
 
 <h3>Factory Reset — Limpeza total de dados</h3>
 <p>A função <strong>Factory Reset</strong> apaga permanentemente <em>todos</em> os dados do sistema: processos, fornecedores, certidões, configurações e brasão. Para evitar exclusões acidentais, o processo exige <strong>três confirmações sucessivas</strong>:</p>
@@ -1304,7 +1354,12 @@
   <tr><td><strong>Certidão sincronizada</strong></td><td>Sincronização de datas entre processo e cadastro de fornecedor</td></tr>
   <tr><td><strong>Fornecedor alterado</strong></td><td>Lista dos campos alterados no cadastro do fornecedor</td></tr>
   <tr><td><strong>Campo alterado</strong></td><td>Edições nos campos do painel de informações do processo</td></tr>
+  <tr><td><strong>Dados da organização alterados</strong></td><td>Quais campos da identidade do órgão foram alterados em Configurações → Organização (nome do órgão, município, autoridade, CNPJ etc.)</td></tr>
+  <tr><td><strong>Brasão alterado</strong></td><td>Troca ou remoção do brasão institucional usado no cabeçalho dos documentos</td></tr>
 </table>
+<div class="nota">
+  <strong>Nota:</strong> Os dados da organização e o brasão podem ser alterados por qualquer usuário autenticado, mas saem impressos em todo documento gerado — por isso, desde a versão 2.41.0, toda alteração fica registrada na trilha, com autor e data.
+</div>
 
 <h3 id="sec15-3">15.3 Filtros e relatório de auditoria</h3>
 <p>A view de auditoria oferece quatro filtros para refinar os registros exibidos:</p>
@@ -1469,9 +1524,12 @@
 <h3 id="sec21-1">21.1 Backup automático do servidor</h3>
 <p>Quando a última sessão ativa é encerrada (todos os usuários fazem logout ou fecham o navegador), o servidor grava automaticamente:</p>
 <ul>
-  <li>Uma <strong>cópia do banco</strong> (<code>DB_SGCD_BACKUP_[data-hora].db</code>) — cópia binária completa do <code>sgcd.db</code>, incluindo referências a todos os anexos;</li>
+  <li>Um <strong>pacote do banco e dos anexos</strong> (<code>DB_SGCD_BACKUP_[data-hora].zip</code>) — contém o <code>sgcd.db</code> completo e a pasta <code>uploads/</code>, de forma que a restauração recupera também os PDFs anexados;</li>
   <li>Um <strong>backup JSON</strong> (<code>SIS_SGCD_BACKUP_[data-hora].json</code>) — processos, fornecedores e configurações em formato legível.</li>
 </ul>
+<div class="nota">
+  <strong>Nota:</strong> O pacote <code>.zip</code> passou a incluir os anexos na versão 2.43.0. Backups mais antigos, no formato <code>.db</code>, continuam restauráveis — mas repõem apenas o banco, sem os arquivos anexados.
+</div>
 <p>Ambos são salvos na pasta <code>backups/</code> (ou em outra pasta definida em Configurações → Backup de Dados). O sistema mantém apenas os backups automáticos mais recentes, descartando os mais antigos conforme o número configurado em <strong>"Manter últimos N backups"</strong> (padrão: 7).</p>
 <div class="nota">
   <strong>Backup sob demanda:</strong> em Configurações → Backup de Dados, o botão <strong>"Fazer backup agora"</strong> aciona uma cópia do banco imediatamente, sem esperar o encerramento da sessão.
@@ -1507,7 +1565,7 @@
 
 <hr class="section-divider">
 
-<!-- ─────────────────────────────────────────────── SEÇÃO 23 -->
+<!-- ─────────────────────────────────────────────── SEÇÃO 22 -->
 <h2 id="sec22">22. Login e Controle de Acesso</h2>
 <p>A partir da versão 2.0, o acesso ao SGCD é feito por <strong>login individual</strong> (usuário e senha), autenticado pelo servidor local. Cada usuário tem sua própria conta, com registro de autoria nas etapas, documentos e na Trilha de Auditoria (Seção 15).</p>
 
@@ -1573,6 +1631,20 @@
   <strong>Boas práticas:</strong> Execute o diagnóstico antes de encaminhar um processo para publicação ou assinatura, e ao final de cada exercício financeiro para identificar processos com dados incompletos.
 </div>
 
+<h3 id="sec23-4">23.4 Erros recentes do sistema</h3>
+<p>Abaixo do resultado do diagnóstico, na mesma aba <strong>Configurações → Diagnóstico</strong>, o painel <strong>"Erros recentes do sistema"</strong> (versão 2.45.0) mostra as falhas técnicas registradas pelo servidor. O painel é <strong>restrito ao administrador</strong> — usuários comuns não o veem.</p>
+<p>Clique em <strong>"↻ Atualizar"</strong> para carregar os registros. Os erros são exibidos <strong>agrupados por tipo</strong>, com:</p>
+<ul>
+  <li><strong>Nível:</strong> ERROR (falha) ou WARNING (aviso)</li>
+  <li><strong>Qtd:</strong> quantas vezes aquele mesmo erro ocorreu</li>
+  <li><strong>Tipo:</strong> a identificação do erro e a data/hora da última ocorrência</li>
+</ul>
+<p>O painel reúne tanto os erros do servidor quanto os ocorridos <strong>no navegador dos usuários</strong>, reportados automaticamente ao servidor — o que permite ao administrador enxergar problemas de outras máquinas sem precisar pedir print a ninguém.</p>
+<p>Os registros ficam num <strong>log rotativo</strong> na pasta do sistema, que se recicla sozinho e não cresce indefinidamente. Falhas graves, em que o próprio servidor cai, são gravadas à parte no arquivo <code>SGCD_crash.log</code> — quando houver alguma, um aviso vermelho aparece ao final do painel indicando a quantidade.</p>
+<div class="dica">
+  <strong>Dica:</strong> Se algum usuário relatar comportamento estranho, confira este painel antes de qualquer coisa: normalmente o erro já está registrado ali, com a hora exata e a quantidade de ocorrências.
+</div>
+
 <hr class="section-divider">
 
 <!-- ─────────────────────────────────────────────── SEÇÃO 24 -->
@@ -1600,7 +1672,6 @@
 
 <hr class="section-divider">
 
-<!-- ─────────────────────────────────────────────── SEÇÃO 25 -->
 <!-- ─────────────────────────────────────────────── SEÇÃO 25 -->
 <h2 id="sec25">25. Vinculação entre Processos</h2>
 <p>Processos relacionados — por exemplo, uma renovação, um aditivo ou a continuidade de uma contratação anterior — podem ser vinculados entre si, criando um histórico rastreável.</p>
@@ -1631,18 +1702,21 @@
 <hr class="section-divider">
 
 <!-- ─────────────────────────────────────────────── SEÇÃO 27 -->
-<h2 id="sec27">27. Lixeira — Processos Excluídos</h2>
+<h2 id="sec27">27. Lixeira — Processos e Fornecedores Excluídos</h2>
 <p>
-  Ao excluir um processo, ele não é apagado imediatamente — vai para a <strong>Lixeira</strong>,
-  acessível pela barra lateral (seção Administração), onde fica recuperável por <strong>30 dias</strong>,
-  incluindo os arquivos anexados.
+  Ao excluir um <strong>processo</strong> ou um <strong>fornecedor</strong>, o registro não é apagado imediatamente — vai para a
+  <strong>Lixeira</strong>, acessível pela barra lateral (seção Administração), onde fica recuperável por
+  <strong>30 dias</strong>. No caso dos processos, os arquivos anexados vão junto e voltam junto.
 </p>
 <ul>
-  <li><strong>Restaurar:</strong> devolve o processo (e seus arquivos) para a listagem normal</li>
-  <li><strong>Excluir definitivamente:</strong> remove o processo e os anexos de forma irreversível, sem esperar os 30 dias</li>
+  <li><strong>Restaurar:</strong> devolve o processo (e seus arquivos) ou o fornecedor para a listagem normal</li>
+  <li><strong>Excluir definitivamente:</strong> remove o registro — e, no caso do processo, também os anexos — de forma irreversível, sem esperar os 30 dias</li>
 </ul>
+<div class="nota">
+  <strong>Nota:</strong> A exclusão de um fornecedor é bloqueada enquanto ele estiver vinculado a algum processo. Na tela de Fornecedores é possível selecionar vários de uma vez e enviá-los à Lixeira em bloco.
+</div>
 <div class="aviso">
-  <strong>Atenção:</strong> após os 30 dias ou a exclusão definitiva, a única forma de recuperar o processo é restaurando um backup anterior que ainda o contenha.
+  <strong>Atenção:</strong> após os 30 dias ou a exclusão definitiva, a única forma de recuperar o registro é restaurando um backup anterior que ainda o contenha.
 </div>
 
 <hr class="section-divider">
@@ -1669,6 +1743,10 @@
 
 <!-- ─────────────────────────────────────────────── SEÇÃO 29 -->
 <h2 id="sec29">29. Histórico de Versões</h2>
+
+<h3>v2.46.2 — Julho/2026</h3>
+<p><strong>Documentação</strong></p>
+<ul><li>Auditoria do manual e do README: a Seção 4 voltou a descrever a tela real de Fornecedores (tabela + janela), o backup do banco aparece como pacote .zip, o limite de anexo como 20 MB; passaram a ser documentados a opção MINUTA, os métodos de cálculo do preço estimado, a tela de erros recentes, o cadastro compartilhado de fornecedores, as etiquetas e a consulta automática CEIS/CNEP.</li></ul>
 
 <h3>v2.46.1 — Julho/2026</h3>
 <p><strong>Alterado</strong></p>
@@ -2031,6 +2109,16 @@
   <li><strong>Troca de senha obrigatória no primeiro acesso</strong> — o usuário admin padrão (e qualquer novo usuário marcado dessa forma) é obrigado a definir uma nova senha antes de usar o sistema, em vez de só receber um aviso no terminal. Instalações já em uso não são afetadas</li>
 </ul>
 
+<h3>v2.20.4 — Julho/2026</h3>
+<ul>
+  <li><strong>Clicar fora de um modal descartava o que estava digitado</strong> — todas as janelas do sistema (Fornecedor, Usuário, Certidão, Busca Global, Templates, CSV, E-mail, Vínculo, seleção de fornecedor e Conformidade) fechavam ao clicar no fundo escuro, mesmo com o formulário preenchido. O fechamento por clique fora foi removido: agora as janelas só fecham pelo botão Cancelar/✕ ou pela tecla Esc</li>
+</ul>
+
+<h3>v2.20.3 — Julho/2026</h3>
+<ul>
+  <li><strong>Backup perdia as assinaturas digitais</strong> — a tabela de assinaturas não era incluída na exportação nem na restauração; um backup exportado e depois restaurado apagava todas as assinaturas registradas nos processos. Corrigido para exportar e reimportar a tabela, igual ao SGCA</li>
+</ul>
+
 <h3>v2.20.2 — Julho/2026</h3>
 <ul>
   <li><strong>Usuário admin padrão</strong> — o cargo pré-preenchido ("Agente de Contratação") foi removido; agora fica em branco por padrão, igual ao SGDP. Só afeta instalações novas — quem já tem o campo preenchido não é alterado</li>
@@ -2084,7 +2172,7 @@
 
 <h3>v2.17.4 — Julho/2026</h3>
 <ul>
-  <li><strong>Manual desatualizado</strong> — o corpo do manual não descrevia diversas funcionalidades já lançadas: Notificações por E-mail (SMTP/resumo diário), Assinatura Eletrônica de Documentos, Vinculação entre Processos, Agenda de Vencimentos, Lixeira e Exportação PNCP. Adicionadas as Seções 24–29; seções 21–23 (Backup Automático, Controle de Acesso, Painel de Diagnóstico) que existiam no corpo mas não apareciam no sumário foram incluídas. Histórico de Versões passa a ser a Seção 30.</li>
+  <li><strong>Manual desatualizado</strong> — o corpo do manual não descrevia diversas funcionalidades já lançadas: Notificações por E-mail (SMTP/resumo diário), Assinatura Eletrônica de Documentos, Vinculação entre Processos, Agenda de Vencimentos, Lixeira e Exportação PNCP. Adicionadas as Seções 24–29; seções 21–23 (Backup Automático, Controle de Acesso, Painel de Diagnóstico) que existiam no corpo mas não apareciam no sumário foram incluídas. Histórico de Versões passa a ser a Seção 29.</li>
   <li>README ganhou a seção "Contribuição"</li>
 </ul>
 
@@ -2098,7 +2186,7 @@
   <li><strong>Tela de encerramento:</strong> ao clicar em "Fechar sistema", a página exibe uma tela de confirmação visual ("Sistema encerrado") antes de tentar fechar a aba, cobrindo o caso em que <code>window.close()</code> é bloqueado pelo navegador. Paridade com o SGDP.</li>
 </ul>
 
-<h3 id="sec21-new">21.1 v1.19.0 — Junho/2026</h3>
+<h3>v1.19.0 — Junho/2026</h3>
 <ul>
   <li><strong>Otimizações de desempenho — cache DOM:</strong> função <code>_dom()</code> inicializa lazy um cache de 34 elementos estáticos (filtros, KPIs, containers), eliminando chamadas a <code>getElementById</code> nos hot paths de <code>renderDash()</code>, <code>toast()</code> e indicador de salvamento.</li>
   <li><strong>Lógica de filtro centralizada:</strong> <code>_getDashFilters()</code> lê os 7 filtros do dashboard de uma só vez; <code>_applyDashFilters()</code> substitui 45 linhas duplicadas em <code>renderDash()</code>, <code>gerarRelatorio()</code> e <code>exportarCSV()</code>; <code>_lastFiltered</code> cacheia o resultado para reutilização imediata.</li>
@@ -2106,7 +2194,7 @@
   <li><strong>O(n²) → O(1) na lista de fornecedores:</strong> <code>processes.find()</code> dentro de <code>.map()</code> substituído por um <code>Map</code> construído antes do loop, eliminando buscas lineares repetidas por fornecedor.</li>
   <li><strong>Lazy expand nos cards de fornecedor:</strong> a lista de fornecedores passa a renderizar apenas o cabeçalho de cada card (razão social, CNPJ, situação). O conteúdo completo — certidões, QSA, contato, endereço e processos vinculados — é injetado no DOM somente ao clicar no card, reduzindo o HTML inicial em aproximadamente 65% por card.</li>
   <li><strong>Redesign do gráfico de processos por mês:</strong> novo visual com card container integrado ao tema, legenda HTML com ícones coloridos, sumário de métricas abaixo do gráfico (total criados, concluídos com percentual e pico mensal), escala Y com inteiros calculados automaticamente, labels de valor sobre as barras, mês atual em destaque e identificação do ano na virada de exercício (Jan '25).</li>
-  <li><strong>Sincronização de backup entre agentes:</strong> botão "Sincronizar Backup" mescla processos e fornecedores de outro agente pelo critério <em>updatedAt</em> (registro mais recente vence); configurações do sistema não são sobrescritas (ver Seção 22.3).</li>
+  <li><strong>Sincronização de backup entre agentes:</strong> botão "Sincronizar Backup" mescla processos e fornecedores de outro agente pelo critério <em>updatedAt</em> (registro mais recente vence); configurações do sistema não são sobrescritas.</li>
   <li><strong>Criptografia das credenciais SMTP (AES-GCM-256):</strong> a senha SMTP é criptografada com chave aleatória por instalação antes de ser salva no <code>localStorage</code>; nunca armazenada em texto claro. O campo de senha nas configurações exibe placeholder quando já há credencial salva. Ao importar backup de outra máquina, o sistema orienta a reinformar a senha.</li>
   <li><strong>Opção "Ignorar verificação SSL" no SMTP:</strong> novo checkbox nas configurações SMTP para servidores com certificado autoassinado (ex.: webmail municipal); quando desmarcado, a verificação segura é exigida por padrão.</li>
   <li><strong>Hash de senha com salt por instalação:</strong> a senha de acesso passa a ser protegida com salt aleatório gerado na primeira instalação, eliminando o salt fixo anterior; migração automática na primeira autenticação, sem perda de acesso.</li>
@@ -2117,12 +2205,12 @@
 
 <h3 id="sec29-1">29.1 v1.18.0 — Junho/2026</h3>
 <ul>
-  <li><strong>Backup automático por salvamento:</strong> snapshot gravado no <code>localStorage</code> 3 segundos após cada alteração em processo, sem intervenção do usuário (ver Seção 22.1).</li>
-  <li><strong>Banner de alerta de backup:</strong> faixa laranja persistente exibida quando o último backup manual foi exportado há mais de 7 dias ou nunca foi exportado, com botão de exportação rápida (ver Seção 22.2).</li>
-  <li><strong>Validação ao concluir etapa:</strong> ao marcar uma etapa como concluída, o sistema verifica campos obrigatórios e exibe confirmação não-bloqueante listando os campos faltantes (ver Seção 22.4).</li>
-  <li><strong>Controle de acesso por senha:</strong> nova aba "Segurança" nas Configurações para definir, alterar e remover senha de abertura do sistema. Senha armazenada como hash SHA-256. Tela de acesso redesenhada com identidade visual institucional (ver Seção 23).</li>
+  <li><strong>Backup automático por salvamento:</strong> snapshot gravado no <code>localStorage</code> 3 segundos após cada alteração em processo, sem intervenção do usuário.</li>
+  <li><strong>Banner de alerta de backup:</strong> faixa laranja persistente exibida quando o último backup manual foi exportado há mais de 7 dias ou nunca foi exportado, com botão de exportação rápida.</li>
+  <li><strong>Validação ao concluir etapa:</strong> ao marcar uma etapa como concluída, o sistema verifica campos obrigatórios e exibe confirmação não-bloqueante listando os campos faltantes.</li>
+  <li><strong>Controle de acesso por senha:</strong> nova aba "Segurança" nas Configurações para definir, alterar e remover senha de abertura do sistema. Senha armazenada como hash SHA-256. Tela de acesso redesenhada com identidade visual institucional.</li>
   <li><strong>Tela de login redesenhada:</strong> identidade visual com cor institucional aubergine, brasão SVG, badge da Lei 14.133/2021, card do órgão com sigla automática, campo de senha com toggle mostrar/ocultar, animação de shake em senha incorreta e painel de último backup.</li>
-  <li><strong>Painel de Diagnóstico:</strong> nova aba "Diagnóstico" nas Configurações que analisa todos os processos e fornecedores, classificando inconsistências em Erros críticos, Avisos e Informações (ver Seção 24).</li>
+  <li><strong>Painel de Diagnóstico:</strong> nova aba "Diagnóstico" nas Configurações que analisa todos os processos e fornecedores, classificando inconsistências em Erros críticos, Avisos e Informações.</li>
   <li><strong>Exportação PNCP aprimorada:</strong> novos campos CNPJ do órgão, Código IBGE e UF nas Configurações → Organização; JSON exportado usa esses dados reais no preenchimento do órgão contratante.</li>
   <li><strong>Correção de índices no Relatório de Fornecedores:</strong> índice de valor adjudicado substituído por <code>STEPS.findIndex()</code>, eliminando dependência de posição fixa das etapas.</li>
 </ul>
@@ -2160,7 +2248,7 @@
 
 <hr class="section-divider">
 <p style="text-align:center; font-size:9pt; color:#888; margin-top:20pt;">
-  SGCD v1.18.0 — Manual Operacional<br>
+  SGCD v2.46.2 — Manual Operacional<br>
   Sistema de Gestão de Contratação Direta<br>
   Lei Federal nº 14.133/2021
 </p>

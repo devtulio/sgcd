@@ -1,12 +1,12 @@
 # SGCD — Sistema de Gestão de Contratação Direta
 
-![Versão](https://img.shields.io/badge/versão-v2.46.1-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-Python%20%2B%20SQLite-orange) ![Licença](https://img.shields.io/badge/licença-MIT-green) ![Multiusuário](https://img.shields.io/badge/acesso-multiusuário-blueviolet) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21314672.svg)](https://doi.org/10.5281/zenodo.21314672) [![CI](https://github.com/devtulio/sgcd/actions/workflows/ci.yml/badge.svg)](https://github.com/devtulio/sgcd/actions/workflows/ci.yml)
+![Versão](https://img.shields.io/badge/versão-v2.46.2-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-Python%20%2B%20SQLite-orange) ![Licença](https://img.shields.io/badge/licença-MIT-green) ![Multiusuário](https://img.shields.io/badge/acesso-multiusuário-blueviolet) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21314672.svg)](https://doi.org/10.5281/zenodo.21314672) [![CI](https://github.com/devtulio/sgcd/actions/workflows/ci.yml/badge.svg)](https://github.com/devtulio/sgcd/actions/workflows/ci.yml)
 
 ## Descrição
 
 O **SGCD** é uma aplicação web multiusuário para gestão completa de processos de **Dispensa de Licitação** conforme a **Lei Federal nº 14.133/2021** (Nova Lei de Licitações e Contratos Administrativos). Desenvolvido para agentes de contratação pública, o sistema organiza todas as etapas do processo — da formalização da demanda até a publicação do contrato no PNCP — em um fluxo de trabalho guiado, com geração automática de documentos.
 
-Compartilha a arquitetura (servidor Python stdlib + SQLite + frontend single-file) com os sistemas irmãos **SGCA**, **SGDP** e **SGEA**.
+Compartilha a arquitetura (servidor Python + SQLite + frontend single-file, sem nada a instalar) com os sistemas irmãos **SGCA**, **SGDP** e **SGEA**.
 
 Funciona em rede local: um único computador executa o servidor e todos os usuários acessam pelo navegador via IP ou `localhost`.
 
@@ -35,6 +35,9 @@ Funciona em rede local: um único computador executa o servidor e todos os usuá
 - **Exportação PNCP** — JSON estruturado no formato da API do Portal Nacional de Contratações Públicas
 - **Backup automático** após o último usuário sair (JSON + banco de dados SQLite) com rotação configurável — o servidor continua no ar, pronto pro próximo login
 - **Sincronização de backup entre agentes/máquinas** — mescla dados de outra instalação (soma o que é novo, revisa o que conflita) sem substituir o banco inteiro
+- **Cadastro de fornecedores compartilhado** — Exportar/Sincronizar cadastro com os sistemas irmãos (SGCA/SGEA), casando os registros por **CNPJ**, com tela de revisão quando o mesmo fornecedor foi alterado dos dois lados
+- **Etiquetas (tags) nos processos** — classificação livre com sugestão das etiquetas já usadas, exibidas nos cards e consideradas na busca
+- **Motor de erros com tela "Erros recentes"** — falhas do servidor e do navegador dos usuários registradas em log rotativo e exibidas agrupadas em Configurações → Diagnóstico (visível só ao administrador); travamentos graves vão para o `SGCD_crash.log`
 - **Lixeira** — processos e fornecedores excluídos ficam recuperáveis por 30 dias (processos incluem os arquivos anexados). Exclusão de fornecedor bloqueada se ele estiver vinculado a algum processo
 - **Autenticação multiusuário** com hashing PBKDF2-HMAC-SHA256 e gestão de usuários pelo admin
 - **Relatório executivo** com KPIs, gráfico de barras por status e alertas de processos parados
@@ -44,10 +47,10 @@ Funciona em rede local: um único computador executa o servidor e todos os usuá
 
 ## Requisitos
 
-- **Python 3.7+** (apenas biblioteca padrão — sem dependências externas)
+- **Python 3.7+**
 - **Google Chrome** ou **Microsoft Edge** (recomendado)
 - Windows 10/11
-- Nenhuma dependência externa — o SGCD roda 100% com a biblioteca padrão do Python
+- **Nada a instalar:** além da biblioteca padrão do Python, o servidor usa o **waitress** (servidor WSGI puro-Python), que já vem incluído na pasta `waitress/` do próprio projeto — não é preciso `pip install` nem acesso à internet para subir o sistema
 
 > **Servidor sem Python instalado (ex.: Windows Server bloqueado por política de TI):**
 > o `Iniciar SGCD.bat` detecta automaticamente a ausência do Python e extrai uma versão portátil (embarcável, sem instalador) incluída no próprio projeto (`python-3.12.9-embed-amd64.zip`) para `C:\Python312-embed\` — não exige instalação nem privilégio de administrador. Isso resolve o caso comum de instaladores `.exe` bloqueados por AppLocker/antivírus corporativo em servidores.
@@ -110,6 +113,14 @@ Se a conexão não funcionar, execute **`Diagnostico SGCD.bat`** (ou a opção *
 SGCD/
 ├── SGCD.html                # Frontend — aplicação web completa
 ├── server.py                # Servidor Python (API REST + SQLite + uploads)
+├── base.css                 # Estilos compartilhados da família (cópia distribuída)
+├── base.js                  # Utilitários JS compartilhados da família (cópia distribuída)
+├── sgx_base.py              # Infraestrutura Python compartilhada (cópia distribuída)
+├── _esqueleto.sha256        # Manifesto de integridade das cópias compartilhadas
+├── waitress/                # Servidor WSGI puro-Python, vendorizado (nada a instalar)
+├── scripts/                 # Utilitários de desenvolvimento
+│   ├── lint.mjs
+│   └── verificar_esqueleto.py   # Confere as cópias compartilhadas contra o manifesto
 ├── tests/                   # Suíte de testes automatizados do backend
 │   ├── test_server.py
 │   └── e2e/                 # Testes E2E (Playwright) — navegador real de ponta a ponta
@@ -125,7 +136,7 @@ SGCD/
 ├── sgcd.db                  # Banco de dados SQLite (criado automaticamente)
 ├── uploads/                 # Documentos anexados (criado automaticamente)
 ├── backups/                 # Backups automáticos (criado automaticamente)
-├── requirements.txt         # Sem dependências externas (stdlib do Python)
+├── requirements.txt         # Nada a instalar — o waitress vem junto, na pasta acima
 ├── README.md
 ├── CHANGELOG.md
 └── MANUAL.html
@@ -138,7 +149,6 @@ SGCD/
 | Documento | Descrição |
 |-----------|-----------|
 | **Autorização de Abertura** | Despacho formal para início do processo, assinado pela autoridade competente |
-| **Extrato de Publicação** | Texto formatado para publicação no Diário Oficial (Art. 54 §1º) |
 | **Aviso de Dispensa** | Aviso formatado para publicação no PNCP (Art. 75, §3º) |
 | **Ata de Sessão** | Documento completo do processo com propostas, certidões e espaço para assinaturas |
 | **Mapa de Preços** | Tabela comparativa de propostas recebidas |
@@ -172,7 +182,7 @@ Todos os documentos abrem em janela separada com botão "🖨 Imprimir / Salvar 
 - Senhas armazenadas com **PBKDF2-HMAC-SHA256** e salt aleatório por usuário
 - Sessões server-side invalidadas automaticamente por inatividade
 - Acesso à API exige token de sessão em todas as rotas (exceto login e verificação)
-- Upload restrito a extensões seguras (PDF, DOCX, imagens, planilhas) com limite de 50 MB
+- Upload restrito a extensões seguras (PDF, DOCX, imagens, planilhas) com limite de 20 MB por arquivo (a tela recusa antes de enviar; o servidor rejeita acima de 50 MB)
 - Trilha de auditoria imutável registra todas as ações com usuário e timestamp
 - Verificação de integridade do banco de dados (SQLite `PRAGMA integrity_check`) na inicialização
 - Recomenda-se uso em rede interna (LAN) apenas
@@ -186,6 +196,7 @@ Todos os documentos abrem em janela separada com botão "🖨 Imprimir / Salvar 
 | **HTML5 + CSS3** | Interface da aplicação, temas claro/escuro, layout responsivo |
 | **JavaScript puro (ES6+)** | Toda a lógica de negócio, sem frameworks externos |
 | **Python 3 (stdlib)** | Servidor local: REST API, SQLite, auth, SMTP, proxy CNPJ |
+| **waitress** | Servidor WSGI puro-Python que atende as requisições — vendorizado na pasta `waitress/`, nada a instalar |
 | **SQLite** | Armazenamento persistente dos dados (`sgcd.db`) |
 | **ReceitaWS / BrasilAPI** | Consulta de CNPJ (primária + fallback automático) |
 | **ViaCEP** | Preenchimento automático de endereço por CEP |
@@ -194,7 +205,7 @@ Todos os documentos abrem em janela separada com botão "🖨 Imprimir / Salvar 
 
 ## Desenvolvimento
 
-O sistema em si continua zero-dependência (Python stdlib + HTML puro). Para quem for alterar o código, há um lint opcional que verifica variáveis indefinidas no JavaScript de `SGCD.html`:
+O sistema não exige nenhuma instalação: roda com a biblioteca padrão do Python mais o **waitress**, que vem vendorizado na pasta `waitress/` do repositório (puro-Python, sem `pip install`). O frontend é HTML/CSS/JS puro, sem frameworks. Para quem for alterar o código, há um lint opcional que verifica variáveis indefinidas no JavaScript de `SGCD.html`:
 
 ```bash
 npm install   # uma vez, instala apenas o ESLint (ferramenta de dev, não é usada em produção)
