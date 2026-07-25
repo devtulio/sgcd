@@ -2194,6 +2194,7 @@ def _selecionar_modo():
 
 if __name__ == '__main__':
     _selecionar_modo()
+    sgx_base.instalar_captura_de_falhas(_DATA_DIR, 'SGCD')  # crash log que sobrevive à janela fechar
     _check_db_integrity()
     _rotate_backups(_get_backup_cfg())  # limpa excedentes dos backups da sessão anterior
     threading.Thread(target=_watchdog, daemon=True).start()
@@ -2228,3 +2229,11 @@ if __name__ == '__main__':
             httpd.serve_forever()
         except KeyboardInterrupt:
             print('\n  Encerrando servidor...')
+        except Exception:
+            import traceback as _tb
+            _log.error('Servidor caiu (serve_forever): %s', _tb.format_exc())
+            print('\n  ERRO FATAL no servidor — registrado em SGCD_crash.log.')
+            print('  Pressione Enter para fechar.')
+            try: input()
+            except Exception: pass
+            raise
