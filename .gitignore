@@ -29,3 +29,6 @@ nul
 node_modules/
 test-results/
 playwright-report/
+
+# Log de diagnóstico de falha (gerado em runtime — nunca versionar)
+*_crash.log
