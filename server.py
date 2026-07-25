@@ -13,7 +13,6 @@ import time
 import subprocess
 import sys
 import urllib.request
-import logging
 import urllib.error
 import uuid
 import re
@@ -48,19 +47,13 @@ _DATA_DIR     = os.environ.get('SGCD_DATA_DIR', _BASE)
 DB_PATH       = os.path.join(_DATA_DIR, 'sgcd.db')
 UPLOADS_DIR   = os.path.join(_DATA_DIR, 'uploads')
 BACKUP_DIR    = os.path.join(_DATA_DIR, 'backups')
-LOG_PATH      = os.path.join(_DATA_DIR, 'sgcd_errors.log')
 BACKUP_KEEP   = 7        # número de backups automáticos mantidos
 SESSION_TTL   = 60   # renovado pelo ping a cada 5s (ver comentário em _watchdog mais abaixo)
 MAX_UPLOAD    = 50 * 1024 * 1024   # 50 MB — limite de tamanho por upload
 ALLOWED_EXTS  = {'.pdf','.docx','.doc','.xlsx','.xls','.odt','.ods','.png','.jpg','.jpeg','.gif','.webp','.txt','.csv','.zip'}
 
-os.makedirs(_DATA_DIR, exist_ok=True)
-logging.basicConfig(
-    filename=LOG_PATH, level=logging.ERROR,
-    format='%(asctime)s %(levelname)s %(message)s',
-    datefmt='%Y-%m-%dT%H:%M:%S'
-)
-_log = logging.getLogger('sgcd')
+# Motor de erros da família (log rotativo UTF-8 + classificação) — ver sgx_base.
+_log = sgx_base.configurar_log('SGCD', _DATA_DIR)
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 os.makedirs(UPLOADS_DIR, exist_ok=True)
@@ -319,9 +312,10 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         try:
             inner()
         except Exception as e:
-            _log.error('Erro não tratado em %s %s: %s', self.command, self.path, e)
+            # classifica: ErroCliente -> 400 (WARNING sem stack); resto -> 500 (ERROR + traceback)
+            status, corpo = sgx_base.tratar_excecao_request(_log, self.command, self.path, e)
             try:
-                self._json(500, {'error': 'Erro interno no servidor.'})
+                self._json(status, corpo)
             except Exception:
                 pass  # resposta já pode ter começado a ser enviada
 
@@ -384,6 +378,16 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
             self._json(200, {'ok': True})
             threading.Thread(target=_check_shutdown, daemon=True).start()
             return
+
+        # Erro de JavaScript reportado pelo navegador. Sem auth (o erro pode ser
+        # antes do login) e throttled no motor — nunca deixa um browser em loop
+        # afogar o log. Responde sempre 204, para o report ser fire-and-forget.
+        if p == '/api/log/client':
+            try:
+                sgx_base.registrar_erro_cliente_js(_log, json.loads(self._body() or '{}'))
+            except Exception:
+                pass
+            self._json(204, {}); return
 
         if p == '/send-email':
             sess = get_session(self._token())
@@ -472,7 +476,7 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         elif p == '/api/files':
             pid    = qp('process_id')
             prefix = qp('prefix') == '1'
-            per    = min(int(qp('per', 200)), 1000)
+            per    = sgx_base.int_param(qs, 'per', 200, minimo=1, maximo=1000)
             with get_db() as conn:
                 if pid and prefix:
                     total = conn.execute('SELECT COUNT(*) FROM files WHERE process_id LIKE ?', (pid + '%',)).fetchone()[0]
@@ -498,7 +502,7 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         # campo (abrirFieldHist), acessível a qualquer usuário logado. A tela
         # "Auditoria" do menu é que fica restrita a admin, só no frontend.
         elif p == '/api/audit':
-            page = int(qp('page', 1)); per = min(int(qp('per', 50)), 2000)
+            page = sgx_base.int_param(qs, 'page', 1, minimo=1); per = sgx_base.int_param(qs, 'per', 50, minimo=1, maximo=2000)
             q    = (qp('q') or '').strip()
             tipo = qp('tipo') or ''
             de   = qp('de') or ''
@@ -558,6 +562,10 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         elif p == '/api/relatorio/integridade':
             if not s['admin']: self._json(403, {'error': 'Acesso restrito'}); return
             self._relatorio_integridade()
+
+        elif p == '/api/diagnostico/erros':
+            if not s['admin']: self._json(403, {'error': 'Acesso restrito'}); return
+            self._json(200, sgx_base.ler_diagnostico_erros(_DATA_DIR, 'SGCD'))
 
         # Backup
         elif p == '/api/backup':
@@ -913,8 +921,8 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         status  = qp('status', '')
         unidade = qp('unidade', '')
         tag     = qp('tag', '')
-        page    = int(qp('page', 1))
-        per     = min(int(qp('per', 500)), 2000)
+        page    = sgx_base.int_param(qs, 'page', 1, minimo=1)
+        per     = sgx_base.int_param(qs, 'per', 500, minimo=1, maximo=2000)
         trash   = qp('trash') == '1'
 
         where, params = [], []
@@ -1951,7 +1959,7 @@ def _send_daily_alerts():
         _send_email_raw(smtp_cfg, frm, cfg['smtp_to'], f'SGCD — Resumo de pendências ({hoje})', corpo)
         print(f'  [ALERTAS] E-mail de resumo enviado ({len(prazos)} prazo(s), {len(parados)} parado(s))', flush=True)
     except Exception as e:
-        _log.error('Falha ao enviar e-mail de alertas: %s', e)
+        sgx_base.registrar_operacional(_log, 'email-alertas', f'Falha ao enviar e-mail de alertas: {e}')
     with get_db() as conn:
         conn.execute("INSERT OR REPLACE INTO sys_settings (key,value) VALUES ('alert_email_last_sent',?)", (hoje,))
 
@@ -2101,7 +2109,7 @@ def _rotate_backups(cfg=None):
                     if attempt < 5:
                         time.sleep(2)
                     else:
-                        _log.error('Falha ao remover backup %s: arquivo bloqueado (OneDrive/antivírus). Remova manualmente.', old)
+                        sgx_base.registrar_operacional(_log, 'backup-bloqueado', f'Falha ao remover backup {old}: arquivo bloqueado (OneDrive/antivírus). Remova manualmente.')
                 except Exception as e:
                     _log.error('Falha ao remover backup %s: %s', old, e)
                     break

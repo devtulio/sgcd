@@ -377,13 +377,14 @@ class TestHealth(SGCDTestCase):
 
 class TestErroNaoTratado(SGCDTestCase):
 
-    def test_excecao_nao_tratada_retorna_500_em_vez_de_derrubar_conexao(self):
-        # Regressão: handle_error estava definido na classe errada (nunca era
-        # chamado de verdade) — qualquer exceção não tratada derrubava a conexão
-        # sem resposta nenhuma. Agora _safe_dispatch garante um 500 JSON limpo.
+    def test_param_invalido_vira_400_e_nao_derruba_conexao(self):
+        # Regressão + motor de erros: um parâmetro numérico inválido (page=texto)
+        # era erro não-tratado -> 500. Agora o motor classifica como erro DE
+        # CLIENTE (int_param -> ErroCliente) e responde 400 limpo, sem stack no log.
+        # _safe_dispatch continua garantindo que a conexão nunca cai sem resposta.
         token = self.login()
         status, data = self.request('GET', '/api/processes?page=nao-e-um-numero', token=token)
-        self.assertEqual(status, 500)
+        self.assertEqual(status, 400)
         self.assertIn('error', data)
 
         # Confirma que o servidor continua respondendo normalmente depois
@@ -729,6 +730,52 @@ class TestSenhaPadraoMarcadaNoBoot(SGCDTestCase):
     def test_boot_nao_mexe_em_quem_ja_trocou(self):
         self.assertEqual(self._cria_e_reinicia('OutraSenha#2026'), 0,
                          'exigiu troca de quem já tinha saído da senha padrão')
+
+
+class TestMotorErros(SGCDTestCase):
+    """Motor de captura e tratamento de erros (piloto SGCD, 2026-07): classificação
+    cliente(400)/servidor(500), report de erro do navegador, e tela admin de erros."""
+
+    def _raw(self, method, path, data, token=None):
+        conn = http.client.HTTPConnection('127.0.0.1', PORT, timeout=10)
+        hdrs = {'Content-Type': 'application/json'}
+        if token: hdrs['Authorization'] = f'Bearer {token}'
+        conn.request(method, path, body=data, headers=hdrs)
+        resp = conn.getresponse(); body = resp.read(); conn.close()
+        try: return resp.status, json.loads(body) if body else None
+        except ValueError: return resp.status, body
+
+    def test_param_invalido_400(self):
+        tok = self.login()
+        self.assertEqual(self.request('GET', '/api/processes?per=abc', token=tok)[0], 400)
+
+    def test_log_client_sem_auth_204(self):
+        # Endpoint público (erro pode ser antes do login), fire-and-forget -> 204
+        st, _ = self._raw('POST', '/api/log/client',
+                          json.dumps({'msg': 'boom no teste', 'view': 'view-x', 'stack': 'a\nb'}).encode())
+        self.assertEqual(st, 204)
+
+    def test_log_client_chega_no_log_e_no_diagnostico(self):
+        tok = self.login()
+        marca = f'erro-teste-{uuid.uuid4().hex[:8]}'
+        self._raw('POST', '/api/log/client', json.dumps({'msg': marca, 'view': 'view-y'}).encode())
+        # prova order-independent: o erro do cliente foi parar no log do servidor
+        caminho = server.sgx_base.caminho_log_erros(server._DATA_DIR, 'SGCD')
+        # errors='replace': o log pode ter linhas antigas em cp1252 misturadas com
+        # as novas UTF-8 (transição). A marca é ASCII, então aparece de qualquer forma.
+        with open(caminho, encoding='utf-8', errors='replace') as f:
+            self.assertIn(marca, f.read())
+        # e o diagnóstico expõe um grupo de erro de navegador (cliente-js)
+        st, d = self.request('GET', '/api/diagnostico/erros', token=tok)
+        self.assertEqual(st, 200)
+        self.assertTrue(any('cliente-js' in g.get('tipo', '') for g in d['erros']),
+                        'nenhum grupo cliente-js no diagnóstico')
+
+    def test_diagnostico_erros_so_admin(self):
+        admin = self.login()
+        self.request('POST', '/api/usuarios', {'username': 'u_diag', 'nome': 'U', 'password': 'senha123'}, token=admin)
+        comum = self.request('POST', '/api/auth/login', {'username': 'u_diag', 'password': 'senha123'})[1]['token']
+        self.assertEqual(self.request('GET', '/api/diagnostico/erros', token=comum)[0], 403)
 
 
 class TestRecusaSenhaPadrao(SGCDTestCase):

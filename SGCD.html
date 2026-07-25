@@ -1603,6 +1603,18 @@
         <div id="diagnostico-resultado" style="font-size:.82rem">
           <p style="color:var(--gray-400);font-style:italic">Clique em "Reanalisar" para executar o diagnóstico.</p>
         </div>
+
+        <hr style="border:none;border-top:1px solid var(--gray-100);margin:16px 0">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div>
+            <strong style="font-size:.85rem">Erros recentes do sistema</strong>
+            <p style="font-size:.72rem;color:var(--gray-500);margin:2px 0 0">Registrados no log (agrupados por tipo e contagem). Inclui erros do navegador reportados pelos usuários.</p>
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="carregarErros()">↻ Atualizar</button>
+        </div>
+        <div id="erros-resultado" style="font-size:.8rem">
+          <p style="color:var(--gray-400);font-style:italic">Clique em "Atualizar" para ver os erros registrados.</p>
+        </div>
       </div>
 
       <!-- ── Aba Usuários (somente admin) ── -->
@@ -2231,13 +2243,28 @@ async function buscarArquivosPorPrefixo(prefix) {
 
 // ── Tratamento global de erros JS ──────────────────────────────
 let _globalErrorCount = 0;
+// Reporta o erro de JS ao servidor (motor de erros) — fire-and-forget, nunca
+// lança, ignora falha de rede (se o servidor caiu, não há como reportar).
+function _reportErroCliente(msg, stack) {
+  try {
+    const body = JSON.stringify({
+      msg: String(msg).slice(0, 300),
+      stack: String(stack || '').slice(0, 1000),
+      url: location.pathname,
+      view: document.querySelector('.view.active')?.id || '?',
+      userAgent: navigator.userAgent.slice(0, 200),
+    });
+    fetch('/api/log/client', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body, keepalive: true }).catch(() => {});
+  } catch (_) {}
+}
 window.onerror = function(msg, src, line, col, err) {
   _globalErrorCount++;
   if (_globalErrorCount > 3) return true; // evita spam
   const detail = err?.stack ? err.stack.split('\n').slice(0,3).join(' | ') : `${src}:${line}`;
   console.error('[SGCD] Erro não tratado:', msg, detail);
-  // Não exibe toast para erros de extensões do navegador ou scripts externos
+  // Não reporta/avisa erros de extensões do navegador ou scripts externos
   if (src && !src.includes('localhost') && !src.includes('SGCD')) return false;
+  _reportErroCliente(msg, err?.stack || `${src}:${line}`);
   if (typeof toast === 'function') {
     toast(`Erro inesperado: ${String(msg).slice(0, 120)}`, 'error');
   }
@@ -2248,8 +2275,10 @@ window.addEventListener('unhandledrejection', (e) => {
   if (_globalErrorCount > 3) return;
   const msg = e.reason?.message || String(e.reason) || 'Erro assíncrono desconhecido';
   console.error('[SGCD] Promise não tratada:', msg, e.reason?.stack || '');
-  // Ignora erros de rede esperados (timeout, servidor local indisponível)
+  // Ignora erros de rede esperados (timeout, servidor local indisponível) —
+  // não dá pra reportar ao servidor se é justamente o servidor que falhou.
   if (/fetch|network|timeout|abort/i.test(msg)) return;
+  _reportErroCliente(msg, e.reason?.stack);
   if (typeof toast === 'function') toast(`Erro: ${msg.slice(0, 120)}`, 'error');
 });
 // Reset do contador a cada 30s para permitir novos alertas após período de estabilidade
@@ -4200,6 +4229,35 @@ ${_qrFooterReport('Relatório de Auditoria')}
 </body></html>`;
 
   _gerarDocumento(window.open('', '_blank', 'width=1000,height=720'), html, 'Relatório de Auditoria');
+}
+
+async function carregarErros() {
+  const el = document.getElementById('erros-resultado');
+  el.innerHTML = '<p style="color:var(--gray-400)">Carregando…</p>';
+  const r = await API.get('/api/diagnostico/erros');
+  const d = await API.json(r);
+  if (!r?.ok) { el.innerHTML = '<p style="color:#dc2626">Erro ao carregar os registros.</p>'; return; }
+  const erros = d.erros || [];
+  const cor = n => n === 'ERROR' ? '#dc2626' : '#b45309';
+  if (!erros.length) {
+    el.innerHTML = '<p style="color:var(--gray-400);font-style:italic">Nenhum erro registrado. 🎉</p>';
+  } else {
+    const rows = erros.map(g => `
+      <tr>
+        <td style="padding:6px;border-bottom:1px solid var(--gray-100);white-space:nowrap"><span style="color:${cor(g.nivel)};font-weight:600">${escHtml(g.nivel)}</span></td>
+        <td style="padding:6px;border-bottom:1px solid var(--gray-100);text-align:center;font-weight:600">${g.count}</td>
+        <td style="padding:6px;border-bottom:1px solid var(--gray-100);font-size:.75rem">${escHtml(g.tipo)}<div style="color:var(--gray-400)">último: ${escHtml(g.ultimo || '')}</div></td>
+      </tr>`).join('');
+    el.innerHTML = `<table style="width:100%;border-collapse:collapse">
+      <thead><tr>
+        <th style="text-align:left;padding:6px;font-size:.7rem;color:var(--gray-500)">Nível</th>
+        <th style="padding:6px;font-size:.7rem;color:var(--gray-500)">Qtd</th>
+        <th style="text-align:left;padding:6px;font-size:.7rem;color:var(--gray-500)">Tipo</th>
+      </tr></thead><tbody>${rows}</tbody></table>`;
+  }
+  if ((d.crash || []).length) {
+    el.innerHTML += `<div style="margin-top:10px;padding:8px 10px;background:#fef2f2;border:1px solid #fecaca;border-radius:6px;font-size:.72rem;color:#991b1b"><strong>⚠ ${d.crash.length} falha(s) fatal(is) do servidor</strong> — o processo caiu. Detalhe no arquivo <code>SGCD_crash.log</code>.</div>`;
+  }
 }
 
 async function gerarRelatorioIntegridade() {
