@@ -10,6 +10,9 @@
 ### Alterado
 - **Padronização visual:** a tabela da **Trilha de Auditoria** passa a usar o mesmo estilo de tabela canônico das demais listas do sistema (cabeçalho, espaçamento e zebra iguais). Sem mudança de comportamento.
 
+### Corrigido
+- **Modo escuro:** os selos de situação do fornecedor (ativa/inativa/outra) ganharam cores próprias para o tema escuro, em vez das cores claras que destoavam do fundo escuro.
+
 ---
 
 ## [2.45.1] — 2026-07-25
