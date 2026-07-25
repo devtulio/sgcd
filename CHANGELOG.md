@@ -5,6 +5,13 @@
 
 ---
 
+## [Não versionado]
+
+### Documentação
+- Corrige no README a referência ao **Diagnóstico de rede** pelo menu de inicialização: era "opção **[3]**" (numeração do menu antigo, já removida) e passa a "opção **[1]**", igual ao menu atual (`[1] Diagnóstico` / `[2] Iniciar Servidor`).
+
+---
+
 ## [2.45.0] — 2026-07-25
 
 ### Alterado

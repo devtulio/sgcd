@@ -96,7 +96,7 @@ http://192.168.x.x:3000/SGCD.html
 
 Cada usuário faz login com sua própria conta — o servidor atende acessos simultâneos e todos enxergam os mesmos dados.
 
-Se a conexão não funcionar, execute **`Diagnostico SGCD.bat`** (ou a opção **[3]** do `Iniciar SGCD.bat`) na máquina servidora: ele descobre o IP, verifica e corrige automaticamente firewall, perfil de rede e antivírus de terceiros. Ele também testa se há outros dispositivos alcançáveis na rede — útil para identificar isolamento de cliente (Wi-Fi) ou VLANs separadas, casos que exigem intervenção do time de TI.
+Se a conexão não funcionar, execute **`Diagnostico SGCD.bat`** (ou a opção **[1]** do `Iniciar SGCD.bat`) na máquina servidora: ele descobre o IP, verifica e corrige automaticamente firewall, perfil de rede e antivírus de terceiros. Ele também testa se há outros dispositivos alcançáveis na rede — útil para identificar isolamento de cliente (Wi-Fi) ou VLANs separadas, casos que exigem intervenção do time de TI.
 
 > Se o diagnóstico indicar tudo certo mas outra máquina ainda não conseguir acessar, é sinal de bloqueio fora do alcance do Windows (isolamento de rede corporativa, VLAN, ou firewall de outro dispositivo/roteador) — nesse caso, use o teste indicado pelo próprio diagnóstico (`ping` e `Test-NetConnection`) a partir da outra máquina para confirmar e leve essa evidência ao TI.
 
