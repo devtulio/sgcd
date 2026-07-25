@@ -621,13 +621,6 @@
   /* ── Tabela de auditoria (padrão SGDP) ── */
   .table-wrap { background: #fff; border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
   body.dark .table-wrap { background: #2a2a2a; }
-  .audit-table { width: 100%; border-collapse: collapse; }
-  .audit-table th { background: var(--gray-50); border-bottom: 1px solid var(--gray-200);
-    padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 700;
-    text-transform: uppercase; letter-spacing: .4px; color: var(--gray-500); white-space: nowrap; }
-  .audit-table td { padding: 11px 14px; border-bottom: 1px solid var(--gray-100); vertical-align: middle; font-size: 12px; }
-  .audit-table tr:last-child td { border-bottom: none; }
-  .audit-table tr:hover td { background: var(--gray-50); }
 </style>
 </head>
 <body>
@@ -1215,7 +1208,7 @@
         <button class="btn btn-outline btn-sm" onclick="_auditLimparFiltros()">Limpar</button>
       </div>
       <div class="table-wrap">
-        <table class="audit-table">
+        <table class="list-table">
           <thead><tr><th>Data/hora</th><th>Usuário</th><th>Ação</th><th>Detalhes</th></tr></thead>
           <tbody id="audit-body"><tr><td colspan="4" style="text-align:center;padding:32px;color:var(--gray-400)">Carregando…</td></tr></tbody>
         </table>
