@@ -5,7 +5,13 @@
 
 ---
 
-## [Não versionado]
+## [2.45.0] — 2026-07-25
+
+### Alterado
+- **O servidor interno foi trocado por um mais robusto (waitress).** Em uso simultâneo, o servidor anterior às vezes parava sozinho ("servidor parou"); o novo aguenta várias requisições ao mesmo tempo sem cair. O jeito de usar não muda — continua abrindo pelo mesmo atalho.
+
+### Adicionado
+- **Motor de captura e tratamento de erros.** O sistema passa a registrar falhas num arquivo de log rotativo (sem estourar o disco), separa "erro de quem usa" de "erro do programa", captura também erros do navegador e traz a tela **Erros recentes** no Diagnóstico (só para administradores). Se o programa travar de vez, o motivo fica gravado num arquivo `*_crash.log`.
 
 ### Documentação
 - Padronização do **README** e do **LICENSE** entre os sistemas da família (não altera o sistema): subseção "Menu de inicialização" unificada e igual ao código, referência aos sistemas irmãos na Descrição, seção "Documentos Gerados pelo Sistema", e LICENSE normalizado para o template MIT canônico (LF) — o GitHub voltou a classificar o repositório como MIT.

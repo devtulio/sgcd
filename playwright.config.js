@@ -40,7 +40,7 @@ export default defineConfig({
     command: 'python server.py',
     url: `http://localhost:${port}/health`,
     reuseExistingServer: false,
-    timeout: 15_000,
+    timeout: 30_000  // waitress boota um tico mais lento que o http.server,
     env: { SGCD_DATA_DIR: dataDir, SGCD_PORT: String(port) },
   },
 });
