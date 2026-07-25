@@ -8,6 +8,7 @@
 ## [Não versionado]
 
 ### Alterado
+- **A tela de Fornecedores virou tabela** (mesmo padrão dos demais cadastros), no lugar da lista de cards: colunas Razão Social, CNPJ e Situação, com **ordenação ao clicar no cabeçalho** e **seleção em massa** (excluir vários para a Lixeira). O detalhe completo do fornecedor — dados, certidões, sanções, participações em processos, consulta de CNPJ e CEIS/CNEP, edição — passou para uma **janela (modal)**, aberta ao clicar na linha ou em Editar.
 - **Padronização visual:** a tabela da **Trilha de Auditoria** passa a usar o mesmo estilo de tabela canônico das demais listas do sistema (cabeçalho, espaçamento e zebra iguais). Sem mudança de comportamento.
 
 ### Corrigido
