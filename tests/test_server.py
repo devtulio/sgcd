@@ -41,6 +41,10 @@ def setUpModule():
     server.BACKUP_DIR = os.path.join(_tmpdir, 'backups')
     os.makedirs(server.UPLOADS_DIR, exist_ok=True)
     os.makedirs(server.BACKUP_DIR, exist_ok=True)
+    # Motor de erros: redireciona o log para o dir temporário — sem isto os testes
+    # escreveriam no <sigla>_errors.log do repositório (o handler é criado no import).
+    server._DATA_DIR = _tmpdir
+    server._log = server.sgx_base.configurar_log('SGCD', _tmpdir, forcar=True)
     server.init_db()
     # A suíte age como um sistema já instalado, com a senha padrão trocada: sem
     # isto todo login como admin/admin123 tomaria 403, porque o servidor passou a
