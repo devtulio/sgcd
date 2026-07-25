@@ -1893,7 +1893,8 @@ def _send_daily_alerts():
         ).fetchall()}
     if not (cfg.get('smtp_host') and cfg.get('smtp_user') and cfg.get('smtp_pass') and cfg.get('smtp_to')):
         return
-    hoje = time.strftime('%Y-%m-%d')
+    hoje = time.strftime('%Y-%m-%d')       # chave de dedup (não exibir)
+    hoje_br = time.strftime('%d/%m/%Y')    # exibição pt-BR
     if cfg.get('alert_email_last_sent') == hoje:
         return
 
@@ -1952,10 +1953,10 @@ def _send_daily_alerts():
             linhas.append(f'<li><strong>{html_mod.escape(str(objeto))}</strong> — {dias} dias sem atualização</li>')
         linhas.append('</ul>')
 
-    corpo = f"<p>Resumo automático do SGCD — {hoje}</p>" + ''.join(linhas)
+    corpo = f"<p>Resumo automático do SGCD — {hoje_br}</p>" + ''.join(linhas)
     smtp_cfg, frm = _smtp_cfg_build(cfg)
     try:
-        _send_email_raw(smtp_cfg, frm, cfg['smtp_to'], f'SGCD — Resumo de pendências ({hoje})', corpo)
+        _send_email_raw(smtp_cfg, frm, cfg['smtp_to'], f'SGCD — Resumo de pendências ({hoje_br})', corpo)
         print(f'  [ALERTAS] E-mail de resumo enviado ({len(prazos)} prazo(s), {len(parados)} parado(s))', flush=True)
     except Exception as e:
         sgx_base.registrar_operacional(_log, 'email-alertas', f'Falha ao enviar e-mail de alertas: {e}')
