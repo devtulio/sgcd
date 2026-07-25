@@ -5,7 +5,7 @@
 
 ---
 
-## [Não versionado]
+## [2.46.0] — 2026-07-25
 
 ### Alterado
 - **A tela de Fornecedores virou tabela** (mesmo padrão dos demais cadastros), no lugar da lista de cards: colunas Razão Social, CNPJ e Situação, com **ordenação ao clicar no cabeçalho** e **seleção em massa** (excluir vários para a Lixeira). O detalhe completo do fornecedor — dados, certidões, sanções, participações em processos, consulta de CNPJ e CEIS/CNEP, edição — passou para uma **janela (modal)**, aberta ao clicar na linha ou em Editar.

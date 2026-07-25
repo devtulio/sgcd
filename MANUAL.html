@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Manual Operacional — SGCD v2.45.1</title>
+<title>Manual Operacional — SGCD v2.46.0</title>
 <style>
   /* Reset e base */
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -89,7 +89,7 @@
       size: A4;
       margin: 20mm 20mm 25mm;
       @top-center {
-        content: "SGCD v2.45.1 — Manual Operacional";
+        content: "SGCD v2.46.0 — Manual Operacional";
         font-family: 'Times New Roman', serif;
         font-size: 9pt;
         color: #666;
@@ -116,7 +116,7 @@
     <div class="cover-title">Manual Operacional</div>
     <div class="cover-subtitle">SGCD — Sistema de Gestão de Contratação Direta</div>
     <div class="cover-system">Gestão de Processos de Dispensa de Licitação</div>
-    <div class="cover-version">Versão v2.45.1</div>
+    <div class="cover-version">Versão v2.46.0</div>
     <br>
     <div style="font-size:11pt; color:#555; line-height:1.8;">
       Aplicação web multiusuário para agentes de contratação pública<br>
@@ -424,6 +424,7 @@
 
 <!-- ─────────────────────────────────────────────── SEÇÃO 4 -->
 <h2 id="sec4">4. Cadastro de Fornecedores</h2>
+<p>A lista de fornecedores aparece em <strong>tabela</strong> — colunas Razão Social, CNPJ e Situação, que ordenam ao clicar no cabeçalho, com <strong>seleção em massa</strong> para enviar vários à Lixeira. Clicar numa linha (ou em <strong>Editar</strong>) abre o cadastro completo numa <strong>janela</strong>, com as abas Dados, Certidões, Sanções e Participações (processos em que o fornecedor entrou).</p>
 <p>O SGCD mantém um cadastro de fornecedores integrado com os processos. Fornecedores cadastrados podem ser vinculados às propostas e ao processo, facilitando o reaproveitamento de dados e o controle de certidões.</p>
 
 <h3 id="sec4-1">4.1 Consultando e cadastrando</h3>
@@ -1668,6 +1669,13 @@
 
 <!-- ─────────────────────────────────────────────── SEÇÃO 29 -->
 <h2 id="sec29">29. Histórico de Versões</h2>
+
+<h3>v2.46.0 — Julho/2026</h3>
+<p><strong>Alterado</strong></p>
+<ul><li><strong>A tela de Fornecedores virou tabela</strong> (mesmo padrão dos demais cadastros), no lugar dos cards: colunas Razão Social, CNPJ e Situação, com ordenação ao clicar no cabeçalho e seleção em massa (excluir vários para a Lixeira). O detalhe completo do fornecedor — dados, certidões, sanções, participações em processos, consulta de CNPJ e CEIS/CNEP, edição — passou para uma janela (modal).</li>
+<li>A tabela da <strong>Trilha de Auditoria</strong> passa a usar o estilo de tabela canônico das demais listas do sistema.</li></ul>
+<p><strong>Corrigido</strong></p>
+<ul><li>No modo escuro, os selos de situação do fornecedor ganharam cores próprias, em vez das cores claras que destoavam.</li></ul>
 
 <h3>v2.45.1 — Julho/2026</h3>
 <p><strong>Corrigido</strong></p>
