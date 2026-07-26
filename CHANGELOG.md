@@ -9,6 +9,16 @@
 
 ---
 
+## [2.46.3] — 2026-07-25
+
+### Corrigido
+- **Limite de anexo divergente entre a tela e o servidor.** A tela recusa arquivos acima de **20 MB**, mas o servidor anunciava 50 MB na mensagem de erro — um limite que nunca era alcançado, porque o menor prevalece. Os dois passam a valer 20 MB, que é o comportamento real desde sempre. Nada muda para quem usa o sistema; para permitir arquivos maiores, os dois limites precisam subir juntos.
+
+### Documentação
+- **Histórico de Versões do manual:** cinco entradas antigas (v1.14.0 a v1.18.0) ainda apareciam numeradas como "29.1", "29.2"… enquanto todas as demais não são. Numeração removida, no padrão do restante da lista.
+
+---
+
 ## [2.46.2] — 2026-07-25
 
 ### Documentação

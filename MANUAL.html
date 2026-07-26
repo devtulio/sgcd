@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Manual Operacional — SGCD v2.46.2</title>
+<title>Manual Operacional — SGCD v2.46.3</title>
 <style>
   /* Reset e base */
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -89,7 +89,7 @@
       size: A4;
       margin: 20mm 20mm 25mm;
       @top-center {
-        content: "SGCD v2.46.2 — Manual Operacional";
+        content: "SGCD v2.46.3 — Manual Operacional";
         font-family: 'Times New Roman', serif;
         font-size: 9pt;
         color: #666;
@@ -116,7 +116,7 @@
     <div class="cover-title">Manual Operacional</div>
     <div class="cover-subtitle">SGCD — Sistema de Gestão de Contratação Direta</div>
     <div class="cover-system">Gestão de Processos de Dispensa de Licitação</div>
-    <div class="cover-version">Versão v2.46.2</div>
+    <div class="cover-version">Versão v2.46.3</div>
     <br>
     <div style="font-size:11pt; color:#555; line-height:1.8;">
       Aplicação web multiusuário para agentes de contratação pública<br>
@@ -1744,6 +1744,10 @@
 <!-- ─────────────────────────────────────────────── SEÇÃO 29 -->
 <h2 id="sec29">29. Histórico de Versões</h2>
 
+<h3>v2.46.3 — Julho/2026</h3>
+<p><strong>Corrigido</strong></p>
+<ul><li>O servidor anunciava 50 MB como limite de anexo, mas a tela já recusava acima de 20 MB — prevalecia o menor. Os dois passam a valer 20 MB; nada muda no uso.</li></ul>
+
 <h3>v2.46.2 — Julho/2026</h3>
 <p><strong>Documentação</strong></p>
 <ul><li>Auditoria do manual e do README: a Seção 4 voltou a descrever a tela real de Fornecedores (tabela + janela), o backup do banco aparece como pacote .zip, o limite de anexo como 20 MB; passaram a ser documentados a opção MINUTA, os métodos de cálculo do preço estimado, a tela de erros recentes, o cadastro compartilhado de fornecedores, as etiquetas e a consulta automática CEIS/CNEP.</li></ul>
@@ -2203,7 +2207,7 @@
   <li><strong>Configurações — layout responsivo:</strong> a tela de configurações passa a respeitar o modo compacto/expandido; largura dos cards de configuração alinhada com a barra de abas; conteúdo preenche a altura disponível da tela.</li>
 </ul>
 
-<h3 id="sec29-1">29.1 v1.18.0 — Junho/2026</h3>
+<h3>v1.18.0 — Junho/2026</h3>
 <ul>
   <li><strong>Backup automático por salvamento:</strong> snapshot gravado no <code>localStorage</code> 3 segundos após cada alteração em processo, sem intervenção do usuário.</li>
   <li><strong>Banner de alerta de backup:</strong> faixa laranja persistente exibida quando o último backup manual foi exportado há mais de 7 dias ou nunca foi exportado, com botão de exportação rápida.</li>
@@ -2215,7 +2219,7 @@
   <li><strong>Correção de índices no Relatório de Fornecedores:</strong> índice de valor adjudicado substituído por <code>STEPS.findIndex()</code>, eliminando dependência de posição fixa das etapas.</li>
 </ul>
 
-<h3 id="sec29-2">29.2 v1.17.0 — Junho/2026</h3>
+<h3>v1.17.0 — Junho/2026</h3>
 <ul>
   <li><strong>Exportação PNCP:</strong> novo botão "📤 Exportar PNCP" na etapa do Aviso de Dispensa gera um arquivo JSON estruturado no formato da API do Portal Nacional de Contratações Públicas, pré-preenchido com os dados do processo.</li>
   <li><strong>Correção da Ata de Procedimento:</strong> os índices das etapas (Cotações, Propostas, Habilitação, Adjudicação e Homologação) agora são calculados dinamicamente via <code>STEPS.findIndex()</code>, eliminando bugs silenciosos quando etapas são reordenadas.</li>
@@ -2224,7 +2228,7 @@
   <li><strong>Correções legais nos documentos:</strong> revisão geral em todos os 16 modelos de documentos — artigos corrigidos (arts. 3º/9º Lei 9.784/99, art. 72 Lei 14.133/2021, art. 94 c/c art. 91 §4º, art. 72 VII), concordâncias gramaticais, termos técnicos padronizados e parágrafos duplicados removidos.</li>
 </ul>
 
-<h3 id="sec29-3">29.3 v1.16.0</h3>
+<h3>v1.16.0</h3>
 <ul>
   <li><strong>Relatório de Fornecedores:</strong> novo relatório global com indicadores de participação, aprovação e reprovação por fornecedor, incluindo QR Code de autenticidade.</li>
   <li><strong>Relatório Executivo:</strong> novo relatório consolidado de contratações diretas com gráfico de barras de valores por processo, filtros e indicadores de conformidade.</li>
@@ -2232,14 +2236,14 @@
   <li><strong>Processo Completo (PDF):</strong> documento único que agrega todos os atos do processo, com QR Code de autenticidade no rodapé e numeração de seções.</li>
 </ul>
 
-<h3 id="sec29-4">29.4 v1.15.0</h3>
+<h3>v1.15.0</h3>
 <ul>
   <li><strong>Dashboard com paginação:</strong> a listagem de processos no painel inicial passou a exibir resultados paginados, melhorando a performance com grande volume de processos.</li>
   <li><strong>Lazy loading nas etapas:</strong> os cards de cada etapa do processo são renderizados sob demanda, reduzindo o tempo de abertura do painel de processo.</li>
   <li><strong>Filtros avançados no Dashboard:</strong> adicionados filtros por valor mínimo/máximo, período e combinação de critérios.</li>
 </ul>
 
-<h3 id="sec29-5">29.5 v1.14.0</h3>
+<h3>v1.14.0</h3>
 <ul>
   <li><strong>QR Code de autenticidade:</strong> todos os documentos gerados passaram a incluir QR Code no rodapé com código de verificação derivado dos dados do processo (ver Seção 20).</li>
   <li><strong>Histórico por campo:</strong> botão 🕐 em cada campo do painel de informações exibe o histórico completo de alterações com data, valor anterior e novo valor (ver Seção 20.3).</li>
@@ -2248,7 +2252,7 @@
 
 <hr class="section-divider">
 <p style="text-align:center; font-size:9pt; color:#888; margin-top:20pt;">
-  SGCD v2.46.2 — Manual Operacional<br>
+  SGCD v2.46.3 — Manual Operacional<br>
   Sistema de Gestão de Contratação Direta<br>
   Lei Federal nº 14.133/2021
 </p>

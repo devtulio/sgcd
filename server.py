@@ -35,7 +35,7 @@ import sgx_base   # esqueleto compartilhado da família — ver _esqueleto/READM
 # Versão do servidor — DEVE acompanhar o SGCD_VERSION do SGCD.html a cada release.
 # Exposta em /health para o frontend detectar quando o processo em execução está
 # desatualizado (HTML novo servido, mas server.py antigo ainda rodando em memória).
-SERVER_VERSION = '2.46.2'
+SERVER_VERSION = '2.46.3'
 
 PORT          = int(os.environ.get('SGCD_PORT', 3000))
 _BASE         = os.path.dirname(os.path.abspath(__file__))
@@ -48,7 +48,12 @@ UPLOADS_DIR   = os.path.join(_DATA_DIR, 'uploads')
 BACKUP_DIR    = os.path.join(_DATA_DIR, 'backups')
 BACKUP_KEEP   = 7        # número de backups automáticos mantidos
 SESSION_TTL   = 60   # renovado pelo ping a cada 5s (ver comentário em _watchdog mais abaixo)
-MAX_UPLOAD    = 50 * 1024 * 1024   # 50 MB — limite de tamanho por upload
+MAX_UPLOAD    = 20 * 1024 * 1024   # 20 MB — mesmo teto do MAX_FILE_SIZE do SGCD.html,
+                                   # que recusa o arquivo antes de enviar. Servidor e tela
+                                   # tinham limites diferentes (50 x 20), e o de fato valia
+                                   # era o menor; a mensagem de erro do servidor anunciava
+                                   # um limite que ninguém alcançava. Para permitir arquivos
+                                   # maiores, subir os dois juntos.
 ALLOWED_EXTS  = {'.pdf','.docx','.doc','.xlsx','.xls','.odt','.ods','.png','.jpg','.jpeg','.gif','.webp','.txt','.csv','.zip'}
 
 # Motor de erros da família (log rotativo UTF-8 + classificação) — ver sgx_base.

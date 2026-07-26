@@ -1,6 +1,6 @@
 # SGCD — Sistema de Gestão de Contratação Direta
 
-![Versão](https://img.shields.io/badge/versão-v2.46.2-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-Python%20%2B%20SQLite-orange) ![Licença](https://img.shields.io/badge/licença-MIT-green) ![Multiusuário](https://img.shields.io/badge/acesso-multiusuário-blueviolet) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21314672.svg)](https://doi.org/10.5281/zenodo.21314672) [![CI](https://github.com/devtulio/sgcd/actions/workflows/ci.yml/badge.svg)](https://github.com/devtulio/sgcd/actions/workflows/ci.yml)
+![Versão](https://img.shields.io/badge/versão-v2.46.3-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-Python%20%2B%20SQLite-orange) ![Licença](https://img.shields.io/badge/licença-MIT-green) ![Multiusuário](https://img.shields.io/badge/acesso-multiusuário-blueviolet) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21314672.svg)](https://doi.org/10.5281/zenodo.21314672) [![CI](https://github.com/devtulio/sgcd/actions/workflows/ci.yml/badge.svg)](https://github.com/devtulio/sgcd/actions/workflows/ci.yml)
 
 ## Descrição
 
@@ -182,7 +182,7 @@ Todos os documentos abrem em janela separada com botão "🖨 Imprimir / Salvar 
 - Senhas armazenadas com **PBKDF2-HMAC-SHA256** e salt aleatório por usuário
 - Sessões server-side invalidadas automaticamente por inatividade
 - Acesso à API exige token de sessão em todas as rotas (exceto login e verificação)
-- Upload restrito a extensões seguras (PDF, DOCX, imagens, planilhas) com limite de 20 MB por arquivo (a tela recusa antes de enviar; o servidor rejeita acima de 50 MB)
+- Upload restrito a extensões seguras (PDF, DOCX, imagens, planilhas) com limite de 20 MB por arquivo, aplicado nos dois lados: a tela recusa antes de enviar e o servidor rejeita o que passar
 - Trilha de auditoria imutável registra todas as ações com usuário e timestamp
 - Verificação de integridade do banco de dados (SQLite `PRAGMA integrity_check`) na inicialização
 - Recomenda-se uso em rede interna (LAN) apenas
