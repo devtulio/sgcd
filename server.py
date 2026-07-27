@@ -35,7 +35,7 @@ import sgx_base   # esqueleto compartilhado da família — ver _esqueleto/READM
 # Versão do servidor — DEVE acompanhar o SGCD_VERSION do SGCD.html a cada release.
 # Exposta em /health para o frontend detectar quando o processo em execução está
 # desatualizado (HTML novo servido, mas server.py antigo ainda rodando em memória).
-SERVER_VERSION = '2.46.3'
+SERVER_VERSION = '2.46.4'
 
 PORT          = int(os.environ.get('SGCD_PORT', 3000))
 _BASE         = os.path.dirname(os.path.abspath(__file__))
@@ -129,7 +129,14 @@ def init_db():
             );
             CREATE TABLE IF NOT EXISTS files (
                 id            TEXT PRIMARY KEY,
-                process_id    TEXT REFERENCES processes(id) ON DELETE CASCADE,
+                -- SEM foreign key para processes: o front grava um id COMPOSTO aqui
+                -- ("<id-do-processo>_<etapa>", e "_cert_<id>" nas certidões) para poder
+                -- buscar os anexos de uma etapa por prefixo (LIKE). Com a FK declarada,
+                -- todo upload falhava com FOREIGN KEY constraint failed em banco novo —
+                -- bancos antigos escapavam só porque a tabela nasceu antes da FK.
+                -- A limpeza dos arquivos ao purgar continua sendo pelo mesmo prefixo,
+                -- em _purge_process() e _purge_old_trash().
+                process_id    TEXT,
                 step_index    INTEGER,
                 nome_original TEXT NOT NULL,
                 nome_disco    TEXT NOT NULL,
@@ -193,6 +200,31 @@ def init_db():
             conn.execute('ALTER TABLE usuarios ADD COLUMN must_change_password INTEGER DEFAULT 0')
         except sqlite3.OperationalError:
             pass
+        # Migração: remove a foreign key files.process_id -> processes(id) dos bancos
+        # que nasceram com ela (instalações novas a partir da versão que a declarou).
+        # Ela é incompatível com o id composto que o front grava e fazia TODO upload
+        # falhar. SQLite não tem DROP CONSTRAINT: recria a tabela e copia os dados —
+        # sob nome temporário, renomeando no fim, para não deixar referência órfã.
+        if any(fk[2] == 'processes' for fk in conn.execute('PRAGMA foreign_key_list(files)').fetchall()):
+            conn.execute('PRAGMA foreign_keys=OFF')
+            conn.execute('''CREATE TABLE files_novo (
+                id            TEXT PRIMARY KEY,
+                process_id    TEXT,
+                step_index    INTEGER,
+                nome_original TEXT NOT NULL,
+                nome_disco    TEXT NOT NULL,
+                tamanho       INTEGER,
+                mime          TEXT,
+                uploaded_by   INTEGER REFERENCES usuarios(id),
+                uploaded_em   TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M:%S','now','localtime'))
+            )''')
+            conn.execute('''INSERT INTO files_novo
+                            (id,process_id,step_index,nome_original,nome_disco,tamanho,mime,uploaded_by,uploaded_em)
+                            SELECT id,process_id,step_index,nome_original,nome_disco,tamanho,mime,uploaded_by,uploaded_em
+                            FROM files''')
+            conn.execute('DROP TABLE files')
+            conn.execute('ALTER TABLE files_novo RENAME TO files')
+            conn.execute('PRAGMA foreign_keys=ON')
         # Sessões são descartadas a cada início do servidor (logout automático ao fechar janela)
         conn.execute('DELETE FROM sessions')
         # Cria admin padrão se não houver usuários

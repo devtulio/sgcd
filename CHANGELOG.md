@@ -9,6 +9,13 @@
 
 ---
 
+## [2.46.4] — 2026-07-27
+
+### Corrigido
+- **Anexar arquivo não funcionava em instalação nova.** A tabela de arquivos declarava um vínculo rígido com a tabela de processos, incompatível com a forma como o sistema identifica o anexo (que guarda processo **e etapa** no mesmo campo, para conseguir listar os anexos de cada etapa). O resultado é que, num banco criado do zero, **todo upload falhava**. Instalações existentes nunca foram afetadas — a tabela delas é anterior a esse vínculo —, e os anexos já guardados continuam intactos. Bancos que nasceram com o defeito são corrigidos automaticamente ao iniciar o sistema, preservando os arquivos.
+
+---
+
 ## [2.46.3] — 2026-07-25
 
 ### Corrigido

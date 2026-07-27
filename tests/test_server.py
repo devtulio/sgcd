@@ -924,5 +924,48 @@ class TestBackupCofre(SGCDTestCase):
         self.assertEqual(self._raw('POST', '/api/backups/db/restore', b'lixo', token)[0], 400)
 
 
+class TestAnexoProcesso(SGCDTestCase):
+    """Anexo de etapa. O front grava um process_id COMPOSTO ("<id>_<etapa>") para
+    buscar os anexos de uma etapa por prefixo; a tabela files chegou a declarar uma
+    foreign key para processes(id), o que fazia todo upload falhar em banco novo."""
+
+    def _upload(self, process_id, token, nome='doc.pdf'):
+        boundary = '----sgcdtest'
+        corpo = (
+            f'--{boundary}\r\n'
+            f'Content-Disposition: form-data; name="step_index"\r\n\r\n0\r\n'
+            f'--{boundary}\r\n'
+            f'Content-Disposition: form-data; name="file"; filename="{nome}"\r\n'
+            f'Content-Type: application/pdf\r\n\r\n'
+        ).encode() + b'%PDF-1.4 conteudo de teste\r\n' + f'--{boundary}--\r\n'.encode()
+        conn = http.client.HTTPConnection('127.0.0.1', PORT, timeout=10)
+        conn.request('POST', f'/api/processes/{process_id}/files', body=corpo, headers={
+            'Content-Type': f'multipart/form-data; boundary={boundary}',
+            'Authorization': f'Bearer {token}'})
+        resp = conn.getresponse(); body = resp.read(); conn.close()
+        try: return resp.status, json.loads(body) if body else None
+        except ValueError: return resp.status, body
+
+    def test_anexo_com_process_id_composto(self):
+        token = self.login()
+        st, proc = self.request('POST', '/api/processes', {'objeto': 'Processo com anexo'}, token=token)
+        self.assertEqual(st, 200, proc)
+        pid = proc['id']
+        st, d = self._upload(f'{pid}_0', token)
+        self.assertEqual(st, 200, d)          # antes: 500 por FOREIGN KEY constraint failed
+        self.assertEqual(d['process_id'], f'{pid}_0')
+        # e a busca por prefixo, que é o motivo do id composto, encontra o anexo
+        st, lista = self.request('GET', f'/api/files?process_id={pid}&prefix=1', token=token)
+        self.assertEqual(st, 200, lista)
+        self.assertEqual([f['process_id'] for f in lista['items']], [f'{pid}_0'])
+
+    def test_files_sem_foreign_key_para_processes(self):
+        """Trava a regressão no schema, não só no efeito."""
+        import sqlite3
+        with sqlite3.connect(server.DB_PATH) as conn:
+            fks = [f[2] for f in conn.execute('PRAGMA foreign_key_list(files)').fetchall()]
+        self.assertNotIn('processes', fks)
+
+
 if __name__ == '__main__':
     unittest.main()
