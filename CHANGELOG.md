@@ -9,6 +9,15 @@
 
 ---
 
+## [2.46.5] — 2026-07-27
+
+### Corrigido
+- **A exclusão em massa de fornecedores driblava a proteção que a exclusão individual aplica.** Excluir um fornecedor vinculado a algum processo sempre foi recusado pelo botão da linha — mas a checagem existia só na tela, e a barra de ações em massa chamava o servidor direto, apagando fornecedores vinculados sem qualquer aviso. A regra passou para o **servidor**, então vale para todos os caminhos: pelo botão, em massa ou por qualquer outro acesso. Continua valendo tanto para o fornecedor **vencedor** do processo quanto para quem apenas **apresentou proposta** (casado pelo CNPJ). Processos que já estão na Lixeira deixam de prender o fornecedor.
+- **A exclusão em massa agora diz o que não conseguiu excluir e por quê**, em vez de informar só o total de sucessos.
+- **Listas dentro das janelas de confirmação voltam a quebrar linha** (antes saíam todas grudadas num parágrafo só) — vale para todos os sistemas da família.
+
+---
+
 ## [2.46.4] — 2026-07-27
 
 ### Corrigido

@@ -35,7 +35,7 @@ import sgx_base   # esqueleto compartilhado da família — ver _esqueleto/READM
 # Versão do servidor — DEVE acompanhar o SGCD_VERSION do SGCD.html a cada release.
 # Exposta em /health para o frontend detectar quando o processo em execução está
 # desatualizado (HTML novo servido, mas server.py antigo ainda rodando em memória).
-SERVER_VERSION = '2.46.4'
+SERVER_VERSION = '2.46.5'
 
 PORT          = int(os.environ.get('SGCD_PORT', 3000))
 _BASE         = os.path.dirname(os.path.abspath(__file__))
@@ -803,6 +803,48 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         else:
             self._json(404, {'error': 'Rota não encontrada'})
 
+    def _fornecedor_vinculos(self, conn, fid):
+        """Quantos processos vivos citam este fornecedor — como vencedor
+        (`fornecedor.id` no processo) ou como proponente (CNPJ dentro de
+        `_propostas`, nas etapas de cotação, onde só o CNPJ digitado fica gravado).
+
+        Mesma regra que a tela já aplicava antes de excluir; aqui no servidor ela
+        vale para todo caminho — inclusive a exclusão em massa, que chamava a rota
+        direto e passava por cima da checagem feita só no navegador."""
+        row = conn.execute('SELECT cnpj, data FROM fornecedores WHERE id=?', (fid,)).fetchone()
+        if not row:
+            return 0
+        cnpj_alvo = re.sub(r'\D', '', row['cnpj'] or '')
+        if not cnpj_alvo:
+            try:
+                cnpj_alvo = re.sub(r'\D', '', (json.loads(row['data'] or '{}').get('cnpj') or ''))
+            except ValueError:
+                cnpj_alvo = ''
+        n = 0
+        for r in conn.execute('SELECT data FROM processes WHERE deleted_at IS NULL').fetchall():
+            try:
+                proc = json.loads(r['data'] or '{}')
+            except ValueError:
+                continue
+            if (proc.get('fornecedor') or {}).get('id') == fid:
+                n += 1
+                continue
+            if not cnpj_alvo:
+                continue
+            for step in proc.get('steps') or []:
+                bruto = (step.get('fields') or {}).get('_propostas')
+                if not bruto:
+                    continue
+                try:
+                    propostas = json.loads(bruto)
+                except (ValueError, TypeError):
+                    continue
+                if any(re.sub(r'\D', '', (pr.get('cnpj') or '')) == cnpj_alvo
+                       for pr in propostas if isinstance(pr, dict)):
+                    n += 1
+                    break
+        return n
+
     def _route_delete(self, p, qs, s):
         purge = qs.get('purge', [None])[0] == '1'
 
@@ -824,6 +866,10 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
                     conn.execute('DELETE FROM fornecedores WHERE id=?', (fid,))
             else:
                 with get_db() as conn:
+                    vinculos = self._fornecedor_vinculos(conn, fid)
+                    if vinculos:
+                        self._json(409, {'error': f'Não é possível excluir: fornecedor vinculado a {vinculos} processo(s).'})
+                        return
                     conn.execute('UPDATE fornecedores SET deleted_at=? WHERE id=?', (_now(), fid))
             self._json(200, {'ok': True})
 

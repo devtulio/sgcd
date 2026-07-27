@@ -924,6 +924,55 @@ class TestBackupCofre(SGCDTestCase):
         self.assertEqual(self._raw('POST', '/api/backups/db/restore', b'lixo', token)[0], 400)
 
 
+class TestGuardaExclusaoFornecedor(SGCDTestCase):
+    """A recusa de excluir fornecedor vinculado a processo vivia só na tela: a
+    exclusão em massa chamava a rota direto e passava por cima dela. A regra
+    agora é do servidor, então vale para qualquer caminho."""
+
+    def _forn(self, token, cnpj, razao):
+        st, d = self.request('POST', '/api/fornecedores', {'cnpj': cnpj, 'razaoSocial': razao}, token=token)
+        self.assertEqual(st, 200, d)
+        return d['id']
+
+    def test_bloqueia_fornecedor_vencedor_de_processo(self):
+        token = self.login()
+        fid = self._forn(token, '11222333000181', 'Fornecedor Vencedor LTDA')
+        st, proc = self.request('POST', '/api/processes',
+                                {'objeto': 'Processo com vencedor', 'fornecedor': {'id': fid}}, token=token)
+        self.assertEqual(st, 200, proc)
+        st, d = self.request('DELETE', f'/api/fornecedores/{fid}', token=token)
+        self.assertEqual(st, 409, d)
+        self.assertIn('vinculado a 1 processo', d['error'])
+
+    def test_bloqueia_fornecedor_so_com_proposta(self):
+        """Proposta guarda só o CNPJ digitado na etapa — não o id do fornecedor."""
+        token = self.login()
+        fid = self._forn(token, '44555666000177', 'Fornecedor Proponente LTDA')
+        propostas = json.dumps([{'cnpj': '44.555.666/0001-77', 'valor': 100}])
+        st, proc = self.request('POST', '/api/processes', {
+            'objeto': 'Processo com proposta',
+            'steps': [{'fields': {'_propostas': propostas}}]}, token=token)
+        self.assertEqual(st, 200, proc)
+        st, d = self.request('DELETE', f'/api/fornecedores/{fid}', token=token)
+        self.assertEqual(st, 409, d)
+
+    def test_permite_excluir_fornecedor_sem_vinculo(self):
+        token = self.login()
+        fid = self._forn(token, '77888999000155', 'Fornecedor Livre LTDA')
+        st, _ = self.request('DELETE', f'/api/fornecedores/{fid}', token=token)
+        self.assertEqual(st, 200)
+
+    def test_processo_na_lixeira_nao_prende_o_fornecedor(self):
+        token = self.login()
+        fid = self._forn(token, '22333444000166', 'Fornecedor de Processo Excluido')
+        st, proc = self.request('POST', '/api/processes',
+                                {'objeto': 'Processo que vai pra lixeira', 'fornecedor': {'id': fid}}, token=token)
+        self.assertEqual(st, 200, proc)
+        self.assertEqual(self.request('DELETE', f'/api/fornecedores/{fid}', token=token)[0], 409)
+        self.request('DELETE', f"/api/processes/{proc['id']}", token=token)   # processo -> lixeira
+        self.assertEqual(self.request('DELETE', f'/api/fornecedores/{fid}', token=token)[0], 200)
+
+
 class TestAnexoProcesso(SGCDTestCase):
     """Anexo de etapa. O front grava um process_id COMPOSTO ("<id>_<etapa>") para
     buscar os anexos de uma etapa por prefixo; a tabela files chegou a declarar uma

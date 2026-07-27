@@ -2106,7 +2106,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.46.4';
+const SGCD_VERSION = '2.46.5';
 // URL absoluta (não relativa): o API_BASE monta as URLs da REST API a partir da
 // origem real, nunca uma porta fixa (era 'http://localhost:3000' hardcoded).
 const API_BASE = window.location.origin;
@@ -3885,12 +3885,25 @@ async function _fornBulkExcluir() {
   const ok = await customConfirm(`Excluir ${ids.length} fornecedor(es)? Vão para a Lixeira (30 dias antes da exclusão definitiva).`,
     { title: 'Excluir fornecedores', icon: '⚠️', okLabel: 'Excluir', okClass: 'btn-danger' });
   if (!ok) return;
+  // O servidor recusa (409) fornecedor vinculado a processo — a mesma regra do
+  // botão individual. Aqui é preciso ler o motivo de cada recusa: contar só os
+  // r.ok esconderia do usuário por que alguns não saíram.
   let n = 0;
-  for (const id of ids) { const r = await API.del(`/api/fornecedores/${id}`); if (r?.ok) n++; }
+  const bloqueados = [];
+  for (const id of ids) {
+    const r = await API.del(`/api/fornecedores/${id}`);
+    if (r?.ok) { n++; continue; }
+    const d = await API.json(r);
+    const f = _fornCache.find(x => String(x.id) === String(id));
+    bloqueados.push(`• ${f ? f.razao_social : id}: ${d?.error || 'não foi possível excluir'}`);
+  }
   await _auditEvento('FORNECEDOR_EXCLUIDO', `${n} fornecedor(es) enviado(s) à Lixeira em massa`);
   _fornSel = new Set();
-  toast(`${n} fornecedor(es) enviado(s) à Lixeira.`, 'success');
   renderFornecedores();
+  if (!bloqueados.length) { toast(`${n} fornecedor(es) enviado(s) à Lixeira.`, 'success'); return; }
+  await customConfirm(
+    `${n} enviado(s) à Lixeira. ${bloqueados.length} não pôde(ram) ser excluído(s):\n\n${bloqueados.join('\n')}`,
+    { title: 'Exclusão parcial', icon: 'ℹ️', okLabel: 'Entendi', cancelLabel: 'Fechar' });
 }
 
 // setNavActive()/_hideAllViews() vêm do base.js (todas as 7 views já têm class="view")
