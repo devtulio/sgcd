@@ -35,7 +35,7 @@ import sgx_base   # esqueleto compartilhado da família — ver _esqueleto/READM
 # Versão do servidor — DEVE acompanhar o SGCD_VERSION do SGCD.html a cada release.
 # Exposta em /health para o frontend detectar quando o processo em execução está
 # desatualizado (HTML novo servido, mas server.py antigo ainda rodando em memória).
-SERVER_VERSION = '2.46.5'
+SERVER_VERSION = '2.46.6'
 
 PORT          = int(os.environ.get('SGCD_PORT', 3000))
 _BASE         = os.path.dirname(os.path.abspath(__file__))
@@ -1171,12 +1171,13 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         self._json(200, data)
 
     def _import_fornecedores(self, data):
-        # Importa fornecedores de um backup do SGCA (mesma forma de dado nos 2 sistemas):
-        # upsert por CNPJ. Ao atualizar um existente, preserva os vínculos LOCAIS do SGCD
-        # (processos, certidões) e sobrepõe o resto com os dados do arquivo.
+        # Duas entradas usam esta rota (as duas restritas ao administrador): o backup
+        # de um sistema irmão e o CSV de fornecedores da tela — a forma do dado é a
+        # mesma nos dois casos. Upsert por CNPJ: ao atualizar um existente, preserva
+        # os vínculos LOCAIS do SGCD (processos, certidões) e sobrepõe o resto.
         incoming = data.get('fornecedores') if isinstance(data, dict) else None
         if not isinstance(incoming, list):
-            self._json(400, {'error': 'Formato inválido: esperado {"fornecedores": [...]} (backup do SGCA)'}); return
+            self._json(400, {'error': 'Formato inválido: esperado {"fornecedores": [...]}'}); return
         novos = atualizados = ignorados = 0
         with get_db() as conn:
             existentes = {}

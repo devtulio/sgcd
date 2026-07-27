@@ -924,6 +924,40 @@ class TestBackupCofre(SGCDTestCase):
         self.assertEqual(self._raw('POST', '/api/backups/db/restore', b'lixo', token)[0], 400)
 
 
+class TestImportFornecedoresSoAdmin(SGCDTestCase):
+    """A importação de CSV de fornecedores passou a usar a rota /import (restrita
+    ao administrador), que grava em lote e faz upsert por CNPJ. Antes o navegador
+    gravava um a um pela rota comum de edição: qualquer usuário importava, e
+    reimportar o mesmo arquivo duplicava o cadastro."""
+
+    def _linhas(self, cnpj, razao):
+        return {'fornecedores': [{'cnpj': cnpj, 'razao': razao, 'razao_social': razao}]}
+
+    def test_usuario_comum_nao_importa(self):
+        admin = self.login()
+        st, u = self.request('POST', '/api/usuarios',
+                             {'username': 'u_import_sgcd', 'nome': 'Comum', 'password': 'senha123'}, token=admin)
+        self.assertEqual(st, 200, u)
+        comum = self.request('POST', '/api/auth/login',
+                             {'username': 'u_import_sgcd', 'password': 'senha123'})[1]['token']
+        st, d = self.request('POST', '/api/fornecedores/import',
+                             self._linhas('55666777000188', 'Fornecedor CSV LTDA'), token=comum)
+        self.assertEqual(st, 403, d)
+
+    def test_reimportar_nao_duplica(self):
+        admin = self.login()
+        payload = self._linhas('99888777000166', 'Fornecedor Repetido LTDA')
+        st, d1 = self.request('POST', '/api/fornecedores/import', payload, token=admin)
+        self.assertEqual(st, 200, d1)
+        self.assertEqual((d1['novos'], d1['atualizados']), (1, 0))
+        st, d2 = self.request('POST', '/api/fornecedores/import', payload, token=admin)
+        self.assertEqual(st, 200, d2)
+        self.assertEqual((d2['novos'], d2['atualizados']), (0, 1))
+        st, lista = self.request('GET', '/api/fornecedores', token=admin)
+        iguais = [f for f in lista['items'] if (f.get('cnpj') or '').replace('.', '').replace('/', '').replace('-', '') == '99888777000166']
+        self.assertEqual(len(iguais), 1, 'reimportar não pode duplicar o fornecedor')
+
+
 class TestGuardaExclusaoFornecedor(SGCDTestCase):
     """A recusa de excluir fornecedor vinculado a processo vivia só na tela: a
     exclusão em massa chamava a rota direto e passava por cima dela. A regra

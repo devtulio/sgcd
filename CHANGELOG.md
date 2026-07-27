@@ -9,6 +9,17 @@
 
 ---
 
+## [2.46.6] — 2026-07-27
+
+### Alterado
+- **A importação de fornecedores por CSV passou a ser restrita ao administrador** e a gravar tudo de uma vez, em vez de um fornecedor por vez a partir do navegador. Quem não é administrador deixa de ver o botão. Cadastrar fornecedor pela tela continua liberado para todos.
+
+### Corrigido
+- **Reimportar o mesmo arquivo duplicava o cadastro inteiro.** Cada linha do CSV virava um fornecedor novo, mesmo que o CNPJ já existisse. Agora a importação casa por **CNPJ**: atualiza quem já está cadastrado (preservando certidões e vínculos com processos) e insere só o que falta.
+- Se a importação falhar no meio, nada é gravado — antes metade das linhas entrava e a outra metade se perdia.
+
+---
+
 ## [2.46.5] — 2026-07-27
 
 ### Corrigido

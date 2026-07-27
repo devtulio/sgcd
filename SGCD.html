@@ -881,7 +881,7 @@
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
           Relatório de Sanções
         </button>
-        <button class="btn btn-outline" onclick="abrirModalCsv()" title="Importar fornecedores de arquivo CSV">
+        <button class="btn btn-outline admin-only" onclick="abrirModalCsv()" title="Importar fornecedores de arquivo CSV (restrito ao administrador)">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
           Importar CSV
         </button>
@@ -2106,7 +2106,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.46.5';
+const SGCD_VERSION = '2.46.6';
 // URL absoluta (não relativa): o API_BASE monta as URLs da REST API a partir da
 // origem real, nunca uma porta fixa (era 'http://localhost:3000' hardcoded).
 const API_BASE = window.location.origin;
@@ -12012,6 +12012,7 @@ async function importarCsv() {
   document.querySelector('#modal-csv .btn-ghost').style.display = 'none';
 
   let ok = 0, erros = 0;
+  const preparados = [];
   const progressBar = document.getElementById('csv-progress-bar');
   const progressMsg = document.getElementById('csv-progress-msg');
 
@@ -12040,17 +12041,36 @@ async function importarCsv() {
         } catch { /* ignora erro de CNPJ individual */ }
       }
 
-      await salvarFornecedor(forn);
+      preparados.push(forn);
       ok++;
     } catch { erros++; }
   }
 
+  // A consulta de CNPJ continua aqui (sai da máquina do usuário e tem barra de
+  // progresso), mas a gravação vai num lote só para /api/fornecedores/import:
+  // é a rota restrita ao administrador, que grava numa transação e faz upsert
+  // por CNPJ — antes, cada linha virava um fornecedor novo e reimportar o mesmo
+  // arquivo duplicava o cadastro inteiro.
+  progressMsg.textContent = `Gravando ${preparados.length} fornecedor(es)…`;
+  let resumo = null;
+  if (preparados.length) {
+    const r = await API.post('/api/fornecedores/import', { fornecedores: preparados });
+    resumo = await API.json(r);
+    if (!r || !r.ok) {
+      progressMsg.textContent = resumo?.error || 'Falha ao importar.';
+      toast(resumo?.error || 'Falha ao importar.', 'error', 9000);
+      return;
+    }
+  }
+
   progressBar.style.width = '100%';
-  progressMsg.textContent = `Concluído! ${ok} importado(s)${erros ? ', '+erros+' erro(s)' : ''}.`;
+  const novos = resumo?.novos || 0, atualizados = resumo?.atualizados || 0;
+  const detalhe = `${novos} novo(s), ${atualizados} atualizado(s)`;
+  progressMsg.textContent = `Concluído! ${detalhe}${erros ? ', ' + erros + ' erro(s)' : ''}.`;
   renderFornecedores();
   setTimeout(() => {
     fecharModalCsv();
-    toast(`${ok} fornecedor(es) importado(s) com sucesso!`, 'success');
+    toast(`Importação concluída: ${detalhe}.`, 'success');
   }, 1400);
 }
 
