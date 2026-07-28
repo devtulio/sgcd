@@ -9,6 +9,13 @@
 
 ---
 
+## [2.46.15] — 2026-07-28
+
+### Corrigido
+- **A janela do sistema acumulava vários GB no computador.** O sistema abre o app numa janela dedicada do navegador, com perfil próprio, e o Chrome baixava para dentro desse perfil o modelo de inteligência artificial local dele — cerca de **4 GB** que nada aqui usa. A abertura passa a desligar esse recurso: o perfil fica em algumas dezenas de MB.
+
+---
+
 ## [2.46.14] — 2026-07-28
 
 ### Corrigido

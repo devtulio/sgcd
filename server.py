@@ -35,7 +35,7 @@ import sgx_base   # esqueleto compartilhado da família — ver _esqueleto/READM
 # Versão do servidor — DEVE acompanhar o SGCD_VERSION do SGCD.html a cada release.
 # Exposta em /health para o frontend detectar quando o processo em execução está
 # desatualizado (HTML novo servido, mas server.py antigo ainda rodando em memória).
-SERVER_VERSION = '2.46.14'
+SERVER_VERSION = '2.46.15'
 
 PORT          = int(os.environ.get('SGCD_PORT', 3000))
 _BASE         = os.path.dirname(os.path.abspath(__file__))
@@ -2341,6 +2341,10 @@ if __name__ == '__main__':
             f'--app=http://localhost:{PORT}/SGCD.html',
             '--start-maximized',
             '--disable-background-mode',
+            # O Chrome baixa ~4 GB de modelo de IA local dentro do perfil (pasta
+            # OptGuideOnDeviceModel) sem que nada aqui use isso. Desligado na
+            # abertura: o perfil do sistema fica em dezenas de MB.
+            '--disable-features=OptimizationGuideOnDeviceModel',
             f'--user-data-dir={profile_dir}',
         ])
         print('  App aberto no navegador.')
