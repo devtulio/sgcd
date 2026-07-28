@@ -1,6 +1,6 @@
 # SGCD — Sistema de Gestão de Contratação Direta
 
-![Versão](https://img.shields.io/badge/versão-v2.46.11-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-Python%20%2B%20SQLite-orange) ![Licença](https://img.shields.io/badge/licença-MIT-green) ![Multiusuário](https://img.shields.io/badge/acesso-multiusuário-blueviolet) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21314672.svg)](https://doi.org/10.5281/zenodo.21314672) [![CI](https://github.com/devtulio/sgcd/actions/workflows/ci.yml/badge.svg)](https://github.com/devtulio/sgcd/actions/workflows/ci.yml)
+![Versão](https://img.shields.io/badge/versão-v2.46.12-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-Python%20%2B%20SQLite-orange) ![Licença](https://img.shields.io/badge/licença-MIT-green) ![Multiusuário](https://img.shields.io/badge/acesso-multiusuário-blueviolet) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21314672.svg)](https://doi.org/10.5281/zenodo.21314672) [![CI](https://github.com/devtulio/sgcd/actions/workflows/ci.yml/badge.svg)](https://github.com/devtulio/sgcd/actions/workflows/ci.yml)
 
 ## Descrição
 
@@ -131,6 +131,7 @@ SGCD/
 ├── Criar Atalho SGCD.ps1    # Script PowerShell de criação do atalho
 ├── Diagnostico SGCD.bat     # Roda o diagnóstico de rede (clique duplo)
 ├── Liberar Porta SGCD.bat   # Cria regra de firewall para porta 3000 (Admin)
+├── Perguntar Onde Salvar Downloads.reg  # Política do navegador: perguntar onde salvar cada download (Admin)
 ├── diagnostico.py           # Script de diagnóstico de rede e firewall
 ├── sgcd.ico                 # Ícone personalizado do sistema
 ├── sgcd.db                  # Banco de dados SQLite (criado automaticamente)

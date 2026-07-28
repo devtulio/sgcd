@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Manual Operacional — SGCD v2.46.11</title>
+<title>Manual Operacional — SGCD v2.46.12</title>
 <style>
   /* Reset e base */
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -89,7 +89,7 @@
       size: A4;
       margin: 20mm 20mm 25mm;
       @top-center {
-        content: "SGCD v2.46.11 — Manual Operacional";
+        content: "SGCD v2.46.12 — Manual Operacional";
         font-family: 'Times New Roman', serif;
         font-size: 9pt;
         color: #666;
@@ -116,7 +116,7 @@
     <div class="cover-title">Manual Operacional</div>
     <div class="cover-subtitle">SGCD — Sistema de Gestão de Contratação Direta</div>
     <div class="cover-system">Gestão de Processos de Dispensa de Licitação</div>
-    <div class="cover-version">Versão v2.46.11</div>
+    <div class="cover-version">Versão v2.46.12</div>
     <br>
     <div style="font-size:11pt; color:#555; line-height:1.8;">
       Aplicação web multiusuário para agentes de contratação pública<br>
@@ -308,7 +308,7 @@
 
 <div class="dica">
   <strong>Baixar arquivos escolhendo a pasta, nos postos da rede.</strong> Na máquina que roda o servidor (acesso por <code>localhost</code>), todo download do sistema abre a janela <strong>"Salvar como"</strong>. Nos computadores que acessam <strong>pelo endereço de rede</strong> (<code>http://192.168.x.x:3000</code>), o navegador não oferece essa janela à página — é uma regra de segurança dele: só páginas servidas por HTTPS ou por <code>localhost</code> podem gravar em pasta escolhida. Nesses postos o arquivo vai direto para a pasta de Downloads.<br><br>
-  Para que também perguntem, ligue a opção <strong>do navegador</strong> em cada posto: <strong>Configurações → Downloads → "Perguntar onde salvar cada arquivo antes de fazer o download"</strong>. Para padronizar sem depender de cada usuário, aplique a política do navegador — salve o texto abaixo como <code>perguntar-onde-salvar.reg</code> e execute <strong>como Administrador, uma vez por computador</strong> (havendo domínio/AD, o mesmo ajuste vira uma GPO única e nenhum posto precisa ser visitado):<br><br>
+  Para que também perguntem, ligue a opção <strong>do navegador</strong> em cada posto: <strong>Configurações → Downloads → "Perguntar onde salvar cada arquivo antes de fazer o download"</strong>. Para padronizar sem depender de cada usuário, aplique a política do navegador: o arquivo <strong><code>Perguntar Onde Salvar Downloads.reg</code></strong> acompanha o sistema, na mesma pasta do <code>Iniciar SGCD.bat</code> — copie-o para o posto e execute com <strong>botão direito → Executar como administrador</strong>, uma vez por computador (havendo domínio/AD, o mesmo ajuste vira uma GPO única e nenhum posto precisa ser visitado). É o conteúdo abaixo:<br><br>
   <code>Windows Registry Editor Version 5.00</code><br>
   <code>&nbsp;</code><br>
   <code>[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Google\Chrome]</code><br>
@@ -1761,6 +1761,10 @@
 
 <!-- ─────────────────────────────────────────────── SEÇÃO 29 -->
 <h2 id="sec29">29. Histórico de Versões</h2>
+
+<h3>v2.46.12 — Julho/2026</h3>
+<p><strong>Adicionado</strong></p>
+<ul><li>O arquivo <code>Perguntar Onde Salvar Downloads.reg</code> passa a acompanhar o sistema: aplicado num posto da rede, faz o navegador perguntar onde salvar cada download.</li></ul>
 
 <h3>v2.46.11 — Julho/2026</h3>
 <p><strong>Documentação</strong></p>
