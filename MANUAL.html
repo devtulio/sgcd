@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Manual Operacional — SGCD v2.46.10</title>
+<title>Manual Operacional — SGCD v2.46.11</title>
 <style>
   /* Reset e base */
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -89,7 +89,7 @@
       size: A4;
       margin: 20mm 20mm 25mm;
       @top-center {
-        content: "SGCD v2.46.10 — Manual Operacional";
+        content: "SGCD v2.46.11 — Manual Operacional";
         font-family: 'Times New Roman', serif;
         font-size: 9pt;
         color: #666;
@@ -116,7 +116,7 @@
     <div class="cover-title">Manual Operacional</div>
     <div class="cover-subtitle">SGCD — Sistema de Gestão de Contratação Direta</div>
     <div class="cover-system">Gestão de Processos de Dispensa de Licitação</div>
-    <div class="cover-version">Versão v2.46.10</div>
+    <div class="cover-version">Versão v2.46.11</div>
     <br>
     <div style="font-size:11pt; color:#555; line-height:1.8;">
       Aplicação web multiusuário para agentes de contratação pública<br>
@@ -305,6 +305,19 @@
   <strong>Uso restrito à rede interna.</strong> A comunicação entre as máquinas é HTTP simples (sem criptografia de transporte) — adequado para uma rede interna confiável do órgão, mas <strong>nunca exponha a porta do sistema à internet</strong> (redirecionamento de porta no roteador, DMZ etc.). Para acesso remoto, utilize a VPN institucional.
 </div>
 
+
+<div class="dica">
+  <strong>Baixar arquivos escolhendo a pasta, nos postos da rede.</strong> Na máquina que roda o servidor (acesso por <code>localhost</code>), todo download do sistema abre a janela <strong>"Salvar como"</strong>. Nos computadores que acessam <strong>pelo endereço de rede</strong> (<code>http://192.168.x.x:3000</code>), o navegador não oferece essa janela à página — é uma regra de segurança dele: só páginas servidas por HTTPS ou por <code>localhost</code> podem gravar em pasta escolhida. Nesses postos o arquivo vai direto para a pasta de Downloads.<br><br>
+  Para que também perguntem, ligue a opção <strong>do navegador</strong> em cada posto: <strong>Configurações → Downloads → "Perguntar onde salvar cada arquivo antes de fazer o download"</strong>. Para padronizar sem depender de cada usuário, aplique a política do navegador — salve o texto abaixo como <code>perguntar-onde-salvar.reg</code> e execute <strong>como Administrador, uma vez por computador</strong> (havendo domínio/AD, o mesmo ajuste vira uma GPO única e nenhum posto precisa ser visitado):<br><br>
+  <code>Windows Registry Editor Version 5.00</code><br>
+  <code>&nbsp;</code><br>
+  <code>[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Google\Chrome]</code><br>
+  <code>"PromptForDownloadLocation"=dword:00000001</code><br>
+  <code>&nbsp;</code><br>
+  <code>[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Edge]</code><br>
+  <code>"PromptForDownloadLocation"=dword:00000001</code><br><br>
+  Vale para Chrome e Edge, é <strong>por computador</strong> (não por usuário), sobrevive a reinício e a atualização do navegador, e passa a valer ao fechar e reabrir o navegador. Para conferir se pegou, abra <code>chrome://policy</code> (ou <code>edge://policy</code>) e procure <code>PromptForDownloadLocation</code>. Para desfazer, troque <code>00000001</code> por <code>00000000</code>.
+</div>
 <hr class="section-divider">
 
 <!-- ─────────────────────────────────────────────── SEÇÃO 2 -->
@@ -852,7 +865,7 @@
 
 <p><strong>Baixar um anexo.</strong> Ao clicar no arquivo anexado, o navegador abre a janela <strong>"Salvar como"</strong> para escolher a pasta de destino — útil para arquivar a certidão direto na pasta do processo, em vez de ela cair na pasta de downloads e ter de ser movida depois.</p>
 <div class="nota">
-  <strong>Nota:</strong> Essa janela é oferecida pelo navegador e depende de o sistema ser acessado por <code>localhost</code> (na própria máquina do servidor). Nos computadores que acessam <strong>pelo endereço de rede</strong> (ex.: <code>http://192.168.0.10:3000</code>), o navegador não a disponibiliza e o arquivo vai direto para a pasta de downloads. Nesses casos, quem quiser escolher a pasta a cada download deve ligar a opção do próprio navegador: no Chrome/Edge, <strong>Configurações → Downloads → "Perguntar onde salvar cada arquivo antes de fazer o download"</strong>.
+  <strong>Nota:</strong> Essa janela é oferecida pelo navegador e depende de o sistema ser acessado por <code>localhost</code> (na própria máquina do servidor). Nos computadores que acessam <strong>pelo endereço de rede</strong> (ex.: <code>http://192.168.0.10:3000</code>), o navegador não a disponibiliza e o arquivo vai direto para a pasta de downloads. Para que esses postos também perguntem, ligue a opção do próprio navegador — manualmente ou por política, conforme a <a href="#sec1-5">Seção 1.5</a>.
 </div>
 
 <h3 id="sec7-4">7.4 Editar informações do processo</h3>
@@ -1748,6 +1761,10 @@
 
 <!-- ─────────────────────────────────────────────── SEÇÃO 29 -->
 <h2 id="sec29">29. Histórico de Versões</h2>
+
+<h3>v2.46.11 — Julho/2026</h3>
+<p><strong>Documentação</strong></p>
+<ul><li>Documentação: a seção de uso em rede local passa a explicar como fazer os postos que acessam pelo endereço de rede perguntarem onde salvar cada download (opção do navegador ou política, com o .reg pronto).</li></ul>
 
 <h3>v2.46.10 — Julho/2026</h3>
 <p><strong>Corrigido</strong></p>
