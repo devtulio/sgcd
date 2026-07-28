@@ -9,6 +9,13 @@
 
 ---
 
+## [2.46.7] — 2026-07-27
+
+### Documentação
+- Atualização do componente compartilhado entre os quatro sistemas (máscara do código do catálogo Fiorilli/SCPI, usada pelo SGCA e pelo SGEA). Nada muda no SGCD.
+
+---
+
 ## [2.46.6] — 2026-07-27
 
 ### Alterado
