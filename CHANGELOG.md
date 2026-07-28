@@ -9,6 +9,14 @@
 
 ---
 
+## [2.46.8] — 2026-07-27
+
+### Corrigido
+- **Processo vinculado a outro que foi excluído aparecia como se ainda existisse.** O vínculo é guardado nos dois processos, e excluir um deles não mexia na cópia do outro: o link continuava clicável e abria um processo que estava na Lixeira. Agora ele aparece marcado como **"processo excluído"**, em cinza e sem link. **Restaurar o processo devolve o vínculo ao normal**, e a exclusão definitiva remove a referência dos demais — inclusive na limpeza automática dos 30 dias.
+- **Excluir os processos de um fornecedor liberava a exclusão dele antes da hora.** A proteção contava apenas processos ativos, então mandar os processos para a Lixeira "destravava" o fornecedor; excluí-lo nesse intervalo deixava os processos, ao serem restaurados, apontando para um cadastro que não existia mais. A contagem passa a incluir os processos na Lixeira e a mensagem diz onde eles estão (ex.: *"vinculado a 3 processo(s), sendo 2 na Lixeira"*). Para liberar o fornecedor, é preciso restaurar ou excluir definitivamente esses processos.
+
+---
+
 ## [2.46.7] — 2026-07-27
 
 ### Documentação

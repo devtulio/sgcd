@@ -996,15 +996,67 @@ class TestGuardaExclusaoFornecedor(SGCDTestCase):
         st, _ = self.request('DELETE', f'/api/fornecedores/{fid}', token=token)
         self.assertEqual(st, 200)
 
-    def test_processo_na_lixeira_nao_prende_o_fornecedor(self):
+    def test_so_a_purga_libera_o_fornecedor(self):
+        """A Lixeira não basta: o processo pode voltar, e o fornecedor excluído
+        nesse meio-tempo deixaria o processo restaurado apontando para o vazio.
+        (Esta regra mudou: antes bastava mandar o processo à Lixeira.)"""
         token = self.login()
         fid = self._forn(token, '22333444000166', 'Fornecedor de Processo Excluido')
         st, proc = self.request('POST', '/api/processes',
                                 {'objeto': 'Processo que vai pra lixeira', 'fornecedor': {'id': fid}}, token=token)
         self.assertEqual(st, 200, proc)
         self.assertEqual(self.request('DELETE', f'/api/fornecedores/{fid}', token=token)[0], 409)
-        self.request('DELETE', f"/api/processes/{proc['id']}", token=token)   # processo -> lixeira
+        self.request('DELETE', f"/api/processes/{proc['id']}", token=token)          # -> Lixeira
+        self.assertEqual(self.request('DELETE', f'/api/fornecedores/{fid}', token=token)[0], 409)
+        self.request('DELETE', f"/api/processes/{proc['id']}?purge=1", token=token)  # -> definitivo
         self.assertEqual(self.request('DELETE', f'/api/fornecedores/{fid}', token=token)[0], 200)
+
+
+class TestVinculosEFornecedorNaLixeira(SGCDTestCase):
+    """Dois efeitos colaterais da exclusão que passavam despercebidos: o vínculo
+    entre processos ficava apontando para o registro apagado, e a proteção do
+    fornecedor ignorava os processos que estão na Lixeira (e podem voltar)."""
+
+    def _processo(self, token, objeto, **extra):
+        st, p = self.request('POST', '/api/processes', {'objeto': objeto, **extra}, token=token)
+        self.assertEqual(st, 200, p)
+        return p['id']
+
+    def test_purga_remove_o_vinculo_do_outro_processo(self):
+        token = self.login()
+        a = self._processo(token, 'Processo A')
+        b = self._processo(token, 'Processo B',
+                           processos_relacionados=[{'id': a, 'num': '1/2026', 'tipo': 'renovacao'}])
+        # o vínculo existe antes
+        st, doc = self.request('GET', f'/api/processes/{b}', token=token)
+        self.assertEqual([v['id'] for v in doc['processos_relacionados']], [a])
+
+        # na Lixeira o vínculo permanece (o processo pode ser restaurado)
+        self.assertEqual(self.request('DELETE', f'/api/processes/{a}', token=token)[0], 200)
+        st, doc = self.request('GET', f'/api/processes/{b}', token=token)
+        self.assertEqual([v['id'] for v in doc['processos_relacionados']], [a],
+                         'exclusão reversível não pode apagar o vínculo do outro lado')
+
+        # a purga definitiva limpa
+        self.assertEqual(self.request('DELETE', f'/api/processes/{a}?purge=1', token=token)[0], 200)
+        st, doc = self.request('GET', f'/api/processes/{b}', token=token)
+        self.assertEqual(doc.get('processos_relacionados'), [])
+
+    def test_fornecedor_segue_bloqueado_com_processo_na_lixeira(self):
+        token = self.login()
+        st, f = self.request('POST', '/api/fornecedores',
+                             {'cnpj': '88999000000111', 'razaoSocial': 'Fornecedor da Lixeira'}, token=token)
+        self.assertEqual(st, 200, f)
+        pid = self._processo(token, 'Processo que vai para a lixeira', fornecedor={'id': f['id']})
+
+        self.assertEqual(self.request('DELETE', f'/api/processes/{pid}', token=token)[0], 200)
+        st, d = self.request('DELETE', f"/api/fornecedores/{f['id']}", token=token)
+        self.assertEqual(st, 409, d)
+        self.assertIn('na Lixeira', d['error'])
+
+        # purgado o processo, o fornecedor libera
+        self.assertEqual(self.request('DELETE', f'/api/processes/{pid}?purge=1', token=token)[0], 200)
+        self.assertEqual(self.request('DELETE', f"/api/fornecedores/{f['id']}", token=token)[0], 200)
 
 
 class TestAnexoProcesso(SGCDTestCase):

@@ -35,7 +35,7 @@ import sgx_base   # esqueleto compartilhado da família — ver _esqueleto/READM
 # Versão do servidor — DEVE acompanhar o SGCD_VERSION do SGCD.html a cada release.
 # Exposta em /health para o frontend detectar quando o processo em execução está
 # desatualizado (HTML novo servido, mas server.py antigo ainda rodando em memória).
-SERVER_VERSION = '2.46.7'
+SERVER_VERSION = '2.46.8'
 
 PORT          = int(os.environ.get('SGCD_PORT', 3000))
 _BASE         = os.path.dirname(os.path.abspath(__file__))
@@ -323,6 +323,28 @@ def _check_shutdown():
             print('\nÚltima sessão encerrada. Executando backup automático...')
             _do_json_backup(cfg)
             _do_db_backup(cfg)
+
+def _limpar_vinculos_para(conn, pid):
+    """Tira o processo purgado da lista `processos_relacionados` dos demais.
+
+    O vínculo é gravado em duplicata (uma cópia em cada processo), então apagar o
+    registro deixava a cópia do outro lado apontando para o vazio. A limpeza é
+    feita só na PURGA: enquanto o processo está na Lixeira ele pode voltar, e o
+    vínculo tem de voltar com ele — a tela marca esses casos como "processo
+    excluído" em vez de sumir com a informação."""
+    for r in conn.execute('SELECT id, data FROM processes').fetchall():
+        try:
+            proc = json.loads(r['data'] or '{}')
+        except ValueError:
+            continue
+        vincs = proc.get('processos_relacionados')
+        if not isinstance(vincs, list):
+            continue
+        restantes = [v for v in vincs if not (isinstance(v, dict) and v.get('id') == pid)]
+        if len(restantes) != len(vincs):
+            proc['processos_relacionados'] = restantes
+            conn.execute('UPDATE processes SET data=? WHERE id=?',
+                         (json.dumps(proc, ensure_ascii=False), r['id']))
 
 # ── HTTP Handler ──────────────────────────────────────────────────────────────
 
@@ -820,14 +842,20 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
                 cnpj_alvo = re.sub(r'\D', '', (json.loads(row['data'] or '{}').get('cnpj') or ''))
             except ValueError:
                 cnpj_alvo = ''
+        # Inclui os processos na Lixeira: eles podem ser restaurados, e excluir o
+        # fornecedor nesse meio-tempo deixaria o processo restaurado apontando para
+        # um cadastro que não existe mais. A contagem sai separada para a mensagem
+        # dizer onde estão os vínculos.
         n = 0
-        for r in conn.execute('SELECT data FROM processes WHERE deleted_at IS NULL').fetchall():
+        na_lixeira = 0
+        for r in conn.execute('SELECT data, deleted_at FROM processes').fetchall():
             try:
                 proc = json.loads(r['data'] or '{}')
             except ValueError:
                 continue
             if (proc.get('fornecedor') or {}).get('id') == fid:
                 n += 1
+                na_lixeira += bool(r['deleted_at'])
                 continue
             if not cnpj_alvo:
                 continue
@@ -842,8 +870,9 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
                 if any(re.sub(r'\D', '', (pr.get('cnpj') or '')) == cnpj_alvo
                        for pr in propostas if isinstance(pr, dict)):
                     n += 1
+                    na_lixeira += bool(r['deleted_at'])
                     break
-        return n
+        return n, na_lixeira
 
     def _route_delete(self, p, qs, s):
         purge = qs.get('purge', [None])[0] == '1'
@@ -866,9 +895,11 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
                     conn.execute('DELETE FROM fornecedores WHERE id=?', (fid,))
             else:
                 with get_db() as conn:
-                    vinculos = self._fornecedor_vinculos(conn, fid)
+                    vinculos, na_lixeira = self._fornecedor_vinculos(conn, fid)
                     if vinculos:
-                        self._json(409, {'error': f'Não é possível excluir: fornecedor vinculado a {vinculos} processo(s).'})
+                        detalhe = f', sendo {na_lixeira} na Lixeira' if na_lixeira else ''
+                        self._json(409, {'error': f'Não é possível excluir: fornecedor vinculado a '
+                                                  f'{vinculos} processo(s){detalhe}.'})
                         return
                     conn.execute('UPDATE fornecedores SET deleted_at=? WHERE id=?', (_now(), fid))
             self._json(200, {'ok': True})
@@ -1118,6 +1149,7 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
                 if os.path.exists(fp): os.remove(fp)
             conn.execute('DELETE FROM files WHERE process_id LIKE ?', (pid + '%',))
             conn.execute('DELETE FROM processes WHERE id=?', (pid,))
+            _limpar_vinculos_para(conn, pid)
 
     # ── Fornecedores ──────────────────────────────────────────────────────────
 
@@ -2066,6 +2098,7 @@ def _purge_old_trash():
                 if os.path.exists(fp): os.remove(fp)
             conn.execute('DELETE FROM files WHERE process_id LIKE ?', (pid + '%',))
             conn.execute('DELETE FROM processes WHERE id=?', (pid,))
+            _limpar_vinculos_para(conn, pid)   # mesma limpeza da purga manual
         conn.execute("DELETE FROM fornecedores WHERE deleted_at IS NOT NULL AND deleted_at < ?", (limite_iso,))
 
 def _watchdog():

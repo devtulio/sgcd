@@ -2106,7 +2106,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.46.7';
+const SGCD_VERSION = '2.46.8';
 // URL absoluta (não relativa): o API_BASE monta as URLs da REST API a partir da
 // origem real, nunca uma porta fixa (era 'http://localhost:3000' hardcoded).
 const API_BASE = window.location.origin;
@@ -7387,14 +7387,22 @@ function renderInfoFields() {
     <div style="border-top:1px solid var(--gray-200);margin:10px 0 8px;padding-top:8px">
       <p style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--gray-500);margin-bottom:6px">Processos relacionados</p>
     </div>
-    ${vincs.map(r => `
+    ${vincs.map(r => {
+      // `processes` só tem os vivos: o que não está lá foi para a Lixeira (ou
+      // purgado). Marca em vez de esconder — o vínculo existiu, e some sozinho
+      // se o processo for purgado. Restaurar o processo o traz de volta.
+      const existe = processes.some(x => x.id === r.id);
+      return `
       <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;background:var(--gray-50);border-radius:6px;padding:6px 8px">
         <div>
           <div style="font-size:.7rem;color:var(--gray-400)">${escHtml(TIPO_LABEL[r.tipo]||r.tipo)}</div>
-          <a href="#" onclick="event.preventDefault();openProcess('${r.id}')" style="font-size:.8rem;font-weight:500">${escHtml(r.num||r.objeto)}</a>
+          ${existe
+            ? `<a href="#" onclick="event.preventDefault();openProcess('${r.id}')" style="font-size:.8rem;font-weight:500">${escHtml(r.num||r.objeto)}</a>`
+            : `<span style="font-size:.8rem;font-weight:500;color:var(--gray-400)" title="O processo vinculado está na Lixeira ou foi excluído definitivamente">${escHtml(r.num||r.objeto)} <span style="font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.3px">— processo excluído</span></span>`}
         </div>
         <button class="btn btn-ghost btn-sm" onclick="removerVinculo('${r.id}')" title="Remover vínculo" style="font-size:.7rem;padding:2px 6px;color:var(--danger)">✕</button>
-      </div>`).join('')}
+      </div>`;
+    }).join('')}
     <button class="btn btn-outline btn-sm" onclick="abrirVinculoModal()" style="width:100%;margin-top:4px;font-size:.75rem">+ Vincular processo</button>`;
 
   // Grupos de campos com cabeçalhos visuais
