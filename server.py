@@ -35,7 +35,7 @@ import sgx_base   # esqueleto compartilhado da família — ver _esqueleto/READM
 # Versão do servidor — DEVE acompanhar o SGCD_VERSION do SGCD.html a cada release.
 # Exposta em /health para o frontend detectar quando o processo em execução está
 # desatualizado (HTML novo servido, mas server.py antigo ainda rodando em memória).
-SERVER_VERSION = '2.46.15'
+SERVER_VERSION = '2.46.16'
 
 PORT          = int(os.environ.get('SGCD_PORT', 3000))
 _BASE         = os.path.dirname(os.path.abspath(__file__))
@@ -445,7 +445,7 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
                 sgx_base.registrar_erro_cliente_js(_log, json.loads(self._body() or '{}'))
             except Exception:
                 pass
-            self._json(204, {}); return
+            self._sem_conteudo(); return
 
         if p == '/send-email':
             sess = get_session(self._token())
@@ -1867,6 +1867,13 @@ class SGCDHandler(http.server.SimpleHTTPRequestHandler):
         self.send_header('Content-Length', str(len(payload)))
         self.end_headers()
         self.wfile.write(payload)
+
+    def _sem_conteudo(self):
+        """204 nao pode ter corpo: o waitress descarta e avisa no log
+        ("application-written content was ignored"). Responde so o status."""
+        self.send_response(204)
+        self._cors()
+        self.end_headers()
 
     def log_message(self, fmt, *args): pass
 

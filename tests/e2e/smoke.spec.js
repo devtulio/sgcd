@@ -335,3 +335,44 @@ test('links das certidoes estao vivos e o do Portal filtra pelo fornecedor', asy
 
   expect(r.ids).toContain('sintegra');
 });
+
+// Etapa "Elaboracao e Publicacao do Aviso de Dispensa": preencher a data de
+// publicacao dispara duas gravacoes (publicacao + encerramento calculado). Elas
+// saiam juntas, com o mesmo _baseUpdatedAt, e a segunda voltava 409 "alterado por
+// outro usuario" - o processo conflitando com ele mesmo, sem ninguem mais
+// editando. O campo calculado ficava so na tela e nao chegava ao servidor.
+test('data de publicacao grava tambem o encerramento, sem conflito', async ({ page }) => {
+  await page.goto('/SGCD.html');
+  await page.fill('#pin-username', 'admin');
+  await page.fill('#pin-input', 'novaSenhaE2E123');
+  await page.click('#overlay-pin button[onclick="verificarSenha()"]');
+  await expect(page.locator('#overlay-pin')).toBeHidden();
+
+  const idxAviso = await page.evaluate(() => STEPS.findIndex(s => /Aviso de Dispensa/.test(s.name)));
+
+  const r = await page.evaluate(async (idx) => {
+    const ps = await listarProcessos();
+    await openProcess(ps[0].id);
+    expandedSteps.add(idx);
+    await renderSingleStep(idx);
+    await new Promise(res => setTimeout(res, 400));
+
+    const avisos = [];
+    const origToast = window.toast;
+    window.toast = (m, t) => { avisos.push(String(m)); return origToast(m, t); };
+
+    const inp = document.querySelector(`#step-body-${idx} input[onchange*="onPublicacaoChange"]`);
+    inp.value = '2026-08-03';
+    inp.dispatchEvent(new Event('change', { bubbles: true }));
+    await new Promise(res => setTimeout(res, 2500));
+    window.toast = origToast;
+
+    // relê do servidor: e la que o campo calculado se perdia
+    const doServidor = await buscarProcesso(ps[0].id);
+    return { avisos, campos: doServidor.steps[idx].fields };
+  }, idxAviso);
+
+  expect(r.avisos.join(' '), 'apareceu aviso de conflito ao salvar').not.toMatch(/alterado por outro usu/i);
+  expect(r.campos.data_publicacao).toBe('2026-08-03');
+  expect(r.campos.data_encerramento, 'o encerramento calculado nao chegou ao servidor').toBeTruthy();
+});

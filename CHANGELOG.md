@@ -9,6 +9,14 @@
 
 ---
 
+## [2.46.16] — 2026-07-28
+
+### Corrigido
+- **Preencher a data de publicação do Aviso de Dispensa acusava "processo alterado por outro usuário".** A data de encerramento é calculada e gravada logo em seguida, e as duas gravações saíam ao mesmo tempo: a segunda era recusada como se outra pessoa tivesse editado o processo — sendo que era o processo conflitando com ele mesmo, ninguém mais mexendo. Além do susto, **a data de encerramento calculada ficava só na tela e não chegava ao servidor**. As duas gravações passam a sair em fila.
+- **Aviso técnico no console do servidor.** Ao reportar um erro de JavaScript, o servidor respondia "sem conteúdo" mas ainda enviava um corpo junto, e o motor do servidor registrava o aviso `application-written content was ignored`. Sem efeito para quem usa; o log fica limpo.
+
+---
+
 ## [2.46.15] — 2026-07-28
 
 ### Corrigido

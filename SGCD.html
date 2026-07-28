@@ -2106,7 +2106,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.46.15';
+const SGCD_VERSION = '2.46.16';
 // URL absoluta (não relativa): o API_BASE monta as URLs da REST API a partir da
 // origem real, nunca uma porta fixa (era 'http://localhost:3000' hardcoded).
 const API_BASE = window.location.origin;
@@ -4893,14 +4893,18 @@ function calcDiasUteis(dataBase, dias) {
   return dt;
 }
 
-function onPublicacaoChange(i, val) {
-  updateField(i, 'data_publicacao', val);
+// async/await de proposito: as duas gravacoes precisam ser em fila. Disparadas
+// juntas, as duas saiam com o mesmo _baseUpdatedAt e a segunda voltava 409
+// ("alterado por outro usuario") — conflito do processo com ele mesmo, sem
+// ninguem mais editando.
+async function onPublicacaoChange(i, val) {
+  await updateField(i, 'data_publicacao', val);
   if (!val) return;
   const enc = currentProcess.steps[i]?.fields?.data_encerramento;
   if (enc) return;
   const minDate = calcDiasUteis(new Date(val + 'T00:00:00'), 3);
   const minStr = minDate.toISOString().slice(0,10);
-  updateField(i, 'data_encerramento', minStr);
+  await updateField(i, 'data_encerramento', minStr);
   const inp = document.querySelector(`#step-body-${i} input[onchange*="data_encerramento"]`);
   if (inp) inp.value = minStr;
 }
