@@ -2106,7 +2106,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.46.9';
+const SGCD_VERSION = '2.46.10';
 // URL absoluta (não relativa): o API_BASE monta as URLs da REST API a partir da
 // origem real, nunca uma porta fixa (era 'http://localhost:3000' hardcoded).
 const API_BASE = window.location.origin;
@@ -7839,12 +7839,12 @@ async function downloadFile(fileId) {
   const match = disp.match(/filename\*?=(?:UTF-8'')?([^;]+)/i);
   const filename = match ? decodeURIComponent(match[1].replace(/"/g,'')) : `arquivo_${fileId}`;
   const blob = await r.blob();
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href = url; a.download = filename;
-  document.body.appendChild(a); a.click();
-  document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  // Passa pelo _salvarArquivoComo (esqueleto) em vez de <a download>: assim o
+  // usuário escolhe onde salvar em vez de o arquivo cair direto na pasta de
+  // downloads. Onde a API de gravação não existe (navegador antigo, ou acesso
+  // por IP da rede, que não é contexto seguro), ele mesmo cai no download
+  // direto — o comportamento nunca fica pior do que era.
+  await _salvarArquivoComo(blob, filename, blob.type || 'application/octet-stream');
 }
 
 async function deleteFile(fileId, stepIdx) {

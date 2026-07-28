@@ -154,3 +154,51 @@ test('sanitizador de e-mail bloqueia javascript: mesmo com caractere de controle
   expect(r.https.protocolo).toBe('https:');
   expect(r.mailto.protocolo).toBe('mailto:');
 });
+
+// Anexo baixado tem de passar pelo seletor "Salvar como" do navegador, não cair
+// direto na pasta de downloads (relato de uso real: certidões da habilitação).
+// Stuba window.showSaveFilePicker porque o diálogo nativo é do sistema
+// operacional e o Playwright não o enxerga — o que importa provar é que
+// downloadFile() consulta a API de gravação em vez de criar um <a download>.
+test('baixar anexo abre o seletor de destino em vez de baixar direto', async ({ page }) => {
+  await page.goto('/SGCD.html');
+  await page.fill('#pin-username', 'admin');
+  // Senha já trocada pelo primeiro teste (servidor/banco compartilhados na suíte).
+  await page.fill('#pin-input', 'novaSenhaE2E123');
+  await page.click('#overlay-pin button[onclick="verificarSenha()"]');
+  await expect(page.locator('#overlay-pin')).toBeHidden();
+
+  // Anexa um PDF pela propria API - o que se testa aqui e o caminho de
+  // download, nao o de upload.
+  const fileId = await page.evaluate(async () => {
+    const fd = new FormData();
+    fd.append('file', new Blob(['%PDF-1.4 certidao'], { type: 'application/pdf' }), 'certidao.pdf');
+    const r = await fetch('/api/files', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${localStorage.getItem('sgcd-token')}` },
+      body: fd,
+    });
+    return (await r.json()).id;
+  });
+  expect(fileId).toBeTruthy();
+
+  const salvo = await page.evaluate(async (id) => {
+    const chamado = { picker: false, nome: null, bytes: 0 };
+    window.showSaveFilePicker = async (opts) => {
+      chamado.picker = true;
+      chamado.nome = opts.suggestedName;
+      return {
+        createWritable: async () => ({
+          write: async (blob) => { chamado.bytes = blob.size; },
+          close: async () => {},
+        }),
+      };
+    };
+    await downloadFile(id);
+    return chamado;
+  }, fileId);
+
+  expect(salvo.picker, 'downloadFile nao consultou showSaveFilePicker').toBe(true);
+  expect(salvo.nome).toBe('certidao.pdf');
+  expect(salvo.bytes).toBeGreaterThan(0);
+});

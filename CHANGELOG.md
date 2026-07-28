@@ -9,6 +9,13 @@
 
 ---
 
+## [2.46.10] — 2026-07-28
+
+### Corrigido
+- **Baixar um anexo mandava o arquivo direto para a pasta de downloads.** Relatado no uso real, ao salvar as certidões geradas na etapa de habilitação: não havia como escolher a pasta, e cada arquivo tinha de ser movido depois. O download passa a abrir a janela **"Salvar como"** do navegador. Onde essa janela não está disponível — navegador antigo, ou acesso pelo **endereço de rede** (`http://192.168.x.x:3000`), que o navegador não trata como origem segura —, o comportamento continua o de antes, o download direto; nessas máquinas, a opção *"Perguntar onde salvar cada arquivo"* do próprio navegador é o que resolve.
+
+---
+
 ## [2.46.9] — 2026-07-28
 
 ### Corrigido
