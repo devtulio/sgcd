@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Manual Operacional — SGCD v2.46.16</title>
+<title>Manual Operacional — SGCD v2.46.17</title>
 <style>
   /* Reset e base */
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -89,7 +89,7 @@
       size: A4;
       margin: 20mm 20mm 25mm;
       @top-center {
-        content: "SGCD v2.46.16 — Manual Operacional";
+        content: "SGCD v2.46.17 — Manual Operacional";
         font-family: 'Times New Roman', serif;
         font-size: 9pt;
         color: #666;
@@ -116,7 +116,7 @@
     <div class="cover-title">Manual Operacional</div>
     <div class="cover-subtitle">SGCD — Sistema de Gestão de Contratação Direta</div>
     <div class="cover-system">Gestão de Processos de Dispensa de Licitação</div>
-    <div class="cover-version">Versão v2.46.16</div>
+    <div class="cover-version">Versão v2.46.17</div>
     <br>
     <div style="font-size:11pt; color:#555; line-height:1.8;">
       Aplicação web multiusuário para agentes de contratação pública<br>
@@ -712,7 +712,7 @@
     <li>Acesse o PNCP (<em>www.pncp.gov.br</em>) e publique o aviso completo</li>
     <li>Publique também o aviso no Diário Oficial do Município (eletrônico ou impresso)</li>
     <li>Registre no sistema: data de publicação, data de encerramento das propostas, link do PNCP e link do Diário Oficial</li>
-    <li>O sistema calcula automaticamente a data mínima de encerramento (3 dias úteis) e alerta se a data informada for inferior ao mínimo legal</li>
+    <li>O sistema calcula automaticamente a data de encerramento (3 dias úteis) e a <strong>recalcula sempre que a data de publicação mudar</strong>, avisando na tela a nova data; se você ampliar o prazo de propostas de propósito, reponha a data maior depois de mexer na publicação. Continua alertando se a data informada ficar abaixo do mínimo legal</li>
     <li>Aguarde o prazo de 3 dias úteis antes de prosseguir</li>
   </ul>
   <div class="aviso" style="margin-top:8pt;"><strong>Atenção:</strong> A ausência de publicação ou o não cumprimento do prazo de 3 dias úteis é irregularidade grave que pode nulificar o processo.</div>
@@ -1761,6 +1761,10 @@
 
 <!-- ─────────────────────────────────────────────── SEÇÃO 29 -->
 <h2 id="sec29">29. Histórico de Versões</h2>
+
+<h3>v2.46.17 — Julho/2026</h3>
+<p><strong>Alterado</strong></p>
+<ul><li>Mudar a data de publicação do Aviso de Dispensa passa a recalcular o prazo de encerramento (3 dias úteis a partir da nova data). Antes o prazo ficava preso à publicação antiga.</li></ul>
 
 <h3>v2.46.16 — Julho/2026</h3>
 <p><strong>Corrigido</strong></p>

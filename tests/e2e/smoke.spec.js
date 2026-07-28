@@ -374,5 +374,20 @@ test('data de publicacao grava tambem o encerramento, sem conflito', async ({ pa
 
   expect(r.avisos.join(' '), 'apareceu aviso de conflito ao salvar').not.toMatch(/alterado por outro usu/i);
   expect(r.campos.data_publicacao).toBe('2026-08-03');
-  expect(r.campos.data_encerramento, 'o encerramento calculado nao chegou ao servidor').toBeTruthy();
+  // 03/08/2026 e segunda: 3 dias uteis caem em 06/08
+  expect(r.campos.data_encerramento, 'o encerramento calculado nao chegou ao servidor').toBe('2026-08-06');
+
+  // Remarcar a publicacao tem de puxar o prazo junto: antes o encerramento
+  // continuava preso a data antiga, porque so era preenchido quando vazio.
+  const depois = await page.evaluate(async (idx) => {
+    const inp = document.querySelector(`#step-body-${idx} input[onchange*="onPublicacaoChange"]`);
+    inp.value = '2026-08-10';
+    inp.dispatchEvent(new Event('change', { bubbles: true }));
+    await new Promise(res => setTimeout(res, 2500));
+    const doServidor = await buscarProcesso(currentProcess.id);
+    return doServidor.steps[idx].fields;
+  }, idxAviso);
+
+  expect(depois.data_publicacao).toBe('2026-08-10');
+  expect(depois.data_encerramento, 'o prazo nao acompanhou a nova data de publicacao').toBe('2026-08-13');
 });

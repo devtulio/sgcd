@@ -9,6 +9,14 @@
 
 ---
 
+## [2.46.17] — 2026-07-28
+
+### Alterado
+- **Mudar a data de publicação do Aviso de Dispensa passa a recalcular o prazo de encerramento.** Antes o sistema só preenchia a data de encerramento quando ela estava vazia: remarcar a publicação deixava para trás um prazo calculado a partir da data antiga, e cabia ao usuário perceber. Agora o encerramento é sempre recalculado para 3 dias úteis a partir da nova publicação, com um aviso na tela informando a nova data.
+  - **Atenção:** se você tinha ampliado o prazo de propostas de propósito (o mínimo legal de 3 dias úteis é um piso, não um teto), remarcar a publicação vai trazer o encerramento de volta ao mínimo — reponha a data maior depois de mexer na publicação.
+
+---
+
 ## [2.46.16] — 2026-07-28
 
 ### Corrigido
