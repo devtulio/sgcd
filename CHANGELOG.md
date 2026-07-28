@@ -9,6 +9,13 @@
 
 ---
 
+## [2.46.13] — 2026-07-28
+
+### Corrigido
+- **Os botões de baixar e excluir anexo não funcionavam.** Clicar em ⬇ ou ✕ na lista de documentos de uma etapa — ou no nome/✕ de um arquivo anexado a uma certidão — não fazia nada: o identificador do arquivo era colocado no código da tela **sem aspas**, o que produzia JavaScript inválido e derrubava o clique antes de qualquer coisa acontecer (`Uncaught SyntaxError: Invalid or unexpected token`). Vinha da primeira versão do sistema, quando esse identificador ainda era um número; ao passar para o servidor ele virou texto e estes quatro pontos não acompanharam. **Nenhum anexo foi perdido** — o defeito era só no clique. Excluir e baixar anexo voltam a funcionar, com o "Salvar como" da v2.46.10.
+
+---
+
 ## [2.46.12] — 2026-07-28
 
 ### Adicionado

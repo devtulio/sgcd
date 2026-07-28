@@ -202,3 +202,65 @@ test('baixar anexo abre o seletor de destino em vez de baixar direto', async ({ 
   expect(salvo.nome).toBe('certidao.pdf');
   expect(salvo.bytes).toBeGreaterThan(0);
 });
+
+// Os botoes da lista de anexos interpolavam o id do arquivo SEM aspas no
+// onclick ("deleteFile(ba85ee05-e9c1-...)"), o que e JavaScript invalido: o
+// clique morria com "Uncaught SyntaxError: Invalid or unexpected token" e nem
+// baixar nem excluir funcionavam. Este teste clica nos botoes de verdade - se
+// alguem tirar as aspas outra vez, ele cai.
+test('botoes de baixar e excluir anexo funcionam pelo clique real', async ({ page }) => {
+  await page.goto('/SGCD.html');
+  await page.fill('#pin-username', 'admin');
+  await page.fill('#pin-input', 'novaSenhaE2E123');
+  await page.click('#overlay-pin button[onclick="verificarSenha()"]');
+  await expect(page.locator('#overlay-pin')).toBeHidden();
+
+  const erros = [];
+  page.on('pageerror', e => erros.push(e.message));
+
+  // Abre o processo do primeiro spec e anexa um PDF na etapa 1. O process_id
+  // do anexo e composto (<processo>_<etapa>), como a tela monta.
+  await page.evaluate(async () => {
+    const ps = await listarProcessos();
+    await openProcess(ps[0].id);
+    const fd = new FormData();
+    fd.append('file', new Blob(['%PDF-1.4 anexo'], { type: 'application/pdf' }), 'anexo do teste.pdf');
+    fd.append('process_id', ps[0].id + '_0');
+    fd.append('step_index', '0');
+    await fetch('/api/files', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${localStorage.getItem('sgcd-token')}` },
+      body: fd,
+    });
+    expandedSteps.add(0);
+    await renderSingleStep(0);
+  });
+
+  await expect(page.locator('.file-item')).toHaveCount(1);
+
+  // Baixar: o clique tem de chegar em downloadFile e abrir o seletor de destino.
+  const baixou = await page.evaluate(async () => {
+    const chamado = { picker: false, nome: null, bytes: 0 };
+    window.showSaveFilePicker = async (opts) => {
+      chamado.picker = true;
+      chamado.nome = opts.suggestedName;
+      return { createWritable: async () => ({ write: async (b) => { chamado.bytes = b.size; }, close: async () => {} }) };
+    };
+    document.querySelector('.file-item button[title="Baixar"]').click();
+    await new Promise(r => setTimeout(r, 800));
+    return chamado;
+  });
+  expect(baixou.picker, 'o clique em Baixar nao chegou em downloadFile').toBe(true);
+  expect(baixou.nome).toBe('anexo do teste.pdf');
+  expect(baixou.bytes).toBeGreaterThan(0);
+
+  // Excluir: o clique tem de remover o anexo de verdade.
+  await page.evaluate(async () => {
+    window.customConfirm = async () => true;
+    document.querySelector('.file-item button[title="Remover"]').click();
+    await new Promise(r => setTimeout(r, 1200));
+  });
+  await expect(page.locator('.file-item')).toHaveCount(0);
+
+  expect(erros, 'houve erro de JavaScript na pagina').toEqual([]);
+});
