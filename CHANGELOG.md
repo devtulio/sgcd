@@ -9,6 +9,13 @@
 
 ---
 
+## [2.46.14] — 2026-07-28
+
+### Corrigido
+- **Um processo sem etapas derrubava a lista inteira.** Registro vindo de um backup malformado (ou criado fora da tela) fazia o cálculo de situação e de progresso quebrar, e com ele o dashboard de todos os processos — não só o defeituoso. Agora o processo sem etapas aparece como não iniciado, com 0% de progresso, e o restante da lista segue normal.
+
+---
+
 ## [2.46.13] — 2026-07-28
 
 ### Corrigido

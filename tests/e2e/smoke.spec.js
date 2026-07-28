@@ -264,3 +264,34 @@ test('botoes de baixar e excluir anexo funcionam pelo clique real', async ({ pag
 
   expect(erros, 'houve erro de JavaScript na pagina').toEqual([]);
 });
+
+// Processo sem "steps" (backup malformado, ou registro criado por integracao)
+// derrubava a lista inteira: processStatus/pct chamavam p.steps.filter direto e
+// uma unica linha ruim quebrava o dashboard de todo mundo. O registro e criado
+// ANTES de abrir a tela, para o teste exercitar a carga inicial da lista.
+test('processo sem etapas nao derruba a lista', async ({ page, request }) => {
+  const login = await request.post('/api/auth/login', {
+    data: { username: 'admin', password: 'novaSenhaE2E123' },
+  });
+  const { token } = await login.json();
+  const criado = await request.post('/api/processes', {
+    headers: { Authorization: `Bearer ${token}` },
+    data: { objeto: 'Processo sem etapas' },
+  });
+  const { id } = await criado.json();
+
+  const erros = [];
+  page.on('pageerror', e => erros.push(e.message));
+
+  await page.goto('/SGCD.html');
+  await page.fill('#pin-username', 'admin');
+  await page.fill('#pin-input', 'novaSenhaE2E123');
+  await page.click('#overlay-pin button[onclick="verificarSenha()"]');
+  await expect(page.locator('#overlay-pin')).toBeHidden();
+
+  await expect(page.locator('.process-card', { hasText: 'Processo sem etapas' })).toBeVisible();
+  expect(erros, 'a lista quebrou com um processo sem etapas').toEqual([]);
+
+  // nao deixa o registro degenerado para os proximos specs
+  await request.delete(`/api/processes/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+});

@@ -2106,7 +2106,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.46.13';
+const SGCD_VERSION = '2.46.14';
 // URL absoluta (não relativa): o API_BASE monta as URLs da REST API a partir da
 // origem real, nunca uma porta fixa (era 'http://localhost:3000' hardcoded).
 const API_BASE = window.location.origin;
@@ -3248,11 +3248,15 @@ function fmtDate(dt) {
 }
 
 function processStatus(p) {
-  const done = p.steps.filter(s => s.status === 'done').length;
-  const blocked = p.steps.some(s => s.status === 'blocked');
+  // (p.steps || []): processo vindo de backup malformado ou de uma versao antiga
+  // pode nao ter etapas. Sem a guarda, uma unica linha ruim derrubava a lista
+  // inteira (o dashboard chama isto para todo processo).
+  const steps = p.steps || [];
+  const done = steps.filter(s => s.status === 'done').length;
+  const blocked = steps.some(s => s.status === 'blocked');
   if (blocked) return 'blocked';
   if (done === 0) return 'todo';
-  if (done === p.steps.length) return 'done';
+  if (done === steps.length) return 'done';
   return 'progress';
 }
 
@@ -3271,8 +3275,10 @@ function nextPendingStep(p) {
 }
 
 function pct(p) {
-  const done = p.steps.filter(s => s.status === 'done').length;
-  return Math.round(done / p.steps.length * 100);
+  const steps = p.steps || [];
+  if (!steps.length) return 0;
+  const done = steps.filter(s => s.status === 'done').length;
+  return Math.round(done / steps.length * 100);
 }
 
 function _toastSom(t) {
@@ -6330,7 +6336,7 @@ function renderDetail() {
   `;
 
   const pc = pct(p);
-  document.getElementById('d-step-dots').innerHTML = p.steps.map(s => {
+  document.getElementById('d-step-dots').innerHTML = (p.steps || []).map(s => {
     const cls = s.status === 'done' ? 'done' : s.status === 'blocked' ? 'blocked' : 'pending';
     const tipLabel = s.status === 'done' ? 'Concluída' : s.status === 'blocked' ? 'Bloqueada' : 'Pendente';
     const tipText = s.name ? `${s.name} — ${tipLabel}` : tipLabel;
