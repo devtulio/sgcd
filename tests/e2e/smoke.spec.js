@@ -295,3 +295,43 @@ test('processo sem etapas nao derruba a lista', async ({ page, request }) => {
   // nao deixa o registro degenerado para os proximos specs
   await request.delete(`/api/processes/${id}`, { headers: { Authorization: `Bearer ${token}` } });
 });
+
+// Links das certidoes da habilitacao: dois deles apontavam para paginas que os
+// orgaos desativaram, e o do Portal da Transparencia montava o parametro com o
+// nome errado (cnpjCpf em vez de cpfCnpj), abrindo a lista geral de sancionados
+// em vez da consulta do fornecedor do processo.
+test('links das certidoes estao vivos e o do Portal filtra pelo fornecedor', async ({ page }) => {
+  await page.goto('/SGCD.html');
+  await page.fill('#pin-username', 'admin');
+  await page.fill('#pin-input', 'novaSenhaE2E123');
+  await page.click('#overlay-pin button[onclick="verificarSenha()"]');
+  await expect(page.locator('#overlay-pin')).toBeHidden();
+
+  const r = await page.evaluate(async () => {
+    const ps = await listarProcessos();
+    await openProcess(ps[0].id);
+    currentProcess.fornecedor = { id: 'forn-teste', razao_social: 'FORNECEDOR E2E', cnpj: '12.908.073/0001-65' };
+    await saveProcess(currentProcess);
+    const idx = STEPS.findIndex(s => s.certidoes);
+    expandedSteps.add(idx);
+    await renderSingleStep(idx);
+    await new Promise(res => setTimeout(res, 500));
+    const links = [...document.querySelectorAll('.cert-link-btn')].map(a => a.href);
+    return {
+      transp: links.find(h => /portaldatransparencia/.test(h)),
+      urls: CERTIDOES.map(c => c.url).filter(Boolean),
+      ids: CERTIDOES.map(c => c.id),
+    };
+  });
+
+  // o parametro certo, com o CNPJ do fornecedor so com digitos
+  expect(r.transp).toContain('cpfCnpj=12908073000165');
+  expect(r.transp, 'voltou a usar o parametro que o site ignora').not.toContain('cnpjCpf=');
+  expect(r.transp).not.toContain('undefined');
+
+  // paginas que os orgaos desativaram nao podem voltar
+  expect(r.urls.join(' '), 'aplicacao do TCU desativada em 22/05/2026').not.toContain('contas.tcu.gov.br');
+  expect(r.urls.join(' '), 'host cas.receita.fazenda.gov.br nao existe mais').not.toContain('cas.receita.fazenda.gov.br');
+
+  expect(r.ids).toContain('sintegra');
+});

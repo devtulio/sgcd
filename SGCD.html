@@ -2944,10 +2944,11 @@ const CERTIDOES = [
   // ── Cadastros e Consultas Oficiais ─────────────────────────────────────────
   { id:'cnpj',         nome:'CNPJ — Receita Federal',              url:'https://solucoes.receita.fazenda.gov.br/servicos/cnpjreva/cnpjreva_solicitacao.asp',                                                                     desc:'Comprovante de inscrição e situação cadastral' },
   { id:'qsa',          nome:'QSA — Quadro Societário',             url:'https://solucoes.receita.fazenda.gov.br/servicos/cnpjreva/cnpjreva_solicitacao.asp',                                                                     desc:'Quadro de sócios e administradores' },
+  { id:'sintegra',     nome:'SINTEGRA — Inscrição Estadual',       url:'http://www.sintegra.gov.br/',                                                                                            desc:'Cadastro de contribuintes do ICMS (o site não oferece HTTPS)' },
   { id:'sicaf_crc',    nome:'SICAF — CRC',                         url:'https://www3.comprasnet.gov.br/sicaf-web/public/pages/consultas/consultarCRC.jsf',                                                                       desc:'Certificado de Registro Cadastral',          diasPadrao: 365 },
   { id:'sicaf_rest',   nome:'SICAF — Restrição Contratar',         url:'https://www3.comprasnet.gov.br/sicaf-web/public/pages/consultas/consultarRestricaoContratarAdministracaoPublica.jsf',                                   desc:'Restrição de contratar com a Adm. Pública' },
   { id:'tcu_consult',  nome:'TCU — Consulta Consolidada PJ',       url:'https://certidoes-apf.apps.tcu.gov.br/',                                                                                                                desc:'Consulta consolidada de pessoa jurídica' },
-  { id:'tcu_inidone',  nome:'TCU — Inabilitados e Inidôneos',      url:'https://contas.tcu.gov.br/ords/f?p=1660:3:17397976312703::::P3_TIPO_RELACAO:INIDONEO',                                                                   desc:'Certidão de inabilitados e inidôneos' },
+  { id:'tcu_inidone',  nome:'TCU — Inabilitados e Inidôneos',      url:'https://certidoes.apps.tcu.gov.br/emitir-certidao-inidoneos',                                                                                                                                                                 desc:'Certidão de inabilitados e inidôneos' },
   { id:'cgu',          nome:'CGU — Certidões',                     url:'https://certidoes.cgu.gov.br/',                                                                                                                         desc:'Certidões da Controladoria-Geral da União' },
   { id:'cnj',          nome:'CNJ — Improbidade Administrativa',    url:'https://www.cnj.jus.br/improbidade_adm/consultar_requerido.php?validar=form',                                                                           desc:'CNIA — Cadastro Nacional de Condenações' },
   { id:'tcesp_lic',    nome:'TCESP — Apenados Licitação',          url:'https://www4.tce.sp.gov.br/apenados/publico/#/publicas/certificado',                                                                                     desc:'Certidão de impedimentos de licitação' },
@@ -2959,7 +2960,7 @@ const CERTIDOES = [
   { id:'cnd_municipal',nome:'CND Municipal',                        url:'',                                                                                                                                                      desc:'Certidão Negativa de Débitos junto ao município sede do fornecedor', diasPadrao: 180 },
   { id:'fgts',         nome:'CRF — FGTS (Caixa Econômica)',        url:'https://consulta-crf.caixa.gov.br/consultacrf/pages/consultaEmpregador.jsf',                                                                             desc:'Certidão de Regularidade do FGTS',           diasPadrao: 30  },
   { id:'cndt',         nome:'CNDT — Débitos Trabalhistas (TST)',   url:'https://cndt-certidao.tst.jus.br/inicio.faces',                                                                                                         desc:'Certidão Negativa de Débitos Trabalhistas',  diasPadrao: 180 },
-  { id:'simples',      nome:'Certidão Simples Nacional',            url:'https://cas.receita.fazenda.gov.br/cas/pages/emissaoCertidao/formEmissaoCertidao.jsf',                                                                  desc:'Comprovante de opção pelo Simples Nacional',  diasPadrao: 60  },
+  { id:'simples',      nome:'Certidão Simples Nacional',            url:'https://www8.receita.fazenda.gov.br/SimplesNacional/aplicacoes.aspx?id=21',                                                                                                                                                  desc:'Comprovante de opção pelo Simples Nacional',  diasPadrao: 60  },
   { id:'falencia',     nome:'Certidão de Falência e Concordata',   url:'',                                                                                                                                                      desc:'Emitida pelo distribuidor judicial da sede do fornecedor', diasPadrao: 60  },
   // ── Engenharia (somente quando aplicável) ──────────────────────────────────
   { id:'susep_lic',    nome:'SUSEP — Certidão Licenciamento',      url:'https://www2.susep.gov.br/safe/certidoes/app/certidao/emitir',                                                                                           desc:'Certidão de licenciamento e apontamento',    engenharia: true },
@@ -3268,7 +3269,7 @@ function statusLabel(s) {
 function nextPendingStep(p) {
   const order = p.stepOrder || STEPS.map((_,i) => i);
   for (const i of order) {
-    const s = p.steps[i];
+    const s = (p.steps || [])[i];
     if (!s || s.status !== 'done') return { idx: i, step: STEPS[i] };
   }
   return null;
@@ -4477,7 +4478,7 @@ function unitColor(unidade) {
 
 function toggleExpandAll() {
   if (!currentProcess) return;
-  const allIdxs = currentProcess.steps.map((_, i) => i);
+  const allIdxs = (currentProcess.steps || []).map((_, i) => i);
   const allExpanded = allIdxs.every(i => expandedSteps.has(i));
   if (allExpanded) {
     expandedSteps.clear();
@@ -6246,6 +6247,10 @@ async function openProcess(id) {
   const u = getUser();
   {
     let changed = false;
+    // Processo vindo de backup malformado pode chegar sem "steps". Normalizando
+    // aqui, o while logo abaixo preenche as etapas padrao e o registro se
+    // conserta sozinho ao ser aberto, em vez de derrubar a tela.
+    if (!Array.isArray(currentProcess.steps)) { currentProcess.steps = []; changed = true; }
     const forn = currentProcess.fornecedor;
     const fornRazao = typeof forn === 'object' ? (forn?.razao_social || forn?.nome_fantasia || '') : (forn || '');
     const fornCnpj  = typeof forn === 'object' ? (forn?.cnpj || '') : '';
@@ -6618,6 +6623,13 @@ async function renderChecklist() {
   container.innerHTML = cards.join('');
 }
 
+// O objeto do fornecedor nem sempre traz cnpj_digits (cadastro manual, importacao
+// de CSV, registro antigo). Sem isto o link do Portal da Transparencia saia com
+// "cpfCnpj=undefined" e a consulta vinha sem filtro nenhum.
+function _cnpjDigits(f) {
+  return (f?.cnpj_digits || f?.cnpj || '').replace(/\D/g, '');
+}
+
 function renderStepFields(i, step, data, certFileMap = {}) {
   // Auto-fill defaults for contrato fields (display only, not saved)
   const autoDefaults = {};
@@ -6817,7 +6829,7 @@ function renderCertidoesSection(stepIdx, data, certFileMap = {}) {
           </div>
           ${c.diasPadrao ? `<span style="font-size:.65rem;color:var(--success);opacity:.8" title="Sincroniza com cadastro do fornecedor">⇄ fornecedor</span>` : ''}
         </div>` : ''}
-        <a class="cert-link-btn" href="${c.id === 'transp' && forn ? c.url + '&cnpjCpf=' + forn.cnpj_digits : c.url}" target="_blank" rel="noopener" onclick="playClick()">↗ Acessar</a>
+        <a class="cert-link-btn" href="${c.id === 'transp' && forn ? c.url + '&cpfCnpj=' + _cnpjDigits(forn) : c.url}" target="_blank" rel="noopener" onclick="playClick()">↗ Acessar</a>
       </div>
       ${fileArea}
     </div>`;

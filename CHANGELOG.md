@@ -12,7 +12,15 @@
 ## [2.46.15] — 2026-07-28
 
 ### Corrigido
+- **Links de certidões da etapa de habilitação desatualizados.** Dois órgãos trocaram o endereço e o sistema continuava apontando para o antigo:
+  - **TCU — Inabilitados e Inidôneos:** a aplicação usada foi desativada pelo próprio TCU em 22/05/2026; passa a apontar para a Plataforma de Certidões (`certidoes.apps.tcu.gov.br`).
+  - **Certidão Simples Nacional:** o endereço antigo saiu do ar (o servidor nem existe mais); passa a apontar para a Consulta Optantes no portal do Simples Nacional.
+- **A consulta de sanções abria a lista do Brasil inteiro em vez do fornecedor do processo.** O link do Portal da Transparência era montado com o nome de parâmetro errado, então o filtro por CNPJ nunca era aplicado — quem clicasse via uma lista de sancionados sem relação com o processo. Corrigido; o CNPJ agora também é extraído do cadastro quando o registro não o traz pronto.
 - **A janela do sistema acumulava vários GB no computador.** O sistema abre o app numa janela dedicada do navegador, com perfil próprio, e o Chrome baixava para dentro desse perfil o modelo de inteligência artificial local dele — cerca de **4 GB** que nada aqui usa. A abertura passa a desligar esse recurso: o perfil fica em algumas dezenas de MB.
+- **Processo sem etapas: também ao abrir.** Além da lista (corrigida na v2.46.14), o processo defeituoso agora abre normalmente — as etapas padrão são recompostas e o registro se conserta sozinho ao ser aberto.
+
+### Adicionado
+- **SINTEGRA — Inscrição Estadual** entra na lista de certidões da habilitação, junto dos demais cadastros oficiais.
 
 ---
 
