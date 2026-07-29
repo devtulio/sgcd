@@ -585,23 +585,7 @@
     padding: 4px 8px; border-radius: 4px; white-space: nowrap; pointer-events: none;
     opacity: 0; transition: opacity .15s; z-index: 500; transform: translateX(-50%);
   }
-  #step-dot-tooltip.visible { opacity: 1; }  .more-actions-menu {
-    display: none; position: absolute; top: calc(100% + 6px); right: 0;
-    background: #fff; border: 1px solid var(--gray-200); border-radius: 8px;
-    box-shadow: var(--shadow-md); min-width: 200px; z-index: 300;
-    overflow: hidden;
-  }
-  .more-actions-menu.open { display: block; }
-  .more-actions-menu button {
-    display: flex; align-items: center; gap: 8px; width: 100%;
-    padding: 9px 14px; font-size: .83rem; font-weight: 500; border: none;
-    background: none; cursor: pointer; color: var(--gray-700); text-align: left;
-    font-family: inherit; transition: background .12s;
-  }
-  .more-actions-menu button:hover { background: var(--gray-50); color: var(--gray-900); }
-  body.dark .more-actions-menu { background: #2a2a2a; border-color: #444; }
-  body.dark .more-actions-menu button { color: var(--gray-300); }
-  body.dark .more-actions-menu button:hover { background: #333; color: #fff; }
+  #step-dot-tooltip.visible { opacity: 1; }
 
   /* ── Próxima etapa ── */
   .step-next-badge {
@@ -2106,7 +2090,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.46.18';
+const SGCD_VERSION = '2.46.19';
 // URL absoluta (não relativa): o API_BASE monta as URLs da REST API a partir da
 // origem real, nunca uma porta fixa (era 'http://localhost:3000' hardcoded).
 const API_BASE = window.location.origin;
@@ -2147,10 +2131,6 @@ async function salvarProcesso(data) {
   }
   return API.json(r);
 }
-async function excluirProcesso(id) {
-  await API.del(`/api/processes/${id}`);
-}
-
 async function listarFornecedores() {
   const r = await API.get('/api/fornecedores?per=2000');
   const d = await API.json(r);
@@ -2969,8 +2949,6 @@ const CERTIDOES = [
   { id:'outro',        nome:'Outra',                               url:'',                                                                                                                                                      desc:'Certidão ou documento não listado acima' },
 ];
 
-// Mapa de migração: IDs antigos do CERT_TIPOS → IDs unificados do CERTIDOES
-const _CERT_MIGRA = { cnd_federal:'rfb', cnd_estadual:'pge_sp', crf_fgts:'fgts' };
 
 // ══════════════════════════════════════════════════════════════
 // STATE
@@ -3728,16 +3706,6 @@ function _fornecedorPassaFiltro(f, filtro, cnpjDupSet) {
 // Ordenação genérica de tabelas de listagem (chave -> { idx, dir }).
 // Nome do estado é _listSort (o _tblSort deste arquivo já é usado pela tabela do Dashboard).
 const _listSort = {};
-function _tblTh(key, cols) {
-  const s = _listSort[key] || { idx: null, dir: 1 };
-  return '<tr>' + cols.map((c, idx) => {
-    if (c.noSort) return `<th class="${c.cls || ''}">${escHtml(c.h)}</th>`;
-    const active = s.idx === idx;
-    const arrow = active ? (s.dir === 1 ? ' ▲' : ' ▼') : '';
-    const aria = active ? (s.dir === 1 ? 'ascending' : 'descending') : 'none';
-    return `<th onclick="_tblDoSort('${key}',${idx})" role="button" tabindex="0" aria-sort="${aria}" title="Ordenar por ${escHtml(c.h)}" style="cursor:pointer;user-select:none;white-space:nowrap">${escHtml(c.h)}<span style="opacity:.65">${arrow}</span></th>`;
-  }).join('') + '</tr>';
-}
 function _tblApply(key, cols, items) {
   const s = _listSort[key];
   if (!s || s.idx == null || !cols[s.idx] || cols[s.idx].noSort) return items;
@@ -6394,7 +6362,6 @@ function renderFracPanel() {
   if (!frac || frac.nivel === 'ok') { card.style.display = 'none'; return; }
 
   card.style.display = '';
-  const cores = { atencao: '#7a5800', alerta: '#c7162b' };
   const icons = { atencao: '🟡', alerta: '🔴' };
   title.style.color = '#fff';
   title.style.background = frac.nivel === 'alerta' ? '#c7162b' : '#d4920a';
@@ -6994,51 +6961,6 @@ async function _syncCertToForn(certId, certData) {
 }
 
 // Migra IDs antigos do CERT_TIPOS para os IDs unificados do CERTIDOES
-async function _migrarStepsParecer() {
-  // Insere a etapa "Parecer Jurídico" (índice 5) em processos criados antes da v1.11.3
-  const procs = await listarProcessos();
-  for (const p of procs) {
-    if (!p.steps || p.steps.length >= STEPS.length) continue;
-    const emptyStep = { status: 'pending', fields: {}, completedAt: null };
-    p.steps.splice(5, 0, emptyStep);
-    await salvarProcesso(p);
-  }
-}
-
-async function _migrarFusaoAvisoPublicacao() {
-  // Funde as antigas etapas 8 (Aviso) e 9 (Publicação) em uma só (v1.12.1+)
-  // Processos com 16 steps precisam ter o step[8] fundido no step[7] e removido
-  const procs = await listarProcessos();
-  for (const p of procs) {
-    if (!p.steps || p.steps.length < 16) continue;
-    const avisoStep  = p.steps[7] || {};
-    const publStep   = p.steps[8] || {};
-    // Copia os campos de publicação para o step do aviso
-    avisoStep.fields = Object.assign({}, publStep.fields || {}, avisoStep.fields || {});
-    // Herda status: se publicação estava done, mantém; senão usa o do aviso
-    if (publStep.status === 'done' && avisoStep.status !== 'done') {
-      avisoStep.status = publStep.status;
-      avisoStep.completedAt = publStep.completedAt;
-    }
-    p.steps[7] = avisoStep;
-    p.steps.splice(8, 1); // remove a antiga etapa de publicação
-    await salvarProcesso(p);
-  }
-}
-
-async function _migrarCertidoesFornecedores() {
-  const forns = await listarFornecedores();
-  for (const forn of forns) {
-    if (!forn.certidoes?.length) continue;
-    let changed = false;
-    forn.certidoes = forn.certidoes.map(c => {
-      const novoId = _CERT_MIGRA[c.tipoId];
-      if (novoId) { changed = true; return { ...c, tipoId: novoId }; }
-      return c;
-    });
-    if (changed) { forn.updatedAt = Date.now(); await salvarFornecedor(forn); }
-  }
-}
 async function getCertFilesMap(processId, stepIdx) {
   const prefix = processId + '_' + stepIdx + '_cert_';
   const files = await buscarArquivosPorPrefixo(prefix);
@@ -9357,13 +9279,6 @@ function gerarAvisoDispensa() {
     tecnica_preco:  'técnica e preço',
     maior_retorno:  'maior retorno econômico',
   };
-  const _criterioInciso = {
-    menor_preco:    'I',
-    maior_desconto: 'II',
-    melhor_tecnica: 'III',
-    tecnica_preco:  'IV',
-    maior_retorno:  'VI',
-  };
   const _criterioVantajosa = {
     menor_preco:    'o <strong>menor preço</strong> que atenda integralmente às especificações técnicas, aos padrões de qualidade e às demais condições estabelecidas no Termo de Referência e em seus anexos',
     maior_desconto: 'o <strong>maior desconto</strong> sobre a tabela de referência que atenda integralmente às especificações técnicas e demais condições do Termo de Referência',
@@ -9372,7 +9287,6 @@ function gerarAvisoDispensa() {
     maior_retorno:  'o <strong>maior retorno econômico</strong> para a Administração, observadas as condições estabelecidas no Termo de Referência',
   };
   const criterioLabel    = _criterioLabel[proc.criterio_selecao]    || 'menor preço';
-  const criterioInciso   = _criterioInciso[proc.criterio_selecao]   || 'I';
   const criterioVantajosa = _criterioVantajosa[proc.criterio_selecao] || _criterioVantajosa.menor_preco;
 
   const prazoFormatado = v(iAviso,'prazo_propostas') ? new Date(v(iAviso,'prazo_propostas')+'T00:00:00').toLocaleDateString('pt-BR', {day:'2-digit',month:'2-digit',year:'numeric'}) : '_____/_____/________';
@@ -10544,19 +10458,8 @@ document.getElementById('confirm-overlay').addEventListener('click', e => {
   }
 });
 
-// ══════════════════════════════════════════════════════════════
-// ASSINATURA ELETRÔNICA — 3 módulos (Simples / gov.br / ICP-Brasil)
-// ══════════════════════════════════════════════════════════════
-async function _hashSha256(text) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
 function applyTheme(dark) {
   document.body.classList.toggle('dark', dark);
-  const btn = document.getElementById('theme-btn');
-  const lbl = document.getElementById('theme-lbl');
-  if (lbl) lbl.innerHTML = dark ? ICONS.sun(20) : ICONS.moon(20);
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -11298,15 +11201,7 @@ function _applyTemaCor(val) {
 
 function _applySidebarMode() { /* ponytail: sidebar agora é sempre 220px */ }
 
-function toggleMoreActions(e) {
-  e.stopPropagation();
-  document.getElementById('more-actions-menu').classList.toggle('open');
-}
-function closeMoreActions() {
-  document.getElementById('more-actions-menu')?.classList.remove('open');
-}
 // Fecha ao clicar fora
-document.addEventListener('click', () => closeMoreActions());
 
 function toggleDetailSidebar() {
   const grid = document.querySelector('.detail-grid');
@@ -11325,20 +11220,6 @@ function _applyDetailSidebar(hidden) {
   grid.classList.toggle('sidebar-hidden', !!hidden);
   const btn = document.getElementById('btn-toggle-sidebar-detail');
   if (btn) btn.textContent = hidden ? '⊞ Painel' : '⊟ Painel';
-}
-
-function toggleTheme() {
-  const isDark = !document.body.classList.contains('dark');
-  localStorage.setItem('sgcd-theme', isDark ? 'dark' : 'light');
-  // Persiste também em sgcd-user para manter sincronia com Configurações
-  const u = getUser();
-  u.dark_mode = isDark ? 'dark' : 'light';
-  localStorage.setItem('sgcd-user', JSON.stringify(u));
-  // Atualiza o select se a tela de configurações estiver aberta
-  const sel = document.getElementById('s-dark-mode');
-  if (sel) sel.value = u.dark_mode;
-  applyTheme(isDark);
-  playClick();
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -11529,16 +11410,11 @@ async function abrirEmailModal() {
   const stepPubl = p.steps?.[7]?.fields || {};
   const dtEnc = stepPubl.data_encerramento
     ? new Date(stepPubl.data_encerramento + 'T00:00:00').toLocaleDateString('pt-BR') : null;
-  const encLine = dtEnc
-    ? `Envie sua proposta até a data de encerramento: ${dtEnc}.`
-    : `Envie sua proposta até a data de encerramento publicada.`;
   const linkPncp   = stepPubl.link_pncp   ? `PNCP: ${stepPubl.link_pncp}` : null;
   const linkDiario = stepPubl.link_diario ? `Diário Oficial do Município: ${stepPubl.link_diario}` : null;
   const linkSite   = stepPubl.link_site   ? `Site Oficial do Município: ${stepPubl.link_site}` : null;
-  const linksBlock = [encLine, linkPncp, linkDiario, linkSite].filter(Boolean).join('\n');
 
   document.getElementById('email-subj-forn').value = `Aviso de Dispensa de Licitação — ${nums}`;
-  const _municipio = u.municipio ? `, ${u.municipio}` : '';
   const _valor = p.valor ? fmtMoney(p.valor) : 'a definir';
   const _linksSection = (() => {
     const parts = [];
@@ -11807,7 +11683,6 @@ function fecharModalTemplates() {
 }
 
 // Chama ao abrir o modal de novo processo
-const _origOpenNewModal = typeof openNewModal === 'function' ? openNewModal : null;
 
 // ══════════════════════════════════════════════════════════════
 // FEATURE 2 — NOTIFICAÇÕES IN-APP

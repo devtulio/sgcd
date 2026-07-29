@@ -9,6 +9,13 @@
 
 ---
 
+## [2.46.19] — 2026-07-29
+
+### Removido
+- **Código morto** (126 linhas): restos da assinatura eletrônica retirada em versões anteriores, três rotinas de migração de processos das versões 1.11/1.12 — já substituídas pela migração que roda ao abrir o processo, e uma delas capaz de corromper processos atuais se voltasse a rodar —, o menu "mais ações" que não existe mais na tela (funções, listener global e CSS), o botão de tema que também não existe, e variáveis calculadas e nunca usadas. Nada muda no uso.
+
+---
+
 ## [2.46.18] — 2026-07-28
 
 ### Corrigido
