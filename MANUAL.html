@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Manual Operacional — SGCD v2.46.19</title>
+<title>Manual Operacional — SGCD v2.46.20</title>
 <style>
   /* Reset e base */
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -89,7 +89,7 @@
       size: A4;
       margin: 20mm 20mm 25mm;
       @top-center {
-        content: "SGCD v2.46.19 — Manual Operacional";
+        content: "SGCD v2.46.20 — Manual Operacional";
         font-family: 'Times New Roman', serif;
         font-size: 9pt;
         color: #666;
@@ -116,7 +116,7 @@
     <div class="cover-title">Manual Operacional</div>
     <div class="cover-subtitle">SGCD — Sistema de Gestão de Contratação Direta</div>
     <div class="cover-system">Gestão de Processos de Dispensa de Licitação</div>
-    <div class="cover-version">Versão v2.46.19</div>
+    <div class="cover-version">Versão v2.46.20</div>
     <br>
     <div style="font-size:11pt; color:#555; line-height:1.8;">
       Aplicação web multiusuário para agentes de contratação pública<br>
@@ -215,8 +215,8 @@
 
     <div class="toc-item h2"><a href="#sec19">19. Relatório Executivo</a></div>
 
-    <div class="toc-item h2"><a href="#sec20">20. QR Code e Verificação de Autenticidade</a></div>
-    <div class="toc-item h3"><a href="#sec20-1">20.1 QR Code nos documentos</a></div>
+    <div class="toc-item h2"><a href="#sec20">20. Código de Autenticidade dos Documentos</a></div>
+    <div class="toc-item h3"><a href="#sec20-1">20.1 O rodapé dos documentos</a></div>
     <div class="toc-item h3"><a href="#sec20-2">20.2 O código de autenticidade</a></div>
     <div class="toc-item h3"><a href="#sec20-3">20.3 Histórico de edições por campo</a></div>
 
@@ -1505,20 +1505,19 @@
 <hr class="section-divider">
 
 <!-- ─────────────────────────────────────────────── SEÇÃO 20 -->
-<h2 id="sec20">20. QR Code e Verificação de Autenticidade</h2>
-<p>A partir da versão 1.14.0, todos os documentos gerados pelo SGCD incluem um <strong>QR Code no rodapé</strong> que permite verificar a autenticidade do documento de forma rápida, confirmando que ele foi gerado pelo sistema e não foi adulterado.</p>
+<h2 id="sec20">20. Código de Autenticidade dos Documentos</h2>
+<p>Todo documento gerado pelo SGCD traz no rodapé um <strong>código de autenticidade</strong> que o vincula ao processo que o originou.</p>
 
-<h3 id="sec20-1">20.1 QR Code nos documentos</h3>
+<h3 id="sec20-1">20.1 O rodapé dos documentos</h3>
 <p>O rodapé de cada documento gerado (Autorização, Ata, Aviso, Extrato de Contrato, Despachos, Termos e Mapa de Preços) exibe:</p>
 <ul>
-  <li>Um <strong>QR Code</strong> gerado localmente (sem dependências externas)</li>
   <li>A <strong>data e hora</strong> de geração do documento</li>
   <li>O <strong>código de autenticidade</strong> no formato <code>XXXX-XXXX</code> (8 caracteres hexadecimais derivados dos dados do processo)</li>
 </ul>
-<p>O QR Code codifica um texto de autenticidade no formato <code>SGCD/versão/órgão/{código}</code> (identifica o documento; não há mais página de verificação online).</p>
+<div class="nota"><strong>Nota:</strong> até a versão 2.46.19 o rodapé trazia também um <strong>QR Code</strong>. Ele foi retirado: codificava exatamente o mesmo texto impresso ao lado e não levava a lugar nenhum — o sistema é local e não há página pública para o QR apontar. Documentos já impressos continuam válidos; o código de autenticidade é o mesmo.</div>
 
 <h3 id="sec20-2">20.2 O código de autenticidade</h3>
-<p>O código no formato <code>XXXX-XXXX</code> é um carimbo de autenticidade derivado dos dados do processo, impresso junto ao QR no rodapé de cada documento. Ele identifica o documento e o vincula ao processo que o originou. Não há mais uma página de verificação online — o código serve como referência para conferência manual contra o processo no sistema.</p>
+<p>O código no formato <code>XXXX-XXXX</code> é um carimbo de autenticidade derivado dos dados do processo, impresso no rodapé de cada documento. Ele identifica o documento e o vincula ao processo que o originou. Não há mais uma página de verificação online — o código serve como referência para conferência manual contra o processo no sistema.</p>
 
 <h3 id="sec20-3">20.3 Histórico de edições por campo</h3>
 <p>Cada campo editável no <strong>painel de informações</strong> do processo possui um botão <strong>🕐</strong> ao lado do seu rótulo. Clique nele para visualizar um histórico completo de todas as alterações já realizadas naquele campo específico.</p>
@@ -1761,6 +1760,10 @@
 
 <!-- ─────────────────────────────────────────────── SEÇÃO 29 -->
 <h2 id="sec29">29. Histórico de Versões</h2>
+
+<h3>v2.46.20 — Julho/2026</h3>
+<p><strong>Removido</strong></p>
+<ul><li>QR Code do rodapé dos documentos removido: codificava o mesmo texto impresso ao lado e não levava a lugar nenhum, já que o sistema é local. O rodapé mantém data, versão e código de autenticidade.</li></ul>
 
 <h3>v2.46.19 — Julho/2026</h3>
 <p><strong>Removido</strong></p>

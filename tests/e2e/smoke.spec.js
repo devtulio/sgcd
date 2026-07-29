@@ -40,6 +40,13 @@ test('login força troca de senha, cria processo e gera documento', async ({ pag
   ]);
   await popup.waitForLoadState();
   await expect(popup.locator('.doc-title')).toContainText('Autorização de Abertura');
+
+  // O QR do rodape era decorativo: codificava um texto que ja vinha impresso ao
+  // lado, e nao levava a lugar nenhum (o sistema e local). Foi retirado - este
+  // assert impede que volte junto com o gerador de 190 linhas que o alimentava.
+  // precisa ser especifico: o brasao do orgao tambem e <img>, e pode existir
+  await expect(popup.locator('img[alt="QR"], img[src^="data:image/svg+xml"]')).toHaveCount(0);
+  await expect(popup.getByText('Código de autenticidade')).toBeVisible();
 });
 
 test('sincroniza backup de outro agente e mescla processo novo', async ({ page }) => {

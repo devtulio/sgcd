@@ -1,6 +1,6 @@
 # SGCD — Sistema de Gestão de Contratação Direta
 
-![Versão](https://img.shields.io/badge/versão-v2.46.19-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-Python%20%2B%20SQLite-orange) ![Licença](https://img.shields.io/badge/licença-MIT-green) ![Multiusuário](https://img.shields.io/badge/acesso-multiusuário-blueviolet) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21314672.svg)](https://doi.org/10.5281/zenodo.21314672) [![CI](https://github.com/devtulio/sgcd/actions/workflows/ci.yml/badge.svg)](https://github.com/devtulio/sgcd/actions/workflows/ci.yml)
+![Versão](https://img.shields.io/badge/versão-v2.46.20-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-Python%20%2B%20SQLite-orange) ![Licença](https://img.shields.io/badge/licença-MIT-green) ![Multiusuário](https://img.shields.io/badge/acesso-multiusuário-blueviolet) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21314672.svg)](https://doi.org/10.5281/zenodo.21314672) [![CI](https://github.com/devtulio/sgcd/actions/workflows/ci.yml/badge.svg)](https://github.com/devtulio/sgcd/actions/workflows/ci.yml)
 
 ## Descrição
 
@@ -31,7 +31,7 @@ Funciona em rede local: um único computador executa o servidor e todos os usuá
 - **Notificações por e-mail via SMTP** com editor rich text para fornecedor e equipe interna — os destinatários são os **fornecedores cotados no processo** (casados com o cadastro por CNPJ), não o cadastro inteiro; cada um recebe um e-mail individual, com saudação **pelo nome do sócio** ou **simples** ("Prezado fornecedor"), à escolha
 - **Notificações in-app** — alertas de prazo, processos parados e certidões vencendo
 - **Resumo diário por e-mail** — prazos e processos parados, enviado automaticamente pelo servidor sem depender de ninguém logado (requer SMTP configurado)
-- **QR Code de autenticidade** em todos os documentos gerados
+- **Código de autenticidade** no rodapé de todos os documentos gerados
 - **Exportação PNCP** — JSON estruturado no formato da API do Portal Nacional de Contratações Públicas
 - **Backup automático** após o último usuário sair (JSON + banco de dados SQLite) com rotação configurável — o servidor continua no ar, pronto pro próximo login
 - **Sincronização de backup entre agentes/máquinas** — mescla dados de outra instalação (soma o que é novo, revisa o que conflita) sem substituir o banco inteiro
