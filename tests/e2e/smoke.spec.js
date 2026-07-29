@@ -315,19 +315,22 @@ test('links das certidoes estao vivos e o do Portal filtra pelo fornecedor', asy
     const idx = STEPS.findIndex(s => s.certidoes);
     expandedSteps.add(idx);
     await renderSingleStep(idx);
-    await new Promise(res => setTimeout(res, 500));
-    const links = [...document.querySelectorAll('.cert-link-btn')].map(a => a.href);
     return {
-      transp: links.find(h => /portaldatransparencia/.test(h)),
       urls: CERTIDOES.map(c => c.url).filter(Boolean),
       ids: CERTIDOES.map(c => c.id),
     };
   });
 
+  // localizador do Playwright em vez de ler o DOM na hora: ele espera o render
+  // terminar sozinho (o runner do CI e bem mais lento que a maquina local).
+  const linkTransp = page.locator('.cert-link-btn[href*="portaldatransparencia"]');
+  await expect(linkTransp).toBeVisible();
+  const transp = await linkTransp.getAttribute('href');
+
   // o parametro certo, com o CNPJ do fornecedor so com digitos
-  expect(r.transp).toContain('cpfCnpj=12908073000165');
-  expect(r.transp, 'voltou a usar o parametro que o site ignora').not.toContain('cnpjCpf=');
-  expect(r.transp).not.toContain('undefined');
+  expect(transp).toContain('cpfCnpj=12908073000165');
+  expect(transp, 'voltou a usar o parametro que o site ignora').not.toContain('cnpjCpf=');
+  expect(transp).not.toContain('undefined');
 
   // paginas que os orgaos desativaram nao podem voltar
   expect(r.urls.join(' '), 'aplicacao do TCU desativada em 22/05/2026').not.toContain('contas.tcu.gov.br');
@@ -361,33 +364,35 @@ test('data de publicacao grava tambem o encerramento, sem conflito', async ({ pa
     const origToast = window.toast;
     window.toast = (m, t) => { avisos.push(String(m)); return origToast(m, t); };
 
-    const inp = document.querySelector(`#step-body-${idx} input[onchange*="onPublicacaoChange"]`);
-    inp.value = '2026-08-03';
-    inp.dispatchEvent(new Event('change', { bubbles: true }));
-    await new Promise(res => setTimeout(res, 2500));
     window.toast = origToast;
-
-    // relê do servidor: e la que o campo calculado se perdia
-    const doServidor = await buscarProcesso(ps[0].id);
-    return { avisos, campos: doServidor.steps[idx].fields };
+    return { avisos, id: ps[0].id };
   }, idxAviso);
 
+  // page.fill espera o campo existir; nada de ler o DOM antes do render terminar
+  const campoPub = page.locator(`#step-body-${idxAviso} input[onchange*="onPublicacaoChange"]`);
+  await expect(campoPub).toBeVisible();
+  await campoPub.fill('2026-08-03');
+  await campoPub.dispatchEvent('change');
+  await expect(page.locator(`#step-body-${idxAviso} input[onchange*="data_encerramento"]`))
+    .toHaveValue('2026-08-06');
+
+  const r2 = await page.evaluate(async (pid) => await buscarProcesso(pid), r.id);
+  const campos = r2.steps[idxAviso].fields;
+
   expect(r.avisos.join(' '), 'apareceu aviso de conflito ao salvar').not.toMatch(/alterado por outro usu/i);
-  expect(r.campos.data_publicacao).toBe('2026-08-03');
+  expect(campos.data_publicacao).toBe('2026-08-03');
   // 03/08/2026 e segunda: 3 dias uteis caem em 06/08
-  expect(r.campos.data_encerramento, 'o encerramento calculado nao chegou ao servidor').toBe('2026-08-06');
+  expect(campos.data_encerramento, 'o encerramento calculado nao chegou ao servidor').toBe('2026-08-06');
 
   // Remarcar a publicacao tem de puxar o prazo junto: antes o encerramento
   // continuava preso a data antiga, porque so era preenchido quando vazio.
-  const depois = await page.evaluate(async (idx) => {
-    const inp = document.querySelector(`#step-body-${idx} input[onchange*="onPublicacaoChange"]`);
-    inp.value = '2026-08-10';
-    inp.dispatchEvent(new Event('change', { bubbles: true }));
-    await new Promise(res => setTimeout(res, 2500));
-    const doServidor = await buscarProcesso(currentProcess.id);
-    return doServidor.steps[idx].fields;
-  }, idxAviso);
+  await campoPub.fill('2026-08-10');
+  await campoPub.dispatchEvent('change');
+  await expect(page.locator(`#step-body-${idxAviso} input[onchange*="data_encerramento"]`))
+    .toHaveValue('2026-08-13');
 
+  const r3 = await page.evaluate(async (pid) => await buscarProcesso(pid), r.id);
+  const depois = r3.steps[idxAviso].fields;
   expect(depois.data_publicacao).toBe('2026-08-10');
   expect(depois.data_encerramento, 'o prazo nao acompanhou a nova data de publicacao').toBe('2026-08-13');
 });

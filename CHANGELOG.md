@@ -12,6 +12,7 @@
 ## [2.46.18] — 2026-07-28
 
 ### Corrigido
+- **Ao preencher a data de publicação do Aviso de Dispensa, a etapa inteira era redesenhada.** O campo em uso sumia por um instante e podia engolir o próximo clique ou digitação. Agora só o campo de encerramento e o alerta de prazo mínimo são atualizados, sem redesenhar o resto.
 - **Gravações simultâneas do mesmo processo podiam se recusar entre si.** Dois pontos do sistema salvam sem esperar — a abertura do processo (que completa campos automáticos) e o preenchimento automático das certidões a partir do cadastro do fornecedor. Se uma delas coincidisse com uma edição sua, o servidor recusava a segunda com o aviso de *"processo alterado por outro usuário"* (o processo conflitando com ele mesmo) e **uma das gravações se perdia**. Agora as gravações entram em fila: cada uma só começa depois que a anterior terminou, e o aviso deixa de aparecer sem que ninguém mais esteja editando.
 
 ---

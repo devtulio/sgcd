@@ -4922,13 +4922,17 @@ async function onPublicacaoChange(i, val) {
   const anterior = currentProcess.steps[i]?.fields?.data_encerramento;
   if (anterior === minStr) return;
   await updateField(i, 'data_encerramento', minStr);
+  // Atualiza o campo e some com o aviso de prazo minimo sem re-renderizar a
+  // etapa: re-render trocava o DOM embaixo de quem estava preenchendo (e o
+  // proprio campo de data sumia por um instante). O aviso so existe quando o
+  // encerramento esta abaixo do minimo, e acabamos de coloca-lo no minimo.
+  const campo = document.querySelector(`#step-body-${i} input[onchange*="data_encerramento"]`);
+  if (campo) campo.value = minStr;
+  document.getElementById(`aviso-prazo-${i}`)?.remove();
   const emPtBr = new Date(minStr + 'T00:00:00').toLocaleDateString('pt-BR');
   toast(anterior
     ? `Prazo recalculado: encerramento em ${emPtBr} (3 dias úteis da nova publicação).`
     : `Encerramento definido para ${emPtBr} (3 dias úteis).`, '');
-  // re-renderiza para o campo e o aviso de prazo minimo acompanharem
-  expandedSteps.add(i);
-  renderSingleStep(i);
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -6730,7 +6734,7 @@ function renderStepFields(i, step, data, certFileMap = {}) {
       const minDate = calcDiasUteis(new Date(pub + 'T00:00:00'), 3);
       const minStr = minDate.toISOString().slice(0,10);
       if (enc < minStr) {
-        html += `<div style="background:#fff1f0;border:1px solid #ffa39e;border-radius:6px;padding:8px 10px;margin-top:8px;font-size:.8rem;color:#cf1322">
+        html += `<div id="aviso-prazo-${i}" style="background:#fff1f0;border:1px solid #ffa39e;border-radius:6px;padding:8px 10px;margin-top:8px;font-size:.8rem;color:#cf1322">
           ⚠ Data de encerramento (${new Date(enc+'T00:00:00').toLocaleDateString('pt-BR')}) é inferior ao prazo mínimo legal de 3 dias úteis. Mínimo: ${new Date(minStr+'T00:00:00').toLocaleDateString('pt-BR')}.
         </div>`;
       }
