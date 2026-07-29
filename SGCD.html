@@ -2106,7 +2106,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.46.17';
+const SGCD_VERSION = '2.46.18';
 // URL absoluta (não relativa): o API_BASE monta as URLs da REST API a partir da
 // origem real, nunca uma porta fixa (era 'http://localhost:3000' hardcoded).
 const API_BASE = window.location.origin;
@@ -3347,7 +3347,22 @@ function _hideSaveIndicator(ok = true) {
   _saveIndicatorTimer = setTimeout(() => { el.style.opacity = '0'; }, 1800);
 }
 
-async function saveProcess(p) {
+// Fila de gravacao. Duas chamadas concorrentes saiam com o mesmo
+// _baseUpdatedAt e a segunda voltava 409 ("alterado por outro usuario") — o
+// processo conflitando com ele mesmo. Enfileirando, cada gravacao so comeca
+// depois que a anterior devolveu o updatedAt novo, e nenhum call site precisa
+// lembrar de esperar (havia dois disparando sem await: abertura do processo e
+// auto-preenchimento das certidoes).
+let _filaSalvarProcesso = Promise.resolve();
+
+function saveProcess(p) {
+  // .catch antes do then: uma gravacao que falha nao pode travar a fila; quem
+  // chamou continua recebendo a propria rejeicao pelo retorno abaixo.
+  _filaSalvarProcesso = _filaSalvarProcesso.catch(() => {}).then(() => _salvarProcessoAgora(p));
+  return _filaSalvarProcesso;
+}
+
+async function _salvarProcessoAgora(p) {
   _showSaveIndicator();
   p.updatedAt = Date.now();
   let ok = false;
@@ -8425,8 +8440,9 @@ async function verificarConformidade() {
     else err(`Certidões pendentes: ${aplicaveis.length - obtidas} de ${aplicaveis.length}`, 'Acesse a etapa de habilitação para obter as certidões');
   }
 
-  const done  = p.steps.filter(s => s.status==='done').length;
-  const total = p.steps.length;
+  const etapas = p.steps || [];
+  const done  = etapas.filter(s => s.status==='done').length;
+  const total = etapas.length;
   if (done === total) ok(`Checklist completo (${done}/${total} etapas)`);
   else checks.push({ ok: false, warn: true, label: `${total-done} etapa(s) pendente(s) no checklist (${done}/${total})`, hint: 'O processo pode ser instruído mesmo com etapas em andamento' });
 

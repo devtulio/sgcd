@@ -391,3 +391,42 @@ test('data de publicacao grava tambem o encerramento, sem conflito', async ({ pa
   expect(depois.data_publicacao).toBe('2026-08-10');
   expect(depois.data_encerramento, 'o prazo nao acompanhou a nova data de publicacao').toBe('2026-08-13');
 });
+
+// Gravacoes concorrentes do mesmo processo: dois pontos do sistema salvam sem
+// esperar (abertura do processo e auto-preenchimento das certidoes). Sem fila,
+// elas saem com o mesmo _baseUpdatedAt e o servidor recusa a segunda com 409
+// "alterado por outro usuario" - o processo conflitando com ele mesmo.
+test('gravacoes simultaneas do mesmo processo nao conflitam entre si', async ({ page }) => {
+  await page.goto('/SGCD.html');
+  await page.fill('#pin-username', 'admin');
+  await page.fill('#pin-input', 'novaSenhaE2E123');
+  await page.click('#overlay-pin button[onclick="verificarSenha()"]');
+  await expect(page.locator('#overlay-pin')).toBeHidden();
+
+  const r = await page.evaluate(async () => {
+    const ps = await listarProcessos();
+    await openProcess(ps[0].id);
+
+    const avisos = [];
+    const origToast = window.toast;
+    window.toast = (m, t) => { avisos.push(String(m)); return origToast(m, t); };
+
+    // dispara tres sem aguardar nenhuma, como os pontos fire-and-forget fazem
+    currentProcess.steps[0].fields.responsavel = 'Fulano';
+    const p1 = saveProcess(currentProcess);
+    currentProcess.steps[1].fields.responsavel = 'Beltrano';
+    const p2 = saveProcess(currentProcess);
+    currentProcess.steps[2].fields.responsavel = 'Sicrano';
+    const p3 = saveProcess(currentProcess);
+    const estados = (await Promise.allSettled([p1, p2, p3])).map(x => x.status);
+    window.toast = origToast;
+
+    const doServidor = await buscarProcesso(currentProcess.id);
+    return { estados, avisos, gravados: [0, 1, 2].map(i => doServidor.steps[i].fields.responsavel) };
+  });
+
+  expect(r.estados, 'alguma gravacao foi recusada').toEqual(['fulfilled', 'fulfilled', 'fulfilled']);
+  expect(r.avisos.join(' '), 'apareceu aviso de conflito').not.toMatch(/alterado por outro usu/i);
+  expect(r.gravados, 'gravacao perdida: o servidor nao ficou com os tres campos')
+    .toEqual(['Fulano', 'Beltrano', 'Sicrano']);
+});
