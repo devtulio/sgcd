@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Manual Operacional — SGCD v2.46.21</title>
+<title>Manual Operacional — SGCD v2.46.22</title>
 <style>
   /* Reset e base */
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -89,7 +89,7 @@
       size: A4;
       margin: 20mm 20mm 25mm;
       @top-center {
-        content: "SGCD v2.46.21 — Manual Operacional";
+        content: "SGCD v2.46.22 — Manual Operacional";
         font-family: 'Times New Roman', serif;
         font-size: 9pt;
         color: #666;
@@ -116,7 +116,7 @@
     <div class="cover-title">Manual Operacional</div>
     <div class="cover-subtitle">SGCD — Sistema de Gestão de Contratação Direta</div>
     <div class="cover-system">Gestão de Processos de Dispensa de Licitação</div>
-    <div class="cover-version">Versão v2.46.21</div>
+    <div class="cover-version">Versão v2.46.22</div>
     <br>
     <div style="font-size:11pt; color:#555; line-height:1.8;">
       Aplicação web multiusuário para agentes de contratação pública<br>
@@ -1657,6 +1657,7 @@
   <li><strong>Tipo:</strong> a identificação do erro e a data/hora da última ocorrência</li>
 </ul>
 <p>O painel reúne tanto os erros do servidor quanto os ocorridos <strong>no navegador dos usuários</strong>, reportados automaticamente ao servidor — o que permite ao administrador enxergar problemas de outras máquinas sem precisar pedir print a ninguém.</p>
+<p>O painel mostra apenas os <strong>últimos 7 dias</strong> — é o que faz dele um retrato do que está quebrado agora, e não um histórico que cresce para sempre; registros mais antigos continuam no arquivo de log e aparecem como uma contagem ao pé da lista.</p>
 <p>Os registros ficam num <strong>log rotativo</strong> na pasta do sistema, que se recicla sozinho e não cresce indefinidamente. Falhas graves, em que o próprio servidor cai, são gravadas à parte no arquivo <code>SGCD_crash.log</code> — quando houver alguma, um aviso vermelho aparece ao final do painel indicando a quantidade.</p>
 <div class="dica">
   <strong>Dica:</strong> Se algum usuário relatar comportamento estranho, confira este painel antes de qualquer coisa: normalmente o erro já está registrado ali, com a hora exata e a quantidade de ocorrências.
@@ -1760,6 +1761,10 @@
 
 <!-- ─────────────────────────────────────────────── SEÇÃO 29 -->
 <h2 id="sec29">29. Histórico de Versões</h2>
+
+<h3>v2.46.22 — Julho/2026</h3>
+<p><strong>Alterado</strong></p>
+<ul><li>A tela "Erros recentes" passa a mostrar só os últimos 7 dias, para ser um retrato do que está quebrado agora; o que é mais antigo continua no log e aparece como contagem ao pé da lista.</li></ul>
 
 <h3>v2.46.21 — Julho/2026</h3>
 <p><strong>Corrigido</strong></p>
