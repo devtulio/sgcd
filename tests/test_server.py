@@ -777,6 +777,40 @@ class TestMotorErros(SGCDTestCase):
         self.assertTrue(any('cliente-js' in g.get('tipo', '') for g in d['erros']),
                         'nenhum grupo cliente-js no diagnóstico')
 
+    def test_diagnostico_so_mostra_a_janela_recente(self):
+        """A tela se chama "Erros recentes": defeito ja corrigido nao pode ficar
+        la para sempre (o log so rotaciona aos 2 MB). O que e mais antigo que a
+        janela vira contagem em 'anteriores' — sem apagar nada do arquivo."""
+        import datetime, tempfile, shutil
+        d = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, d, True)
+        agora = datetime.datetime.now()
+        def ts(dias): return (agora - datetime.timedelta(days=dias)).isoformat(timespec='seconds')
+        linhas = [
+            f"{ts(30)} | ERROR | operacional | rota-x | antigo",
+            f"{ts(8)} | WARNING | operacional | cliente-js | fora da janela por 1 dia",
+            f"{ts(6)} | WARNING | operacional | cliente-js | dentro",
+            f"{ts(1)} | ERROR | operacional | rota-y | ontem",
+            "    at algo (arquivo.html:1:1)",
+        ]
+        caminho = server.sgx_base.caminho_log_erros(d, 'SGCD')
+        with open(caminho, 'w', encoding='utf-8', newline='') as f:
+            f.write('\n'.join(linhas) + '\n')
+
+        r = server.sgx_base.ler_diagnostico_erros(d, 'SGCD')
+        self.assertEqual(r['dias'], 7)
+        self.assertEqual(r['anteriores'], 2, 'os dois mais velhos deviam ficar fora da janela')
+        self.assertEqual(sum(g['count'] for g in r['erros']), 2)
+
+        # a janela e parametrizavel, e com ela larga nada fica de fora
+        r30 = server.sgx_base.ler_diagnostico_erros(d, 'SGCD', dias=31)
+        self.assertEqual(r30['anteriores'], 0)
+        self.assertEqual(sum(g['count'] for g in r30['erros']), 4)
+
+        # o arquivo continua intacto: filtrar nao apaga
+        with open(caminho, encoding='utf-8') as f:
+            self.assertEqual(len(f.readlines()), 5)
+
     def test_diagnostico_erros_so_admin(self):
         admin = self.login()
         self.request('POST', '/api/usuarios', {'username': 'u_diag', 'nome': 'U', 'password': 'senha123'}, token=admin)
