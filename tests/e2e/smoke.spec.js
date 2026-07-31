@@ -448,7 +448,12 @@ test('gravacoes simultaneas do mesmo processo nao conflitam entre si', async ({ 
 // ontem. Aconteceu de verdade na Justificativa da Escolha, em 31/07/2026. O
 // juiz aqui e o fmtDate, que forca hora local — e o caso de 1o de janeiro, onde
 // o erro troca o ANO.
-test('data so-string nao volta um dia (nem troca o ano na virada)', async ({ page }) => {
+// timezoneId fixo: em UTC o defeito e invisivel (a leitura errada cai no mesmo
+// dia), entao sem isto o teste passaria no CI mesmo com o bug de volta.
+test.describe('datas em fuso brasileiro', () => {
+  test.use({ timezoneId: 'America/Sao_Paulo' });
+
+  test('data so-string nao volta um dia (nem troca o ano na virada)', async ({ page }) => {
   await page.goto('/SGCD.html');
   await page.fill('#pin-username', 'admin');
   await page.fill('#pin-input', 'novaSenhaE2E123');
@@ -459,14 +464,13 @@ test('data so-string nao volta um dia (nem troca o ano na virada)', async ({ pag
     meio:      fmtDate('2026-07-31'),
     virada:    fmtDate('2026-01-01'),
     anoVirada: new Date('2026-01-01T00:00:00').getFullYear(),
-    // o jeito errado, so para deixar o contraste explicito no teste
-    erradoAno: new Date('2026-01-01').getFullYear(),
   }));
 
+  // Assercoes independentes de fuso: valem tanto aqui (UTC-3) quanto no runner
+  // do CI (UTC). Nao da para afirmar o comportamento ERRADO num teste, porque
+  // ele so aparece em fuso negativo — foi assim que este teste quebrou no CI.
   expect(r.meio,   'a data voltou um dia').toBe('31/07/2026');
   expect(r.virada, 'a virada de ano voltou um dia').toBe('01/01/2026');
   expect(r.anoVirada).toBe(2026);
-  // prova de que o modo errado erra mesmo: se um dia isto passar a dar 2026,
-  // o navegador mudou de comportamento e o teste acima perdeu o sentido
-  expect(r.erradoAno, 'new Date(so-data) deixou de ser UTC?').toBe(2025);
+  });
 });
