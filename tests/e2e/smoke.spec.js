@@ -474,3 +474,63 @@ test.describe('datas em fuso brasileiro', () => {
   expect(r.anoVirada).toBe(2026);
   });
 });
+
+// "Aguardando terceiro": marca uma etapa como parada esperando alguem de fora
+// (assinatura, publicacao, retorno de orgao), com prazo. Nao e "Bloqueada" —
+// bloqueio sinaliza problema e pinta o processo de vermelho; espera declarada e
+// curso normal. O valor esta no efeito: suspende o alerta de processo parado
+// ATE a previsao, e cobra depois dela.
+test('aguardando terceiro: marca, mostra, filtra e some ao concluir', async ({ page }) => {
+  await page.goto('/SGCD.html');
+  await page.fill('#pin-username', 'admin');
+  await page.fill('#pin-input', 'novaSenhaE2E123');
+  await page.click('#overlay-pin button[onclick="verificarSenha()"]');
+  await expect(page.locator('#overlay-pin')).toBeHidden();
+
+  const idx = await page.evaluate(() => STEPS.findIndex(s => /Instrumento Contratual/i.test(s.name)));
+
+  const id = await page.evaluate(async (idx) => {
+    const ps = await listarProcessos();
+    await openProcess(ps[0].id);
+    expandedSteps.add(idx);
+    await renderSingleStep(idx);
+    return ps[0].id;
+  }, idx);
+
+  // localizadores em vez de ler o DOM na hora: o render e assincrono
+  await page.click(`#step-card-${idx} button[onclick="abrirAguardando(${idx})"]`);
+  const campoPrev = page.locator(`#ag-prev-${idx}`);
+  await expect(campoPrev).toBeVisible();
+  const sugerida = await campoPrev.inputValue();
+  await page.click(`#ag-form-${idx} button[onclick="salvarAguardando(${idx})"]`);
+  await expect(page.locator(`#step-card-${idx} .step-aguardando-badge`)).toBeVisible();
+
+  const r = await page.evaluate(async ({ id, idx }) => ({
+    id, sugerida: null,
+    gravado: (await buscarProcesso(id)).steps[idx].fields._aguardando,
+  }), { id, idx });
+  r.sugerida = sugerida;
+
+  // a previsao e obrigatoria e nasce em 5 dias uteis
+  expect(r.gravado.previsao).toBe(r.sugerida);
+  expect(r.gravado.desde).toBeTruthy();
+
+  const efeitos = await page.evaluate(async ({ id, idx }) => {
+    const p = await buscarProcesso(id);
+    const ag = _aguardandoDoProcesso(p);
+    // uma previsao no passado tem de contar como atrasada
+    const vencida = _aguardandoVencido({ previsao: '2020-01-01', desde: '2019-12-01' });
+    // concluir a etapa limpa a marcacao, senao vira lixo permanente
+    window.customConfirm = async () => true;
+    await openProcess(id);
+    await setStepStatus(idx, 'done');
+    await new Promise(res => setTimeout(res, 600));
+    const depois = (await buscarProcesso(id)).steps[idx].fields._aguardando;
+    return { detectada: !!ag, dentroDoPrazo: !_aguardandoVencido(ag), vencida, depois: depois ?? null };
+  }, { id: r.id, idx });
+
+  expect(efeitos.detectada, 'a espera nao foi detectada no processo').toBe(true);
+  expect(efeitos.dentroDoPrazo, 'espera recem-criada ja nasceu vencida').toBe(true);
+  expect(efeitos.vencida, 'previsao no passado deveria contar como atrasada').toBe(true);
+  expect(efeitos.depois, 'concluir a etapa deveria limpar a marcacao').toBeNull();
+});

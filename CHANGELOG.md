@@ -7,6 +7,14 @@
 
 ## [Não versionado]
 
+### Adicionado
+- **Marcar uma etapa como "aguardando terceiro".** Quando o processo depende de alguém de fora — assinatura do contrato pelo fornecedor, retorno de outro órgão, publicação —, a etapa pode ser marcada com uma **previsão de retorno**. Enquanto o prazo vale, o processo **deixa de constar como parado** no painel; se a previsão passar, ele volta a alertar, agora informando há quantos dias a espera dura.
+  - A previsão é obrigatória e já vem sugerida em **5 dias úteis**. O motivo vem preenchido com o nome da etapa e pode ser editado.
+  - O selo aparece na etapa e no card do processo, e há um filtro **"Aguardando terceiros"** no painel — o que permite, enfim, separar o que depende de você do que não depende.
+  - Ao concluir a etapa, a marcação sai sozinha. Ligar e desligar ficam registrados na auditoria, com a duração da espera — útil para justificar o prazo depois.
+  - **Não é o mesmo que "Bloqueada"**: bloqueio sinaliza problema e marca o processo inteiro; a espera é curso normal do processo.
+  - O processo continua só sendo dado como **concluído** quando todas as etapas fecharem — inclusive empenho, contrato e publicação no PNCP, que são exigências legais.
+
 ### Corrigido
 - **Documentos saíam com a data de ontem.** A **Justificativa da Escolha do Fornecedor** imprimia no rodapé o dia anterior ao da geração, e o mesmo acontecia com a **Data da Proposta** no documento que lista as propostas. A causa é a forma como o navegador interpreta uma data sem horário: ele a lê como meia-noite em UTC, o que no nosso fuso cai às 21h do dia anterior. Os documentos passam a usar o mesmo tratamento de data já aplicado no resto do sistema. **Termo de Adjudicação e Termo de Homologação nunca foram afetados** — conferidos.
 

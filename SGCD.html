@@ -588,6 +588,16 @@
   #step-dot-tooltip.visible { opacity: 1; }
 
   /* ── Próxima etapa ── */
+  .step-aguardando-badge {
+    display: inline-flex; align-items: center; gap: 3px;
+    font-size: .62rem; font-weight: 700; text-transform: uppercase; letter-spacing: .4px;
+    background: #fff7e6; color: #92400e; border: 1px solid #fcd34d;
+    padding: 2px 7px; border-radius: 99px; flex-shrink: 0; white-space: nowrap;
+  }
+  .step-aguardando-badge.vencido { background: #fef2f2; color: #b91c1c; border-color: #fca5a5; }
+  body.dark .step-aguardando-badge { background: #3a2e12; color: #fcd34d; border-color: #6b5410; }
+  body.dark .step-aguardando-badge.vencido { background: #3a1414; color: #fca5a5; border-color: #7f1d1d; }
+
   .step-next-badge {
     display: inline-flex; align-items: center; gap: 3px;
     font-size: .62rem; font-weight: 700; text-transform: uppercase; letter-spacing: .4px;
@@ -821,6 +831,7 @@
         <option value="progress">Em andamento</option>
         <option value="done">Concluído</option>
         <option value="blocked">Bloqueado</option>
+        <option value="aguardando">Aguardando terceiros</option>
       </select>
       <select id="filter-unidade" onchange="renderDash()" title="Filtrar por unidade/secretaria"><option value="">Todas as unidades</option></select>
       <input type="date" id="filter-de" onchange="renderDash()" title="Data de criação: de" style="max-width:148px">
@@ -3226,6 +3237,107 @@ function fmtDate(dt) {
   return d.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric' });
 }
 
+// ══════════════════════════════════════════════════════════════
+// AGUARDANDO TERCEIRO
+// ══════════════════════════════════════════════════════════════
+// Marca uma etapa como "parada esperando alguem de fora" (assinatura do
+// fornecedor, publicacao, retorno de orgao). Nao e "Bloqueada": bloqueio
+// pinta o processo de vermelho e sinaliza PROBLEMA; isto aqui e curso normal.
+// A previsao e obrigatoria de proposito — sem prazo, a marcacao viraria um
+// jeito de silenciar o alerta de processo parado para sempre.
+
+// Data local em AAAA-MM-DD. toISOString() converteria para UTC e, depois das
+// 21h no nosso fuso, devolveria o DIA SEGUINTE — a mesma armadilha que fez
+// documento sair com a data de ontem.
+function _isoLocal(d = new Date()) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function _aguardandoDaEtapa(step) {
+  const a = step?.fields?._aguardando;
+  return (a && a.previsao) ? a : null;
+}
+
+// Devolve {idx, ...dados} da primeira etapa aguardando terceiro, ou null.
+function _aguardandoDoProcesso(p) {
+  const steps = p?.steps || [];
+  for (let i = 0; i < steps.length; i++) {
+    if (steps[i].status === 'done') continue;   // concluida nao aguarda mais nada
+    const a = _aguardandoDaEtapa(steps[i]);
+    if (a) return { idx: i, ...a };
+  }
+  return null;
+}
+
+function _aguardandoVencido(a) {
+  if (!a?.previsao) return false;
+  const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+  return new Date(a.previsao + 'T00:00:00') < hoje;
+}
+
+// Formulario inline (nao modal): a etapa ja edita campos assim, e um modal a
+// mais so para duas entradas seria peso desnecessario.
+function abrirAguardando(i) {
+  const cx = document.getElementById(`ag-form-${i}`);
+  if (!cx) return;
+  // padrao: 5 dias uteis, que e o prazo tipico de assinatura de contrato
+  const previsao = _isoLocal(calcDiasUteis(new Date(), 5));
+  cx.innerHTML = `
+    <div style="margin-top:10px;padding:10px 12px;background:var(--gray-50);border:1px solid var(--gray-200);border-radius:8px">
+      <div style="font-size:.75rem;font-weight:600;margin-bottom:8px">Aguardando terceiro</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
+        <label style="font-size:.7rem;color:var(--gray-500)">Previsão de retorno
+          <input type="date" id="ag-prev-${i}" value="${previsao}" style="display:block;margin-top:2px">
+        </label>
+        <label style="font-size:.7rem;color:var(--gray-500);flex:1;min-width:180px">O que se espera
+          <input type="text" id="ag-motivo-${i}" value="${escHtml(STEPS[i]?.name || '')}" style="display:block;width:100%;margin-top:2px">
+        </label>
+        <button class="btn btn-primary btn-sm" onclick="salvarAguardando(${i})">Registrar</button>
+        <button class="btn btn-outline btn-sm" onclick="document.getElementById('ag-form-${i}').innerHTML=''">Cancelar</button>
+      </div>
+      <p style="font-size:.68rem;color:var(--gray-500);margin:8px 0 0">
+        Enquanto valer, o processo deixa de constar como parado — e volta a alertar se a previsão passar.</p>
+    </div>`;
+}
+
+async function salvarAguardando(i) {
+  const previsao = document.getElementById(`ag-prev-${i}`)?.value;
+  const motivo   = (document.getElementById(`ag-motivo-${i}`)?.value || '').trim();
+  if (!previsao) { toast('Informe a previsão de retorno.', 'error'); return; }
+  const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+  if (new Date(previsao + 'T00:00:00') < hoje) { toast('A previsão não pode ser no passado.', 'error'); return; }
+  const p = currentProcess;
+  p.steps[i].fields = p.steps[i].fields || {};
+  p.steps[i].fields._aguardando = { desde: _isoLocal(), previsao, motivo };
+  await saveProcess(p);
+  await _auditEvento('AGUARDANDO_TERCEIRO',
+    `Etapa ${i + 1} — ${STEPS[i]?.name}: aguardando ${motivo || 'terceiro'}, previsto para ${fmtDate(previsao)}`, p.id);
+  toast(`Etapa marcada como aguardando — previsto para ${fmtDate(previsao)}.`, '');
+  expandedSteps.add(i);
+  await renderSingleStep(i);
+  renderDetail();
+}
+
+async function limparAguardando(i) {
+  const p = currentProcess;
+  const a = _aguardandoDaEtapa(p.steps[i]);
+  if (!a) return;
+  delete p.steps[i].fields._aguardando;
+  await saveProcess(p);
+  await _auditEvento('AGUARDANDO_ENCERRADO',
+    `Etapa ${i + 1} — ${STEPS[i]?.name}: espera encerrada após ${_aguardandoDias(a)} dia(s)`, p.id);
+  toast('Espera encerrada.', '');
+  expandedSteps.add(i);
+  await renderSingleStep(i);
+  renderDetail();
+}
+
+function _aguardandoDias(a) {
+  if (!a?.desde) return 0;
+  const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+  return Math.max(0, Math.floor((hoje - new Date(a.desde + 'T00:00:00')) / 86400000));
+}
+
 function processStatus(p) {
   // (p.steps || []): processo vindo de backup malformado ou de uma versao antiga
   // pode nao ter etapas. Sem a guarda, uma unica linha ruim derrubava a lista
@@ -3922,11 +4034,20 @@ function updateAgendaBadge() {
     check(p.steps?.[7]?.fields?.data_encerramento);
     check(p.steps?.[13]?.fields?.vigencia_final);
     check(p.prazo);
-    // processos parados há mais de 15 dias
+    // processos parados há mais de 15 dias — mas espera declarada não é abandono:
+    // enquanto a previsão não vence, o processo não conta como parado. Vencida,
+    // ele volta a contar, agora com prazo estourado.
     const lastUp = p.updatedAt || p.createdAt;
     if (lastUp && processStatus(p) === 'progress') {
-      const diasParado = Math.floor((today - new Date(lastUp)) / 86400000);
-      if (diasParado > 15) count++;
+      const ag = _aguardandoDoProcesso(p);
+      if (ag && !_aguardandoVencido(ag)) {
+        // dentro do prazo combinado: não é alerta
+      } else if (ag) {
+        count++;   // previsão estourou
+      } else {
+        const diasParado = Math.floor((today - new Date(lastUp)) / 86400000);
+        if (diasParado > 15) count++;
+      }
     }
   }
   const badge = document.getElementById('agenda-badge');
@@ -4591,7 +4712,9 @@ function _getDashFilters() {
 function _applyDashFilters(list, f) {
   return list.filter(p => {
     const st = processStatus(p);
-    if (f.fSt && st !== f.fSt) return false;
+    if (f.fSt === 'aguardando') {
+      if (!_aguardandoDoProcesso(p)) return false;
+    } else if (f.fSt && st !== f.fSt) return false;
     if (f.fUn && p.unidade !== f.fUn) return false;
     if (f.fDe && _ts(p.createdAt) < new Date(f.fDe + 'T00:00:00').getTime()) return false;
     if (f.fAte && _ts(p.createdAt) > new Date(f.fAte + 'T23:59:59').getTime()) return false;
@@ -4793,6 +4916,14 @@ function renderDash() {
             ? [p.num_proc && `PA ${escHtml(p.num_proc)}`, p.num_dl && `DL ${escHtml(p.num_dl)}`].filter(Boolean).join(' · ')
             : escHtml(p.num || '—')}</div>
           <span class="badge ${stl}" title="${{ todo:'Não iniciado — nenhuma etapa iniciada', progress:'Em andamento — etapas em progresso', done:'Concluído — todas as etapas finalizadas', blocked:'Bloqueado — há etapas impedidas' }[st]}">${statusLabel(st)}</span>
+          ${(() => {
+            const ag = _aguardandoDoProcesso(p);
+            if (!ag) return '';
+            const venc = _aguardandoVencido(ag);
+            return `<span class="step-aguardando-badge ${venc ? 'vencido' : ''}"
+              title="${escHtml(ag.motivo || 'Aguardando terceiro')} — há ${_aguardandoDias(ag)} dia(s); previsto para ${fmtDate(ag.previsao)}">
+              ⏳ ${venc ? 'Atrasado' : 'Aguardando'} · ${fmtDate(ag.previsao)}</span>`;
+          })()}
         </div>
         <div class="title">
           <span class="title-text" id="card-title-${p.id}">${escHtml(p.objeto)}</span>
@@ -6549,13 +6680,21 @@ async function _buildStepCardHtml(i, p, isNext = false) {
         <button class="btn btn-success btn-sm" onclick="markStep(${i},'done')">✓ Concluída</button>
         <button class="btn btn-outline btn-sm" onclick="markStep(${i},'pending')">Desfazer</button>
         <button class="btn btn-danger btn-sm"  onclick="markStep(${i},'blocked')">✗ Bloqueada</button>
-      </div>`;
+        ${_aguardandoDaEtapa(p.steps[i])
+          ? `<button class="btn btn-outline btn-sm" onclick="limparAguardando(${i})" title="A etapa deixa de constar como aguardando terceiro">⏳ Cancelar espera</button>`
+          : `<button class="btn btn-outline btn-sm" onclick="abrirAguardando(${i})" title="Registra que a etapa depende de alguém de fora, com prazo previsto">⏳ Aguardando terceiro</button>`}
+      </div>
+      <div id="ag-form-${i}"></div>`;
   } else {
     // Conta arquivos de forma eficiente apenas para exibir no header
     try { files = await buscarArquivosPorProcesso(p.id + '_' + i); fileCount = files.length; } catch {}
   }
 
   const nextBadge = isNext ? `<span class="step-next-badge" title="Próxima etapa a concluir">▶ Próxima</span>` : '';
+  const ag = isDone ? null : _aguardandoDaEtapa(p.steps[i]);
+  const agBadge = ag ? `<span class="step-aguardando-badge ${_aguardandoVencido(ag) ? 'vencido' : ''}"
+      title="${escHtml(ag.motivo || 'Aguardando terceiro')} — desde ${fmtDate(ag.desde)}, previsto para ${fmtDate(ag.previsao)}">
+      ⏳ ${_aguardandoVencido(ag) ? 'Atrasado' : 'Aguardando'} · ${fmtDate(ag.previsao)}</span>` : '';
   return `<div class="step-card ${isDone?'completed':''} ${isBlocked?'blocked':''} ${expanded?'expanded':''}" id="step-card-${i}" draggable="true" ondragstart="onStepDragStart(event,${i})" ondragover="onStepDragOver(event,${i})" ondragleave="onStepDragLeave(${i})" ondrop="onStepDrop(event,${i})">
       <div class="step-row" onclick="toggleStep(${i})" role="button" tabindex="0">
         <div class="step-drag-handle" onclick="event.stopPropagation()" title="Arraste para reordenar">⠿</div>
@@ -6568,7 +6707,7 @@ async function _buildStepCardHtml(i, p, isNext = false) {
           <div class="step-sub">${escHtml(step.sub)}${fileCount ? ` · 📎 ${fileCount} arquivo${fileCount>1?'s':''}` : ''}</div>
           ${isDone ? _stepSummaryLine(i, step, data) : ''}
         </div>
-        ${nextBadge}
+        ${agBadge}${nextBadge}
         ${data.completedAt ? `<div class="step-date">${fmtDate(data.completedAt)}</div>` : ''}
       </div>
       <div class="step-body ${expanded?'':'hidden'}" id="step-body-${i}">
@@ -7623,6 +7762,9 @@ async function setStepStatus(i, status) {
   const prev = p.steps[i].status;
   p.steps[i].status = status;
   p.steps[i].completedAt = status === 'done' ? Date.now() : null;
+  // etapa concluida nao aguarda mais ninguem: a marcacao sai sozinha, senao
+  // vira lixo que ninguem lembra de limpar
+  if (status === 'done' && p.steps[i].fields?._aguardando) delete p.steps[i].fields._aguardando;
   if (status === 'pending' && p.steps[i].data?.fields) {
     p.steps[i].data.fields.data_conclusao = '';
   }
