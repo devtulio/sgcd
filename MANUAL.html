@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Manual Operacional — SGCD v2.46.22</title>
+<title>Manual Operacional — SGCD v2.47.0</title>
 <style>
   /* Reset e base */
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -89,7 +89,7 @@
       size: A4;
       margin: 20mm 20mm 25mm;
       @top-center {
-        content: "SGCD v2.46.22 — Manual Operacional";
+        content: "SGCD v2.47.0 — Manual Operacional";
         font-family: 'Times New Roman', serif;
         font-size: 9pt;
         color: #666;
@@ -116,7 +116,7 @@
     <div class="cover-title">Manual Operacional</div>
     <div class="cover-subtitle">SGCD — Sistema de Gestão de Contratação Direta</div>
     <div class="cover-system">Gestão de Processos de Dispensa de Licitação</div>
-    <div class="cover-version">Versão v2.46.22</div>
+    <div class="cover-version">Versão v2.47.0</div>
     <br>
     <div style="font-size:11pt; color:#555; line-height:1.8;">
       Aplicação web multiusuário para agentes de contratação pública<br>
@@ -169,6 +169,7 @@
     <div class="toc-item h2"><a href="#sec7">7. Trabalhando com o Processo</a></div>
     <div class="toc-item h3"><a href="#sec7-1">7.1 Expandir e recolher etapas</a></div>
     <div class="toc-item h3"><a href="#sec7-2">7.2 Status das etapas</a></div>
+    <div class="toc-item h3"><a href="#sec7-2b">7.2.1 Aguardando terceiro</a></div>
     <div class="toc-item h3"><a href="#sec7-3">7.3 Anexar documentos</a></div>
     <div class="toc-item h3"><a href="#sec7-4">7.4 Editar informações do processo</a></div>
     <div class="toc-item h3"><a href="#sec7-5">7.5 Reordenar etapas</a></div>
@@ -849,6 +850,23 @@
   <li><strong>Bloqueada:</strong> etapa que não pode ser avançada por alguma razão (ex.: pendência em etapa anterior, prazo de publicação aguardando)</li>
 </ul>
 <p>Para alterar o status, clique no <strong>ícone de verificação (✔)</strong> no cabeçalho da etapa. Cada clique avança pelo ciclo: <strong>Pendente → Concluída → Bloqueada → Pendente</strong>. A barra de progresso do processo é atualizada automaticamente.</p>
+
+
+<h3 id="sec7-2b">7.2.1 Aguardando terceiro</h3>
+<p>Nem toda parada é problema. Quando a etapa depende de <strong>alguém de fora</strong> — a assinatura do contrato pelo fornecedor, o retorno de outro órgão, uma publicação —, marque-a como <strong>Aguardando terceiro</strong>: o botão fica junto de "Concluída" e "Bloqueada", dentro da etapa expandida.</p>
+<p>O sistema pede uma <strong>previsão de retorno</strong> (obrigatória, já sugerida em <strong>5 dias úteis</strong>) e o que se espera (vem preenchido com o nome da etapa). A partir daí:</p>
+<ul>
+  <li>Um selo <strong>⏳ Aguardando</strong>, com a data prevista, aparece na etapa e no card do processo;</li>
+  <li>O processo <strong>deixa de constar como parado</strong> enquanto o prazo vale — e volta a alertar se a previsão passar, informando há quantos dias a espera dura;</li>
+  <li>No painel, o filtro <strong>"Aguardando terceiros"</strong> separa o que depende de você do que não depende;</li>
+  <li>Ao concluir a etapa, a marcação é removida automaticamente. O início e o fim da espera ficam registrados na Auditoria, com a duração — útil para justificar o prazo depois.</li>
+</ul>
+<div class="nota">
+  <strong>Não confunda com "Bloqueada".</strong> Bloqueio sinaliza <em>problema</em> e marca o processo inteiro como bloqueado no painel. A espera por terceiro é o curso normal do processo — por isso tem tratamento próprio.
+</div>
+<div class="aviso">
+  <strong>Atenção:</strong> marcar como aguardando <strong>não conclui</strong> o processo. Ele só é dado como concluído quando todas as 18 etapas fecharem, inclusive Nota de Empenho, Instrumento Contratual e Publicação do Contrato no PNCP — esta última é condição de eficácia do contrato (Lei nº 14.133/2021).
+</div>
 
 <h3 id="sec7-3">7.3 Anexar documentos</h3>
 <p>Cada etapa possui uma área para anexo de documentos. Para anexar:</p>
@@ -1761,6 +1779,12 @@
 
 <!-- ─────────────────────────────────────────────── SEÇÃO 29 -->
 <h2 id="sec29">29. Histórico de Versões</h2>
+
+<h3>v2.47.0 — Julho/2026</h3>
+<p><strong>Adicionado</strong></p>
+<ul><li>Etapa pode ser marcada como <strong>aguardando terceiro</strong>, com previsão de retorno: o processo deixa de constar como parado enquanto o prazo vale, e volta a alertar se ele passar. Filtro próprio no painel (ver Seção 7.2.1).</li></ul>
+<p><strong>Corrigido</strong></p>
+<ul><li>Documentos saíam com a data do dia anterior — afetava a Justificativa da Escolha do Fornecedor e a Data da Proposta. Termo de Adjudicação e Termo de Homologação nunca foram afetados.</li></ul>
 
 <h3>v2.46.22 — Julho/2026</h3>
 <p><strong>Alterado</strong></p>

@@ -1,6 +1,6 @@
 # SGCD — Sistema de Gestão de Contratação Direta
 
-![Versão](https://img.shields.io/badge/versão-v2.46.22-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-Python%20%2B%20SQLite-orange) ![Licença](https://img.shields.io/badge/licença-MIT-green) ![Multiusuário](https://img.shields.io/badge/acesso-multiusuário-blueviolet) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21314672.svg)](https://doi.org/10.5281/zenodo.21314672) [![CI](https://github.com/devtulio/sgcd/actions/workflows/ci.yml/badge.svg)](https://github.com/devtulio/sgcd/actions/workflows/ci.yml)
+![Versão](https://img.shields.io/badge/versão-v2.47.0-blue) ![Lei](https://img.shields.io/badge/Lei-14.133%2F2021-green) ![Tecnologia](https://img.shields.io/badge/tecnologia-Python%20%2B%20SQLite-orange) ![Licença](https://img.shields.io/badge/licença-MIT-green) ![Multiusuário](https://img.shields.io/badge/acesso-multiusuário-blueviolet) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21314672.svg)](https://doi.org/10.5281/zenodo.21314672) [![CI](https://github.com/devtulio/sgcd/actions/workflows/ci.yml/badge.svg)](https://github.com/devtulio/sgcd/actions/workflows/ci.yml)
 
 ## Descrição
 
@@ -19,6 +19,7 @@ Funciona em rede local: um único computador executa o servidor e todos os usuá
 - **Cadastro de fornecedores** com consulta automática de CNPJ via ReceitaWS/BrasilAPI e controle de certidões com alertas de vencimento
 - **Gestão de propostas e cotações** com cálculo automático do valor de referência por **média, mediana ou menor preço** (art. 6º da IN SEGES/ME nº 65/2021)
 - **Dotação orçamentária** por processo — Programa/Ação, Elemento de Despesa, Fonte e Dotação Completa
+- **Aguardando terceiro** — marca a etapa que depende de alguém de fora (assinatura, retorno de órgão) com prazo previsto: o processo deixa de constar como parado enquanto o prazo vale, e volta a alertar se ele passar
 - **Verificação de conformidade** automática: aponta pendências e inconsistências no processo
 - **Alerta de fracionamento** — detecta processos com objetos similares e calcula soma dos valores no exercício
 - **Controle de limites anuais** Art. 75, I e II com painel de acumulado e alerta ao atingir o teto legal

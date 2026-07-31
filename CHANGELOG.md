@@ -7,6 +7,10 @@
 
 ## [Não versionado]
 
+---
+
+## [2.47.0] — 2026-07-31
+
 ### Adicionado
 - **Marcar uma etapa como "aguardando terceiro".** Quando o processo depende de alguém de fora — assinatura do contrato pelo fornecedor, retorno de outro órgão, publicação —, a etapa pode ser marcada com uma **previsão de retorno**. Enquanto o prazo vale, o processo **deixa de constar como parado** no painel; se a previsão passar, ele volta a alertar, agora informando há quantos dias a espera dura.
   - A previsão é obrigatória e já vem sugerida em **5 dias úteis**. O motivo vem preenchido com o nome da etapa e pode ser editado.
