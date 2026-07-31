@@ -7,6 +7,9 @@
 
 ## [Não versionado]
 
+### Corrigido
+- **Documentos saíam com a data de ontem.** A **Justificativa da Escolha do Fornecedor** imprimia no rodapé o dia anterior ao da geração, e o mesmo acontecia com a **Data da Proposta** no documento que lista as propostas. A causa é a forma como o navegador interpreta uma data sem horário: ele a lê como meia-noite em UTC, o que no nosso fuso cai às 21h do dia anterior. Os documentos passam a usar o mesmo tratamento de data já aplicado no resto do sistema. **Termo de Adjudicação e Termo de Homologação nunca foram afetados** — conferidos.
+
 ---
 
 ## [2.46.22] — 2026-07-29

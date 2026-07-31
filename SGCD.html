@@ -8789,7 +8789,7 @@ function gerarDespachoRecusa(stepIdx, pi) {
   <tr><td class="lbl">Fornecedor Recusado</td><td>${blank(prop.fornecedor)}</td></tr>
   ${prop.cnpj ? `<tr><td class="lbl">CNPJ</td><td>${escHtml(prop.cnpj)}</td></tr>` : ''}
   ${prop.valor ? `<tr><td class="lbl">Valor da Proposta</td><td>${escHtml(prop.valor)}</td></tr>` : ''}
-  ${prop.data_proposta ? `<tr><td class="lbl">Data da Proposta</td><td>${new Date(prop.data_proposta).toLocaleDateString('pt-BR')}</td></tr>` : ''}
+  ${prop.data_proposta ? `<tr><td class="lbl">Data da Proposta</td><td>${fmtDate(prop.data_proposta)}</td></tr>` : ''}
 </table>
 
 <div class="section">
@@ -9679,7 +9679,9 @@ function gerarEnquadramentoLegal() {
   const hoje = new Date().toLocaleDateString('pt-BR', { day:'numeric', month:'long', year:'numeric' });
   const blank = txt => escHtml(txt) || '_'.repeat(40);
   const fmtVal = v => v ? fmtMoney(v) : '_______________';
-  const d = dt => dt ? new Date(dt).toLocaleDateString('pt-BR') : '_____/_____/_______';
+  // fmtDate e nao new Date(dt): string so-data e lida como UTC, e no nosso fuso
+  // (UTC-3) isso cai no dia anterior — o documento saia com a data de ontem.
+  const d = dt => dt ? fmtDate(dt) : '_____/_____/_______';
   // Data por extenso, no mesmo formato dos demais documentos (Autorização, Aviso).
   // 'T00:00:00' força leitura no fuso local — sem isso a data ISO volta um dia.
   const dExt = dt => new Date(dt + 'T00:00:00').toLocaleDateString('pt-BR', { day:'numeric', month:'long', year:'numeric' });
@@ -9766,7 +9768,9 @@ function gerarJustificativaEscolha() {
   const hoje = new Date().toLocaleDateString('pt-BR', { day:'numeric', month:'long', year:'numeric' });
   const blank = txt => escHtml(txt) || '_'.repeat(40);
   const fmtVal = v => v ? fmtMoney(v) : '_______________';
-  const d = dt => dt ? new Date(dt).toLocaleDateString('pt-BR') : '_____/_____/_______';
+  // fmtDate e nao new Date(dt): string so-data e lida como UTC, e no nosso fuso
+  // (UTC-3) isso cai no dia anterior — o documento saia com a data de ontem.
+  const d = dt => dt ? fmtDate(dt) : '_____/_____/_______';
 
   const stepData = p.steps?.[STEPS.findIndex(s => s.justificativaEscolha)]?.fields || {};
   const responsavel   = stepData.responsavel   || u.nome || '';
