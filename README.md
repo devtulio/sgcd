@@ -10,12 +10,14 @@ Compartilha a arquitetura (servidor Python + SQLite + frontend single-file, sem 
 
 Funciona em rede local: um único computador executa o servidor e todos os usuários acessam pelo navegador via IP ou `localhost`.
 
-![SGCD — painel de processos](docs/screenshots/painel.png)
+![Painel de processos](docs/screenshots/painel.png)
+<sup>Painel: cada processo com a etapa em que está e o quanto já andou.</sup>
 
-<p align="center">
-  <img src="docs/screenshots/etapas.png" width="49%" alt="Checklist das 18 etapas do processo">
-  <img src="docs/screenshots/documento.png" width="49%" alt="Documento gerado em A4">
-</p>
+![Checklist das etapas](docs/screenshots/etapas.png)
+<sup>As 18 etapas do processo, com a próxima em destaque e a Nota de Empenho marcada como "não se aplica" — nem todo município a emite dentro do processo.</sup>
+
+![Documento gerado](docs/screenshots/documento.png)
+<sup>Documentos saem prontos em A4, com os dados do processo e do órgão.</sup>
 
 > As telas acima usam dados fictícios, gerados por `docs/screenshots.spec.js` contra um banco temporário.
 
