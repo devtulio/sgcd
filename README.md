@@ -10,6 +10,15 @@ Compartilha a arquitetura (servidor Python + SQLite + frontend single-file, sem 
 
 Funciona em rede local: um único computador executa o servidor e todos os usuários acessam pelo navegador via IP ou `localhost`.
 
+![SGCD — painel de processos](docs/screenshots/painel.png)
+
+<p align="center">
+  <img src="docs/screenshots/etapas.png" width="49%" alt="Checklist das 18 etapas do processo">
+  <img src="docs/screenshots/documento.png" width="49%" alt="Documento gerado em A4">
+</p>
+
+> As telas acima usam dados fictícios, gerados por `docs/screenshots.spec.js` contra um banco temporário.
+
 ---
 
 ## Funcionalidades Principais

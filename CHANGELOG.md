@@ -7,6 +7,12 @@
 
 ## [Não versionado]
 
+### Corrigido
+- **"Aberto há NaN dias" no cabeçalho do processo.** A data de criação é número quando o processo nasce na tela e texto quando o servidor a carimba (criação pela API, restauração de backup) — a conta usava o valor cru em vez do conversor que o resto do sistema já usava.
+
+### Documentação
+- **Capturas de tela no README.** As imagens são geradas por `docs/screenshots.spec.js` contra um banco temporário, com dados fictícios e sem brasão — a captura nunca enxerga o banco real. Para atualizá-las depois de mudar a interface: `npx playwright test -c docs/screenshots.config.js`.
+
 ---
 
 ## [2.48.2] — 2026-08-01

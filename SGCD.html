@@ -6522,7 +6522,10 @@ function renderDetail() {
     ? [p.num_proc && `PA ${escHtml(p.num_proc)}`, p.num_dl && `DL ${escHtml(p.num_dl)}`].filter(Boolean).join(' &nbsp;·&nbsp; ')
     : escHtml(p.num || '');
   document.getElementById('d-title').textContent = p.objeto;
-  const _diasAberto = Math.floor((Date.now() - p.createdAt) / 86400000);
+  // _ts: createdAt pode ser numero (nasceu na tela) ou texto ISO (carimbado pelo
+  // servidor, ou vindo de restauracao) — subtrair o texto direto dava
+  // "Aberto ha NaN dias" no cabecalho.
+  const _diasAberto = Math.floor((Date.now() - _ts(p.createdAt)) / 86400000);
   const _diasStr = _diasAberto === 0 ? 'Criado hoje' : `Aberto há ${_diasAberto} dia${_diasAberto !== 1 ? 's' : ''}`;
   document.getElementById('d-meta').innerHTML = `
     <span><span class="badge ${stl}">${statusLabel(st)}</span></span>
