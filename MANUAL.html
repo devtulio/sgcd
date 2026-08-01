@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Manual Operacional — SGCD v2.48.1</title>
+<title>Manual Operacional — SGCD v2.48.2</title>
 <style>
   /* Reset e base */
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -89,7 +89,7 @@
       size: A4;
       margin: 20mm 20mm 25mm;
       @top-center {
-        content: "SGCD v2.48.1 — Manual Operacional";
+        content: "SGCD v2.48.2 — Manual Operacional";
         font-family: 'Times New Roman', serif;
         font-size: 9pt;
         color: #666;
@@ -116,7 +116,7 @@
     <div class="cover-title">Manual Operacional</div>
     <div class="cover-subtitle">SGCD — Sistema de Gestão de Contratação Direta</div>
     <div class="cover-system">Gestão de Processos de Dispensa de Licitação</div>
-    <div class="cover-version">Versão v2.48.1</div>
+    <div class="cover-version">Versão v2.48.2</div>
     <br>
     <div style="font-size:11pt; color:#555; line-height:1.8;">
       Aplicação web multiusuário para agentes de contratação pública<br>
@@ -1795,6 +1795,10 @@
 
 <!-- ─────────────────────────────────────────────── SEÇÃO 29 -->
 <h2 id="sec29">29. Histórico de Versões</h2>
+
+<h3>v2.48.2 — Agosto/2026</h3>
+<p><strong>Corrigido</strong></p>
+<ul><li>O sistema calculava "hoje" convertendo o horário para o fuso de Greenwich. Depois das 21h, "hoje" já era o dia seguinte lá — e tudo que dependia disso errava um dia, mas só à noite. No SGCD afetava o prazo mínimo sugerido nos campos de data, a validade preenchida automaticamente nas certidões, a checagem de feriado no cálculo de dias úteis e a data no nome dos arquivos exportados.</li></ul>
 
 <h3>v2.48.1 — Agosto/2026</h3>
 <p><strong>Corrigido</strong></p>

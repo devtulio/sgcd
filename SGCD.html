@@ -2114,7 +2114,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.48.1';
+const SGCD_VERSION = '2.48.2';
 // URL absoluta (não relativa): o API_BASE monta as URLs da REST API a partir da
 // origem real, nunca uma porta fixa (era 'http://localhost:3000' hardcoded).
 const API_BASE = window.location.origin;
@@ -2395,7 +2395,7 @@ async function factoryReset() {
       const blob = await rb.blob();
       const url  = URL.createObjectURL(blob);
       const a    = Object.assign(document.createElement('a'), {
-        href: url, download: `SGCD_wipe_backup_${new Date().toISOString().slice(0,10)}.json`
+        href: url, download: `SGCD_wipe_backup_${_isoLocal()}.json`
       });
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
       URL.revokeObjectURL(url);
@@ -2430,7 +2430,7 @@ async function exportBackup() {
     const url  = URL.createObjectURL(blob);
     const a    = Object.assign(document.createElement('a'), {
       href: url,
-      download: `SIS_SGCD_BACKUP_${new Date().toISOString().slice(0,10)}_${new Date().toTimeString().slice(0,8).replace(/:/g,'-')}.json`
+      download: `SIS_SGCD_BACKUP_${_isoLocal()}_${new Date().toTimeString().slice(0,8).replace(/:/g,'-')}.json`
     });
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     URL.revokeObjectURL(url);
@@ -3266,12 +3266,7 @@ function fmtExtenso(dt) {
 // A previsao e obrigatoria de proposito — sem prazo, a marcacao viraria um
 // jeito de silenciar o alerta de processo parado para sempre.
 
-// Data local em AAAA-MM-DD. toISOString() converteria para UTC e, depois das
-// 21h no nosso fuso, devolveria o DIA SEGUINTE — a mesma armadilha que fez
-// documento sair com a data de ontem.
-function _isoLocal(d = new Date()) {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
+// _isoLocal (data local em AAAA-MM-DD) vem do base.js compartilhado.
 
 function _aguardandoDaEtapa(step) {
   const a = step?.fields?._aguardando;
@@ -4629,7 +4624,7 @@ async function exportarAuditoriaCSV() {
   });
 
   const csv = '﻿' + [header.map(esc).join(','), ...rows].join('\r\n');
-  const salvo = await _salvarArquivoComo(csv, `SGCD_auditoria_${new Date().toISOString().slice(0,10)}.csv`, 'text/csv;charset=utf-8;');
+  const salvo = await _salvarArquivoComo(csv, `SGCD_auditoria_${_isoLocal()}.csv`, 'text/csv;charset=utf-8;');
   if (salvo) toast(`${lista.length} registro(s) exportado(s).`, 'success');
 }
 
@@ -5058,7 +5053,7 @@ function calcDiasUteis(dataBase, dias) {
     const mes = Math.floor((h + l - 7*m + 114) / 31);
     const dia = ((h + l - 7*m + 114) % 31) + 1;
     const pascoa = new Date(ano, mes-1, dia);
-    const off = n => { const x = new Date(pascoa); x.setDate(x.getDate()+n); return x.toISOString().slice(0,10); };
+    const off = n => { const x = new Date(pascoa); x.setDate(x.getDate()+n); return _isoLocal(x); };
     return new Set([
       `${ano}-01-01`, `${ano}-04-21`, `${ano}-05-01`, `${ano}-09-07`,
       `${ano}-10-12`, `${ano}-11-02`, `${ano}-11-15`, `${ano}-12-25`,
@@ -5071,7 +5066,7 @@ function calcDiasUteis(dataBase, dias) {
     dt.setDate(dt.getDate() + 1);
     const dow = dt.getDay();
     if (dow === 0 || dow === 6) continue;
-    if (feriados(dt.getFullYear()).has(dt.toISOString().slice(0,10))) continue;
+    if (feriados(dt.getFullYear()).has(_isoLocal(dt))) continue;
     added++;
   }
   return dt;
@@ -5087,7 +5082,7 @@ async function onPublicacaoChange(i, val) {
   // Recalcula SEMPRE que a publicacao muda: antes so preenchia quando o
   // encerramento estava vazio, entao remarcar a publicacao deixava para tras um
   // prazo calculado a partir da data antiga.
-  const minStr = calcDiasUteis(new Date(val + 'T00:00:00'), 3).toISOString().slice(0,10);
+  const minStr = _isoLocal(calcDiasUteis(new Date(val + 'T00:00:00'), 3));
   const anterior = currentProcess.steps[i]?.fields?.data_encerramento;
   if (anterior === minStr) return;
   await updateField(i, 'data_encerramento', minStr);
@@ -6211,7 +6206,7 @@ function _ceAutoFillValidade() {
   if (!tipo?.diasPadrao) return;
   const d = new Date(emissao + 'T00:00:00');
   d.setDate(d.getDate() + tipo.diasPadrao);
-  document.getElementById('ce-validade').value = d.toISOString().slice(0,10);
+  document.getElementById('ce-validade').value = _isoLocal(d);
 }
 function onCeTipoChange() {
   const val = document.getElementById('ce-tipo').value;
@@ -6917,7 +6912,7 @@ function renderStepFields(i, step, data, certFileMap = {}) {
     const enc = data.fields['data_encerramento'];
     if (pub && enc) {
       const minDate = calcDiasUteis(new Date(pub + 'T00:00:00'), 3);
-      const minStr = minDate.toISOString().slice(0,10);
+      const minStr = _isoLocal(minDate);
       if (enc < minStr) {
         html += `<div id="aviso-prazo-${i}" style="background:#fff1f0;border:1px solid #ffa39e;border-radius:6px;padding:8px 10px;margin-top:8px;font-size:.8rem;color:#cf1322">
           ⚠ Data de encerramento (${new Date(enc+'T00:00:00').toLocaleDateString('pt-BR')}) é inferior ao prazo mínimo legal de 3 dias úteis. Mínimo: ${new Date(minStr+'T00:00:00').toLocaleDateString('pt-BR')}.
@@ -8860,7 +8855,7 @@ async function exportarCSV() {
   });
 
   const csv = '﻿' + [header.map(esc).join(','), ...rows].join('\r\n');
-  const salvo = await _salvarArquivoComo(csv, `SGCD_processos_${new Date().toISOString().slice(0,10)}.csv`, 'text/csv;charset=utf-8;');
+  const salvo = await _salvarArquivoComo(csv, `SGCD_processos_${_isoLocal()}.csv`, 'text/csv;charset=utf-8;');
   if (salvo) toast(`${lista.length} processo(s) exportado(s).`, 'success');
 }
 
@@ -8886,7 +8881,7 @@ async function exportarFornecedoresCSV() {
   });
 
   const csv = '﻿' + [header.map(esc).join(','), ...rows].join('\r\n');
-  const salvo = await _salvarArquivoComo(csv, `SGCD_fornecedores_${new Date().toISOString().slice(0,10)}.csv`, 'text/csv;charset=utf-8;');
+  const salvo = await _salvarArquivoComo(csv, `SGCD_fornecedores_${_isoLocal()}.csv`, 'text/csv;charset=utf-8;');
   if (salvo) toast(`${lista.length} fornecedor(es) exportado(s).`, 'success');
 }
 
@@ -8910,7 +8905,7 @@ async function exportarFornecedoresXlsx() {
       municipioUf, vencidas, atualizado ? new Date(atualizado).toLocaleDateString('pt-BR') : ''
     ];
   });
-  if (!(await _exportarXlsx(`SGCD_fornecedores_${new Date().toISOString().slice(0,10)}.xlsx`, cabecalho, linhas))) return;
+  if (!(await _exportarXlsx(`SGCD_fornecedores_${_isoLocal()}.xlsx`, cabecalho, linhas))) return;
   toast(`${lista.length} fornecedor(es) exportado(s).`, 'success');
 }
 
@@ -8923,7 +8918,7 @@ async function exportarCadastroForn() {
   if (!r?.ok) { toast('Erro ao exportar cadastro.', 'error'); return; }
   const txt = await r.text();
   let n = 0; try { n = (JSON.parse(txt).fornecedores || []).length; } catch {}
-  const nome = `SGX_FORN_${new Date().toISOString().slice(0,10)}_${new Date().toTimeString().slice(0,8).replace(/:/g,'-')}.json`;
+  const nome = `SGX_FORN_${_isoLocal()}_${new Date().toTimeString().slice(0,8).replace(/:/g,'-')}.json`;
   const salvo = await _salvarArquivoComo(txt, nome, 'application/json');
   if (salvo) toast(`${n} fornecedor(es) exportado(s) para sincronização.`, 'success');
 }
@@ -9817,7 +9812,7 @@ async function exportarPNCP() {
   };
 
   const json = JSON.stringify(payload, null, 2);
-  const nomeArquivo = `PNCP_${p.num_dl || p.num_proc || 'dispensa'}_${new Date().toISOString().slice(0,10)}.json`;
+  const nomeArquivo = `PNCP_${p.num_dl || p.num_proc || 'dispensa'}_${_isoLocal()}.json`;
   const salvo = await _salvarArquivoComo(json, nomeArquivo, 'application/json');
   if (!salvo) return;
 
@@ -12973,7 +12968,7 @@ async function exportarBackupDB() {
   const blob = await r.blob();
   const url  = URL.createObjectURL(blob);
   const a    = Object.assign(document.createElement('a'), { href: url,
-    download: `DB_SGCD_BACKUP_${new Date().toISOString().slice(0,10)}_${new Date().toTimeString().slice(0,8).replace(/:/g,'-')}.zip`
+    download: `DB_SGCD_BACKUP_${_isoLocal()}_${new Date().toTimeString().slice(0,8).replace(/:/g,'-')}.zip`
   });
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   URL.revokeObjectURL(url);

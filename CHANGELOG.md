@@ -9,6 +9,13 @@
 
 ---
 
+## [2.48.2] — 2026-08-01
+
+### Corrigido
+- **Cálculo de "hoje" errava um dia depois das 21h.** O sistema calculava "hoje" convertendo o horário para o fuso de Greenwich. Depois das 21h, "hoje" já era o dia seguinte lá — e tudo que dependia disso errava um dia, mas só à noite. No SGCD isso afetava o prazo mínimo sugerido nos campos de data, a validade preenchida automaticamente nas certidões, a checagem de feriado no cálculo de dias úteis e a data no nome dos arquivos exportados. A função que resolve isso passou para o esqueleto compartilhado e vale agora para os quatro sistemas.
+
+---
+
 ## [2.48.1] — 2026-08-01
 
 ### Corrigido

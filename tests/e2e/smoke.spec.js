@@ -479,6 +479,25 @@ test.describe('datas em fuso brasileiro', () => {
   expect(r.anoVirada).toBe(2026);
   });
 
+  // _isoLocal vem do base.js compartilhado. toISOString() devolveria a data em
+  // UTC — as 23h30 daqui ja e o dia seguinte la, e "hoje" calculado assim errava
+  // um dia. Relogio fixo nessa janela, a unica em que o defeito aparece.
+  test('data de hoje e a local, nao a de UTC', async ({ page }) => {
+    await page.clock.setFixedTime(new Date('2026-08-01T23:30:00-03:00'));
+    await page.goto('/SGCD.html');
+    await page.fill('#pin-username', 'admin');
+    await page.fill('#pin-input', 'novaSenhaE2E123');
+    await page.click('#overlay-pin button[onclick="verificarSenha()"]');
+    await expect(page.locator('#overlay-pin')).toBeHidden();
+
+    const r = await page.evaluate(() => ({
+      hoje: _isoLocal(),
+      comData: _isoLocal(new Date('2026-01-01T00:00:00')),
+    }));
+    expect(r.hoje,    'data de hoje saiu em UTC').toBe('2026-08-01');
+    expect(r.comData, 'virada de ano voltou um dia').toBe('2026-01-01');
+  });
+
   // O fecho "local, data" dos documentos vai por extenso. Adjudicacao,
   // homologacao e justificativa saiam em "31/07/2026" porque formatavam a
   // data_conclusao com o formato curto quando ela estava preenchida — e so
