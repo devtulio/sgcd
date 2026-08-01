@@ -588,6 +588,19 @@
   #step-dot-tooltip.visible { opacity: 1; }
 
   /* ── Próxima etapa ── */
+  .step-card.nao-aplica { opacity: .72; }
+  .step-card.nao-aplica .step-name { text-decoration: line-through; text-decoration-color: var(--gray-400); }
+  .step-check.nao-aplica { background: var(--gray-300); border-color: var(--gray-400); }
+  .step-dot.nao-aplica { background: var(--gray-300); }
+
+  .step-na-badge {
+    display: inline-flex; align-items: center; gap: 3px;
+    font-size: .62rem; font-weight: 700; text-transform: uppercase; letter-spacing: .4px;
+    background: var(--gray-100); color: var(--gray-600); border: 1px solid var(--gray-300);
+    padding: 2px 7px; border-radius: 99px; flex-shrink: 0; white-space: nowrap;
+  }
+  body.dark .step-na-badge { background: #2a2a2a; color: var(--gray-300); border-color: #444; }
+
   .step-aguardando-badge {
     display: inline-flex; align-items: center; gap: 3px;
     font-size: .62rem; font-weight: 700; text-transform: uppercase; letter-spacing: .4px;
@@ -3343,11 +3356,14 @@ function processStatus(p) {
   // pode nao ter etapas. Sem a guarda, uma unica linha ruim derrubava a lista
   // inteira (o dashboard chama isto para todo processo).
   const steps = p.steps || [];
+  // 'na' (nao se aplica) resolve a etapa tanto quanto 'done': o municipio que
+  // nao faz empenho global, por exemplo, nao pode ficar com o processo eterno.
   const done = steps.filter(s => s.status === 'done').length;
+  const resolvidas = steps.filter(s => s.status === 'done' || s.status === 'na').length;
   const blocked = steps.some(s => s.status === 'blocked');
   if (blocked) return 'blocked';
   if (done === 0) return 'todo';
-  if (done === steps.length) return 'done';
+  if (resolvidas === steps.length) return 'done';
   return 'progress';
 }
 
@@ -3360,7 +3376,7 @@ function nextPendingStep(p) {
   const order = p.stepOrder || STEPS.map((_,i) => i);
   for (const i of order) {
     const s = (p.steps || [])[i];
-    if (!s || s.status !== 'done') return { idx: i, step: STEPS[i] };
+    if (!s || (s.status !== 'done' && s.status !== 'na')) return { idx: i, step: STEPS[i] };
   }
   return null;
 }
@@ -3368,8 +3384,8 @@ function nextPendingStep(p) {
 function pct(p) {
   const steps = p.steps || [];
   if (!steps.length) return 0;
-  const done = steps.filter(s => s.status === 'done').length;
-  return Math.round(done / steps.length * 100);
+  const resolvidas = steps.filter(s => s.status === 'done' || s.status === 'na').length;
+  return Math.round(resolvidas / steps.length * 100);
 }
 
 function _toastSom(t) {
@@ -6476,8 +6492,8 @@ function renderDetail() {
 
   const pc = pct(p);
   document.getElementById('d-step-dots').innerHTML = (p.steps || []).map(s => {
-    const cls = s.status === 'done' ? 'done' : s.status === 'blocked' ? 'blocked' : 'pending';
-    const tipLabel = s.status === 'done' ? 'Concluída' : s.status === 'blocked' ? 'Bloqueada' : 'Pendente';
+    const cls = s.status === 'done' ? 'done' : s.status === 'blocked' ? 'blocked' : s.status === 'na' ? 'nao-aplica' : 'pending';
+    const tipLabel = s.status === 'done' ? 'Concluída' : s.status === 'blocked' ? 'Bloqueada' : s.status === 'na' ? 'Não se aplica' : 'Pendente';
     const tipText = s.name ? `${s.name} — ${tipLabel}` : tipLabel;
     return `<div class="step-dot ${cls}" title="${tipText}" data-tip="${tipText}"></div>`;
   }).join('');
@@ -6657,6 +6673,8 @@ async function _buildStepCardHtml(i, p, isNext = false) {
   const expanded = expandedSteps.has(i);
   const isDone    = status === 'done';
   const isBlocked = status === 'blocked';
+  const isNA      = status === 'na';
+  const naInfo    = isNA ? (p.steps[i].fields?._naoSeAplica || null) : null;
 
   // Lazy loading: só carrega arquivos/fields quando a etapa está expandida
   let files = [], certFileMap = {}, fileCount = 0, bodyHtml = '';
@@ -6680,6 +6698,9 @@ async function _buildStepCardHtml(i, p, isNext = false) {
         <button class="btn btn-success btn-sm" onclick="markStep(${i},'done')">✓ Concluída</button>
         <button class="btn btn-outline btn-sm" onclick="markStep(${i},'pending')">Desfazer</button>
         <button class="btn btn-danger btn-sm"  onclick="markStep(${i},'blocked')">✗ Bloqueada</button>
+        ${p.steps[i].status === 'na'
+          ? `<button class="btn btn-outline btn-sm" onclick="markStep(${i},'pending')" title="Volta a etapa para pendente">Reativar etapa</button>`
+          : `<button class="btn btn-outline btn-sm" onclick="marcarNaoSeAplica(${i})" title="A etapa não faz parte do fluxo deste município ou deste processo">— Não se aplica</button>`}
         ${_aguardandoDaEtapa(p.steps[i])
           ? `<button class="btn btn-outline btn-sm" onclick="limparAguardando(${i})" title="A etapa deixa de constar como aguardando terceiro">⏳ Cancelar espera</button>`
           : `<button class="btn btn-outline btn-sm" onclick="abrirAguardando(${i})" title="Registra que a etapa depende de alguém de fora, com prazo previsto">⏳ Aguardando terceiro</button>`}
@@ -6695,10 +6716,10 @@ async function _buildStepCardHtml(i, p, isNext = false) {
   const agBadge = ag ? `<span class="step-aguardando-badge ${_aguardandoVencido(ag) ? 'vencido' : ''}"
       title="${escHtml(ag.motivo || 'Aguardando terceiro')} — desde ${fmtDate(ag.desde)}, previsto para ${fmtDate(ag.previsao)}">
       ⏳ ${_aguardandoVencido(ag) ? 'Atrasado' : 'Aguardando'} · ${fmtDate(ag.previsao)}</span>` : '';
-  return `<div class="step-card ${isDone?'completed':''} ${isBlocked?'blocked':''} ${expanded?'expanded':''}" id="step-card-${i}" draggable="true" ondragstart="onStepDragStart(event,${i})" ondragover="onStepDragOver(event,${i})" ondragleave="onStepDragLeave(${i})" ondrop="onStepDrop(event,${i})">
+  return `<div class="step-card ${isDone?'completed':''} ${isBlocked?'blocked':''} ${isNA?'nao-aplica':''} ${expanded?'expanded':''}" id="step-card-${i}" draggable="true" ondragstart="onStepDragStart(event,${i})" ondragover="onStepDragOver(event,${i})" ondragleave="onStepDragLeave(${i})" ondrop="onStepDrop(event,${i})">
       <div class="step-row" onclick="toggleStep(${i})" role="button" tabindex="0">
         <div class="step-drag-handle" onclick="event.stopPropagation()" title="Arraste para reordenar">⠿</div>
-        <div class="step-check ${isDone?'checked':''} ${isBlocked?'blocked':''}" onclick="event.stopPropagation();cycleStatus(${i})" role="button" tabindex="0" title="Clique para alternar: Pendente → Concluída → Bloqueada → Pendente">
+        <div class="step-check ${isDone?'checked':''} ${isBlocked?'blocked':''} ${isNA?'nao-aplica':''}" onclick="event.stopPropagation();cycleStatus(${i})" role="button" tabindex="0" title="Clique para alternar: Pendente → Concluída → Bloqueada → Pendente">
           ${isDone ? `<svg width="11" height="9" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1.5" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>` : ''}
           ${isBlocked ? `<svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 2l6 6M8 2l-6 6" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>` : ''}
         </div>
@@ -6707,10 +6728,14 @@ async function _buildStepCardHtml(i, p, isNext = false) {
           <div class="step-sub">${escHtml(step.sub)}${fileCount ? ` · 📎 ${fileCount} arquivo${fileCount>1?'s':''}` : ''}</div>
           ${isDone ? _stepSummaryLine(i, step, data) : ''}
         </div>
-        ${agBadge}${nextBadge}
+        ${isNA ? `<span class="step-na-badge" title="${escHtml(naInfo?.motivo || 'Não se aplica')}">— Não se aplica</span>` : ''}${agBadge}${nextBadge}
         ${data.completedAt ? `<div class="step-date">${fmtDate(data.completedAt)}</div>` : ''}
       </div>
       <div class="step-body ${expanded?'':'hidden'}" id="step-body-${i}">
+        ${naInfo ? `<div class="nota" style="margin-bottom:10px;font-size:.78rem">
+          <strong>Não se aplica.</strong> ${escHtml(naInfo.motivo)}
+          <div style="color:var(--gray-500);font-size:.72rem;margin-top:2px">registrado em ${fmtDate(naInfo.em)}${naInfo.por ? ` por ${escHtml(naInfo.por)}` : ''}</div>
+        </div>` : ''}
         ${bodyHtml}
       </div>
     </div>`;
@@ -7698,6 +7723,39 @@ async function cycleStatus(i) {
   }
 }
 
+// "Nao se aplica": a etapa nao faz parte do fluxo deste municipio (ex.: empenho
+// global antes do contrato, quando o empenho e feito por pedido pela
+// contabilidade) ou deste processo. Conta como resolvida para o progresso, mas
+// NAO como concluida — e o motivo fica registrado, porque quem audita vai
+// perguntar por que a etapa nao existe.
+async function marcarNaoSeAplica(i) {
+  const cx = document.getElementById(`ag-form-${i}`);
+  if (!cx) return;
+  cx.innerHTML = `
+    <div style="margin-top:10px;padding:10px 12px;background:var(--gray-50);border:1px solid var(--gray-200);border-radius:8px">
+      <div style="font-size:.75rem;font-weight:600;margin-bottom:6px">Marcar como “não se aplica”</div>
+      <label style="font-size:.7rem;color:var(--gray-500);display:block">Motivo (fica registrado no processo e na auditoria)
+        <input type="text" id="na-motivo-${i}" style="display:block;width:100%;margin-top:2px"
+               placeholder="Ex.: empenho é feito por pedido, pela contabilidade — não há empenho global">
+      </label>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="btn btn-primary btn-sm" onclick="salvarNaoSeAplica(${i})">Confirmar</button>
+        <button class="btn btn-outline btn-sm" onclick="document.getElementById('ag-form-${i}').innerHTML=''">Cancelar</button>
+      </div>
+    </div>`;
+  document.getElementById(`na-motivo-${i}`)?.focus();
+}
+
+async function salvarNaoSeAplica(i) {
+  const motivo = (document.getElementById(`na-motivo-${i}`)?.value || '').trim();
+  if (!motivo) { toast('Informe o motivo — ele fica registrado no processo.', 'error'); return; }
+  const p = currentProcess;
+  p.steps[i].fields = p.steps[i].fields || {};
+  p.steps[i].fields._naoSeAplica = { motivo, em: _isoLocal(), por: _getAuditor() };
+  delete p.steps[i].fields._aguardando;   // nao faz sentido esperar por etapa que nao existe
+  await setStepStatus(i, 'na');
+}
+
 async function markStep(i, status) {
   await setStepStatus(i, status);
 }
@@ -7733,10 +7791,12 @@ const STEP_DONE_REQUIRED = [
   /* 9  Aviso Dispensa   */ ['responsavel','data_conclusao','data_publicacao'],
   /* 10 Propostas        */ ['responsavel','data_conclusao'],
   /* 11 Habilitação      */ ['responsavel','fornecedor'],
-  /* 12 Adjudicação      */ ['responsavel','data_conclusao','valor_adjudicado'],
-  /* 13 Homologação      */ ['responsavel','data_conclusao','autoridade'],
-  /* 14 Nota Empenho     */ ['responsavel','data_conclusao','num_empenho'],
-  /* 15 Instrumento      */ ['responsavel','num_contrato','data_assinatura','valor_contrato'],
+  /* 12 Justificativa    */ ['responsavel','data_conclusao'],
+  /* 13 Adjudicação      */ ['responsavel','data_conclusao','valor_adjudicado'],
+  /* 14 Homologação      */ ['responsavel','data_conclusao','autoridade'],
+  /* 15 Nota de Empenho  */ ['responsavel','data_conclusao','num_empenho'],
+  /* 16 Instrumento      */ ['responsavel','num_contrato','data_assinatura','valor_contrato'],
+  /* 17 Publicação PNCP  */ ['responsavel','data_publicacao'],
 ];
 
 async function _confirmarConclusaoEtapa(i) {
@@ -7769,15 +7829,19 @@ async function setStepStatus(i, status) {
     p.steps[i].data.fields.data_conclusao = '';
   }
 
-  const labels = { done: 'Etapa concluída', blocked: 'Etapa bloqueada', pending: 'Etapa reaberta' };
+  const labels = { done: 'Etapa concluída', blocked: 'Etapa bloqueada', pending: 'Etapa reaberta', na: 'Etapa marcada como não se aplica' };
+  // reativar limpa o motivo: senao ficaria uma justificativa orfa no processo
+  if (status !== 'na' && p.steps[i].fields?._naoSeAplica) delete p.steps[i].fields._naoSeAplica;
+  if (!p.timeline) p.timeline = [];   // processo de backup antigo/API pode nao ter
   p.timeline.push({
-    action: `${labels[status] || status}: ${STEPS[i].name}`,
+    action: `${labels[status] || status}: ${STEPS[i].name}${status === 'na' && p.steps[i].fields?._naoSeAplica?.motivo ? ` — ${p.steps[i].fields._naoSeAplica.motivo}` : ''}`,
     at: Date.now(),
     type: status,
     user: _getAuditor()
   });
+  const motivoNA = status === 'na' ? ` — motivo: ${p.steps[i].fields?._naoSeAplica?.motivo || '—'}` : '';
   await _auditEvento(`ETAPA_${status.toUpperCase()}`,
-    `${labels[status] || status}: Etapa ${i + 1} — ${STEPS[i].name}`, p.id);
+    `${labels[status] || status}: Etapa ${i + 1} — ${STEPS[i].name}${motivoNA}`, p.id);
 
   await saveProcess(p);
   renderDetail();
@@ -7936,6 +8000,7 @@ async function processFileList(stepIdx, fileList) {
   const aceitos = Array.from(fileList).filter(f => f.size <= MAX_FILE_SIZE);
   if (!aceitos.length) { renderSingleStep(stepIdx); return; }
   const nomesArqs = aceitos.map(f => f.name).join(', ');
+  if (!p.timeline) p.timeline = [];   // processo de backup antigo/API pode nao ter
   p.timeline.push({
     action: `${aceitos.length} arquivo(s) anexado(s) à etapa ${stepIdx+1}: ${STEPS[stepIdx].name}`,
     at: Date.now(), type: '', user: _getAuditor()
@@ -8071,7 +8136,8 @@ function printProcess() {
     const status = data.status || 'pending';
     const isDone = status === 'done';
     const isBlocked = status === 'blocked';
-    const icon = isDone ? '✔' : isBlocked ? '✖' : '○';
+    const isNA = status === 'na';
+    const icon = isDone ? '✔' : isBlocked ? '✖' : isNA ? '—' : '○';
     const color = isDone ? '#16a34a' : isBlocked ? '#dc2626' : '#6b7280';
     const fields = data.fields || {};
     const fieldRows = s.fields.filter(k => k !== '_certidoes' && fields[k]).map(k =>
@@ -8515,9 +8581,11 @@ async function verificarConformidade() {
 
   const etapas = p.steps || [];
   const done  = etapas.filter(s => s.status==='done').length;
+  const na    = etapas.filter(s => s.status==='na').length;
   const total = etapas.length;
-  if (done === total) ok(`Checklist completo (${done}/${total} etapas)`);
-  else checks.push({ ok: false, warn: true, label: `${total-done} etapa(s) pendente(s) no checklist (${done}/${total})`, hint: 'O processo pode ser instruído mesmo com etapas em andamento' });
+  const sufixoNA = na ? ` · ${na} não se aplica${na > 1 ? 'm' : ''}` : '';
+  if (done + na === total) ok(`Checklist completo (${done}/${total} etapas${sufixoNA})`);
+  else checks.push({ ok: false, warn: true, label: `${total-done-na} etapa(s) pendente(s) no checklist (${done}/${total}${sufixoNA})`, hint: 'O processo pode ser instruído mesmo com etapas em andamento' });
 
   const allOk = checks.every(c => c.ok || c.warn);
   const icon  = c => c.ok ? '✔' : c.warn ? '⚠' : '✖';

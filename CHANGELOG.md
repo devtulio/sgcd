@@ -7,6 +7,15 @@
 
 ## [Não versionado]
 
+### Adicionado
+- **Marcar uma etapa como "não se aplica".** Nem todo município segue o mesmo rito: aqui, por exemplo, **não há empenho global antes do contrato** — a contabilidade empenha pedido a pedido, e a nota de empenho nem volta para o processo administrativo. Agora a etapa pode ser marcada como não aplicável, **com motivo obrigatório**, e o processo consegue ser concluído sem ela. A etapa aparece riscada, com o motivo à vista, e o registro vai para o histórico e para a auditoria — quem for conferir o processo depois vai encontrar a justificativa.
+  - Conta como resolvida no progresso, mas **não** como concluída: o documento do processo completo mostra “—”, e a verificação de conformidade informa quantas etapas não se aplicam.
+  - Reversível: o botão **Reativar etapa** devolve a etapa para pendente e apaga o motivo.
+
+### Corrigido
+- **A conclusão de etapas cobrava o campo da etapa seguinte.** A tabela de campos obrigatórios estava deslocada em uma posição desde a primeira versão do sistema: concluir a **Homologação** pedia o *número do empenho*; a **Nota de Empenho** pedia dados do contrato; a **Adjudicação** pedia a autoridade. Cada etapa passa a cobrar o que é dela. O aviso nunca impediu de concluir — mas atrapalhava a leitura do que realmente faltava.
+- **Processo sem histórico podia falhar ao mudar o status de uma etapa.** Registro vindo de backup antigo ou criado fora da tela não tem a lista de histórico, e dois pontos do código contavam com ela — os outros três já se protegiam.
+
 ---
 
 ## [2.47.1] — 2026-07-31

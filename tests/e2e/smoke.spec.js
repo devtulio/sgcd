@@ -534,3 +534,88 @@ test('aguardando terceiro: marca, mostra, filtra e some ao concluir', async ({ p
   expect(efeitos.vencida, 'previsao no passado deveria contar como atrasada').toBe(true);
   expect(efeitos.depois, 'concluir a etapa deveria limpar a marcacao').toBeNull();
 });
+
+// "Nao se aplica": etapa que nao existe no fluxo do municipio (aqui, o empenho
+// global antes do contrato — a contabilidade empenha por pedido). Sem isso o
+// processo nunca fecharia, ou fecharia com uma etapa marcada como concluida
+// sem ter acontecido, que e pior.
+test('etapa "nao se aplica" exige motivo e deixa o processo fechar', async ({ page }) => {
+  await page.goto('/SGCD.html');
+  await page.fill('#pin-username', 'admin');
+  await page.fill('#pin-input', 'novaSenhaE2E123');
+  await page.click('#overlay-pin button[onclick="verificarSenha()"]');
+  await expect(page.locator('#overlay-pin')).toBeHidden();
+
+  const idx = await page.evaluate(() => STEPS.findIndex(s => /Nota de Empenho/i.test(s.name)));
+
+  const id = await page.evaluate(async (idx) => {
+    const r = await API.post('/api/processes', { objeto: 'Processo sem empenho global' });
+    const novo = await API.json(r);
+    // o processo criado pela API nao tem etapas; abre pela tela, que as recompoe
+    await loadProcesses();
+    await openProcess(novo.id);
+    expandedSteps.add(idx);
+    await renderSingleStep(idx);
+    return novo.id;
+  }, idx);
+
+  await page.click(`#step-card-${idx} button[onclick="marcarNaoSeAplica(${idx})"]`);
+  const campo = page.locator(`#na-motivo-${idx}`);
+  await expect(campo).toBeVisible();
+
+  // motivo em branco e recusado: a justificativa e o ponto do recurso
+  await page.click(`#ag-form-${idx} button[onclick="salvarNaoSeAplica(${idx})"]`);
+  await expect(page.locator(`#step-card-${idx} .step-na-badge`)).toHaveCount(0);
+
+  await campo.fill('empenho por pedido, pela contabilidade');
+  await page.click(`#ag-form-${idx} button[onclick="salvarNaoSeAplica(${idx})"]`);
+  await expect(page.locator(`#step-card-${idx} .step-na-badge`)).toBeVisible();
+
+  const r = await page.evaluate(async ({ id, idx }) => {
+    const p = await buscarProcesso(id);
+    const antes = { status: processStatus(p), na: p.steps[idx].status, motivo: p.steps[idx].fields._naoSeAplica?.motivo };
+    // conclui todas as outras e confere que o processo fecha mesmo com a "na"
+    await openProcess(id);
+    for (let i = 0; i < currentProcess.steps.length; i++) {
+      if (currentProcess.steps[i].status === 'na') continue;
+      currentProcess.steps[i].status = 'done';
+    }
+    await saveProcess(currentProcess);
+    const dep = await buscarProcesso(id);
+    return { antes, depois: { status: processStatus(dep), pct: pct(dep), naAindaNa: dep.steps[idx].status } };
+  }, { id, idx });
+
+  expect(r.antes.na).toBe('na');
+  expect(r.antes.motivo).toBe('empenho por pedido, pela contabilidade');
+  expect(r.depois.status, 'processo nao fechou com uma etapa marcada como nao se aplica').toBe('done');
+  expect(r.depois.pct).toBe(100);
+  expect(r.depois.naAindaNa, 'a etapa virou concluida sozinha').toBe('na');
+});
+
+// A tabela de campos exigidos por etapa estava deslocada em uma posicao desde a
+// versao inicial: concluir a HOMOLOGACAO pedia "numero do empenho". Este teste
+// casa cada etapa com o campo que e dela.
+test('campos exigidos batem com a etapa certa', async ({ page }) => {
+  await page.goto('/SGCD.html');
+  await page.fill('#pin-username', 'admin');
+  await page.fill('#pin-input', 'novaSenhaE2E123');
+  await page.click('#overlay-pin button[onclick="verificarSenha()"]');
+  await expect(page.locator('#overlay-pin')).toBeHidden();
+
+  const r = await page.evaluate(() => {
+    const acha = nome => STEPS.findIndex(s => new RegExp(nome, 'i').test(s.name));
+    const exigido = i => STEP_DONE_REQUIRED[i] || [];
+    return {
+      homologacao: exigido(acha('Homologa')),
+      empenho:     exigido(acha('Nota de Empenho')),
+      adjudicacao: exigido(acha('Adjudica')),
+      instrumento: exigido(acha('Instrumento Contratual')),
+    };
+  });
+
+  expect(r.homologacao, 'homologação não pode exigir número de empenho').not.toContain('num_empenho');
+  expect(r.homologacao).toContain('autoridade');
+  expect(r.empenho).toContain('num_empenho');
+  expect(r.adjudicacao).toContain('valor_adjudicado');
+  expect(r.instrumento).toContain('num_contrato');
+});
