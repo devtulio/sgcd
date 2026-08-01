@@ -619,3 +619,51 @@ test('campos exigidos batem com a etapa certa', async ({ page }) => {
   expect(r.adjudicacao).toContain('valor_adjudicado');
   expect(r.instrumento).toContain('num_contrato');
 });
+
+// CNPJ digitado numa cotacao/proposta resolve contra o cadastro: se ja existe,
+// puxa; se nao existe, consulta a Receita e CADASTRA. A guarda que importa e a
+// do CNPJ invalido — o cadastro e sincronizado com SGCA e SGEA, e numero
+// errado viraria lixo nos tres.
+test('CNPJ na cotacao puxa do cadastro e nao cadastra numero invalido', async ({ page }) => {
+  await page.goto('/SGCD.html');
+  await page.fill('#pin-username', 'admin');
+  await page.fill('#pin-input', 'novaSenhaE2E123');
+  await page.click('#overlay-pin button[onclick="verificarSenha()"]');
+  await expect(page.locator('#overlay-pin')).toBeHidden();
+
+  const r = await page.evaluate(async () => {
+    const cnpj = '12.908.073/0001-65';
+    await salvarFornecedor({ id: '12908073000165', cnpj, cnpj_digits: '12908073000165',
+                             razao_social: 'FORNECEDOR DE TESTE LTDA', addedAt: Date.now() });
+    const antes = (await listarFornecedores()).length;
+
+    const ps = await listarProcessos();
+    await openProcess(ps[0].id);
+    const idx = STEPS.findIndex(s => /Pesquisa de Pre/i.test(s.name));
+    expandedSteps.add(idx);
+    await renderSingleStep(idx);
+
+    // 1) CNPJ que ja esta no cadastro: puxa sem ir a Receita
+    addCotacao(idx);
+    await new Promise(res => setTimeout(res, 400));
+    await updateCotacao(idx, 0, 'cnpj', cnpj);
+    await new Promise(res => setTimeout(res, 900));
+    const doCadastro = getCotacoes(idx)[0];
+
+    // 2) invalido: nao cadastra e nao apaga o que foi digitado
+    addCotacao(idx);
+    await new Promise(res => setTimeout(res, 400));
+    await updateCotacao(idx, 1, 'cnpj', '11.111.111/1111-11');
+    await new Promise(res => setTimeout(res, 700));
+    const invalida = getCotacoes(idx)[1];
+
+    return { antes, depois: (await listarFornecedores()).length,
+             nomePuxado: doCadastro.fornecedor, cnpjInvalido: invalida.cnpj,
+             nomeNoInvalido: invalida.fornecedor || '' };
+  });
+
+  expect(r.nomePuxado, 'nao puxou o nome do cadastro').toBe('FORNECEDOR DE TESTE LTDA');
+  expect(r.cnpjInvalido, 'o CNPJ digitado sumiu apos a recusa').toBe('11.111.111/1111-11');
+  expect(r.nomeNoInvalido, 'preencheu nome para um CNPJ invalido').toBe('');
+  expect(r.depois, 'CNPJ invalido acabou cadastrado').toBe(r.antes);
+});

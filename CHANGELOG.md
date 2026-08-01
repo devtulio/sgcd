@@ -8,6 +8,9 @@
 ## [Não versionado]
 
 ### Adicionado
+- **CNPJ digitado na cotação ou na proposta agora resolve sozinho.** Ao informar o CNPJ, o sistema procura o fornecedor **no cadastro**; se já estiver lá, preenche a razão social na hora. Se não estiver, consulta a Receita Federal, **cadastra o fornecedor** e preenche — sem precisar sair da etapa para cadastrar antes. Na etapa de habilitação isso já acontecia; agora vale para a pesquisa de preços e para as propostas.
+  - **CNPJ inválido não cadastra nada** e o número digitado é preservado. O cadastro de fornecedores é sincronizado com o SGCA e o SGEA — um número errado viraria registro inútil nos três sistemas.
+  - Se a consulta à Receita estiver fora do ar, o CNPJ fica como foi digitado e o preenchimento segue normalmente.
 - **Marcar uma etapa como "não se aplica".** Nem todo município segue o mesmo rito: aqui, por exemplo, **não há empenho global antes do contrato** — a contabilidade empenha pedido a pedido, e a nota de empenho nem volta para o processo administrativo. Agora a etapa pode ser marcada como não aplicável, **com motivo obrigatório**, e o processo consegue ser concluído sem ela. A etapa aparece riscada, com o motivo à vista, e o registro vai para o histórico e para a auditoria — quem for conferir o processo depois vai encontrar a justificativa.
   - Conta como resolvida no progresso, mas **não** como concluída: o documento do processo completo mostra “—”, e a verificação de conformidade informa quantas etapas não se aplicam.
   - Reversível: o botão **Reativar etapa** devolve a etapa para pendente e apaga o motivo.

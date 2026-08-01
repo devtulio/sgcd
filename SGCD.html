@@ -3696,6 +3696,48 @@ async function buscarCep(cepInputId, fieldPrefix) {
   } catch(e) { toast(e.message || 'Erro ao consultar CEP.', 'error'); }
 }
 
+// Resolve um CNPJ digitado em qualquer lugar do processo: procura no nosso
+// cadastro; se nao houver, consulta a Receita e CADASTRA, devolvendo os dados.
+//
+// Guarda deliberada: so cadastra CNPJ com digito verificador valido E que a
+// Receita reconheca. O cadastro de fornecedores e sincronizado com o SGCA e o
+// SGEA — um numero digitado errado viraria lixo nos tres sistemas.
+async function resolverFornecedorPorCnpj(valor) {
+  const digits = cleanCnpj(valor);
+  if (digits.length !== 14) return { erro: 'incompleto' };
+  if (!validarCnpj(digits)) return { erro: 'invalido' };
+
+  const jaCadastrado = (await listarFornecedores())
+    .find(f => cleanCnpj(f.cnpj_digits || f.cnpj) === digits);
+  if (jaCadastrado) return { forn: jaCadastrado, origem: 'cadastro' };
+
+  const { data, fonte } = await fetchCnpjData(digits);   // pode lancar
+  const forn = { id: digits, cnpj: formatCnpj(digits), cnpj_digits: digits, ...data, consultadoEm: Date.now() };
+  await saveFornecedor(forn, currentProcess?.id);
+  return { forn, origem: 'receita', fonte };
+}
+
+// Usado pelas cotacoes e propostas: preenche a razao social a partir do CNPJ,
+// cadastrando o fornecedor se ele ainda nao existir.
+async function _puxarFornecedorPara(valorCnpj, aplicar) {
+  const digits = cleanCnpj(valorCnpj);
+  if (digits.length !== 14) return;            // ainda digitando: silencio
+  if (!validarCnpj(digits)) { toast('CNPJ inválido — verifique os dígitos.', 'error'); return; }
+  try {
+    toast('Consultando o cadastro…', '');
+    const r = await resolverFornecedorPorCnpj(valorCnpj);
+    if (r.erro || !r.forn) return;
+    await aplicar(r.forn);
+    toast(r.origem === 'cadastro'
+      ? `Fornecedor do cadastro: ${r.forn.razao_social}.`
+      : `Fornecedor cadastrado agora (${r.fonte}): ${r.forn.razao_social}.`, 'success');
+  } catch (e) {
+    // consulta indisponivel nao pode travar o preenchimento: o CNPJ fica como
+    // foi digitado e o usuario segue
+    toast(`Não consegui consultar este CNPJ (${e.message || 'falha na consulta'}). O número foi mantido.`, 'error');
+  }
+}
+
 async function buscarCnpj(stepIdx) {
   const input = document.getElementById(`cnpj-fld-${stepIdx}`);
   const digits = cleanCnpj(input.value);
@@ -7427,6 +7469,21 @@ let _saveCotTimer = null;
 async function updateCotacao(stepIdx, ci, field, value) {
   const lista = getCotacoes(stepIdx);
   lista[ci][field] = value;
+  // CNPJ preenchido: puxa do cadastro (ou cadastra e puxa) e completa o nome.
+  // Grava antes de consultar: se o numero for invalido ou a consulta falhar, o
+  // que o usuario digitou nao pode sumir da tela.
+  if (field === 'cnpj' && cleanCnpj(value).length === 14) {
+    await saveCotacoes(stepIdx, lista);
+    await _puxarFornecedorPara(value, async forn => {
+      const l = getCotacoes(stepIdx);
+      l[ci].fornecedor = forn.razao_social || l[ci].fornecedor || '';
+      l[ci].cnpj = forn.cnpj;
+      await saveCotacoes(stepIdx, l);
+      expandedSteps.add(stepIdx);
+      renderSingleStep(stepIdx);
+    });
+    return;
+  }
   // Persiste imediatamente mudanças de situação; demais campos usam debounce de 500ms
   if (field === 'situacao') {
     await saveCotacoes(stepIdx, lista);
@@ -7899,6 +7956,21 @@ let _savePropTimer = null;
 async function updateProposta(stepIdx, pi, field, value) {
   const lista = getPropostas(stepIdx);
   lista[pi][field] = value;
+  // CNPJ preenchido: puxa do cadastro (ou cadastra e puxa). Guarda o fornId,
+  // que e o que liga a proposta vencedora ao cadastro mais adiante.
+  if (field === 'cnpj' && cleanCnpj(value).length === 14) {
+    await savePropostas(stepIdx, lista);   // preserva o digitado antes de consultar
+    await _puxarFornecedorPara(value, async forn => {
+      const l = getPropostas(stepIdx);
+      l[pi].fornecedor = forn.razao_social || l[pi].fornecedor || '';
+      l[pi].cnpj = forn.cnpj;
+      l[pi].fornId = forn.id;
+      await savePropostas(stepIdx, l);
+      expandedSteps.add(stepIdx);
+      renderSingleStep(stepIdx);
+    });
+    return;
+  }
   if (field === 'situacao') {
     // Mudança de situação: processa imediatamente (pode vincular vencedor)
     if (value === 'vencedora') {
