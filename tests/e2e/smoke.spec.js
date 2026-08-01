@@ -281,9 +281,12 @@ test('processo sem etapas nao derruba a lista', async ({ page, request }) => {
     data: { username: 'admin', password: 'novaSenhaE2E123' },
   });
   const { token } = await login.json();
+  // objeto unico por execucao: com retries e banco compartilhado, um nome fixo
+  // deixava DOIS cards iguais na tela e o localizador batia em ambos
+  const objeto = `Processo sem etapas ${Date.now()}`;
   const criado = await request.post('/api/processes', {
     headers: { Authorization: `Bearer ${token}` },
-    data: { objeto: 'Processo sem etapas' },
+    data: { objeto },
   });
   const { id } = await criado.json();
 
@@ -294,9 +297,11 @@ test('processo sem etapas nao derruba a lista', async ({ page, request }) => {
   await page.fill('#pin-username', 'admin');
   await page.fill('#pin-input', 'novaSenhaE2E123');
   await page.click('#overlay-pin button[onclick="verificarSenha()"]');
-  await expect(page.locator('#overlay-pin')).toBeHidden();
+  // 20s so aqui: este teste abre o painel com todos os processos dos specs
+  // anteriores, e o runner do CI e bem mais lento que a maquina local
+  await expect(page.locator('#overlay-pin')).toBeHidden({ timeout: 20000 });
 
-  await expect(page.locator('.process-card', { hasText: 'Processo sem etapas' })).toBeVisible();
+  await expect(page.locator('.process-card', { hasText: objeto })).toBeVisible();
   expect(erros, 'a lista quebrou com um processo sem etapas').toEqual([]);
 
   // nao deixa o registro degenerado para os proximos specs
