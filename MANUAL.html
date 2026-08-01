@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Manual Operacional — SGCD v2.48.2</title>
+<title>Manual Operacional — SGCD v2.48.3</title>
 <style>
   /* Reset e base */
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -89,7 +89,7 @@
       size: A4;
       margin: 20mm 20mm 25mm;
       @top-center {
-        content: "SGCD v2.48.2 — Manual Operacional";
+        content: "SGCD v2.48.3 — Manual Operacional";
         font-family: 'Times New Roman', serif;
         font-size: 9pt;
         color: #666;
@@ -116,7 +116,7 @@
     <div class="cover-title">Manual Operacional</div>
     <div class="cover-subtitle">SGCD — Sistema de Gestão de Contratação Direta</div>
     <div class="cover-system">Gestão de Processos de Dispensa de Licitação</div>
-    <div class="cover-version">Versão v2.48.2</div>
+    <div class="cover-version">Versão v2.48.3</div>
     <br>
     <div style="font-size:11pt; color:#555; line-height:1.8;">
       Aplicação web multiusuário para agentes de contratação pública<br>
@@ -1795,6 +1795,12 @@
 
 <!-- ─────────────────────────────────────────────── SEÇÃO 29 -->
 <h2 id="sec29">29. Histórico de Versões</h2>
+
+<h3>v2.48.3 — Agosto/2026</h3>
+<p><strong>Corrigido</strong></p>
+<ul><li>O cabeçalho do processo mostrava <strong>"Aberto há NaN dias"</strong> em vez do tempo decorrido. Acontecia com processo criado fora da tela (pela API) ou restaurado de backup que trouxesse a data em texto.</li></ul>
+<p><strong>Documentação</strong></p>
+<ul><li>O README do projeto no GitHub passou a mostrar capturas de tela do sistema (painel, checklist do processo e documento gerado), geradas por script contra um banco temporário com dados fictícios.</li></ul>
 
 <h3>v2.48.2 — Agosto/2026</h3>
 <p><strong>Corrigido</strong></p>

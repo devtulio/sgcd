@@ -7,6 +7,10 @@
 
 ## [Não versionado]
 
+---
+
+## [2.48.3] — 2026-08-01
+
 ### Corrigido
 - **"Aberto há NaN dias" no cabeçalho do processo.** A data de criação é número quando o processo nasce na tela e texto quando o servidor a carimba (criação pela API, restauração de backup) — a conta usava o valor cru em vez do conversor que o resto do sistema já usava.
 
