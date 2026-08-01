@@ -7,6 +7,10 @@
 
 ## [Não versionado]
 
+---
+
+## [2.48.0] — 2026-08-01
+
 ### Adicionado
 - **CNPJ digitado na cotação ou na proposta agora resolve sozinho.** Ao informar o CNPJ, o sistema procura o fornecedor **no cadastro**; se já estiver lá, preenche a razão social na hora. Se não estiver, consulta a Receita Federal, **cadastra o fornecedor** e preenche — sem precisar sair da etapa para cadastrar antes. Na etapa de habilitação isso já acontecia; agora vale para a pesquisa de preços e para as propostas.
   - **CNPJ inválido não cadastra nada** e o número digitado é preservado. O cadastro de fornecedores é sincronizado com o SGCA e o SGEA — um número errado viraria registro inútil nos três sistemas.

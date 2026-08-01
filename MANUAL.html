@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Manual Operacional — SGCD v2.47.1</title>
+<title>Manual Operacional — SGCD v2.48.0</title>
 <style>
   /* Reset e base */
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -89,7 +89,7 @@
       size: A4;
       margin: 20mm 20mm 25mm;
       @top-center {
-        content: "SGCD v2.47.1 — Manual Operacional";
+        content: "SGCD v2.48.0 — Manual Operacional";
         font-family: 'Times New Roman', serif;
         font-size: 9pt;
         color: #666;
@@ -116,7 +116,7 @@
     <div class="cover-title">Manual Operacional</div>
     <div class="cover-subtitle">SGCD — Sistema de Gestão de Contratação Direta</div>
     <div class="cover-system">Gestão de Processos de Dispensa de Licitação</div>
-    <div class="cover-version">Versão v2.47.1</div>
+    <div class="cover-version">Versão v2.48.0</div>
     <br>
     <div style="font-size:11pt; color:#555; line-height:1.8;">
       Aplicação web multiusuário para agentes de contratação pública<br>
@@ -170,6 +170,7 @@
     <div class="toc-item h3"><a href="#sec7-1">7.1 Expandir e recolher etapas</a></div>
     <div class="toc-item h3"><a href="#sec7-2">7.2 Status das etapas</a></div>
     <div class="toc-item h3"><a href="#sec7-2b">7.2.1 Aguardando terceiro</a></div>
+    <div class="toc-item h3"><a href="#sec7-2c">7.2.2 Não se aplica</a></div>
     <div class="toc-item h3"><a href="#sec7-3">7.3 Anexar documentos</a></div>
     <div class="toc-item h3"><a href="#sec7-4">7.4 Editar informações do processo</a></div>
     <div class="toc-item h3"><a href="#sec7-5">7.5 Reordenar etapas</a></div>
@@ -618,7 +619,7 @@
   <p><strong>O que fazer:</strong> Registrar as cotações de mercado obtidas e calcular o valor de referência da contratação. A IN SEGES 65/2021 exige pelo menos 3 fontes válidas, que podem incluir: fornecedores do ramo, portais governamentais (Painel de Preços, BEC, BLL), notas fiscais de compras anteriores e tabelas referenciais de preço.</p>
   <ul>
     <li>Clique em <strong>"+ Adicionar cotação"</strong> para cada fonte consultada</li>
-    <li>Preencha: fornecedor, CNPJ, valor cotado, data e situação (Válida ou Descartada)</li>
+    <li>Preencha: fornecedor, CNPJ, valor cotado, data e situação (Válida ou Descartada). <strong>Ao informar o CNPJ, o sistema resolve o fornecedor sozinho:</strong> se ele já estiver no cadastro, a razão social é preenchida na hora; se não estiver, o sistema consulta a Receita Federal, <strong>cadastra o fornecedor</strong> e preenche. CNPJ inválido não cadastra nada e o número digitado é mantido. O mesmo vale nas propostas (Seção 8)</li>
     <li>Descarte cotações inexequíveis ou desatualizadas e justifique no campo de observações</li>
     <li>Escolha o <strong>método de cálculo</strong> e registre o <strong>valor de referência</strong> apurado</li>
     <li>Guarde os comprovantes: e-mails, prints de portais, declarações de fornecedores</li>
@@ -848,6 +849,7 @@
   <li><strong>Pendente:</strong> etapa ainda não iniciada (status inicial)</li>
   <li><strong>Concluída:</strong> etapa finalizada com sucesso</li>
   <li><strong>Bloqueada:</strong> etapa que não pode ser avançada por alguma razão (ex.: pendência em etapa anterior, prazo de publicação aguardando)</li>
+  <li><strong>Não se aplica:</strong> etapa que não faz parte do fluxo deste município ou deste processo (ver 7.2.2)</li>
 </ul>
 <p>Para alterar o status, clique no <strong>ícone de verificação (✔)</strong> no cabeçalho da etapa. Cada clique avança pelo ciclo: <strong>Pendente → Concluída → Bloqueada → Pendente</strong>. A barra de progresso do processo é atualizada automaticamente.</p>
 
@@ -866,6 +868,20 @@
 </div>
 <div class="aviso">
   <strong>Atenção:</strong> marcar como aguardando <strong>não conclui</strong> o processo. Ele só é dado como concluído quando todas as 18 etapas fecharem, inclusive Nota de Empenho, Instrumento Contratual e Publicação do Contrato no PNCP — esta última é condição de eficácia do contrato (Lei nº 14.133/2021).
+</div>
+
+
+<h3 id="sec7-2c">7.2.2 Não se aplica</h3>
+<p>Nem todo município segue o mesmo rito. Se uma etapa do checklist simplesmente <strong>não existe no seu fluxo</strong>, marque-a como <strong>Não se aplica</strong> — o botão fica junto de "Concluída" e "Bloqueada", na etapa expandida.</p>
+<p>O sistema <strong>exige um motivo</strong>, e é ele que responde a quem for conferir o processo depois. Exemplo real: <em>"o empenho é feito por pedido, pela contabilidade — não há empenho global antes do contrato"</em>.</p>
+<ul>
+  <li>A etapa aparece <strong>riscada</strong>, com o motivo à vista, a data e quem registrou;</li>
+  <li>Conta como <strong>resolvida</strong> no percentual de progresso — o processo consegue ser concluído sem ela —, mas <strong>não</strong> como concluída: no documento do processo completo ela sai com "—", e a verificação de conformidade informa quantas etapas não se aplicam;</li>
+  <li>O registro vai para o histórico do processo e para a Auditoria;</li>
+  <li>É reversível: o botão <strong>Reativar etapa</strong> devolve a etapa para pendente e apaga o motivo.</li>
+</ul>
+<div class="nota">
+  <strong>Por que não simplesmente concluir a etapa?</strong> Porque concluir afirma que o ato aconteceu. "Não se aplica" afirma que ele não existe naquele fluxo — e diz por quê. Para quem audita, são coisas diferentes.
 </div>
 
 <h3 id="sec7-3">7.3 Anexar documentos</h3>

@@ -16,7 +16,8 @@ Funciona em rede local: um único computador executa o servidor e todos os usuá
 
 - **Checklist estruturado com 18 etapas** do processo de Dispensa de Licitação, cada uma com fundamento legal e orientação de preenchimento
 - **Geração automática de documentos** prontos para assinatura: Autorização de Abertura, Aviso de Dispensa, Ata de Sessão, Mapa de Preços, Despachos e Extrato de Contrato — cada um com a opção **"Gerar como MINUTA"** (marca d'água), desmarcada por padrão
-- **Cadastro de fornecedores** com consulta automática de CNPJ via ReceitaWS/BrasilAPI e controle de certidões com alertas de vencimento
+- **Cadastro de fornecedores** com consulta automática de CNPJ via ReceitaWS/BrasilAPI e controle de certidões com alertas de vencimento — informar o CNPJ numa cotação ou proposta puxa o fornecedor do cadastro e, se ele não existir, cadastra na hora
+- **Etapa "não se aplica"** — para o rito que o município não segue (ex.: empenho global antes do contrato), com motivo obrigatório registrado no processo e na auditoria
 - **Gestão de propostas e cotações** com cálculo automático do valor de referência por **média, mediana ou menor preço** (art. 6º da IN SEGES/ME nº 65/2021)
 - **Dotação orçamentária** por processo — Programa/Ação, Elemento de Despesa, Fonte e Dotação Completa
 - **Aguardando terceiro** — marca a etapa que depende de alguém de fora (assinatura, retorno de órgão) com prazo previsto: o processo deixa de constar como parado enquanto o prazo vale, e volta a alertar se ele passar
