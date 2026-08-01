@@ -2114,7 +2114,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.48.0';
+const SGCD_VERSION = '2.48.1';
 // URL absoluta (não relativa): o API_BASE monta as URLs da REST API a partir da
 // origem real, nunca uma porta fixa (era 'http://localhost:3000' hardcoded).
 const API_BASE = window.location.origin;
@@ -3248,6 +3248,13 @@ function fmtDate(dt) {
   // Suporta tanto timestamp numérico (novo) quanto string YYYY-MM-DD (legado)
   const d = typeof dt === 'number' ? new Date(dt) : new Date(dt + 'T00:00:00');
   return d.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric' });
+}
+// Data por extenso ("31 de julho de 2026") para o fecho local-data dos
+// documentos. Sem argumento, devolve hoje. Mesma armadilha de fuso do fmtDate:
+// string so-data precisa do 'T00:00:00' para nao voltar um dia.
+function fmtExtenso(dt) {
+  const d = !dt ? new Date() : (typeof dt === 'number' ? new Date(dt) : new Date(dt + 'T00:00:00'));
+  return d.toLocaleDateString('pt-BR', { day:'numeric', month:'long', year:'numeric' });
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -9355,7 +9362,10 @@ function gerarTermoAdjudicacao() {
   ])) return;
   const u = getUser();
   const stepIdx = STEPS.findIndex(s => s.adjudicacao);
-  const propStepIdx = proc.steps.findIndex(s => s.propostas);
+  // STEPS, nao proc.steps: a etapa gravada guarda so {status, fields,
+  // completedAt} — as marcas (propostas, adjudicacao...) vivem no STEPS e o
+  // indice e o mesmo nos dois. Procurar a marca no gravado sempre dava -1.
+  const propStepIdx = STEPS.findIndex(s => s.propostas);
   const data = stepIdx >= 0 ? (proc.steps[stepIdx]?.fields || {}) : {};
   const propLista = propStepIdx >= 0 ? JSON.parse(proc.steps[propStepIdx]?.fields?._propostas || '[]') : [];
   const propVencedora = propLista.find(p => p.situacao === 'vencedora');
@@ -9363,9 +9373,8 @@ function gerarTermoAdjudicacao() {
   const forn = proc.fornecedor || null;
   const fornNome = propVencedora?.fornecedor || (forn ? (forn.razao_social || forn.nome_fantasia || '') : '');
   const fornCnpj = propVencedora?.cnpj || (forn ? (forn.cnpj || '') : '');
-  const hoje = new Date().toLocaleDateString('pt-BR', { day:'numeric', month:'long', year:'numeric' });
   const blank = t => escHtml(t) || '_'.repeat(40);
-  const dataAdj = data.data_conclusao ? new Date(data.data_conclusao + 'T00:00:00').toLocaleDateString('pt-BR') : hoje;
+  const dataAdj = fmtExtenso(data.data_conclusao);
   const valorAdj = propVencedora?.valor || data.valor_adjudicado || proc.valor || '';
   const dec = u.dec_municipal || '';
   const decRef = dec ? `, nos termos do Decreto Municipal nº ${escHtml(dec)}` : '';
@@ -9465,8 +9474,7 @@ function gerarTermoHomologacao() {
   const fornNome = forn ? (forn.razao_social || forn.nome_fantasia || '') : '';
   const fornCnpj = forn ? (forn.cnpj || '') : '';
   const valorAdj = (stepAdj >= 0 ? proc.steps[stepAdj]?.fields?.valor_adjudicado : '') || proc.valor || '';
-  const hoje = new Date().toLocaleDateString('pt-BR', { day:'numeric', month:'long', year:'numeric' });
-  const dataHom = dataFields.data_conclusao ? new Date(dataFields.data_conclusao + 'T00:00:00').toLocaleDateString('pt-BR') : hoje;
+  const dataHom = fmtExtenso(dataFields.data_conclusao);
   const blank = t => escHtml(t) || '_'.repeat(40);
   const dec = u.dec_municipal || '';
   const decRef = dec ? `, nos termos do Decreto Municipal nº ${escHtml(dec)}` : '';
@@ -10047,7 +10055,6 @@ ${_docFooter(p)}
 function gerarJustificativaEscolha() {
   const p = currentProcess;
   const u = getUser();
-  const hoje = new Date().toLocaleDateString('pt-BR', { day:'numeric', month:'long', year:'numeric' });
   const blank = txt => escHtml(txt) || '_'.repeat(40);
   const fmtVal = v => v ? fmtMoney(v) : '_______________';
   // fmtDate e nao new Date(dt): string so-data e lida como UTC, e no nosso fuso
@@ -10056,7 +10063,7 @@ function gerarJustificativaEscolha() {
 
   const stepData = p.steps?.[STEPS.findIndex(s => s.justificativaEscolha)]?.fields || {};
   const responsavel   = stepData.responsavel   || u.nome || '';
-  const dataConclusao = stepData.data_conclusao ? d(stepData.data_conclusao) : hoje;
+  const dataConclusao = fmtExtenso(stepData.data_conclusao);
   const justificativa = stepData.justificativa_escolha || '';
   const observacoes   = stepData.observacoes || '';
   const fornForn = typeof p.fornecedor === 'object' ? p.fornecedor : null;
@@ -12884,7 +12891,7 @@ function _temFornecedor(proc) {
 }
 
 function _temPropostaVencedora(proc) {
-  const propIdx = proc.steps?.findIndex(s => s.propostas);
+  const propIdx = STEPS.findIndex(s => s.propostas);   // ver nota em gerarTermoAdjudicacao
   if (propIdx < 0) return false;
   const lista = JSON.parse(proc.steps[propIdx]?.fields?._propostas || '[]');
   return lista.some(p => p.situacao === 'vencedora');

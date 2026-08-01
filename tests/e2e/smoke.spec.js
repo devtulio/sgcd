@@ -478,6 +478,49 @@ test.describe('datas em fuso brasileiro', () => {
   expect(r.virada, 'a virada de ano voltou um dia').toBe('01/01/2026');
   expect(r.anoVirada).toBe(2026);
   });
+
+  // O fecho "local, data" dos documentos vai por extenso. Adjudicacao,
+  // homologacao e justificativa saiam em "31/07/2026" porque formatavam a
+  // data_conclusao com o formato curto quando ela estava preenchida — e so
+  // caiam no extenso no caso vazio. O juiz e o documento gerado, nao o helper:
+  // o defeito estava no ponto de uso, nao na formatacao.
+  test('fecho dos documentos sai por extenso, sem voltar um dia', async ({ page, context }) => {
+    page.on('dialog', d => d.accept());
+    await page.goto('/SGCD.html');
+    await page.fill('#pin-username', 'admin');
+    await page.fill('#pin-input', 'novaSenhaE2E123');
+    await page.click('#overlay-pin button[onclick="verificarSenha()"]');
+    await expect(page.locator('#overlay-pin')).toBeHidden();
+
+    await page.evaluate(async () => {
+      const r = await API.post('/api/processes', { objeto: 'Documento com data por extenso' });
+      const novo = await API.json(r);
+      await loadProcesses();
+      await openProcess(novo.id);
+      const iProp = STEPS.findIndex(s => s.propostas);
+      const iAdj  = STEPS.findIndex(s => s.adjudicacao);
+      const iHom  = STEPS.findIndex(s => s.homologacao);
+      currentProcess.steps[iProp].fields._propostas = JSON.stringify(
+        [{ fornecedor: 'Fornecedor Extenso Ltda', cnpj: '11.222.333/0001-81', valor: '1000,00', situacao: 'vencedora' }]);
+      currentProcess.steps[iAdj].fields.data_conclusao = '2026-07-31';
+      currentProcess.steps[iHom].fields.data_conclusao = '2026-01-01';  // virada de ano
+      await saveProcess(currentProcess);
+      for (const i of [iAdj, iHom]) { expandedSteps.add(i); await renderSingleStep(i); }
+    });
+
+    // clique real no botao: window.open sem gesto do usuario e barrado pelo
+    // bloqueador de popup, e o documento nunca chega a abrir
+    for (const [botao, esperado] of [[/Gerar Termo de Adjudicação/, '31 de julho de 2026'],
+                                     [/Gerar Termo de Homologação/, '1 de janeiro de 2026']]) {
+      const [popup] = await Promise.all([
+        context.waitForEvent('page'),
+        page.getByRole('button', { name: botao }).click(),
+      ]);
+      await popup.waitForLoadState();
+      await expect(popup.locator('.city-date'), 'o fecho nao saiu por extenso').toContainText(esperado);
+      await popup.close();
+    }
+  });
 });
 
 // "Aguardando terceiro": marca uma etapa como parada esperando alguem de fora

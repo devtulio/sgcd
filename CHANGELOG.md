@@ -9,6 +9,14 @@
 
 ---
 
+## [2.48.1] — 2026-08-01
+
+### Corrigido
+- **Data do fecho dos documentos voltou a sair por extenso.** Justificativa da Escolha do Fornecedor (etapa 13), Adjudicação (14) e Homologação (15) fechavam com "Município, 31/07/2026" quando a data de conclusão estava preenchida — só o caso em branco caía no extenso. Agora os três seguem o padrão dos demais documentos: "Município, 31 de julho de 2026".
+- **Termo de Adjudicação não achava a proposta vencedora.** A busca pela etapa de propostas procurava uma marca que só existe na definição das etapas, nunca no processo gravado — dava sempre "não encontrado". Efeito: o termo ignorava o fornecedor vencedor da etapa de propostas e só funcionava com fornecedor vinculado ao processo, avisando "Nenhum fornecedor vencedor identificado" nos demais casos.
+
+---
+
 ## [2.48.0] — 2026-08-01
 
 ### Adicionado

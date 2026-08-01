@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Manual Operacional — SGCD v2.48.0</title>
+<title>Manual Operacional — SGCD v2.48.1</title>
 <style>
   /* Reset e base */
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -89,7 +89,7 @@
       size: A4;
       margin: 20mm 20mm 25mm;
       @top-center {
-        content: "SGCD v2.48.0 — Manual Operacional";
+        content: "SGCD v2.48.1 — Manual Operacional";
         font-family: 'Times New Roman', serif;
         font-size: 9pt;
         color: #666;
@@ -116,7 +116,7 @@
     <div class="cover-title">Manual Operacional</div>
     <div class="cover-subtitle">SGCD — Sistema de Gestão de Contratação Direta</div>
     <div class="cover-system">Gestão de Processos de Dispensa de Licitação</div>
-    <div class="cover-version">Versão v2.48.0</div>
+    <div class="cover-version">Versão v2.48.1</div>
     <br>
     <div style="font-size:11pt; color:#555; line-height:1.8;">
       Aplicação web multiusuário para agentes de contratação pública<br>
@@ -1795,6 +1795,25 @@
 
 <!-- ─────────────────────────────────────────────── SEÇÃO 29 -->
 <h2 id="sec29">29. Histórico de Versões</h2>
+
+<h3>v2.48.1 — Agosto/2026</h3>
+<p><strong>Corrigido</strong></p>
+<ul>
+  <li>O fecho dos documentos das etapas 13, 14 e 15 (Justificativa da Escolha, Adjudicação e Homologação) saía com a data em números — "Município, 31/07/2026". Volta a sair por extenso, como nos demais documentos: "Município, 31 de julho de 2026".</li>
+  <li>O Termo de Adjudicação não encontrava a proposta vencedora da Etapa 11 e recusava a geração com "Nenhum fornecedor vencedor identificado". Só funcionava quando havia fornecedor vinculado ao processo.</li>
+</ul>
+
+<h3>v2.48.0 — Agosto/2026</h3>
+<p><strong>Adicionado</strong></p>
+<ul>
+  <li>CNPJ informado na cotação ou na proposta procura o fornecedor no cadastro e, se ele não estiver lá, consulta a Receita, cadastra e preenche — sem sair da etapa (ver Seção 9).</li>
+  <li>Etapa pode ser marcada como <strong>não se aplica</strong>, com motivo obrigatório, e o processo conclui sem ela (ver Seção 7.2.2).</li>
+</ul>
+<p><strong>Corrigido</strong></p>
+<ul>
+  <li>A conclusão de etapa cobrava o campo da etapa seguinte: a Homologação pedia número de empenho, a Nota de Empenho pedia dados do contrato. Cada etapa passa a cobrar o que é dela.</li>
+  <li>Processo sem histórico podia falhar ao mudar o status de uma etapa.</li>
+</ul>
 
 <h3>v2.47.1 — Julho/2026</h3>
 <p><strong>Alterado</strong></p>
