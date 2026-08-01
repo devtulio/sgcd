@@ -734,3 +734,55 @@ test('CNPJ na cotacao puxa do cadastro e nao cadastra numero invalido', async ({
   expect(r.nomeNoInvalido, 'preencheu nome para um CNPJ invalido').toBe('');
   expect(r.depois, 'CNPJ invalido acabou cadastrado').toBe(r.antes);
 });
+
+// Horario limite das propostas: o aviso dizia so o dia, e "ate 27/07" sem hora
+// deixa em aberto ate quando a proposta e aceita. O campo e opcional — sem ele o
+// documento sai como antes, so com a data.
+test('horario limite das propostas entra no Aviso de Dispensa', async ({ page, context }) => {
+  page.on('dialog', d => d.accept());
+  await page.goto('/SGCD.html');
+  await page.fill('#pin-username', 'admin');
+  await page.fill('#pin-input', 'novaSenhaE2E123');
+  await page.click('#overlay-pin button[onclick="verificarSenha()"]');
+  await expect(page.locator('#overlay-pin')).toBeHidden();
+
+  const idx = await page.evaluate(async () => {
+    const i = STEPS.findIndex(s => s.avisoDispensa);
+    const r = await API.post('/api/processes', { objeto: 'Aviso com horario limite (E2E)' });
+    const novo = await API.json(r);
+    await loadProcesses();
+    await openProcess(novo.id);
+    expandedSteps.add(i);
+    await renderSingleStep(i);
+    return i;
+  });
+
+  const campoHora = page.locator(`#step-fld-${idx}-hora_propostas`);
+  await expect(campoHora, 'campo de horario nao apareceu na etapa').toBeVisible();
+  await expect(campoHora).toHaveAttribute('type', 'time');
+
+  await page.locator(`#step-fld-${idx}-prazo_propostas`).fill('2026-07-27');
+  await page.locator(`#step-fld-${idx}-prazo_propostas`).dispatchEvent('change');
+  await campoHora.fill('17:00');
+  await campoHora.dispatchEvent('change');
+
+  const [doc] = await Promise.all([
+    context.waitForEvent('page'),
+    page.locator(`#step-card-${idx} button[onclick="gerarAvisoDispensa()"]`).click(),
+  ]);
+  await doc.waitForLoadState();
+  await expect(doc.locator('td', { hasText: /Até 27\/07\/2026/ }),
+    'o horario nao saiu no aviso').toContainText('às 17h00');
+  await doc.close();
+
+  // sem horario, o documento continua saindo so com a data (campo e opcional)
+  await campoHora.fill('');
+  await campoHora.dispatchEvent('change');
+  const [doc2] = await Promise.all([
+    context.waitForEvent('page'),
+    page.locator(`#step-card-${idx} button[onclick="gerarAvisoDispensa()"]`).click(),
+  ]);
+  await doc2.waitForLoadState();
+  await expect(doc2.locator('td', { hasText: /Até 27\/07\/2026/ })).not.toContainText('às');
+  await doc2.close();
+});

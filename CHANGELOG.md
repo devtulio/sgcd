@@ -9,6 +9,14 @@
 
 ---
 
+## [2.49.0] — 2026-08-01
+
+### Adicionado
+- **Horário limite para recebimento de propostas.** A Etapa 10 (Aviso de Dispensa) ganhou um campo de horário ao lado do prazo, e ele sai no aviso junto com a data: *"Até 27/07/2026, às 17h00, observado o horário de Brasília/DF"*. Até agora o aviso dizia apenas o dia, o que deixa em aberto até que hora a proposta é aceita — e é onde nasce discussão com fornecedor que entrega no fim do último dia.
+  - O campo é **opcional**: sem horário informado, o aviso sai só com a data, exatamente como antes. Ao gerar o documento sem preenchê-lo, o sistema avisa (sem impedir).
+
+---
+
 ## [2.48.3] — 2026-08-01
 
 ### Corrigido

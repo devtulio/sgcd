@@ -2114,7 +2114,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.48.3';
+const SGCD_VERSION = '2.49.0';
 // URL absoluta (não relativa): o API_BASE monta as URLs da REST API a partir da
 // origem real, nunca uma porta fixa (era 'http://localhost:3000' hardcoded).
 const API_BASE = window.location.origin;
@@ -2773,7 +2773,7 @@ const STEPS = [
   {
     name: 'Elaboração e Publicação do Aviso de Dispensa',
     sub: 'Minuta, publicação no PNCP e Diário Oficial — Art. 75, §3º e Art. 54, §1º',
-    fields: ['responsavel','data_conclusao','prazo_propostas','endereco_envio','data_publicacao','data_encerramento','link_pncp','link_diario','link_site','observacoes'],
+    fields: ['responsavel','data_conclusao','prazo_propostas','hora_propostas','endereco_envio','data_publicacao','data_encerramento','link_pncp','link_diario','link_site','observacoes'],
     avisoDispensa: true
   },
   {
@@ -2855,6 +2855,7 @@ const FIELD_LABELS = {
   num_contrato: 'Nº do instrumento contratual',
   vigencia: 'Vigência',
   prazo_propostas: 'Prazo para recebimento de propostas',
+  hora_propostas: 'Horário limite (no dia do prazo)',
   endereco_envio: 'Endereço/e-mail para envio das propostas',
   data_assinatura: 'Data de assinatura',
   vigencia_inicial: 'Vigência inicial',
@@ -2869,6 +2870,10 @@ const FIELD_LABELS = {
 
 const DATE_FIELDS  = new Set(['data_conclusao','data_publicacao','data_encerramento','vigencia_inicial','vigencia_final','data_assinatura','prazo_propostas']);
 const MONEY_FIELDS = new Set(['valor_estimado','valor_adjudicado','valor_contrato']);
+// Hora sem data: guarda 'HH:MM' e sai no documento como 17h00. Separado do
+// prazo (data) de proposito — quem publica o aviso costuma definir os dois em
+// momentos diferentes, e a data sozinha ja e um prazo valido.
+const TIME_FIELDS  = new Set(['hora_propostas']);
 
 // Tetos de dispensa por valor (art. 75, I e II da Lei 14.133/2021), atualizados
 // por decreto todo ano. FONTE ÚNICA dos números usados em CÁLCULO — antes eles
@@ -6869,6 +6874,10 @@ function renderStepFields(i, step, data, certFileMap = {}) {
       return `<label for="${fid}">${label}</label>
         <input type="date" id="${fid}" value="${data.fields[f]||''}" onchange="updateField(${i},'${f}',this.value)">`;
     }
+    if (TIME_FIELDS.has(f)) {
+      return `<label for="${fid}">${label}</label>
+        <input type="time" id="${fid}" value="${data.fields[f]||''}" onchange="updateField(${i},'${f}',this.value)">`;
+    }
     if (MONEY_FIELDS.has(f)) {
       return `<label for="${fid}">${label}</label>
         <input type="text" id="${fid}" value="${val}" oninput="maskMoney(this)" onchange="updateField(${i},'${f}',this.value)" style="font-variant-numeric:tabular-nums">`;
@@ -9555,6 +9564,8 @@ function gerarAvisoDispensa() {
     { ok: !!proc.objeto,    msg: 'Objeto da contratação não preenchido', bloqueia: true },
     { ok: !!proc.legal,     msg: 'Base legal (Art. 75, inciso) não selecionada', bloqueia: false },
     { ok: !!(proc.valor || proc.steps?.[STEPS.findIndex(s => s.cotacoes)]?.fields?.valor_estimado), msg: 'Valor estimado não informado', bloqueia: false },
+    { ok: !!proc.steps?.[STEPS.findIndex(s => s.avisoDispensa)]?.fields?.hora_propostas,
+      msg: 'Horário limite para recebimento de propostas não informado — o aviso sairá apenas com a data', bloqueia: false },
   ])) return;
   const u = getUser();
   const p = i => proc.steps[i]?.fields || {};
@@ -9582,7 +9593,10 @@ function gerarAvisoDispensa() {
   const criterioLabel    = _criterioLabel[proc.criterio_selecao]    || 'menor preço';
   const criterioVantajosa = _criterioVantajosa[proc.criterio_selecao] || _criterioVantajosa.menor_preco;
 
-  const prazoFormatado = v(iAviso,'prazo_propostas') ? new Date(v(iAviso,'prazo_propostas')+'T00:00:00').toLocaleDateString('pt-BR', {day:'2-digit',month:'2-digit',year:'numeric'}) : '_____/_____/________';
+  const prazoData = v(iAviso,'prazo_propostas') ? fmtDate(v(iAviso,'prazo_propostas')) : '_____/_____/________';
+  // 'HH:MM' -> '17h00'; sem horario informado, o prazo sai so com a data, como antes
+  const horaPrazo = v(iAviso,'hora_propostas');
+  const prazoFormatado = prazoData + (horaPrazo ? `, às ${horaPrazo.replace(':', 'h')}` : '');
   const enderecoEnvio  = v(iAviso,'endereco_envio') || '_'.repeat(50);
   const valorEstimado  = v(iCotacoes,'valor_estimado');
   // BUG (corrigido): lia da etapa "Dotação Orçamentária" (sem campo fundamento) em vez de "Enquadramento Legal"

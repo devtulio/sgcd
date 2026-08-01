@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Manual Operacional — SGCD v2.48.3</title>
+<title>Manual Operacional — SGCD v2.49.0</title>
 <style>
   /* Reset e base */
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -89,7 +89,7 @@
       size: A4;
       margin: 20mm 20mm 25mm;
       @top-center {
-        content: "SGCD v2.48.3 — Manual Operacional";
+        content: "SGCD v2.49.0 — Manual Operacional";
         font-family: 'Times New Roman', serif;
         font-size: 9pt;
         color: #666;
@@ -116,7 +116,7 @@
     <div class="cover-title">Manual Operacional</div>
     <div class="cover-subtitle">SGCD — Sistema de Gestão de Contratação Direta</div>
     <div class="cover-system">Gestão de Processos de Dispensa de Licitação</div>
-    <div class="cover-version">Versão v2.48.3</div>
+    <div class="cover-version">Versão v2.49.0</div>
     <br>
     <div style="font-size:11pt; color:#555; line-height:1.8;">
       Aplicação web multiusuário para agentes de contratação pública<br>
@@ -708,12 +708,13 @@
   <div class="step-num">Etapa 10</div>
   <div class="step-name">Elaboração e Publicação do Aviso de Dispensa</div>
   <div class="step-legal">Fundamento: Art. 75, §3º e Art. 54, §1º da Lei 14.133/2021 — prazo mínimo 3 dias úteis</div>
-  <p><strong>O que fazer:</strong> Elaborar o Aviso de Dispensa e publicá-lo no PNCP e no Diário Oficial. Use o botão <strong>"Gerar Aviso de Dispensa"</strong> para gerar o documento completo, preenchido com os dados do processo e o Critério de Seleção definido no cadastro do processo (Seção 5). O aviso contém: identificação do órgão, objeto, valor estimado, critério de julgamento, condições de participação, seção sobre a proposta mais vantajosa (Art. 59), data limite e canais de divulgação do resultado.</p>
+  <p><strong>O que fazer:</strong> Elaborar o Aviso de Dispensa e publicá-lo no PNCP e no Diário Oficial. Use o botão <strong>"Gerar Aviso de Dispensa"</strong> para gerar o documento completo, preenchido com os dados do processo e o Critério de Seleção definido no cadastro do processo (Seção 5). O aviso contém: identificação do órgão, objeto, valor estimado, critério de julgamento, condições de participação, seção sobre a proposta mais vantajosa (Art. 59), data e horário limite e canais de divulgação do resultado.</p>
   <ul>
     <li>Clique em <strong>"Gerar Aviso de Dispensa"</strong>, revise, imprima ou salve como PDF e assine</li>
     <li>Acesse o PNCP (<em>www.pncp.gov.br</em>) e publique o aviso completo</li>
     <li>Publique também o aviso no Diário Oficial do Município (eletrônico ou impresso)</li>
     <li>Registre no sistema: data de publicação, data de encerramento das propostas, link do PNCP e link do Diário Oficial</li>
+    <li>Informe o <strong>horário limite</strong> para recebimento das propostas, ao lado do prazo. Ele sai no aviso junto com a data ("Até 27/07/2026, às 17h00"), e é o que evita discussão sobre proposta entregue no fim do último dia. O campo é opcional: sem ele o aviso sai só com a data, como antes</li>
     <li>O sistema calcula automaticamente a data de encerramento (3 dias úteis) e a <strong>recalcula sempre que a data de publicação mudar</strong>, avisando na tela a nova data; se você ampliar o prazo de propostas de propósito, reponha a data maior depois de mexer na publicação. Continua alertando se a data informada ficar abaixo do mínimo legal</li>
     <li>Aguarde o prazo de 3 dias úteis antes de prosseguir</li>
   </ul>
@@ -1795,6 +1796,10 @@
 
 <!-- ─────────────────────────────────────────────── SEÇÃO 29 -->
 <h2 id="sec29">29. Histórico de Versões</h2>
+
+<h3>v2.49.0 — Agosto/2026</h3>
+<p><strong>Adicionado</strong></p>
+<ul><li>A Etapa 10 ganhou o campo <strong>horário limite</strong> para recebimento das propostas, ao lado do prazo. Ele sai no Aviso de Dispensa junto com a data ("Até 27/07/2026, às 17h00"). O campo é opcional: sem ele, o aviso sai só com a data, como antes.</li></ul>
 
 <h3>v2.48.3 — Agosto/2026</h3>
 <p><strong>Corrigido</strong></p>

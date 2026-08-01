@@ -35,7 +35,7 @@ Funciona em rede local: um único computador executa o servidor e todos os usuá
 - **Verificação de conformidade** automática: aponta pendências e inconsistências no processo
 - **Alerta de fracionamento** — detecta processos com objetos similares e calcula soma dos valores no exercício
 - **Controle de limites anuais** Art. 75, I e II com painel de acumulado e alerta ao atingir o teto legal
-- **Cálculo automático de prazos** (Art. 75 §3°) — data mínima de encerramento com alerta visual
+- **Cálculo automático de prazos** (Art. 75 §3°) — data mínima de encerramento com alerta visual, e horário limite para recebimento das propostas impresso no Aviso de Dispensa
 - **Trilha de auditoria global** com timeline agrupada por dia, filtros por tipo de evento, período e usuário
 - **Exportação para CSV** de processos, fornecedores e trilha de auditoria — respeita os filtros/busca ativos na tela
 - **Agenda de Vencimentos** — prazos de propostas, contratos e processos parados em um único painel
