@@ -2114,7 +2114,7 @@ const ICONS = {
   calendar: (s=13)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
 };
 
-const SGCD_VERSION = '2.49.0';
+const SGCD_VERSION = '2.50.0';
 // URL absoluta (não relativa): o API_BASE monta as URLs da REST API a partir da
 // origem real, nunca uma porta fixa (era 'http://localhost:3000' hardcoded).
 const API_BASE = window.location.origin;
@@ -3031,6 +3031,12 @@ const OBJETO_CLASS = {
       'Sementes, Fertilizantes e Insumos Agrícolas',
       'Gás e Combustíveis Especiais',
       'Material Gráfico e de Comunicação',
+      'Material de Copa, Cozinha e Refeitório',
+      'Material Veterinário e Agropecuário',
+      'Material de Sinalização e Identificação Visual',
+      'Material de Áudio, Vídeo e Fotografia',
+      'Material para Manutenção de Vias e Estradas',
+      'Material de Segurança e Combate a Incêndio',
       'Outros Materiais de Consumo'
     ],
     'Bens — Material Permanente': [
@@ -3046,6 +3052,12 @@ const OBJETO_CLASS = {
       'Equipamentos de Climatização',
       'Eletrodomésticos e Eletroeletrônicos',
       'Instrumentos Musicais',
+      'Equipamentos de Cozinha e Refeitório Industrial',
+      'Equipamentos Odontológicos',
+      'Equipamentos Agrícolas e de Jardinagem',
+      'Equipamentos de Combate a Incêndio e Salvamento',
+      'Equipamentos de Sinalização e Trânsito',
+      'Equipamentos de Oficina e Manutenção',
       'Outros Equipamentos Permanentes'
     ],
     'Serviços': [
@@ -3072,6 +3084,22 @@ const OBJETO_CLASS = {
       'Serviços de Eventos e Cerimonial',
       'Serviços Funerários',
       'Serviços de Topografia, Georreferenciamento e Engenharia',
+      'Assessoria e Consultoria em Gestão Pública',
+      'Serviços de Apoio Administrativo e Operacional',
+      'Serviços de Recrutamento, Seleção e Concursos Públicos',
+      'Serviços de Comunicação Institucional e Assessoria de Imprensa',
+      'Serviços de Seguros',
+      'Serviços Bancários e Financeiros',
+      'Serviços de Assistência Social e Convivência',
+      'Serviços Veterinários e de Bem-Estar Animal',
+      'Serviços de Sinalização Viária e Trânsito',
+      'Serviços de Gestão Documental e Digitalização',
+      'Serviços de Lavanderia e Rouparia',
+      'Serviços de Agenciamento de Viagens e Passagens',
+      'Serviços de Eficiência Energética e Energia Solar',
+      'Serviços de Administração e Manutenção de Cemitérios',
+      'Serviços de Acessibilidade, Tradução e Interpretação',
+      'Serviços de Rastreamento e Telemetria de Frota',
       'Outros Serviços'
     ],
     'Obras e Serviços de Engenharia': [
@@ -3084,74 +3112,797 @@ const OBJETO_CLASS = {
       'Obras de Contenção, Aterro e Terraplanagem',
       'Instalações Elétricas e de Telecomunicações',
       'Instalações Hidrossanitárias',
+      'Obras de Praças, Parques e Áreas de Lazer',
+      'Obras em Cemitérios e Capelas Mortuárias',
+      'Obras de Acessibilidade e Adequação de Edificações',
+      'Recuperação e Conservação de Estradas Rurais',
+      'Demolição, Remoção e Limpeza de Terrenos',
+      'Sistemas de Prevenção e Combate a Incêndio',
+      'Obras de Sinalização e Segurança Viária',
       'Outros Serviços de Engenharia'
     ]
   },
   subcategorias: {
-    'Alimentação e Gêneros Alimentícios': ['Gêneros alimentícios em geral','Água mineral e bebidas','Laticínios e derivados','Carnes e pescados','Hortifrutigranjeiros','Produtos de panificação','Suplementos e complementos alimentares'],
-    'Higiene, Limpeza e Conservação': ['Material de limpeza em geral','Desinfetantes e saneantes','Papel higiênico e descartáveis de higiene','Produtos de higiene pessoal','Sacos de lixo e embalagens de descarte','Panos, vassouras e utensílios de limpeza'],
-    'Material de Escritório e Papelaria': ['Papéis, cadernos e cartolinas','Canetas, lápis e instrumentos de escrita','Pastas, arquivadores e organizadores','Envelopes e formulários','Toner, cartuchos e suprimentos de impressão','Itens de fixação (clipes, grampos, fitas)','Outros materiais de papelaria'],
-    'Material Educacional e Didático': ['Livros e publicações','Material escolar (cadernos, mochilas etc.)','Jogos pedagógicos e brinquedos educativos','Material artístico e de artesanato','Material de laboratório escolar','Outros materiais didáticos'],
-    'Material Hospitalar e Laboratorial': ['Materiais descartáveis hospitalares','EPIs hospitalares','Reagentes e insumos laboratoriais','Material para curativos e procedimentos','Artigos médico-cirúrgicos'],
-    'Material Farmacológico e Medicamentos': ['Medicamentos em geral','Vacinas e imunobiológicos','Insumos farmacêuticos','Materiais odontológicos','Produtos fitoterápicos e similares'],
-    'Material Esportivo e Recreativo': ['Equipamentos esportivos','Uniformes e artigos esportivos','Brinquedos e artigos recreativos','Artigos para academia e fitness'],
-    'Vestuário, Uniformes e EPIs': ['Uniformes funcionais e escolares','Equipamentos de proteção individual (EPIs)','Calçados e acessórios profissionais','Roupas de cama, mesa e banho institucional'],
-    'Combustíveis e Lubrificantes': ['Gasolina, etanol e diesel','Lubrificantes e óleos automotivos','Aditivos e fluidos especiais'],
-    'Material Elétrico': ['Fios, cabos e condutores elétricos','Lâmpadas, luminárias e reatores','Disjuntores, tomadas e componentes elétricos','Pilhas, baterias e acumuladores','Materiais de proteção elétrica'],
-    'Material Hidráulico e Sanitário': ['Tubos, conexões e registros','Torneiras, válvulas e acessórios sanitários','Caixas d\'água e reservatórios','Bombas e motores hidráulicos'],
-    'Material de Construção e Manutenção': ['Cimento, areia, brita e argamassa','Tintas, solventes e impermeabilizantes','Madeiras e materiais de marcenaria','Azulejos, pisos e revestimentos','Ferro, aço e estruturas metálicas','Vidros e esquadrias'],
-    'Ferramentas e Utensílios': ['Ferramentas manuais e elétricas','Utensílios de copa e cozinha institucional','Outros utensílios'],
-    'Sementes, Fertilizantes e Insumos Agrícolas': ['Sementes e mudas','Fertilizantes e corretivos','Defensivos agrícolas e fitossanitários','Equipamentos e insumos de irrigação'],
-    'Gás e Combustíveis Especiais': ['Gás de cozinha (GLP)','Gás natural','Lenha e biomassa'],
-    'Material Gráfico e de Comunicação': ['Impressos e formulários','Material de sinalização e comunicação visual','Brindes, placas comemorativas e troféus'],
-    'Outros Materiais de Consumo': ['Outros materiais de consumo não classificados'],
-    'Mobiliário e Decoração': ['Mesas, cadeiras e mobiliário de escritório','Mobiliário escolar','Mobiliário hospitalar e clínico','Armários, estantes e arquivos de aço','Cortinas, tapetes e artigos de decoração'],
-    'Equipamentos de Informática e TI': ['Computadores e notebooks','Servidores e infraestrutura de rede','Periféricos e acessórios de informática','Impressoras, scanners e multifuncionais','Softwares e licenças','Outros equipamentos de TI'],
-    'Equipamentos de Comunicação e Audiovisual': ['Aparelhos de telefonia e PABX','Equipamentos de videoconferência','Equipamentos de som, projeção e TV','Equipamentos de radiocomunicação','Câmeras e equipamentos fotográficos'],
-    'Equipamentos Médico-Hospitalares': ['Equipamentos de diagnóstico','Equipamentos cirúrgicos','Equipamentos de UTI e terapia intensiva','Equipamentos odontológicos','Equipamentos de fisioterapia e reabilitação'],
-    'Equipamentos Laboratoriais e Científicos': ['Equipamentos de análise e medição','Equipamentos de microbiologia','Instrumentos de precisão'],
-    'Equipamentos Esportivos e de Lazer': ['Equipamentos de academia e fitness','Equipamentos para quadras e campos','Equipamentos de lazer e recreação infantil','Piscinas e equipamentos aquáticos'],
-    'Equipamentos Educacionais': ['Quadros brancos, interativos e lousas','Mobiliário e estruturas pedagógicas','Equipamentos de artes e música'],
-    'Veículos, Máquinas e Equipamentos Pesados': ['Automóveis e veículos leves','Ônibus, vans e transporte coletivo','Caminhões e veículos de carga','Máquinas agrícolas e de terraplanagem','Tratores e equipamentos de jardinagem','Ambulâncias e veículos de emergência','Embarcações e equipamentos náuticos'],
-    'Equipamentos de Segurança e Vigilância': ['Câmeras de vigilância (CFTV)','Alarmes e sistemas de monitoramento','Equipamentos de controle de acesso','Equipamentos de combate a incêndio'],
-    'Equipamentos de Climatização': ['Aparelhos de ar-condicionado split','Sistemas de ar-condicionado central','Ventiladores, exaustores e climatizadores','Aquecedores e sistemas de aquecimento'],
-    'Eletrodomésticos e Eletroeletrônicos': ['Eletrodomésticos de cozinha','Televisores e monitores','Geladeiras, freezers e câmaras frias','Lavadoras e secadoras institucionais'],
-    'Instrumentos Musicais': ['Instrumentos de sopro','Instrumentos de percussão','Instrumentos de corda','Equipamentos de som para bandas'],
-    'Outros Equipamentos Permanentes': ['Outros equipamentos permanentes não classificados'],
-    'Limpeza, Higienização e Conservação': ['Limpeza predial (contrato)','Higienização de veículos','Controle de pragas e desinsetização','Limpeza de caixas d\'água e reservatórios','Lavanderia e higienização de roupas','Desinfecção e higienização ambiental'],
-    'Manutenção de Bens Imóveis': ['Manutenção civil e de alvenaria','Manutenção elétrica predial','Manutenção hidráulica predial','Manutenção de telhados e coberturas','Manutenção de portões, portas e esquadrias','Pintura e recuperação de fachadas','Manutenção predial geral'],
-    'Manutenção de Veículos e Máquinas': ['Manutenção preventiva de veículos leves','Manutenção corretiva de veículos leves','Manutenção de ônibus e veículos pesados','Manutenção de máquinas e equipamentos pesados','Serviços de borracharia e pneus','Higienização e lavagem de frotas'],
-    'Manutenção de Equipamentos de TI': ['Manutenção de computadores e periféricos','Manutenção de redes e infraestrutura','Manutenção de impressoras e copiadoras','Suporte técnico e helpdesk'],
-    'Manutenção de Equipamentos em Geral': ['Manutenção de equipamentos médico-hospitalares','Manutenção de ar-condicionado e climatização','Manutenção de elevadores','Manutenção de eletrodomésticos e eletroeletrônicos','Calibração e aferição de instrumentos'],
-    'Vigilância e Segurança Patrimonial': ['Vigilância armada','Vigilância desarmada','Monitoramento eletrônico (CFTV)','Portaria e controle de acesso','Segurança escolar'],
-    'Serviços de Tecnologia da Informação': ['Desenvolvimento e manutenção de sistemas','Hospedagem e infraestrutura cloud','Licenciamento de software','Consultoria e assessoria em TI','Suporte e implantação de sistemas'],
-    'Serviços Gráficos, Editoriais e de Publicidade': ['Impressão de materiais institucionais','Criação e design gráfico','Publicidade e propaganda','Publicações legais (diário oficial, jornais)','Serviços editoriais e de redação'],
-    'Serviços de Comunicação e Telefonia': ['Telefonia fixa e móvel','Internet banda larga e links dedicados','Radiocomunicação','Serviços postais e de malote','TV a cabo e streaming institucional'],
-    'Serviços de Saúde e Medicina do Trabalho': ['Exames médicos periódicos','Vacinação e imunização','Assistência médica e planos de saúde','Serviços odontológicos','Saúde mental e psicológica','Ambulância e serviços de emergência'],
-    'Serviços de Capacitação e Treinamento': ['Cursos e treinamentos presenciais','Cursos e treinamentos online (EAD)','Palestras e seminários','Congressos, feiras e eventos técnicos','Certificações e habilitações profissionais'],
-    'Serviços Jurídicos e Advocatícios': ['Assessoria jurídica geral','Representação em processos judiciais','Elaboração de pareceres e contratos','Serviços notariais e cartorários'],
-    'Serviços Contábeis, Financeiros e de Auditoria': ['Serviços contábeis','Auditoria interna e externa','Avaliação patrimonial e perícia','Serviços atuariais'],
-    'Serviços de Transporte e Logística': ['Transporte escolar','Transporte de pacientes','Frete e logística de materiais','Translado e transfer institucional','Locação de veículos com motorista'],
-    'Serviços de Alimentação e Nutrição': ['Fornecimento de refeições (refeitório)','Fornecimento de marmitas e quentinhas','Merenda escolar','Coffee break e catering para eventos','Nutrição enteral e dietas especiais'],
-    'Serviços de Jardinagem, Paisagismo e Limpeza Urbana': ['Poda, roçagem e capina','Jardinagem e paisagismo','Coleta e destinação de resíduos sólidos','Varrição de vias públicas','Arborização urbana'],
-    'Serviços Culturais, Artísticos e Esportivos': ['Apresentações musicais e artísticas','Eventos esportivos e competições','Serviços de biblioteca e acervo','Programas culturais e recreativos'],
-    'Serviços Ambientais e de Saneamento': ['Coleta de resíduos especiais e perigosos','Saneamento ambiental','Licenciamento e consultoria ambiental','Análise de água e efluentes'],
-    'Locação de Veículos, Máquinas e Equipamentos': ['Locação de veículos leves','Locação de ônibus e transporte coletivo','Locação de máquinas e equipamentos pesados','Locação de equipamentos de eventos','Locação de equipamentos de TI'],
-    'Locação de Imóveis': ['Locação de imóvel para uso administrativo','Locação de imóvel para unidade de saúde','Locação de imóvel para uso educacional','Locação de imóvel para uso assistencial','Locação de galpão ou armazém'],
-    'Serviços de Eventos e Cerimonial': ['Organização e produção de eventos','Decoração e ambientação','Locação de tendas, palcos e estruturas','Sonorização e iluminação para eventos','Serviços de recepção e cerimonial'],
-    'Serviços Funerários': ['Fornecimento de urnas funerárias','Serviços de velório e sepultamento','Cremação','Translado funerário'],
-    'Serviços de Topografia, Georreferenciamento e Engenharia': ['Levantamento topográfico','Georreferenciamento e cadastro imobiliário','Projetos arquitetônicos e de engenharia','Supervisão e fiscalização de obras','Laudos técnicos e perícias de engenharia'],
-    'Outros Serviços': ['Outros serviços não classificados'],
-    'Construção de Edificações': ['Construção de prédio administrativo/prefeitura','Construção de unidade de saúde','Construção de escola ou creche','Construção de equipamento esportivo/quadra','Construção de equipamento cultural','Construção de unidade assistencial'],
-    'Reforma e Ampliação de Edificações': ['Reforma de prédio administrativo','Reforma de unidade de saúde','Reforma de escola ou creche','Reforma de equipamento esportivo','Reforma de equipamento cultural','Ampliação de edificação existente'],
-    'Pavimentação e Obras Viárias': ['Pavimentação asfáltica','Pavimentação em paralelepípedo e calçamento','Recapeamento e fresagem','Construção e reforma de calçadas','Sinalização viária','Construção de pontes e viadutos'],
-    'Obras de Saneamento e Drenagem': ['Implantação de rede de drenagem pluvial','Construção de galerias e bueiros','Obras de contenção de enchentes','Implantação de rede de esgoto','Melhorias sanitárias domiciliares'],
-    'Iluminação Pública': ['Implantação de iluminação pública','Substituição por LED','Manutenção do sistema de iluminação pública'],
-    'Obras Hidráulicas e de Abastecimento': ['Implantação de rede de abastecimento d\'água','Construção de poços artesianos','Reservatórios e caixas d\'água','Obras de captação e tratamento de água'],
-    'Obras de Contenção, Aterro e Terraplanagem': ['Contenção de encostas','Aterro e terraplanagem','Muros de arrimo e contenção','Recuperação de áreas degradadas'],
-    'Instalações Elétricas e de Telecomunicações': ['Instalações elétricas prediais','Instalação de cabos e redes estruturadas','CFTV e sistemas de segurança eletrônica','Instalação de painéis solares'],
-    'Instalações Hidrossanitárias': ['Instalações hidráulicas prediais','Instalações sanitárias e esgoto predial','Sistemas de combate a incêndio'],
-    'Outros Serviços de Engenharia': ['Outros serviços de engenharia não classificados']
+    'Alimentação e Gêneros Alimentícios': [
+      'Gêneros alimentícios em geral',
+      'Água mineral e bebidas',
+      'Laticínios e derivados',
+      'Carnes e pescados',
+      'Hortifrutigranjeiros',
+      'Produtos de panificação',
+      'Suplementos e complementos alimentares',
+      'Fórmulas infantis e dietas especiais',
+      'Gêneros da agricultura familiar'
+    ],
+    'Higiene, Limpeza e Conservação': [
+      'Material de limpeza em geral',
+      'Desinfetantes e saneantes',
+      'Papel higiênico e descartáveis de higiene',
+      'Produtos de higiene pessoal',
+      'Sacos de lixo e embalagens de descarte',
+      'Panos, vassouras e utensílios de limpeza'
+    ],
+    'Material de Escritório e Papelaria': [
+      'Papéis, cadernos e cartolinas',
+      'Canetas, lápis e instrumentos de escrita',
+      'Pastas, arquivadores e organizadores',
+      'Envelopes e formulários',
+      'Toner, cartuchos e suprimentos de impressão',
+      'Itens de fixação (clipes, grampos, fitas)',
+      'Outros materiais de papelaria'
+    ],
+    'Material Educacional e Didático': [
+      'Livros e publicações',
+      'Material escolar (cadernos, mochilas etc.)',
+      'Jogos pedagógicos e brinquedos educativos',
+      'Material artístico e de artesanato',
+      'Material de laboratório escolar',
+      'Outros materiais didáticos'
+    ],
+    'Material Hospitalar e Laboratorial': [
+      'Materiais descartáveis hospitalares',
+      'EPIs hospitalares',
+      'Reagentes e insumos laboratoriais',
+      'Material para curativos e procedimentos',
+      'Artigos médico-cirúrgicos',
+      'Material de curativo e enfermagem',
+      'Insumos para exames laboratoriais',
+      'Órteses, próteses e materiais especiais',
+      'Material odontológico de consumo'
+    ],
+    'Material Farmacológico e Medicamentos': [
+      'Medicamentos em geral',
+      'Vacinas e imunobiológicos',
+      'Insumos farmacêuticos',
+      'Materiais odontológicos',
+      'Produtos fitoterápicos e similares',
+      'Medicamentos de uso contínuo',
+      'Medicamentos controlados',
+      'Imunobiológicos e vacinas',
+      'Medicamentos judicializados'
+    ],
+    'Material Esportivo e Recreativo': [
+      'Equipamentos esportivos',
+      'Uniformes e artigos esportivos',
+      'Brinquedos e artigos recreativos',
+      'Artigos para academia e fitness'
+    ],
+    'Vestuário, Uniformes e EPIs': [
+      'Uniformes funcionais e escolares',
+      'Equipamentos de proteção individual (EPIs)',
+      'Calçados e acessórios profissionais',
+      'Roupas de cama, mesa e banho institucional',
+      'Uniformes escolares',
+      'Uniformes de saúde e jalecos',
+      'Calçados de segurança',
+      'Vestuário de proteção para agentes de limpeza'
+    ],
+    'Combustíveis e Lubrificantes': [
+      'Gasolina, etanol e diesel',
+      'Lubrificantes e óleos automotivos',
+      'Aditivos e fluidos especiais',
+      'Arla 32',
+      'Fluidos e aditivos automotivos'
+    ],
+    'Material Elétrico': [
+      'Fios, cabos e condutores elétricos',
+      'Lâmpadas, luminárias e reatores',
+      'Disjuntores, tomadas e componentes elétricos',
+      'Pilhas, baterias e acumuladores',
+      'Materiais de proteção elétrica',
+      'Lâmpadas e luminárias públicas',
+      'Cabos e fiação',
+      'Quadros e disjuntores'
+    ],
+    'Material Hidráulico e Sanitário': [
+      'Tubos, conexões e registros',
+      'Torneiras, válvulas e acessórios sanitários',
+      'Caixas d\'água e reservatórios',
+      'Bombas e motores hidráulicos'
+    ],
+    'Material de Construção e Manutenção': [
+      'Cimento, areia, brita e argamassa',
+      'Tintas, solventes e impermeabilizantes',
+      'Madeiras e materiais de marcenaria',
+      'Azulejos, pisos e revestimentos',
+      'Ferro, aço e estruturas metálicas',
+      'Vidros e esquadrias'
+    ],
+    'Ferramentas e Utensílios': [
+      'Ferramentas manuais e elétricas',
+      'Utensílios de copa e cozinha institucional',
+      'Outros utensílios',
+      'Ferramentas manuais',
+      'Ferramentas elétricas portáteis',
+      'Utensílios agrícolas e de jardinagem'
+    ],
+    'Sementes, Fertilizantes e Insumos Agrícolas': [
+      'Sementes e mudas',
+      'Fertilizantes e corretivos',
+      'Defensivos agrícolas e fitossanitários',
+      'Equipamentos e insumos de irrigação'
+    ],
+    'Gás e Combustíveis Especiais': [
+      'Gás de cozinha (GLP)',
+      'Gás natural',
+      'Lenha e biomassa'
+    ],
+    'Material Gráfico e de Comunicação': [
+      'Impressos e formulários',
+      'Material de sinalização e comunicação visual',
+      'Brindes, placas comemorativas e troféus'
+    ],
+    'Material de Copa, Cozinha e Refeitório': [
+      'Utensílios de cozinha e talheres',
+      'Louças, copos e bandejas',
+      'Descartáveis para copa e cozinha',
+      'Embalagens e recipientes térmicos',
+      'Material de higienização de cozinha'
+    ],
+    'Material Veterinário e Agropecuário': [
+      'Medicamentos e vacinas veterinárias',
+      'Ração e suplementos animais',
+      'Material de manejo e contenção animal',
+      'Defensivos e produtos agropecuários',
+      'Material de identificação animal'
+    ],
+    'Material de Sinalização e Identificação Visual': [
+      'Placas de sinalização e advertência',
+      'Adesivos, faixas e banners',
+      'Crachás, cordões e identificadores',
+      'Sinalização de emergência e evacuação'
+    ],
+    'Material de Áudio, Vídeo e Fotografia': [
+      'Cabos, conectores e adaptadores',
+      'Mídias de gravação e armazenamento',
+      'Baterias e fontes para equipamentos',
+      'Acessórios de iluminação e captação'
+    ],
+    'Material para Manutenção de Vias e Estradas': [
+      'Massa asfáltica e emulsão',
+      'Tubos e aduelas de concreto',
+      'Brita, areia e agregados',
+      'Guias, sarjetas e blocos de concreto',
+      'Tinta para demarcação viária'
+    ],
+    'Material de Segurança e Combate a Incêndio': [
+      'Extintores e recargas',
+      'Mangueiras e esguichos',
+      'Sinalização de segurança do trabalho',
+      'EPIs para brigada de incêndio'
+    ],
+    'Outros Materiais de Consumo': [
+      'Outros materiais de consumo não classificados'
+    ],
+    'Mobiliário e Decoração': [
+      'Mesas, cadeiras e mobiliário de escritório',
+      'Mobiliário escolar',
+      'Mobiliário hospitalar e clínico',
+      'Armários, estantes e arquivos de aço',
+      'Cortinas, tapetes e artigos de decoração',
+      'Mobiliário hospitalar',
+      'Estações de trabalho e divisórias',
+      'Arquivos e armários deslizantes'
+    ],
+    'Equipamentos de Informática e TI': [
+      'Computadores e notebooks',
+      'Servidores e infraestrutura de rede',
+      'Periféricos e acessórios de informática',
+      'Impressoras, scanners e multifuncionais',
+      'Softwares e licenças',
+      'Outros equipamentos de TI',
+      'Notebooks e tablets',
+      'Servidores e storage',
+      'Ativos de rede (switches, roteadores)',
+      'Nobreaks e estabilizadores'
+    ],
+    'Equipamentos de Comunicação e Audiovisual': [
+      'Aparelhos de telefonia e PABX',
+      'Equipamentos de videoconferência',
+      'Equipamentos de som, projeção e TV',
+      'Equipamentos de radiocomunicação',
+      'Câmeras e equipamentos fotográficos'
+    ],
+    'Equipamentos Médico-Hospitalares': [
+      'Equipamentos de diagnóstico',
+      'Equipamentos cirúrgicos',
+      'Equipamentos de UTI e terapia intensiva',
+      'Equipamentos odontológicos',
+      'Equipamentos de fisioterapia e reabilitação',
+      'Equipamentos de imagem e diagnóstico',
+      'Equipamentos de UTI e emergência',
+      'Equipamentos de reabilitação e fisioterapia',
+      'Equipamentos de esterilização'
+    ],
+    'Equipamentos Laboratoriais e Científicos': [
+      'Equipamentos de análise e medição',
+      'Equipamentos de microbiologia',
+      'Instrumentos de precisão'
+    ],
+    'Equipamentos Esportivos e de Lazer': [
+      'Equipamentos de academia e fitness',
+      'Equipamentos para quadras e campos',
+      'Equipamentos de lazer e recreação infantil',
+      'Piscinas e equipamentos aquáticos'
+    ],
+    'Equipamentos Educacionais': [
+      'Quadros brancos, interativos e lousas',
+      'Mobiliário e estruturas pedagógicas',
+      'Equipamentos de artes e música'
+    ],
+    'Veículos, Máquinas e Equipamentos Pesados': [
+      'Automóveis e veículos leves',
+      'Ônibus, vans e transporte coletivo',
+      'Caminhões e veículos de carga',
+      'Máquinas agrícolas e de terraplanagem',
+      'Tratores e equipamentos de jardinagem',
+      'Ambulâncias e veículos de emergência',
+      'Embarcações e equipamentos náuticos',
+      'Ambulâncias',
+      'Ônibus e micro-ônibus escolares',
+      'Caminhões e caçambas',
+      'Retroescavadeiras e motoniveladoras',
+      'Veículos leves administrativos'
+    ],
+    'Equipamentos de Segurança e Vigilância': [
+      'Câmeras de vigilância (CFTV)',
+      'Alarmes e sistemas de monitoramento',
+      'Equipamentos de controle de acesso',
+      'Equipamentos de combate a incêndio'
+    ],
+    'Equipamentos de Climatização': [
+      'Aparelhos de ar-condicionado split',
+      'Sistemas de ar-condicionado central',
+      'Ventiladores, exaustores e climatizadores',
+      'Aquecedores e sistemas de aquecimento'
+    ],
+    'Eletrodomésticos e Eletroeletrônicos': [
+      'Eletrodomésticos de cozinha',
+      'Televisores e monitores',
+      'Geladeiras, freezers e câmaras frias',
+      'Lavadoras e secadoras institucionais'
+    ],
+    'Instrumentos Musicais': [
+      'Instrumentos de sopro',
+      'Instrumentos de percussão',
+      'Instrumentos de corda',
+      'Equipamentos de som para bandas'
+    ],
+    'Equipamentos de Cozinha e Refeitório Industrial': [
+      'Fogões e fornos industriais',
+      'Refrigeradores e freezers industriais',
+      'Coifas, chapas e fritadeiras',
+      'Câmaras frigoríficas',
+      'Utensílios industriais de grande porte'
+    ],
+    'Equipamentos Odontológicos': [
+      'Cadeiras e equipos odontológicos',
+      'Autoclaves e esterilizadores',
+      'Aparelhos de raio-x odontológico',
+      'Instrumentais odontológicos permanentes'
+    ],
+    'Equipamentos Agrícolas e de Jardinagem': [
+      'Roçadeiras e cortadores de grama',
+      'Motosserras e podadores',
+      'Pulverizadores e atomizadores',
+      'Implementos agrícolas',
+      'Sistemas de irrigação'
+    ],
+    'Equipamentos de Combate a Incêndio e Salvamento': [
+      'Equipamentos de resgate e salvamento',
+      'Bombas e motobombas de combate a incêndio',
+      'Equipamentos de proteção respiratória',
+      'Desencarceradores e ferramentas hidráulicas'
+    ],
+    'Equipamentos de Sinalização e Trânsito': [
+      'Semáforos e controladores',
+      'Radares e medidores de velocidade',
+      'Painéis de mensagem variável',
+      'Cones, cavaletes e barreiras'
+    ],
+    'Equipamentos de Oficina e Manutenção': [
+      'Compressores e geradores',
+      'Máquinas de solda',
+      'Elevadores automotivos e macacos',
+      'Ferramentas elétricas de bancada',
+      'Equipamentos de lubrificação'
+    ],
+    'Outros Equipamentos Permanentes': [
+      'Outros equipamentos permanentes não classificados'
+    ],
+    'Limpeza, Higienização e Conservação': [
+      'Limpeza predial (contrato)',
+      'Higienização de veículos',
+      'Controle de pragas e desinsetização',
+      'Limpeza de caixas d\'água e reservatórios',
+      'Lavanderia e higienização de roupas',
+      'Desinfecção e higienização ambiental',
+      'Limpeza pós-obra',
+      'Limpeza de vidros e fachadas'
+    ],
+    'Manutenção de Bens Imóveis': [
+      'Manutenção civil e de alvenaria',
+      'Manutenção elétrica predial',
+      'Manutenção hidráulica predial',
+      'Manutenção de telhados e coberturas',
+      'Manutenção de portões, portas e esquadrias',
+      'Pintura e recuperação de fachadas',
+      'Manutenção predial geral',
+      'Impermeabilização',
+      'Manutenção de forros e divisórias',
+      'Serralheria e estruturas metálicas'
+    ],
+    'Manutenção de Veículos e Máquinas': [
+      'Manutenção preventiva de veículos leves',
+      'Manutenção corretiva de veículos leves',
+      'Manutenção de ônibus e veículos pesados',
+      'Manutenção de máquinas e equipamentos pesados',
+      'Serviços de borracharia e pneus',
+      'Higienização e lavagem de frotas',
+      'Retífica de motores',
+      'Manutenção de ar-condicionado veicular',
+      'Funilaria e pintura',
+      'Alinhamento, balanceamento e suspensão'
+    ],
+    'Manutenção de Equipamentos de TI': [
+      'Manutenção de computadores e periféricos',
+      'Manutenção de redes e infraestrutura',
+      'Manutenção de impressoras e copiadoras',
+      'Suporte técnico e helpdesk',
+      'Manutenção de nobreaks e estabilizadores',
+      'Manutenção de servidores e storage'
+    ],
+    'Manutenção de Equipamentos em Geral': [
+      'Manutenção de equipamentos médico-hospitalares',
+      'Manutenção de ar-condicionado e climatização',
+      'Manutenção de elevadores',
+      'Manutenção de eletrodomésticos e eletroeletrônicos',
+      'Calibração e aferição de instrumentos',
+      'Manutenção de poços artesianos e bombas',
+      'Manutenção de geradores e no-breaks',
+      'Manutenção de equipamentos de cozinha industrial',
+      'Manutenção de equipamentos odontológicos'
+    ],
+    'Vigilância e Segurança Patrimonial': [
+      'Vigilância armada',
+      'Vigilância desarmada',
+      'Monitoramento eletrônico (CFTV)',
+      'Portaria e controle de acesso',
+      'Segurança escolar',
+      'Monitoramento remoto com alarme',
+      'Segurança em eventos',
+      'Instalação e manutenção de CFTV'
+    ],
+    'Serviços de Tecnologia da Informação': [
+      'Desenvolvimento e manutenção de sistemas',
+      'Hospedagem e infraestrutura cloud',
+      'Licenciamento de software',
+      'Consultoria e assessoria em TI',
+      'Suporte e implantação de sistemas',
+      'Sistemas de gestão pública (ERP municipal)',
+      'Portal da transparência e e-SIC',
+      'Backup e recuperação de desastres',
+      'Segurança da informação e LGPD',
+      'Website institucional e hospedagem'
+    ],
+    'Serviços Gráficos, Editoriais e de Publicidade': [
+      'Impressão de materiais institucionais',
+      'Criação e design gráfico',
+      'Publicidade e propaganda',
+      'Publicações legais (diário oficial, jornais)',
+      'Serviços editoriais e de redação',
+      'Confecção de carimbos e placas',
+      'Encadernação e acabamento',
+      'Produção de material de campanha institucional'
+    ],
+    'Serviços de Comunicação e Telefonia': [
+      'Telefonia fixa e móvel',
+      'Internet banda larga e links dedicados',
+      'Radiocomunicação',
+      'Serviços postais e de malote',
+      'TV a cabo e streaming institucional',
+      'Telefonia IP e PABX',
+      'Links de dados entre unidades'
+    ],
+    'Serviços de Saúde e Medicina do Trabalho': [
+      'Exames médicos periódicos',
+      'Vacinação e imunização',
+      'Assistência médica e planos de saúde',
+      'Serviços odontológicos',
+      'Saúde mental e psicológica',
+      'Ambulância e serviços de emergência',
+      'Exames laboratoriais e de imagem',
+      'Consultas e procedimentos especializados',
+      'Fisioterapia e reabilitação',
+      'Laudos e perícias médicas',
+      'Programas de saúde ocupacional (PCMSO/PGR)'
+    ],
+    'Serviços de Capacitação e Treinamento': [
+      'Cursos e treinamentos presenciais',
+      'Cursos e treinamentos online (EAD)',
+      'Palestras e seminários',
+      'Congressos, feiras e eventos técnicos',
+      'Certificações e habilitações profissionais',
+      'Capacitação em licitações e contratos',
+      'Capacitação em contabilidade e orçamento público',
+      'Formação continuada de professores',
+      'Treinamento em saúde e segurança do trabalho'
+    ],
+    'Serviços Jurídicos e Advocatícios': [
+      'Assessoria jurídica geral',
+      'Representação em processos judiciais',
+      'Elaboração de pareceres e contratos',
+      'Serviços notariais e cartorários',
+      'Assessoria em direito administrativo',
+      'Assessoria em direito previdenciário',
+      'Assessoria em direito tributário',
+      'Mediação, conciliação e arbitragem'
+    ],
+    'Serviços Contábeis, Financeiros e de Auditoria': [
+      'Serviços contábeis',
+      'Auditoria interna e externa',
+      'Avaliação patrimonial e perícia',
+      'Serviços atuariais',
+      'Assessoria e apoio técnico-contábil',
+      'Remessas e prestação de contas ao TCE (AUDESP)',
+      'Escrituração e conciliação contábil',
+      'Consultoria em contabilidade pública aplicada (PCASP)'
+    ],
+    'Serviços de Transporte e Logística': [
+      'Transporte escolar',
+      'Transporte de pacientes',
+      'Frete e logística de materiais',
+      'Translado e transfer institucional',
+      'Locação de veículos com motorista',
+      'Transporte de resíduos',
+      'Transporte de servidores',
+      'Mudanças e transporte de mobiliário',
+      'Remoção e guincho de veículos'
+    ],
+    'Serviços de Alimentação e Nutrição': [
+      'Fornecimento de refeições (refeitório)',
+      'Fornecimento de marmitas e quentinhas',
+      'Merenda escolar',
+      'Coffee break e catering para eventos',
+      'Nutrição enteral e dietas especiais',
+      'Fornecimento de leite e complementos',
+      'Assessoria em nutrição escolar'
+    ],
+    'Serviços de Jardinagem, Paisagismo e Limpeza Urbana': [
+      'Poda, roçagem e capina',
+      'Jardinagem e paisagismo',
+      'Coleta e destinação de resíduos sólidos',
+      'Varrição de vias públicas',
+      'Arborização urbana',
+      'Coleta seletiva',
+      'Limpeza de bocas de lobo e galerias',
+      'Manutenção de praças e canteiros'
+    ],
+    'Serviços Culturais, Artísticos e Esportivos': [
+      'Apresentações musicais e artísticas',
+      'Eventos esportivos e competições',
+      'Serviços de biblioteca e acervo',
+      'Programas culturais e recreativos',
+      'Oficinas culturais e artísticas',
+      'Arbitragem e apoio a competições',
+      'Aulas e escolinhas esportivas',
+      'Produção e curadoria de exposições'
+    ],
+    'Serviços Ambientais e de Saneamento': [
+      'Coleta de resíduos especiais e perigosos',
+      'Saneamento ambiental',
+      'Licenciamento e consultoria ambiental',
+      'Análise de água e efluentes',
+      'Limpeza de fossas e caixas de gordura',
+      'Coleta e destinação de resíduos de serviços de saúde',
+      'Educação ambiental',
+      'Monitoramento de aterro e passivos ambientais',
+      'Elaboração de planos ambientais (PMSB, PGRS)'
+    ],
+    'Locação de Veículos, Máquinas e Equipamentos': [
+      'Locação de veículos leves',
+      'Locação de ônibus e transporte coletivo',
+      'Locação de máquinas e equipamentos pesados',
+      'Locação de equipamentos de eventos',
+      'Locação de equipamentos de TI',
+      'Locação de caminhões e utilitários',
+      'Locação de banheiros químicos',
+      'Locação de containers e módulos',
+      'Locação de impressoras e outsourcing de impressão'
+    ],
+    'Locação de Imóveis': [
+      'Locação de imóvel para uso administrativo',
+      'Locação de imóvel para unidade de saúde',
+      'Locação de imóvel para uso educacional',
+      'Locação de imóvel para uso assistencial',
+      'Locação de galpão ou armazém',
+      'Locação de imóvel para almoxarifado',
+      'Locação de área para eventos'
+    ],
+    'Serviços de Eventos e Cerimonial': [
+      'Organização e produção de eventos',
+      'Decoração e ambientação',
+      'Locação de tendas, palcos e estruturas',
+      'Sonorização e iluminação para eventos',
+      'Serviços de recepção e cerimonial',
+      'Fogos de artifício e efeitos',
+      'Segurança e brigada para eventos',
+      'Ambulância e apoio médico em eventos'
+    ],
+    'Serviços Funerários': [
+      'Fornecimento de urnas funerárias',
+      'Serviços de velório e sepultamento',
+      'Cremação',
+      'Translado funerário',
+      'Assistência funerária a famílias carentes',
+      'Preparação e ornamentação'
+    ],
+    'Serviços de Topografia, Georreferenciamento e Engenharia': [
+      'Levantamento topográfico',
+      'Georreferenciamento e cadastro imobiliário',
+      'Projetos arquitetônicos e de engenharia',
+      'Supervisão e fiscalização de obras',
+      'Laudos técnicos e perícias de engenharia',
+      'Regularização fundiária',
+      'Elaboração de laudos de avaliação de imóveis',
+      'Estudos geotécnicos e sondagem'
+    ],
+    'Assessoria e Consultoria em Gestão Pública': [
+      'Assessoria em convênios e transferências voluntárias',
+      'Assessoria em licitações e contratos administrativos',
+      'Assessoria em recursos humanos e folha de pagamento',
+      'Assessoria tributária, fiscal e de arrecadação',
+      'Assessoria em planejamento e orçamento (PPA, LDO, LOA)',
+      'Assessoria em prestação de contas e sistemas do TCE (AUDESP)',
+      'Assessoria em gestão previdenciária (RPPS)',
+      'Assessoria em saúde pública e gestão do SUS',
+      'Assessoria em educação e gestão escolar',
+      'Assessoria em assistência social e SUAS',
+      'Assessoria em meio ambiente e licenciamento',
+      'Assessoria em desenvolvimento urbano e habitação',
+      'Assessoria em captação de recursos e elaboração de projetos',
+      'Consultoria em gestão administrativa e organizacional',
+      'Consultoria em tecnologia e transformação digital',
+      'Assessoria em comunicação e transparência pública'
+    ],
+    'Serviços de Apoio Administrativo e Operacional': [
+      'Recepção e atendimento ao público',
+      'Copeiragem e apoio de refeitório',
+      'Motoristas e condução de veículos',
+      'Apoio operacional e serviços gerais',
+      'Digitação e apoio de escritório',
+      'Portaria e zeladoria'
+    ],
+    'Serviços de Recrutamento, Seleção e Concursos Públicos': [
+      'Organização de concurso público',
+      'Organização de processo seletivo simplificado',
+      'Aplicação de provas e correção',
+      'Avaliação psicológica e psicotécnica',
+      'Perícia médica admissional'
+    ],
+    'Serviços de Comunicação Institucional e Assessoria de Imprensa': [
+      'Assessoria de imprensa',
+      'Produção de conteúdo e mídias sociais',
+      'Cobertura fotográfica e audiovisual',
+      'Clipping e monitoramento de mídia'
+    ],
+    'Serviços de Seguros': [
+      'Seguro de veículos e frota',
+      'Seguro predial e patrimonial',
+      'Seguro de vida e acidentes pessoais',
+      'Seguro de responsabilidade civil',
+      'Seguro de equipamentos e máquinas'
+    ],
+    'Serviços Bancários e Financeiros': [
+      'Gestão da folha de pagamento (banco)',
+      'Arrecadação de tributos e convênios bancários',
+      'Custódia e administração de recursos',
+      'Serviços de cobrança e boletos'
+    ],
+    'Serviços de Assistência Social e Convivência': [
+      'Acolhimento institucional',
+      'Serviços de convivência e fortalecimento de vínculos',
+      'Atendimento a pessoas em situação de rua',
+      'Apoio a idosos e centros-dia',
+      'Serviços socioassistenciais especializados'
+    ],
+    'Serviços Veterinários e de Bem-Estar Animal': [
+      'Castração e esterilização animal',
+      'Vacinação antirrábica e campanhas',
+      'Atendimento clínico veterinário',
+      'Recolhimento e abrigo de animais',
+      'Controle de zoonoses e vetores'
+    ],
+    'Serviços de Sinalização Viária e Trânsito': [
+      'Sinalização horizontal (pintura de vias)',
+      'Sinalização vertical (placas)',
+      'Manutenção de semáforos',
+      'Estudos e projetos de tráfego',
+      'Operação e fiscalização de trânsito'
+    ],
+    'Serviços de Gestão Documental e Digitalização': [
+      'Digitalização de acervo',
+      'Microfilmagem',
+      'Guarda e custódia de documentos',
+      'Organização e classificação de arquivo',
+      'Descarte e eliminação documental'
+    ],
+    'Serviços de Lavanderia e Rouparia': [
+      'Lavanderia hospitalar',
+      'Lavanderia de uniformes e enxoval',
+      'Higienização de colchões e estofados'
+    ],
+    'Serviços de Agenciamento de Viagens e Passagens': [
+      'Emissão de passagens aéreas',
+      'Emissão de passagens rodoviárias',
+      'Hospedagem e reservas',
+      'Fretamento de veículos para viagens'
+    ],
+    'Serviços de Eficiência Energética e Energia Solar': [
+      'Manutenção de usina fotovoltaica',
+      'Eficientização de iluminação',
+      'Gestão e auditoria de contas de energia',
+      'Instalação de sistemas fotovoltaicos'
+    ],
+    'Serviços de Administração e Manutenção de Cemitérios': [
+      'Administração e controle de sepultamentos',
+      'Manutenção e conservação de cemitérios',
+      'Exumação e translado interno'
+    ],
+    'Serviços de Acessibilidade, Tradução e Interpretação': [
+      'Intérprete de Libras',
+      'Audiodescrição',
+      'Tradução e versão de documentos',
+      'Transcrição e legendagem'
+    ],
+    'Serviços de Rastreamento e Telemetria de Frota': [
+      'Rastreamento veicular',
+      'Telemetria e gestão de frota',
+      'Controle de abastecimento por cartão'
+    ],
+    'Outros Serviços': [
+      'Outros serviços não classificados'
+    ],
+    'Construção de Edificações': [
+      'Construção de prédio administrativo/prefeitura',
+      'Construção de unidade de saúde',
+      'Construção de escola ou creche',
+      'Construção de equipamento esportivo/quadra',
+      'Construção de equipamento cultural',
+      'Construção de unidade assistencial',
+      'Construção de creches e escolas',
+      'Construção de unidades de saúde',
+      'Construção de centros comunitários',
+      'Construção de galpões e almoxarifados'
+    ],
+    'Reforma e Ampliação de Edificações': [
+      'Reforma de prédio administrativo',
+      'Reforma de unidade de saúde',
+      'Reforma de escola ou creche',
+      'Reforma de equipamento esportivo',
+      'Reforma de equipamento cultural',
+      'Ampliação de edificação existente',
+      'Reforma de escolas e creches',
+      'Reforma de unidades de saúde',
+      'Cobertura de quadras esportivas',
+      'Reforma de prédios administrativos'
+    ],
+    'Pavimentação e Obras Viárias': [
+      'Pavimentação asfáltica',
+      'Pavimentação em paralelepípedo e calçamento',
+      'Recapeamento e fresagem',
+      'Construção e reforma de calçadas',
+      'Sinalização viária',
+      'Construção de pontes e viadutos',
+      'Recapeamento asfáltico',
+      'Pavimentação em bloquete',
+      'Construção de calçadas e passeios'
+    ],
+    'Obras de Saneamento e Drenagem': [
+      'Implantação de rede de drenagem pluvial',
+      'Construção de galerias e bueiros',
+      'Obras de contenção de enchentes',
+      'Implantação de rede de esgoto',
+      'Melhorias sanitárias domiciliares',
+      'Rede coletora de esgoto',
+      'Galerias de águas pluviais',
+      'Estação de tratamento de esgoto (ETE)',
+      'Ligações domiciliares'
+    ],
+    'Iluminação Pública': [
+      'Implantação de iluminação pública',
+      'Substituição por LED',
+      'Manutenção do sistema de iluminação pública',
+      'Modernização para LED',
+      'Extensão de rede de iluminação',
+      'Iluminação de praças e quadras'
+    ],
+    'Obras Hidráulicas e de Abastecimento': [
+      'Implantação de rede de abastecimento d\'água',
+      'Construção de poços artesianos',
+      'Reservatórios e caixas d\'água',
+      'Obras de captação e tratamento de água'
+    ],
+    'Obras de Contenção, Aterro e Terraplanagem': [
+      'Contenção de encostas',
+      'Aterro e terraplanagem',
+      'Muros de arrimo e contenção',
+      'Recuperação de áreas degradadas'
+    ],
+    'Instalações Elétricas e de Telecomunicações': [
+      'Instalações elétricas prediais',
+      'Instalação de cabos e redes estruturadas',
+      'CFTV e sistemas de segurança eletrônica',
+      'Instalação de painéis solares'
+    ],
+    'Instalações Hidrossanitárias': [
+      'Instalações hidráulicas prediais',
+      'Instalações sanitárias e esgoto predial',
+      'Sistemas de combate a incêndio'
+    ],
+    'Obras de Praças, Parques e Áreas de Lazer': [
+      'Construção e reforma de praças',
+      'Playgrounds e academias ao ar livre',
+      'Quadras poliesportivas',
+      'Pistas de caminhada e ciclovias',
+      'Paisagismo e mobiliário urbano'
+    ],
+    'Obras em Cemitérios e Capelas Mortuárias': [
+      'Construção de gavetas e jazigos',
+      'Construção e reforma de capela mortuária',
+      'Muros, calçamento e infraestrutura de cemitério'
+    ],
+    'Obras de Acessibilidade e Adequação de Edificações': [
+      'Rampas e corrimãos',
+      'Adequação de sanitários acessíveis',
+      'Piso tátil e sinalização acessível',
+      'Instalação de plataformas elevatórias'
+    ],
+    'Recuperação e Conservação de Estradas Rurais': [
+      'Patrolamento e cascalhamento',
+      'Bueiros e mata-burros',
+      'Contenção e drenagem de estradas rurais',
+      'Recuperação de pontes rurais'
+    ],
+    'Demolição, Remoção e Limpeza de Terrenos': [
+      'Demolição de edificações',
+      'Remoção de entulho e resíduos de obra',
+      'Limpeza e roçada de terrenos',
+      'Remoção de estruturas metálicas'
+    ],
+    'Sistemas de Prevenção e Combate a Incêndio': [
+      'Instalação de hidrantes e sprinklers',
+      'Instalação de alarme e detecção de incêndio',
+      'Adequação ao AVCB'
+    ],
+    'Obras de Sinalização e Segurança Viária': [
+      'Implantação de lombadas e travessias elevadas',
+      'Implantação de sinalização em vias novas',
+      'Guard-rails e defensas metálicas'
+    ],
+    'Outros Serviços de Engenharia': [
+      'Outros serviços de engenharia não classificados'
+    ]
   }
 };
 
@@ -3169,10 +3920,19 @@ function fracSimilarity(a, b) {
   ta.forEach(t => { if (tb.has(t)) inter++; });
   return inter / (ta.size + tb.size - inter);
 }
+// "Outros serviços não classificados" e as demais gavetas de sobra dizem apenas
+// que ninguem achou onde encaixar — nao que os objetos sejam parecidos. Tratadas
+// como identidade, dois processos sem relacao nenhuma casavam com score 1.0 e
+// viravam alerta de fracionamento. Caindo fora, a comparacao vai para o texto do
+// objeto, que e o criterio honesto nesse caso.
+function fracClassGenerica(v) {
+  const t = (v || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  return !t || t.startsWith('outro') || t.includes('nao classificad');
+}
 function fracSimilaridade(p, q) {
-  if (p.subcategoria && p.subcategoria === q.subcategoria)
+  if (p.subcategoria && p.subcategoria === q.subcategoria && !fracClassGenerica(p.subcategoria))
     return { score: 1.0, razao: `Mesma subcategoria: ${p.subcategoria}` };
-  if (p.categoria && p.categoria === q.categoria)
+  if (p.categoria && p.categoria === q.categoria && !fracClassGenerica(p.categoria))
     return { score: 0.7, razao: `Mesma categoria: ${p.categoria}` };
   const score = fracSimilarity(p.objeto, q.objeto);
   const pct = Math.round(score * 100);
@@ -3195,6 +3955,21 @@ function fracLimite(legal) {
 }
 function fracParseValor(v) {
   return parseValorBR(v);   // ver parseValorBR no base.js
+}
+
+// Valor que efetivamente compromete o limite do inciso. Enquanto o processo
+// esta em instrucao, o que se tem e a estimativa; depois da adjudicacao, o
+// numero real e o adjudicado (e, se ja houver contrato, o contratado). Somar
+// estimativa de processo ja adjudicado infla o acumulado do exercicio — no caso
+// real que motivou isto, em R$ 22.818,79, o suficiente para mudar a leitura.
+function valorComprometido(p) {
+  const campo = (marca, nome) => {
+    const i = STEPS.findIndex(s => s[marca]);
+    return i >= 0 ? (p.steps?.[i]?.fields?.[nome] || '') : '';
+  };
+  return parseValorBR(campo('extratoContrato', 'valor_contrato')
+                   || campo('adjudicacao', 'valor_adjudicado')
+                   || p.valor || 0);
 }
 function fracJanelaAtivos(lista) {
   const cfg = getUser().frac_janela || 'exercicio';
@@ -3225,11 +4000,16 @@ function analisarFracionamento(lista) {
         grupo.push({ ...q, _razao: razaoFinal });
       }
     }
-    const acumulado = grupo.reduce((s, x) => s + fracParseValor(x.valor), 0);
+    const acumulado = grupo.reduce((s, x) => s + valorComprometido(x), 0);
     const pct = limite > 0 ? Math.round(acumulado / limite * 100) : 0;
+    // Sem processo semelhante nao ha fracionamento a acusar: o percentual e o
+    // tamanho do proprio processo, e quem cuida disso e o painel de limite anual.
+    // Chamar isso de "fracionamento" ensinava a ignorar o alerta.
+    const outros = grupo.filter(x => x.id !== p.id);
     result.set(p.id, {
-      nivel: pct >= 100 ? 'alerta' : pct >= 70 ? 'atencao' : 'ok',
-      grupo: grupo.filter(x => x.id !== p.id),
+      nivel: outros.length === 0 ? 'ok' : pct >= 100 ? 'alerta' : pct >= 70 ? 'atencao' : 'ok',
+      soLimite: outros.length === 0 && pct >= 70,   // valor alto, porem sozinho
+      grupo: outros,
       acumulado, limite, pct
     });
   }
@@ -4965,7 +5745,9 @@ function renderDash() {
     const frac = fracResultado.get(p.id);
     const fracBadge = frac && frac.nivel !== 'ok'
       ? `<span class="frac-badge ${frac.nivel}">${frac.nivel === 'alerta' ? '🔴 Alerta Fracionamento' : '🟡 Atenção Fracionamento'} ${frac.pct}%</span>`
-      : '';
+      : frac?.soLimite
+        ? `<span class="frac-badge atencao" title="Nenhum processo semelhante no período — é o valor deste processo sozinho">🟡 ${frac.pct}% do limite</span>`
+        : '';
     const diasParado = st === 'progress'
       ? Math.floor((hoje - new Date(p.updatedAt || p.createdAt)) / 86400000)
       : 0;
@@ -6563,10 +7345,10 @@ function renderFracPanel() {
   const card  = document.getElementById('frac-card');
   const panel = document.getElementById('frac-panel');
   const title = document.getElementById('frac-card-title');
-  if (!frac || frac.nivel === 'ok') { card.style.display = 'none'; return; }
+  if (!frac || (frac.nivel === 'ok' && !frac.soLimite)) { card.style.display = 'none'; return; }
 
   card.style.display = '';
-  const icons = { atencao: '🟡', alerta: '🔴' };
+  const icons = { atencao: '🟡', alerta: '🔴', ok: '🟡' };   // ok + soLimite = valor alto, sem semelhante
   title.style.color = '#fff';
   title.style.background = frac.nivel === 'alerta' ? '#c7162b' : '#d4920a';
   const temRelacionados = frac.grupo.length > 0;
@@ -7712,9 +8494,10 @@ function renderLimiteAnualPanel() {
   if (!inciso) { card.style.display = 'none'; return; }
 
   const ano = new Date().getFullYear();
-  const acumulado = processes
-    .filter(pr => (pr.legal || '').includes(`Art. 75, ${inciso} —`) && new Date(pr.createdAt).getFullYear() === ano)
-    .reduce((sum, pr) => sum + parseValor(pr.valor), 0);
+  const doInciso = processes
+    .filter(pr => (pr.legal || '').includes(`Art. 75, ${inciso} —`) && new Date(_ts(pr.createdAt)).getFullYear() === ano);
+  const acumulado = doInciso.reduce((sum, pr) => sum + valorComprometido(pr), 0);
+  const jaAdjudicados = doInciso.filter(pr => valorComprometido(pr) !== parseValor(pr.valor)).length;
 
   const pct = Math.min(100, (acumulado / limite) * 100);
   const cor = pct >= 100 ? 'var(--danger)' : pct >= 80 ? 'var(--warning)' : 'var(--success)';
@@ -7730,6 +8513,7 @@ function renderLimiteAnualPanel() {
       <div style="background:${cor};height:8px;width:${pct.toFixed(1)}%;transition:width .3s"></div>
     </div>
     <p style="font-size:.72rem;color:${cor};font-weight:600">${pct.toFixed(1)}% utilizado</p>
+    <p style="font-size:.68rem;color:var(--gray-500);margin-top:4px">${doInciso.length} processo(s) no exercício${jaAdjudicados ? ` — ${jaAdjudicados} pelo valor adjudicado, o restante pela estimativa` : ' (valores estimados)'}</p>
     ${ultrapassou ? `<p style="font-size:.75rem;color:var(--danger);margin-top:6px;font-weight:600">⚠ Limite legal ultrapassado! A dispensa com este inciso não é cabível para novos contratos neste exercício.</p>` : ''}
   `;
 }
@@ -8754,7 +9538,7 @@ function renderKanban(procs) {
       <div class="kanban-col-title">${ph} <span style="background:var(--gray-200);color:var(--gray-600);border-radius:10px;padding:1px 7px;font-size:.7rem;margin-left:4px">${byPhase[ph].length}</span></div>
       ${byPhase[ph].map(p => {
         const nums = [p.num_proc && 'PA '+p.num_proc, p.num_dl && 'DL '+p.num_dl].filter(Boolean).join(' · ');
-        const hasFrac = ['alerta','atencao'].includes(fracResultado.get(p.id)?.nivel);
+        const hasFrac = ['alerta','atencao'].includes(fracResultado.get(p.id)?.nivel);   // nivel ja exige grupo
         const st = processStatus(p);
         const stl = { todo:'badge-todo', progress:'badge-progress', done:'badge-done', blocked:'badge-blocked' }[st];
         return `<div class="kanban-card" onclick="openProcess('${p.id}')" role="button" tabindex="0">

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Manual Operacional — SGCD v2.49.0</title>
+<title>Manual Operacional — SGCD v2.50.0</title>
 <style>
   /* Reset e base */
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -89,7 +89,7 @@
       size: A4;
       margin: 20mm 20mm 25mm;
       @top-center {
-        content: "SGCD v2.49.0 — Manual Operacional";
+        content: "SGCD v2.50.0 — Manual Operacional";
         font-family: 'Times New Roman', serif;
         font-size: 9pt;
         color: #666;
@@ -116,7 +116,7 @@
     <div class="cover-title">Manual Operacional</div>
     <div class="cover-subtitle">SGCD — Sistema de Gestão de Contratação Direta</div>
     <div class="cover-system">Gestão de Processos de Dispensa de Licitação</div>
-    <div class="cover-version">Versão v2.49.0</div>
+    <div class="cover-version">Versão v2.50.0</div>
     <br>
     <div style="font-size:11pt; color:#555; line-height:1.8;">
       Aplicação web multiusuário para agentes de contratação pública<br>
@@ -565,7 +565,11 @@
   <li><strong>Categoria:</strong> tipo de bem ou serviço (ex.: Material de Consumo, Serviços de TI, Obras)</li>
   <li><strong>Subcategoria:</strong> classificação mais específica dentro da categoria</li>
 </ul>
+<p>A lista cobre <strong>99 categorias e mais de 580 subcategorias</strong>, organizadas nas quatro naturezas (material de consumo, material permanente, serviços, e obras e serviços de engenharia), com o vocabulário usual da administração municipal — de assessoria em convênios e transferências voluntárias a recuperação de estradas rurais.</p>
 <p>Essa classificação é utilizada pelo sistema para o <strong>controle de fracionamento</strong>: processos da mesma categoria e natureza têm seus valores somados automaticamente para verificação do limite do Art. 75.</p>
+<div class="nota">
+  <strong>Vale procurar a opção específica antes de recorrer a "Outros".</strong> As opções genéricas — "Outros Serviços", "Outros serviços não classificados" e equivalentes — <strong>não</strong> são consideradas semelhança entre processos: duas contratações sem relação alguma, ambas em "Outros", não devem ser somadas como se fossem a mesma coisa. Nesse caso o sistema compara o texto do objeto, que é menos preciso. Classificar direito melhora a qualidade do alerta de fracionamento.
+</div>
 
 <hr class="section-divider">
 
@@ -1302,10 +1306,13 @@
 <h3>Como funciona</h3>
 <p>O sistema monitora os processos cadastrados e:</p>
 <ul>
-  <li>Detecta processos com <strong>objetos similares</strong> (mesma categoria e subcategoria)</li>
-  <li>Calcula a <strong>soma dos valores estimados</strong> no exercício fiscal ou na janela temporal configurada</li>
-  <li>Emite um <strong>alerta</strong> quando a soma se aproxima ou ultrapassa os limites do Art. 75</li>
+  <li>Detecta processos com <strong>objetos similares</strong> (mesma categoria e subcategoria, ou objetos textualmente parecidos na mesma unidade)</li>
+  <li>Soma o valor desses processos no exercício fiscal ou na janela temporal configurada — usando o <strong>valor adjudicado</strong> quando o processo já passou pela adjudicação, e a estimativa enquanto ele está em instrução</li>
+  <li>Emite um <strong>alerta de fracionamento</strong> quando a soma se aproxima (70%) ou ultrapassa os limites do Art. 75</li>
 </ul>
+<div class="nota">
+  <strong>Alerta de fracionamento e valor próximo ao limite são coisas diferentes.</strong> Só há fracionamento a apontar quando existe <strong>outro processo semelhante</strong> no período. Um processo grande, sozinho, não é fracionamento: nesse caso o sistema mostra apenas <em>"X% do limite"</em>, sem acusar irregularidade. Quem acompanha o teto do inciso no exercício é o painel <strong>Limite Anual</strong>, dentro do processo.
+</div>
 
 <h3>Configurar a janela temporal</h3>
 <p>Em Configurações, é possível definir o período para o cálculo de fracionamento:</p>
@@ -1313,6 +1320,9 @@
   <li><strong>Ano civil:</strong> considera todos os processos do exercício fiscal (1º de janeiro a 31 de dezembro)</li>
   <li><strong>Período personalizado:</strong> define uma janela em meses (ex.: últimos 12 meses)</li>
 </ul>
+<div class="nota">
+  <strong>Nota:</strong> O painel <strong>Limite Anual — Art. 75</strong>, na lateral do processo, soma o que já foi comprometido no exercício pelo mesmo inciso e informa quantos processos entraram na conta e quantos já estão pelo valor adjudicado. Depois da adjudicação, o que conta é o valor adjudicado, não a estimativa — usar a estimativa inflava o acumulado e podia indicar estouro de limite que não existe.
+</div>
 <div class="nota">
   <strong>Nota:</strong> O alerta de fracionamento é uma ferramenta de apoio ao agente de contratação. A análise jurídica de configuração de fracionamento deve sempre ser realizada pelo agente e pela assessoria jurídica do órgão, levando em conta as especificidades de cada caso.
 </div>
@@ -1796,6 +1806,18 @@
 
 <!-- ─────────────────────────────────────────────── SEÇÃO 29 -->
 <h2 id="sec29">29. Histórico de Versões</h2>
+
+<h3>v2.50.0 — Agosto/2026</h3>
+<p><strong>Adicionado</strong></p>
+<ul>
+  <li>Classificação do objeto ampliada de 64 para <strong>99 categorias</strong> e de 288 para <strong>582 subcategorias</strong>, com o vocabulário usual da administração municipal — inclusive a categoria <strong>Assessoria e Consultoria em Gestão Pública</strong>, que faltava (convênios e transferências voluntárias, licitações, RH, tributário, AUDESP, RPPS, SUS, educação, SUAS e outras).</li>
+</ul>
+<p><strong>Alterado</strong></p>
+<ul>
+  <li>O selo de <strong>fracionamento</strong> só aparece quando existe outro processo semelhante no período. Processo grande e sozinho passa a mostrar apenas "X% do limite" — não é fracionamento.</li>
+  <li>O painel <strong>Limite Anual</strong> e o cálculo de fracionamento passam a somar o <strong>valor adjudicado</strong> quando o processo já foi adjudicado, em vez da estimativa.</li>
+  <li>As opções genéricas da classificação ("Outros...", "não classificado") deixam de ser tratadas como objetos semelhantes.</li>
+</ul>
 
 <h3>v2.49.0 — Agosto/2026</h3>
 <p><strong>Adicionado</strong></p>

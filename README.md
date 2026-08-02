@@ -33,7 +33,7 @@ Funciona em rede local: um único computador executa o servidor e todos os usuá
 - **Dotação orçamentária** por processo — Programa/Ação, Elemento de Despesa, Fonte e Dotação Completa
 - **Aguardando terceiro** — marca a etapa que depende de alguém de fora (assinatura, retorno de órgão) com prazo previsto: o processo deixa de constar como parado enquanto o prazo vale, e volta a alertar se ele passar
 - **Verificação de conformidade** automática: aponta pendências e inconsistências no processo
-- **Alerta de fracionamento** — detecta processos com objetos similares e calcula soma dos valores no exercício
+- **Alerta de fracionamento** — detecta processos com objetos similares e soma os valores no exercício (pelo valor adjudicado, quando já houver), com classificação do objeto em 99 categorias e 582 subcategorias
 - **Controle de limites anuais** Art. 75, I e II com painel de acumulado e alerta ao atingir o teto legal
 - **Cálculo automático de prazos** (Art. 75 §3°) — data mínima de encerramento com alerta visual, e horário limite para recebimento das propostas impresso no Aviso de Dispensa
 - **Trilha de auditoria global** com timeline agrupada por dia, filtros por tipo de evento, período e usuário

@@ -9,6 +9,18 @@
 
 ---
 
+## [2.50.0] — 2026-08-02
+
+### Adicionado
+- **Classificação do objeto muito mais completa.** A lista passou de 64 para **99 categorias** e de 288 para **582 subcategorias**, nas quatro naturezas. Entre as novidades, categorias que faltavam para o dia a dia municipal: **Assessoria e Consultoria em Gestão Pública** (convênios e transferências voluntárias, licitações e contratos, RH e folha, tributário, PPA/LDO/LOA, AUDESP, RPPS, SUS, educação, SUAS, meio ambiente, captação de recursos), Apoio Administrativo e Operacional, Concursos Públicos, Seguros, Assistência Social, Serviços Veterinários, Sinalização Viária, Gestão Documental, Cemitérios, Acessibilidade e Libras, Energia Solar, além de obras de praças, estradas rurais, acessibilidade e prevenção de incêndio. Categorias que já existiam também ganharam subcategorias — Serviços Contábeis, por exemplo, passou a distinguir *assessoria e apoio técnico-contábil* de *auditoria*, e ganhou *remessas ao TCE (AUDESP)*.
+- **As opções genéricas deixam de contar como semelhança.** "Outros Serviços", "Outros serviços não classificados" e equivalentes diziam apenas que ninguém achou onde encaixar — mas o sistema as lia como identidade de objeto, com peso máximo. Dois processos sem relação alguma, ambos em "Outros", eram agrupados e viravam alerta de fracionamento. Agora essas opções caem fora da comparação por classificação, e a análise usa o texto do objeto.
+
+### Alterado
+- **O alerta de fracionamento só acusa quando existe processo semelhante.** Antes, um processo sozinho recebia o selo "Atenção Fracionamento" só por consumir mais de 70% do limite do inciso — sem nenhum outro processo parecido no período. Fracionamento é a divisão de uma contratação em partes; processo único e grande não é fracionamento, é um processo grande. Agora esse caso aparece como **"X% do limite"**, e o selo de fracionamento fica reservado a quem tem, de fato, processo semelhante no período. O painel de análise dentro do processo já fazia essa distinção; os selos do painel e do Kanban não.
+- **O limite anual passa a somar o valor adjudicado, não a estimativa.** Enquanto o processo está em instrução, o que se tem é a estimativa; depois da adjudicação, o número real é o valor adjudicado (e o contratado, se já houver contrato). Somar estimativa de processo já adjudicado inflava o acumulado do exercício e podia acusar estouro de limite inexistente. O painel agora informa quantos processos entraram na conta e quantos já estão pelo valor adjudicado.
+
+---
+
 ## [2.49.0] — 2026-08-01
 
 ### Adicionado

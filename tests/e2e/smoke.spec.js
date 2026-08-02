@@ -786,3 +786,108 @@ test('horario limite das propostas entra no Aviso de Dispensa', async ({ page, c
   await expect(doc2.locator('td', { hasText: /Até 27\/07\/2026/ })).not.toContainText('às');
   await doc2.close();
 });
+
+// Fracionamento e limite anual mediam a coisa errada: o badge chamava de
+// "fracionamento" processo sozinho so por ser grande, e o acumulado do exercicio
+// somava a estimativa mesmo depois de adjudicado (no caso real, R$ 22 mil a mais).
+test('fracionamento so acusa com processo semelhante, e o limite usa o adjudicado', async ({ page }) => {
+  const LEGAL = 'Art. 75, II — Valor (até R$ 65.492,11 — serviços e compras)';
+  await page.goto('/SGCD.html');
+  await page.fill('#pin-username', 'admin');
+  await page.fill('#pin-input', 'novaSenhaE2E123');
+  await page.click('#overlay-pin button[onclick="verificarSenha()"]');
+  await expect(page.locator('#overlay-pin')).toBeHidden();
+
+  const r = await page.evaluate(async legal => {
+    const cria = async (objeto, valor, extra = {}) => {
+      const res = await API.post('/api/processes', { objeto, valor, legal, ...extra });
+      return (await API.json(res)).id;
+    };
+    // sozinho e grande: 60.000 de 65.492,11 = 92%
+    const idSozinho = await cria('Reforma do telhado do galpao de maquinas (E2E frac)', '60.000,00');
+    await loadProcesses();
+    const so = analisarFracionamento(processes).get(idSozinho);
+
+    // agora um semelhante, na mesma subcategoria: passa a haver grupo
+    const idPar = await cria('Reforma do telhado do galpao de veiculos (E2E frac)', '20.000,00',
+                             { categoria: 'Cat E2E', subcategoria: 'Sub E2E' });
+    await API.put(`/api/processes/${idSozinho}`, {
+      ...(await buscarProcesso(idSozinho)), categoria: 'Cat E2E', subcategoria: 'Sub E2E' });
+    await loadProcesses();
+    const comPar = analisarFracionamento(processes).get(idSozinho);
+
+    // valor comprometido: enquanto nao ha adjudicacao, vale a estimativa
+    // (processo criado pela API nasce sem etapas; openProcess as recompoe)
+    await openProcess(idPar);
+    const antes = valorComprometido(currentProcess);
+    const iAdj = STEPS.findIndex(s => s.adjudicacao);
+    currentProcess.steps[iAdj].fields.valor_adjudicado = 'R$ 12.000,00';
+    await saveProcess(currentProcess);
+    await openProcess(idPar);
+    const depois = valorComprometido(currentProcess);
+
+    return { soNivel: so.nivel, soLimite: !!so.soLimite, soGrupo: so.grupo.length, soPct: so.pct,
+             parNivel: comPar.nivel, parGrupo: comPar.grupo.length, antes, depois };
+  }, LEGAL);
+
+  // sozinho: nao e fracionamento, mas o valor alto continua sinalizado
+  expect(r.soGrupo, 'agrupou sem processo semelhante').toBe(0);
+  expect(r.soNivel, 'processo sozinho foi acusado de fracionamento').toBe('ok');
+  expect(r.soLimite, 'perdeu o aviso de valor proximo ao limite').toBe(true);
+  expect(r.soPct).toBeGreaterThanOrEqual(70);
+
+  // com semelhante: aí sim é fracionamento
+  expect(r.parGrupo, 'nao achou o processo semelhante').toBe(1);
+  expect(r.parNivel, 'deveria acusar fracionamento').toBe('alerta');
+
+  // adjudicado manda no acumulado
+  expect(r.antes).toBe(20000);
+  expect(r.depois, 'o acumulado ignorou o valor adjudicado').toBe(12000);
+});
+
+// A gaveta de sobra da classificacao ("Outros serviços não classificados") era
+// lida como identidade: dois processos sem relacao nenhuma casavam com score 1.0
+// e viravam alerta de fracionamento. Classificacao de verdade continua valendo.
+test('classificacao generica nao conta como objeto semelhante', async ({ page }) => {
+  const LEGAL = 'Art. 75, II — Valor (até R$ 65.492,11 — serviços e compras)';
+  await page.goto('/SGCD.html');
+  await page.fill('#pin-username', 'admin');
+  await page.fill('#pin-input', 'novaSenhaE2E123');
+  await page.click('#overlay-pin button[onclick="verificarSenha()"]');
+  await expect(page.locator('#overlay-pin')).toBeHidden();
+
+  const r = await page.evaluate(async legal => {
+    const cria = async (objeto, classif) => {
+      const res = await API.post('/api/processes', { objeto, valor: '30.000,00', legal, ...classif });
+      return (await API.json(res)).id;
+    };
+    const generica = { natureza: 'Serviços', categoria: 'Outros Serviços',
+                       subcategoria: 'Outros serviços não classificados' };
+    const a = await cria('Servico de dedetizacao das creches (E2E generica)', generica);
+    const b = await cria('Assessoria em convenios e transferencias (E2E generica)', generica);
+
+    // mesma classificacao real, objetos igualmente distintos
+    const real = { natureza: 'Serviços', categoria: 'Assessoria e Consultoria em Gestão Pública',
+                   subcategoria: 'Assessoria em convênios e transferências voluntárias' };
+    const c = await cria('Primeiro contrato de apoio (E2E real)', real);
+    const d = await cria('Segundo contrato de apoio (E2E real)', real);
+
+    await loadProcesses();
+    const res = analisarFracionamento(processes);
+    const grupoDe = id => res.get(id).grupo.map(x => x.id);
+    return {
+      genericaAgrupou: grupoDe(a).includes(b),
+      realAgrupou: grupoDe(c).includes(d),
+      // a subcategoria nova tem de existir na lista, senao o formulario nao a oferece
+      temCategoria: (OBJETO_CLASS.categorias['Serviços'] || []).includes(real.categoria),
+      temSubcategoria: (OBJETO_CLASS.subcategorias[real.categoria] || []).includes(real.subcategoria),
+      totalCategorias: Object.values(OBJETO_CLASS.categorias).reduce((n, v) => n + v.length, 0),
+    };
+  }, LEGAL);
+
+  expect(r.genericaAgrupou, '"Outros" foi lido como objeto semelhante').toBe(false);
+  expect(r.realAgrupou, 'classificacao real deixou de agrupar').toBe(true);
+  expect(r.temCategoria, 'categoria de assessoria nao esta na lista').toBe(true);
+  expect(r.temSubcategoria, 'subcategoria de convenios nao esta na lista').toBe(true);
+  expect(r.totalCategorias).toBeGreaterThan(90);
+});
