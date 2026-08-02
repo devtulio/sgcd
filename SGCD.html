@@ -4034,13 +4034,7 @@ function fmtDate(dt) {
   const d = typeof dt === 'number' ? new Date(dt) : new Date(dt + 'T00:00:00');
   return d.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric' });
 }
-// Data por extenso ("31 de julho de 2026") para o fecho local-data dos
-// documentos. Sem argumento, devolve hoje. Mesma armadilha de fuso do fmtDate:
-// string so-data precisa do 'T00:00:00' para nao voltar um dia.
-function fmtExtenso(dt) {
-  const d = !dt ? new Date() : (typeof dt === 'number' ? new Date(dt) : new Date(dt + 'T00:00:00'));
-  return d.toLocaleDateString('pt-BR', { day:'numeric', month:'long', year:'numeric' });
-}
+// fmtExtenso (data por extenso) vem do base.js compartilhado.
 
 // ══════════════════════════════════════════════════════════════
 // AGUARDANDO TERCEIRO
@@ -9292,7 +9286,7 @@ function gerarMapaPrecos(stepIdx) {
   const u = getUser();
   const data = p.steps[stepIdx];
   const lista = data.fields._propostas ? JSON.parse(data.fields._propostas) : [];
-  const hoje = new Date().toLocaleDateString('pt-BR', {day:'numeric',month:'long',year:'numeric'});
+  const hoje = fmtExtenso();
   const sitLabels = { analise:'Em análise', aceita:'Aceita', vencedora:'Vencedora', recusada:'Recusada/Desclassificada' };
   const numLine = [p.num_proc&&`PA ${p.num_proc}`, p.num_dl&&`DL ${p.num_dl}`].filter(Boolean).join(' / ') || p.num||'';
   const vencedora = lista.find(x => x.situacao==='vencedora');
@@ -9817,7 +9811,7 @@ function gerarDespachoRecusa(stepIdx, pi) {
   const prop = lista[pi];
   if (!prop) return;
 
-  const hoje = new Date().toLocaleDateString('pt-BR', { day:'numeric', month:'long', year:'numeric' });
+  const hoje = fmtExtenso();
   const blank = txt => escHtml(txt) || '_'.repeat(40);
   const dec = u.dec_municipal || '';
   const decRef = dec ? `, aplicado ao presente procedimento por força do art. 79, §4°, do referido Decreto Municipal` : '';
@@ -9936,7 +9930,7 @@ function gerarDespachoInabilitacao(stepIdx) {
     return st === 'pendente';
   });
 
-  const hoje = new Date().toLocaleDateString('pt-BR', { day:'numeric', month:'long', year:'numeric' });
+  const hoje = fmtExtenso();
   const blank = txt => escHtml(txt) || '_'.repeat(40);
   const dec = u.dec_municipal || '';
   const decRef = dec ? `, aplicado ao presente procedimento por força do art. 79, §4°, do referido Decreto Municipal` : '';
@@ -10058,7 +10052,7 @@ function gerarDespachoHabilitacao(stepIdx) {
     return st === 'obtida' || st === 'na';
   });
 
-  const hoje = new Date().toLocaleDateString('pt-BR', { day:'numeric', month:'long', year:'numeric' });
+  const hoje = fmtExtenso();
   const blank = txt => escHtml(txt) || '_'.repeat(40);
   const dec = u.dec_municipal || '';
   const decRef = dec ? `, aplicado ao presente procedimento por força do art. 79, §4°, do referido Decreto Municipal` : '';
@@ -10356,7 +10350,7 @@ function gerarAvisoDispensa() {
   const v = (i, f) => p(i)[f] || '';
   const iCotacoes = STEPS.findIndex(s => s.cotacoes);
   const iAviso     = STEPS.findIndex(s => s.avisoDispensa);
-  const hoje = new Date().toLocaleDateString('pt-BR', { day:'numeric', month:'long', year:'numeric' });
+  const hoje = fmtExtenso();
   const blank = txt => escHtml(txt) || '_'.repeat(40);
   const fmtVal = val => val ? fmtMoney(val) : '_'.repeat(20);
 
@@ -10638,7 +10632,7 @@ function gerarExtratoContrato() {
   ])) return;
   const u = getUser();
   const data = proc.steps[iInstrumento]?.fields || {};
-  const hoje = new Date().toLocaleDateString('pt-BR', { day:'numeric', month:'long', year:'numeric' });
+  const hoje = fmtExtenso();
   const blank = txt => escHtml(txt) || '_'.repeat(40);
   const forn = proc.fornecedor;
   const contratante = data.contratante || u.orgao || '';
@@ -10762,7 +10756,7 @@ const _DOC_CSS = `
 function gerarEnquadramentoLegal() {
   const p = currentProcess;
   const u = getUser();
-  const hoje = new Date().toLocaleDateString('pt-BR', { day:'numeric', month:'long', year:'numeric' });
+  const hoje = fmtExtenso();
   const blank = txt => escHtml(txt) || '_'.repeat(40);
   const fmtVal = v => v ? fmtMoney(v) : '_______________';
   // fmtDate e nao new Date(dt): string so-data e lida como UTC, e no nosso fuso
@@ -10770,7 +10764,7 @@ function gerarEnquadramentoLegal() {
   const d = dt => dt ? fmtDate(dt) : '_____/_____/_______';
   // Data por extenso, no mesmo formato dos demais documentos (Autorização, Aviso).
   // 'T00:00:00' força leitura no fuso local — sem isso a data ISO volta um dia.
-  const dExt = dt => new Date(dt + 'T00:00:00').toLocaleDateString('pt-BR', { day:'numeric', month:'long', year:'numeric' });
+  const dExt = fmtExtenso;
 
   // BUG (corrigido): lia da etapa "Dotação Orçamentária" (sem campo fundamento) em vez de "Enquadramento Legal"
   const stepData = p.steps?.[STEPS.findIndex(s => s.enquadramentoLegal)]?.fields || {};
@@ -10938,7 +10932,7 @@ function gerarAutorizacao() {
     { ok: !!p.num_dl,  msg: 'Número da DL não informado', bloqueia: false },
   ])) return;
   const u = getUser();
-  const hoje = new Date().toLocaleDateString('pt-BR', { day:'numeric', month:'long', year:'numeric' });
+  const hoje = fmtExtenso();
   const blank = txt => escHtml(txt) || '_'.repeat(40);
   const fmtVal = v => v ? fmtMoney(v) : '_______________';
 
@@ -11071,7 +11065,7 @@ function gerarProcessoCompleto() {
   const u = getUser();
   const blank = v => escHtml(v) || '_'.repeat(30);
   const fmtV  = v => v ? fmtMoney(v) : '_______________';
-  const hoje = new Date().toLocaleDateString('pt-BR', { day:'numeric', month:'long', year:'numeric' });
+  const hoje = fmtExtenso();
   const nums = [p.num_proc && `PA ${p.num_proc}`, p.num_dl && `DL ${p.num_dl}`].filter(Boolean).join(' · ') || p.num || '';
   const forn = p.fornecedor;
   const fornNome = typeof forn==='object'?(forn?.razao_social||''):(forn||'');
@@ -11284,7 +11278,7 @@ function gerarAta() {
   const todasObtidas = certAplicaveis.every(c => (certSaved[c.id] || {}).status === 'obtida' || (certSaved[c.id] || {}).status === 'na');
   const resultadoHab = todasObtidas ? 'HABILITADO' : 'HABILITAÇÃO PENDENTE DE VERIFICAÇÃO';
 
-  const hoje = new Date().toLocaleDateString('pt-BR', { day:'numeric', month:'long', year:'numeric' });
+  const hoje = fmtExtenso();
 
   const cotacoesHtml = cotacoes.length ? `
     <table>
