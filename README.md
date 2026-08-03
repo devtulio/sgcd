@@ -290,4 +290,6 @@ Contribuições são bem-vindas! Veja o [CONTRIBUTING.md](CONTRIBUTING.md) para 
 
 [MIT](LICENSE) — © 2026 Túlio Ribeiro de Moura e Silva.
 
-> **Aviso:** Os dados ficam armazenados no arquivo `sgcd.db` na pasta do sistema. Faça backups regulares em **Configurações → Backup de Dados** e mantenha cópia do `sgcd.db` em local seguro.
+**Aviso:** Os dados ficam armazenados no arquivo `sgcd.db` na pasta do sistema.
+Faça backups regulares em **Configurações → Backup de Dados** e mantenha cópia
+do `sgcd.db` em local seguro.
