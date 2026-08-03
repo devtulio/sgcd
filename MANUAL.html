@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Manual Operacional — SGCD v2.50.1</title>
+<title>Manual Operacional — SGCD v2.50.2</title>
 <style>
   /* Reset e base */
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -89,7 +89,7 @@
       size: A4;
       margin: 20mm 20mm 25mm;
       @top-center {
-        content: "SGCD v2.50.1 — Manual Operacional";
+        content: "SGCD v2.50.2 — Manual Operacional";
         font-family: 'Times New Roman', serif;
         font-size: 9pt;
         color: #666;
@@ -116,7 +116,7 @@
     <div class="cover-title">Manual Operacional</div>
     <div class="cover-subtitle">SGCD — Sistema de Gestão de Contratação Direta</div>
     <div class="cover-system">Gestão de Processos de Dispensa de Licitação</div>
-    <div class="cover-version">Versão v2.50.1</div>
+    <div class="cover-version">Versão v2.50.2</div>
     <br>
     <div style="font-size:11pt; color:#555; line-height:1.8;">
       Aplicação web multiusuário para agentes de contratação pública<br>
@@ -1241,7 +1241,7 @@
   <li>Clique no ícone de <strong>engrenagem (⚙)</strong> para abrir as Configurações</li>
   <li>Localize a seção <strong>"Backup de Dados"</strong></li>
   <li>Clique em <strong>"Exportar Backup"</strong></li>
-  <li>Um arquivo JSON será baixado automaticamente pelo navegador com o nome <code>SIS_SGCD_BACKUP_[data]_[hora].json</code></li>
+  <li>Um arquivo JSON será baixado automaticamente pelo navegador com o nome <code>SYNC_SGCD_BACKUP_[data]_[hora].json</code></li>
   <li>Salve o arquivo em local seguro (pasta local, nuvem, pen drive)</li>
 </ol>
 <div class="dica">
@@ -1587,11 +1587,12 @@
 <p>Quando a última sessão ativa é encerrada (todos os usuários fazem logout ou fecham o navegador), o servidor grava automaticamente:</p>
 <ul>
   <li>Um <strong>pacote do banco e dos anexos</strong> (<code>DB_SGCD_BACKUP_[data-hora].zip</code>) — contém o <code>sgcd.db</code> completo e a pasta <code>uploads/</code>, de forma que a restauração recupera também os PDFs anexados;</li>
-  <li>Um <strong>backup JSON</strong> (<code>SIS_SGCD_BACKUP_[data-hora].json</code>) — processos, fornecedores e configurações em formato legível.</li>
+  <li>Um <strong>backup JSON</strong> (<code>SYNC_SGCD_BACKUP_[data-hora].json</code>) — processos, fornecedores e configurações em formato legível.</li>
 </ul>
 <div class="nota">
   <strong>Nota:</strong> O pacote <code>.zip</code> passou a incluir os anexos na versão 2.43.0. Backups mais antigos, no formato <code>.db</code>, continuam restauráveis — mas repõem apenas o banco, sem os arquivos anexados.
 </div>
+<div class="nota"><strong>Os dois arquivos, pelo nome:</strong> o Cofre é o <code>DB_SGCD_BACKUP_[data-hora].zip</code> — cópia da instalação, restaura tudo, inclusive as contas; guarde-o fora da máquina. O de sincronização é o <code>SYNC_SGCD_BACKUP_[data-hora].json</code> — leva os dados de trabalho a outra instalação, sem contas. Ele se chamava <code>SIS_</code> até agosto/2026; os arquivos gravados antes continuam na lista e continuam restauráveis, porque o sistema reconhece o backup pelo conteúdo, não pelo nome.</div>
 <p>Ambos são salvos na pasta <code>backups/</code> (ou em outra pasta definida em Configurações → Backup de Dados). O sistema mantém apenas os backups automáticos mais recentes, descartando os mais antigos conforme o número configurado em <strong>"Manter últimos N backups"</strong> (padrão: 7).</p>
 <div class="nota">
   <strong>Backup sob demanda:</strong> em Configurações → Backup de Dados, o botão <strong>"Fazer backup agora"</strong> aciona uma cópia do banco imediatamente, sem esperar o encerramento da sessão.
@@ -1806,6 +1807,10 @@
 
 <!-- ─────────────────────────────────────────────── SEÇÃO 29 -->
 <h2 id="sec29">29. Histórico de Versões</h2>
+
+<h3>v2.50.2 — Agosto/2026</h3>
+<p><strong>Alterado</strong></p>
+<ul><li>O backup JSON passou a se chamar <code>SYNC_</code> em vez de <code>SIS_</code> — o nome agora diz o papel: quem restaura tudo é o Cofre <code>.zip</code>; o JSON leva os dados de trabalho a outra instalação. Arquivos gravados antes continuam na lista e continuam restauráveis, porque o backup é reconhecido pelo conteúdo, não pelo nome.</li></ul>
 
 <h3>v2.50.1 — Agosto/2026</h3>
 <p><strong>Alterado</strong></p>
