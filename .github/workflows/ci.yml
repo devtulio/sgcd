@@ -48,7 +48,7 @@ jobs:
       # permite investigar uma queda que não reproduz na máquina local.
       - name: Rastro do E2E (só em caso de falha)
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: rastro-e2e
           path: |
