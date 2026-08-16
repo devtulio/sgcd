@@ -2347,7 +2347,7 @@ if __name__ == '__main__':
     print(f'  Rede:     http://{ip_local}:{PORT}/SGCD.html')
     print()
 
-    browser = _find_browser()
+    browser = None if os.environ.get('SGCD_NO_BROWSER') else _find_browser()
     if browser:
         profile_dir = os.path.join(os.environ.get('TEMP', os.path.expanduser('~')), 'SGCD-Profile')
         subprocess.Popen([
